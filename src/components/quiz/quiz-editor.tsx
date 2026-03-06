@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { QuestionEditor } from "@/components/quiz/question-editor";
 import { Plus, Save, Loader2 } from "lucide-react";
+import { ShareDialog } from "@/components/quiz/share-dialog";
 
 interface Props {
   initialData?: QuizInput & { id?: string };
@@ -108,9 +109,12 @@ export function QuizEditor({ initialData }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">
-        {initialData?.id ? "Modifica Quiz" : "Nuovo Quiz"}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">
+          {initialData?.id ? "Modifica Quiz" : "Nuovo Quiz"}
+        </h1>
+        {initialData?.id && <ShareDialog quizId={initialData.id} />}
+      </div>
 
       {/* Quiz metadata */}
       <div className="space-y-4">
