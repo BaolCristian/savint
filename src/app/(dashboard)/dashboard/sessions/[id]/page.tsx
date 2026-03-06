@@ -8,6 +8,9 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -114,16 +117,35 @@ export default async function SessionDetailPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">{session.quiz.title}</h1>
-        <p className="text-muted-foreground">
-          PIN: {session.pin} &middot; Sessione del{" "}
-          {session.createdAt.toLocaleDateString("it-IT", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{session.quiz.title}</h1>
+          <p className="text-muted-foreground">
+            PIN: {session.pin} &middot; Sessione del{" "}
+            {session.createdAt.toLocaleDateString("it-IT", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href={`/api/stats/export?sessionId=${id}&format=csv`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Esporta CSV
+          </Link>
+          <Link
+            href={`/api/stats/export?sessionId=${id}&format=pdf`}
+            target="_blank"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Esporta PDF
+          </Link>
+        </div>
       </div>
 
       {/* Summary cards */}
