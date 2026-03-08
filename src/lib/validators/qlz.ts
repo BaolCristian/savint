@@ -27,18 +27,60 @@ const matchingOptionsSchema = z.object({
   })).min(2),
 });
 
+const spotErrorOptionsSchema = z.object({
+  lines: z.array(z.string().min(1)).min(2),
+  errorIndices: z.array(z.number().int().min(0)).min(1),
+  explanation: z.string().optional(),
+});
+
+const numericEstimationOptionsSchema = z.object({
+  correctValue: z.number(),
+  tolerance: z.number().min(0),
+  maxRange: z.number().min(0),
+  unit: z.string().optional(),
+});
+
+const imageHotspotOptionsSchema = z.object({
+  imageUrl: z.string().refine(
+    (val) => val.startsWith("/uploads/") || val.startsWith("http://") || val.startsWith("https://"),
+    { message: "Must be a URL or a local upload path" }
+  ),
+  hotspot: z.object({
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+    radius: z.number().min(0.01).max(0.5),
+  }),
+  tolerance: z.number().min(0).max(0.5),
+});
+
+const codeCompletionOptionsSchema = z.object({
+  codeLines: z.array(z.string()).min(2),
+  blankLineIndex: z.number().int().min(0),
+  correctAnswer: z.string().min(1),
+  mode: z.enum(["choice", "text"]),
+  choices: z.array(z.string().min(1)).min(2).max(6).optional(),
+});
+
 const qlzQuestionSchema = z.object({
-  type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "OPEN_ANSWER", "ORDERING", "MATCHING"]),
+  type: z.enum([
+    "MULTIPLE_CHOICE", "TRUE_FALSE", "OPEN_ANSWER", "ORDERING", "MATCHING",
+    "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT", "CODE_COMPLETION",
+  ]),
   text: z.string().min(1).max(500),
   image: z.string().optional(),
   timeLimit: z.number().int().min(5).max(120).default(20),
   points: z.number().int().min(100).max(2000).default(1000),
+  confidenceEnabled: z.boolean().default(false),
   options: z.union([
     multipleChoiceOptionsSchema,
     trueFalseOptionsSchema,
     openAnswerOptionsSchema,
     orderingOptionsSchema,
     matchingOptionsSchema,
+    spotErrorOptionsSchema,
+    numericEstimationOptionsSchema,
+    imageHotspotOptionsSchema,
+    codeCompletionOptionsSchema,
   ]),
 });
 
