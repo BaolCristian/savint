@@ -91,9 +91,17 @@ function sanitizeOptions(
   }
 }
 
+/** Count real players (excluding __host__) */
+function realPlayerCount(game: GameState) {
+  return game.players.has("__host__")
+    ? game.players.size - 1
+    : game.players.size;
+}
+
 /** Build sorted leaderboard from a game state */
 function buildLeaderboard(game: GameState) {
   return [...game.players.values()]
+    .filter((p) => p.name !== "__host__")
     .sort((a, b) => b.totalScore - a.totalScore)
     .map((p) => ({
       playerName: p.name,
@@ -212,7 +220,7 @@ export function setupSocketHandlers(io: TypedIO) {
         // Notify everyone in the room
         io.to(room(sessionId)).emit("playerJoined", {
           playerName,
-          playerCount: game.players.size,
+          playerCount: realPlayerCount(game),
           playerAvatar: playerAvatar,
         });
 
@@ -338,9 +346,10 @@ export function setupSocketHandlers(io: TypedIO) {
       const correctCount = [...game.players.values()].filter(
         (p) => p.lastDelta > 0
       ).length;
+      const total = realPlayerCount(game);
       const classCorrectPercent =
-        game.players.size > 0
-          ? Math.round((correctCount / game.players.size) * 100)
+        total > 0
+          ? Math.round((correctCount / total) * 100)
           : 0;
 
       // Feedback to the answering player only
@@ -355,7 +364,7 @@ export function setupSocketHandlers(io: TypedIO) {
       // Broadcast answer count to room
       io.to(room(game.sessionId)).emit("answerCount", {
         count: game.answerCount,
-        total: game.players.size,
+        total,
       });
     });
 
@@ -446,10 +455,10 @@ export function setupSocketHandlers(io: TypedIO) {
 
       io.to(room(currentSessionId)).emit("playerLeft", {
         playerName: currentPlayerName,
-        playerCount: game.players.size,
+        playerCount: realPlayerCount(game),
       });
 
-      // If no players left and no host, clean up
+      // If no players left, clean up
       if (game.players.size === 0) {
         games.delete(currentSessionId);
       }

@@ -4,9 +4,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: kahoot
-      POSTGRES_USER: kahoot
-      POSTGRES_PASSWORD: kahoot
+      POSTGRES_DB: quizlive
+      POSTGRES_USER: quizlive
+      POSTGRES_PASSWORD: quizlive
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped

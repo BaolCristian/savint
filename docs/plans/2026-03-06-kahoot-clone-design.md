@@ -1,4 +1,4 @@
-# Design Document: Quiz Live per la Scuola (Kahoot Clone)
+# Design Document: Quiz Live per la Scuola
 
 Data: 2026-03-06
 
@@ -147,7 +147,7 @@ molt_tempo:  1.0 - (tempo_impiegato / tempo_limite) * 0.5
 ## Struttura progetto
 
 ```
-kahoot/
+quizlive/
   docker-compose.yml
   Dockerfile
   package.json

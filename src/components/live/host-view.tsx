@@ -40,14 +40,14 @@ interface GameOverData {
   fullResults: { playerName: string; playerAvatar?: string; score: number }[];
 }
 
-const ANSWER_COLORS = [
-  "bg-red-500",
-  "bg-blue-500",
-  "bg-yellow-500",
-  "bg-green-500",
+const MC_COLORS = [
+  "from-red-500 to-red-600",
+  "from-blue-500 to-blue-600",
+  "from-amber-500 to-yellow-500",
+  "from-emerald-500 to-green-600",
 ];
 
-const ANSWER_SHAPES = ["triangle", "diamond", "circle", "square"];
+const MC_ICONS = ["\u25B2", "\u25C6", "\u25CF", "\u25A0"];
 
 export function HostView({ session }: Props) {
   const { socket, connected } = useSocket();
@@ -64,7 +64,6 @@ export function HostView({ session }: Props) {
   // Join session as host on mount
   useEffect(() => {
     if (!socket || !connected) return;
-
     socket.emit("joinSession", {
       pin: session.pin,
       playerName: "__host__",
@@ -76,6 +75,7 @@ export function HostView({ session }: Props) {
     if (!socket) return;
 
     const handlePlayerJoined = (data: { playerName: string; playerAvatar?: string; playerCount: number }) => {
+      if (data.playerName === "__host__") return;
       setPlayers((prev) => [
         ...prev.filter((p) => p.name !== data.playerName),
         { name: data.playerName, avatar: data.playerAvatar },
@@ -150,6 +150,13 @@ export function HostView({ session }: Props) {
     }
   }, [phase, timeLeft]);
 
+  // Auto-transition when all answered
+  useEffect(() => {
+    if (phase === "question" && answerCount.total > 0 && answerCount.count >= answerCount.total) {
+      setPhase("result");
+    }
+  }, [phase, answerCount]);
+
   const handleStartGame = useCallback(() => {
     socket?.emit("startGame");
   }, [socket]);
@@ -167,55 +174,90 @@ export function HostView({ session }: Props) {
     socket?.emit("endGame");
   }, [socket]);
 
-  // --- LOBBY PHASE ---
+  /* ================================================================== */
+  /*  LOBBY                                                              */
+  /* ================================================================== */
   if (phase === "lobby") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 text-white flex flex-col items-center justify-center p-8">
-        <h1 className="text-3xl font-bold mb-2">{session.quiz.title}</h1>
-        <p className="text-lg mb-8 opacity-80">Condividi il PIN per partecipare</p>
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+        {/* Top bar */}
+        <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">📡</span>
+            <h1 className="text-xl lg:text-2xl font-bold truncate">{session.quiz.title}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-block w-3 h-3 rounded-full ${connected ? "bg-green-400" : "bg-red-400 animate-pulse"}`} />
+            <span className="text-sm text-slate-400">{connected ? "Connesso" : "Connessione..."}</span>
+          </div>
+        </header>
 
-        <div className="bg-white/10 backdrop-blur rounded-2xl p-8 mb-8 text-center">
-          <p className="text-sm uppercase tracking-widest mb-2 opacity-70">PIN di gioco</p>
-          <p className="text-7xl font-black tracking-wider">{session.pin}</p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur rounded-xl p-6 mb-8 w-full max-w-md">
-          <h2 className="text-lg font-semibold mb-3">
-            Giocatori connessi ({playerCount})
-          </h2>
-          {players.length === 0 ? (
-            <p className="text-sm opacity-60">In attesa di giocatori...</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {players.map((player) => (
-                <span
-                  key={player.name}
-                  className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
-                >
-                  <span className="text-lg">{player.avatar || "\uD83D\uDC64"}</span>
-                  {player.name}
-                </span>
-              ))}
+        <div className="flex-1 flex flex-col lg:flex-row">
+          {/* Left: PIN section */}
+          <section className="lg:w-1/2 flex flex-col items-center justify-center p-8 lg:p-16 bg-gradient-to-br from-indigo-600 to-purple-700">
+            <p className="text-sm lg:text-base uppercase tracking-[0.3em] text-indigo-200 mb-3">Entra su quizlive e inserisci il PIN</p>
+            <div className="bg-white rounded-2xl px-10 lg:px-16 py-6 lg:py-8 shadow-2xl shadow-indigo-900/50">
+              <p className="text-6xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.15em] text-center tabular-nums">
+                {session.pin}
+              </p>
             </div>
-          )}
+            <p className="mt-6 text-indigo-200 text-base lg:text-lg">
+              {session.quiz.questions.length} domande
+            </p>
+          </section>
+
+          {/* Right: Players + Start */}
+          <section className="lg:w-1/2 flex flex-col p-6 lg:p-10">
+            {/* Players header */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">👥</span>
+              <h2 className="text-2xl lg:text-3xl font-bold">
+                Giocatori
+              </h2>
+              <span className="ml-auto bg-indigo-500 text-white text-xl lg:text-2xl font-bold px-4 py-1.5 rounded-full">
+                {playerCount}
+              </span>
+            </div>
+
+            {/* Players list */}
+            <div className="flex-1 bg-slate-800 rounded-2xl border border-slate-700 p-4 lg:p-6 overflow-y-auto mb-6">
+              {players.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <span className="text-5xl mb-3">⏳</span>
+                  <p className="text-lg">In attesa di giocatori...</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 lg:gap-3 content-start">
+                  {players.map((player) => (
+                    <span
+                      key={player.name}
+                      className="bg-slate-700 hover:bg-slate-600 border border-slate-600 px-3 lg:px-4 py-2 rounded-xl text-sm lg:text-base font-medium flex items-center gap-2 transition-colors animate-slide-up-fade"
+                    >
+                      <span className="text-xl lg:text-2xl">{player.avatar || "👤"}</span>
+                      {player.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Start button */}
+            <button
+              onClick={handleStartGame}
+              disabled={playerCount === 0}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-extrabold px-10 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-green-900/30 hover:shadow-green-500/30 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {playerCount === 0 ? "In attesa di giocatori..." : `Avvia Quiz (${playerCount} giocatori)`}
+            </button>
+          </section>
         </div>
-
-        <button
-          onClick={handleStartGame}
-          disabled={playerCount === 0}
-          className="bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-10 py-4 rounded-xl text-xl transition-colors"
-        >
-          Avvia Quiz
-        </button>
-
-        {!connected && (
-          <p className="mt-4 text-sm text-red-300">Connessione al server in corso...</p>
-        )}
       </div>
     );
   }
 
-  // --- QUESTION PHASE ---
+  /* ================================================================== */
+  /*  QUESTION                                                           */
+  /* ================================================================== */
   if (phase === "question") {
     const q = currentQuestion;
     if (!q) return null;
@@ -226,253 +268,315 @@ export function HostView({ session }: Props) {
         : 0;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-700 to-purple-900 text-white flex flex-col p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-lg font-semibold opacity-80">
-            Domanda {q.questionIndex + 1} / {q.totalQuestions}
-          </span>
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+        {/* Top bar */}
+        <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="text-sm opacity-70">
-              {answerCount.count}/{answerCount.total} risposte
+            <span className="text-sm lg:text-base font-semibold text-slate-400">
+              Domanda {q.questionIndex + 1} / {q.totalQuestions}
             </span>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-32 lg:w-48 bg-slate-700 rounded-full h-2.5">
+                <div
+                  className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${((q.questionIndex + 1) / q.totalQuestions) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 lg:gap-6">
+            {/* Answer counter */}
+            <div className="flex items-center gap-2 bg-slate-700 rounded-xl px-4 py-2">
+              <span className="text-lg">✋</span>
+              <span className="text-base lg:text-lg font-bold">
+                {answerCount.count}
+                <span className="text-slate-400 font-normal">/{answerCount.total}</span>
+              </span>
+            </div>
+
+            {/* Timer */}
             <div
-              className={`rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold ${
+              className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center text-2xl lg:text-3xl font-black transition-colors ${
                 timeLeft <= 5 && timeLeft > 0
-                  ? "animate-countdown-pulse bg-red-500 text-white"
-                  : "bg-white/20"
+                  ? "bg-red-500 text-white animate-countdown-pulse ring-4 ring-red-400/50"
+                  : timeLeft <= 10 && timeLeft > 0
+                    ? "bg-amber-500 text-white"
+                    : "bg-slate-700 text-white"
               }`}
             >
               {timeLeft}
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Question text */}
-        <div className="flex-1 flex flex-col items-center justify-center animate-slide-up-fade">
-          <h2 className="text-4xl font-bold text-center mb-6 max-w-4xl">
+        {/* Question body */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 lg:px-16 py-8">
+          <h2 className="text-3xl lg:text-5xl xl:text-6xl font-bold text-center mb-8 max-w-5xl animate-slide-up-fade leading-tight">
             {q.question.text}
           </h2>
 
-          {/* Optional image */}
           {q.question.mediaUrl && (
             <img
               src={q.question.mediaUrl}
               alt="Immagine della domanda"
-              className="max-h-64 rounded-xl mb-6 object-contain"
+              className="max-h-48 lg:max-h-72 rounded-2xl mb-8 object-contain shadow-lg"
             />
           )}
         </div>
 
-        {/* Answer blocks for MULTIPLE_CHOICE */}
+        {/* Answer options (MULTIPLE_CHOICE) */}
         {q.question.type === "MULTIPLE_CHOICE" && (
-          <div className="grid grid-cols-2 gap-4 mt-auto">
+          <div className="grid grid-cols-2 gap-3 lg:gap-4 px-6 lg:px-10 pb-6">
             {(q.question.options as MultipleChoiceOptions).choices.map(
               (choice, i) => (
                 <div
                   key={i}
-                  className={`${ANSWER_COLORS[i % ANSWER_COLORS.length]} rounded-xl p-6 flex items-center gap-3`}
+                  className={`bg-gradient-to-br ${MC_COLORS[i % MC_COLORS.length]} rounded-2xl p-4 lg:p-6 flex items-center gap-3 lg:gap-4 shadow-lg`}
                 >
-                  <span className="text-2xl font-bold opacity-60">
-                    {ANSWER_SHAPES[i % ANSWER_SHAPES.length] === "triangle"
-                      ? "\u25B2"
-                      : ANSWER_SHAPES[i % ANSWER_SHAPES.length] === "diamond"
-                        ? "\u25C6"
-                        : ANSWER_SHAPES[i % ANSWER_SHAPES.length] === "circle"
-                          ? "\u25CF"
-                          : "\u25A0"}
+                  <span className="text-2xl lg:text-3xl font-bold opacity-50">
+                    {MC_ICONS[i % MC_ICONS.length]}
                   </span>
-                  <span className="text-xl font-semibold">{choice.text}</span>
+                  <span className="text-lg lg:text-2xl font-bold">{choice.text}</span>
                 </div>
               )
             )}
           </div>
         )}
 
+        {/* True/False display */}
+        {q.question.type === "TRUE_FALSE" && (
+          <div className="grid grid-cols-2 gap-3 lg:gap-4 px-6 lg:px-10 pb-6">
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 lg:p-8 flex items-center justify-center shadow-lg">
+              <span className="text-2xl lg:text-3xl font-extrabold">Vero</span>
+            </div>
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 lg:p-8 flex items-center justify-center shadow-lg">
+              <span className="text-2xl lg:text-3xl font-extrabold">Falso</span>
+            </div>
+          </div>
+        )}
+
         {/* Progress bar */}
-        <div className="mt-6 bg-white/20 rounded-full h-3 overflow-hidden">
-          <div
-            className="bg-green-400 h-full rounded-full transition-all duration-500"
-            style={{ width: `${progressPercent}%` }}
-          />
+        <div className="px-6 lg:px-10 pb-4">
+          <div className="bg-slate-800 rounded-full h-3 lg:h-4 overflow-hidden border border-slate-700">
+            <div
+              className="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="text-center text-sm text-slate-500 mt-2">
+            {progressPercent}% ha risposto
+          </p>
         </div>
       </div>
     );
   }
 
-  // --- RESULT PHASE ---
+  /* ================================================================== */
+  /*  RESULT                                                             */
+  /* ================================================================== */
   if (phase === "result") {
     const q = currentQuestion;
-    const isLastQuestion =
-      q && q.questionIndex + 1 >= q.totalQuestions;
+    const isLastQuestion = q && q.questionIndex + 1 >= q.totalQuestions;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-700 to-indigo-900 text-white flex flex-col items-center p-8">
-        <h2 className="text-3xl font-bold mb-8">
-          Risultati - Domanda {q ? q.questionIndex + 1 : ""}
-        </h2>
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+        {/* Top bar */}
+        <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-4 flex items-center justify-between">
+          <h2 className="text-xl lg:text-2xl font-bold">
+            Risultati — Domanda {q ? q.questionIndex + 1 : ""}
+          </h2>
+          <span className="text-sm lg:text-base text-slate-400">
+            {q ? `${q.questionIndex + 1} / ${q.totalQuestions}` : ""}
+          </span>
+        </header>
 
         {!resultsRevealed ? (
-          <button
-            onClick={handleShowResults}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-4 rounded-xl text-xl transition-colors"
-          >
-            Mostra risultati
-          </button>
+          <div className="flex-1 flex flex-col items-center justify-center gap-6">
+            <span className="text-7xl">📊</span>
+            <p className="text-xl lg:text-2xl text-slate-400">Pronto a mostrare i risultati?</p>
+            <button
+              onClick={handleShowResults}
+              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-900 font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-amber-900/30 hover:scale-105 active:scale-95"
+            >
+              Mostra risultati
+            </button>
+          </div>
         ) : (
-          <div className="w-full max-w-4xl">
-            {/* Distribution */}
+          <div className="flex-1 flex flex-col lg:flex-row gap-6 p-6 lg:p-10 overflow-auto">
+            {/* Left: Distribution chart */}
             {resultData && (
-              <div className="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4">Distribuzione risposte</h3>
-                <div className="flex items-end gap-4 h-40">
+              <section className="lg:w-1/2 bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex flex-col">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-2xl">📊</span>
+                  <h3 className="text-xl lg:text-2xl font-bold">Distribuzione risposte</h3>
+                </div>
+                <div className="flex-1 flex items-end gap-3 lg:gap-5 min-h-[200px] lg:min-h-[280px]">
                   {Object.entries(resultData.distribution).map(([key, value], i) => {
-                    const maxVal = Math.max(
-                      ...Object.values(resultData.distribution),
-                      1
-                    );
+                    const maxVal = Math.max(...Object.values(resultData.distribution), 1);
                     const heightPercent = (value / maxVal) * 100;
                     return (
-                      <div
-                        key={key}
-                        className="flex-1 flex flex-col items-center gap-2"
-                      >
-                        <span className="text-sm font-bold">{value}</span>
+                      <div key={key} className="flex-1 flex flex-col items-center gap-2">
+                        <span className="text-lg lg:text-xl font-bold">{value}</span>
                         <div
-                          className={`${ANSWER_COLORS[i % ANSWER_COLORS.length]} w-full rounded-t-lg transition-all duration-700`}
-                          style={{ height: `${heightPercent}%`, minHeight: 4 }}
+                          className={`bg-gradient-to-t ${MC_COLORS[i % MC_COLORS.length]} w-full rounded-t-xl transition-all duration-700`}
+                          style={{ height: `${heightPercent}%`, minHeight: 8 }}
                         />
-                        <span className="text-xs opacity-70 truncate max-w-full">
+                        <span className="text-xs lg:text-sm text-slate-400 truncate max-w-full text-center">
                           {key}
                         </span>
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Top 5 Leaderboard */}
-            {resultData && resultData.leaderboard.length > 0 && (
-              <div className="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4">Top 5 Classifica</h3>
-                <div className="space-y-3">
-                  {resultData.leaderboard.slice(0, 5).map((entry, i) => (
-                    <div
-                      key={entry.playerName}
-                      className="flex items-center justify-between bg-white/10 rounded-lg px-4 py-3 animate-slide-up-fade"
-                      style={{ animationDelay: `${i * 100}ms` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold opacity-60 w-8">
-                          {i + 1}.
-                        </span>
-                        <span className="text-xl">{entry.playerAvatar || "\uD83D\uDC64"}</span>
-                        <span className="font-semibold">{entry.playerName}</span>
+            {/* Right: Leaderboard + actions */}
+            <section className="lg:w-1/2 flex flex-col gap-6">
+              {/* Leaderboard */}
+              {resultData && resultData.leaderboard.length > 0 && (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
+                  <div className="flex items-center gap-2 mb-6">
+                    <span className="text-2xl">🏆</span>
+                    <h3 className="text-xl lg:text-2xl font-bold">Top 5 Classifica</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {resultData.leaderboard.slice(0, 5).map((entry, i) => (
+                      <div
+                        key={entry.playerName}
+                        className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 transition-colors animate-slide-up-fade"
+                        style={{ animationDelay: `${i * 100}ms` }}
+                      >
+                        <div className="flex items-center gap-3 lg:gap-4">
+                          <span className="text-xl lg:text-2xl font-black text-slate-500 w-8">
+                            {i + 1}
+                          </span>
+                          <span className="text-2xl lg:text-3xl">{entry.playerAvatar || "👤"}</span>
+                          <span className="font-bold text-base lg:text-lg">{entry.playerName}</span>
+                        </div>
+                        <div className="flex items-center gap-3 lg:gap-4">
+                          <span className="text-green-400 text-sm lg:text-base font-bold bg-green-400/10 px-2 py-1 rounded-lg">
+                            +{entry.delta}
+                          </span>
+                          <span className="font-extrabold text-lg lg:text-xl">{entry.score}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-green-400 text-sm font-medium">
-                          +{entry.delta}
-                        </span>
-                        <span className="font-bold">{entry.score}</span>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Next / Podium button */}
-            <div className="flex justify-center">
-              {isLastQuestion ? (
-                <button
-                  onClick={handleEndGame}
-                  className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-8 py-4 rounded-xl text-xl transition-colors"
-                >
-                  Mostra podio
-                </button>
-              ) : (
-                <button
-                  onClick={handleNextQuestion}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-4 rounded-xl text-xl transition-colors"
-                >
-                  Prossima domanda
-                </button>
               )}
-            </div>
+
+              {/* Action button */}
+              <div className="flex">
+                {isLastQuestion ? (
+                  <button
+                    onClick={handleEndGame}
+                    className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    🏆 Mostra podio
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNextQuestion}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-green-900/30 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Prossima domanda →
+                  </button>
+                )}
+              </div>
+            </section>
           </div>
         )}
       </div>
     );
   }
 
-  // --- PODIUM PHASE ---
+  /* ================================================================== */
+  /*  PODIUM                                                             */
+  /* ================================================================== */
   if (phase === "podium" && gameOverData) {
-    const medals = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
-    const podiumHeights = ["h-40", "h-32", "h-24"];
-    const podiumOrder = [1, 0, 2]; // Display order: 2nd, 1st, 3rd
+    const medals = ["🥇", "🥈", "🥉"];
+    const podiumBg = [
+      "from-amber-400 to-yellow-500",
+      "from-slate-300 to-slate-400",
+      "from-amber-600 to-orange-700",
+    ];
+    const podiumHeights = ["h-44 lg:h-56", "h-32 lg:h-40", "h-24 lg:h-32"];
+    const podiumOrder = [1, 0, 2]; // Display: 2nd, 1st, 3rd
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-500 to-orange-600 text-white flex flex-col items-center p-8">
-        <h2 className="text-4xl font-bold mb-12">Podio</h2>
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col">
+        {/* Header */}
+        <header className="text-center pt-8 lg:pt-12 pb-4">
+          <h2 className="text-4xl lg:text-6xl font-black">🏆 Podio 🏆</h2>
+          <p className="text-lg lg:text-xl text-slate-400 mt-2">{session.quiz.title}</p>
+        </header>
 
-        {/* Top 3 podium */}
-        <div className="flex items-end justify-center gap-6 mb-12">
+        {/* Top 3 podium visual */}
+        <div className="flex-1 flex items-end justify-center gap-3 lg:gap-6 px-6 lg:px-16 pb-0">
           {podiumOrder.map((position) => {
-            const player = gameOverData.podium.find(
-              (p) => p.position === position + 1
-            );
-            if (!player) return null;
+            const player = gameOverData.podium.find((p) => p.position === position + 1);
+            if (!player) return <div key={position} className="flex-1 max-w-[200px]" />;
             return (
               <div
                 key={player.playerName}
-                className="flex flex-col items-center animate-podium-rise"
-                style={{ animationDelay: `${position * 300}ms` }}
+                className="flex-1 max-w-[200px] flex flex-col items-center animate-podium-rise"
+                style={{ animationDelay: `${position * 400}ms` }}
               >
-                <span className="text-5xl mb-2">{player.playerAvatar || medals[position]}</span>
-                <span className="text-3xl mb-1">{medals[position]}</span>
-                <span className="font-bold text-lg mb-1">
+                <span className="text-5xl lg:text-7xl mb-2">{player.playerAvatar || "👤"}</span>
+                <span className="text-3xl lg:text-4xl mb-1">{medals[position]}</span>
+                <span className="font-extrabold text-lg lg:text-2xl mb-1 text-center truncate max-w-full">
                   {player.playerName}
                 </span>
-                <span className="text-sm opacity-80 mb-3">
+                <span className="text-sm lg:text-lg text-slate-300 mb-3 font-semibold">
                   {player.score} punti
                 </span>
                 <div
-                  className={`${podiumHeights[position]} w-28 bg-white/20 backdrop-blur rounded-t-xl flex items-start justify-center pt-3`}
+                  className={`${podiumHeights[position]} w-full bg-gradient-to-t ${podiumBg[position]} rounded-t-2xl flex items-start justify-center pt-4`}
                 >
-                  <span className="text-3xl font-black">{position + 1}</span>
+                  <span className="text-4xl lg:text-5xl font-black text-white/80">{position + 1}</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Full results list */}
-        <div className="bg-white/10 backdrop-blur rounded-xl p-6 w-full max-w-lg mb-8">
-          <h3 className="text-lg font-semibold mb-4">Classifica completa</h3>
-          <div className="space-y-2">
-            {gameOverData.fullResults.map((entry, i) => (
-              <div
-                key={entry.playerName}
-                className="flex items-center justify-between bg-white/10 rounded-lg px-4 py-2"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-bold opacity-60 w-8">{i + 1}.</span>
-                  <span className="text-xl">{entry.playerAvatar || "\uD83D\uDC64"}</span>
-                  <span className="font-medium">{entry.playerName}</span>
+        {/* Full results */}
+        <section className="bg-slate-800 border-t border-slate-700 px-6 lg:px-16 py-6 lg:py-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">📋</span>
+              <h3 className="text-lg lg:text-xl font-bold">Classifica completa</h3>
+            </div>
+            <div className="space-y-2">
+              {gameOverData.fullResults.map((entry, i) => (
+                <div
+                  key={entry.playerName}
+                  className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-2.5 lg:py-3 animate-slide-up-fade"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-black text-slate-500 w-8 text-lg">{i + 1}.</span>
+                    <span className="text-xl lg:text-2xl">{entry.playerAvatar || "👤"}</span>
+                    <span className="font-semibold text-base lg:text-lg">{entry.playerName}</span>
+                  </div>
+                  <span className="font-extrabold text-lg lg:text-xl">{entry.score} pt</span>
                 </div>
-                <span className="font-bold">{entry.score}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
-        <Link
-          href="/dashboard"
-          className="bg-white text-orange-600 hover:bg-white/90 font-bold px-8 py-4 rounded-xl text-xl transition-colors"
-        >
-          Torna alla dashboard
-        </Link>
+        {/* Footer action */}
+        <footer className="bg-slate-900 border-t border-slate-700 px-6 lg:px-16 py-5 flex justify-center">
+          <Link
+            href="/dashboard"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-lg lg:text-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+          >
+            ← Torna alla dashboard
+          </Link>
+        </footer>
       </div>
     );
   }

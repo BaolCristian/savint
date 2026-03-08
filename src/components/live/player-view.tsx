@@ -50,7 +50,7 @@ interface PodiumData {
 /* ------------------------------------------------------------------ */
 
 function Confetti() {
-  const colors = ["#FF6B6B", "#FFE66D", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#98D8C8"];
+  const colors = ["#E8E8E8", "#D4D4D4", "#C0C0C0", "#F5F5DC", "#D2B48C", "#C4B59D", "#A9A9A9", "#BFBFBF"];
   const pieces = Array.from({ length: 30 }, (_, i) => ({
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 0.5}s`,
@@ -93,7 +93,12 @@ export function PlayerView() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
-  const [avatar, setAvatar] = useState(() => randomEmoji());
+  const [avatar, setAvatar] = useState("");
+
+  // Pick a random emoji only on the client to avoid hydration mismatch
+  useEffect(() => {
+    setAvatar((prev) => prev || randomEmoji());
+  }, []);
   const [avatarCategory, setAvatarCategory] = useState(0);
 
   const questionStartTime = useRef<number>(0);
@@ -207,10 +212,10 @@ export function PlayerView() {
   if (phase === "join") {
     const currentEmojis = EMOJI_CATEGORIES[avatarCategory]?.emojis ?? [];
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-6">
-        <h1 className="mb-8 text-5xl font-extrabold text-white drop-shadow-lg">Quiz Live</h1>
+      <div className="flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-4 sm:p-6" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
+        <h1 className="mb-4 sm:mb-8 text-3xl sm:text-5xl lg:text-6xl font-extrabold text-emerald-800 drop-shadow-sm">Quiz Live</h1>
 
-        <div className="w-full max-w-sm space-y-4">
+        <div className="w-full max-w-sm md:max-w-md space-y-3 sm:space-y-4 lg:space-y-5">
           <input
             type="text"
             inputMode="numeric"
@@ -219,7 +224,7 @@ export function PlayerView() {
             placeholder="PIN del gioco"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            className="h-14 w-full bg-white/20 backdrop-blur-md border border-white/30 text-white placeholder:text-white/50 rounded-2xl text-center text-2xl font-bold tracking-widest px-4 focus:outline-none focus:ring-4 focus:ring-white/40"
+            className="h-12 sm:h-14 lg:h-16 w-full bg-white border border-emerald-200 text-emerald-900 placeholder:text-emerald-400 rounded-2xl text-center text-xl sm:text-2xl lg:text-3xl font-bold tracking-widest px-4 focus:outline-none focus:ring-4 focus:ring-emerald-300"
           />
           <input
             type="text"
@@ -227,23 +232,23 @@ export function PlayerView() {
             placeholder="Il tuo nome"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-14 w-full bg-white/20 backdrop-blur-md border border-white/30 text-white placeholder:text-white/50 rounded-2xl text-center text-xl font-semibold px-4 focus:outline-none focus:ring-4 focus:ring-white/40"
+            className="h-12 sm:h-14 lg:h-16 w-full bg-white border border-emerald-200 text-emerald-900 placeholder:text-emerald-400 rounded-2xl text-center text-lg sm:text-xl lg:text-2xl font-semibold px-4 focus:outline-none focus:ring-4 focus:ring-emerald-300"
           />
 
           {/* Emoji picker */}
           <div className="flex flex-col items-center">
-            <div className="text-6xl mb-3">{avatar}</div>
+            <div className="text-4xl sm:text-6xl lg:text-7xl mb-2 sm:mb-3">{avatar}</div>
 
             {/* Category tabs */}
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-1.5 sm:gap-2 lg:gap-3 mb-2 sm:mb-3">
               {EMOJI_CATEGORIES.map((cat, i) => (
                 <button
                   key={cat.name}
                   onClick={() => setAvatarCategory(i)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
+                  className={`px-2 sm:px-3 lg:px-4 py-1 lg:py-1.5 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition ${
                     avatarCategory === i
-                      ? "bg-white text-purple-700"
-                      : "bg-white/20 text-white"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-white text-emerald-700"
                   }`}
                 >
                   {cat.name}
@@ -252,13 +257,13 @@ export function PlayerView() {
             </div>
 
             {/* Emoji grid */}
-            <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto p-2">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 lg:gap-3 max-h-36 sm:max-h-48 lg:max-h-56 overflow-y-auto p-1.5 sm:p-2">
               {currentEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => setAvatar(emoji)}
-                  className={`text-3xl p-1 rounded-xl cursor-pointer hover:bg-white/20 transition-all ${
-                    avatar === emoji ? "ring-2 ring-white bg-white/30 scale-110" : ""
+                  className={`text-2xl sm:text-3xl lg:text-4xl p-1 lg:p-2 rounded-xl cursor-pointer hover:bg-emerald-200 transition-all ${
+                    avatar === emoji ? "ring-2 ring-emerald-500 bg-emerald-200 scale-110" : ""
                   }`}
                 >
                   {emoji}
@@ -268,7 +273,7 @@ export function PlayerView() {
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-500/90 px-4 py-2 text-center text-sm font-medium text-white">
+            <p className="rounded-lg bg-red-500/90 px-4 py-2 text-center text-sm lg:text-base font-medium text-white">
               {error}
             </p>
           )}
@@ -276,14 +281,14 @@ export function PlayerView() {
           <button
             onClick={handleJoin}
             disabled={!connected}
-            className="w-full bg-white text-purple-700 font-bold text-lg rounded-2xl py-4 shadow-lg shadow-purple-900/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+            className="w-full bg-emerald-600 text-white font-bold text-base sm:text-lg lg:text-xl rounded-2xl py-3 sm:py-4 lg:py-5 shadow-lg shadow-emerald-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
           >
             Entra
           </button>
         </div>
 
         {!connected && (
-          <p className="mt-4 text-sm text-white/70">Connessione in corso...</p>
+          <p className="mt-4 text-sm text-emerald-500">Connessione in corso...</p>
         )}
       </div>
     );
@@ -291,10 +296,10 @@ export function PlayerView() {
 
   if (phase === "waiting") {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-6 text-center">
-        <div className="text-8xl mb-6 animate-float-bounce">{avatar}</div>
-        <h2 className="text-2xl font-bold text-white mb-2">{name}</h2>
-        <p className="text-lg text-white/70">
+      <div className="flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
+        <div className="text-6xl sm:text-8xl lg:text-9xl mb-4 sm:mb-6 animate-float-bounce">{avatar}</div>
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800 mb-2">{name}</h2>
+        <p className="text-base sm:text-lg lg:text-xl text-emerald-600">
           In attesa che il prof avvii il quiz...
         </p>
       </div>
@@ -303,14 +308,14 @@ export function PlayerView() {
 
   if (phase === "question" && questionData) {
     return (
-      <div className="flex min-h-dvh flex-col bg-gray-950 p-4 text-white">
+      <div className="flex min-h-dvh flex-col bg-gray-950 p-3 sm:p-4 lg:p-6 text-white">
         {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-400">
+        <div className="mb-3 sm:mb-4 flex items-center justify-between">
+          <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-400">
             Domanda {questionData.questionIndex + 1}/{questionData.totalQuestions}
           </span>
           <span
-            className={`rounded-full px-4 py-1.5 text-lg font-bold ${
+            className={`rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-base sm:text-lg lg:text-xl font-bold ${
               timeLeft <= 5 && timeLeft > 0
                 ? "bg-red-500 text-white animate-countdown-pulse"
                 : "bg-gray-800 text-white"
@@ -321,18 +326,18 @@ export function PlayerView() {
         </div>
 
         {/* Question text */}
-        <h2 className="mb-6 text-xl md:text-2xl font-bold text-white text-center animate-slide-up-fade">
+        <h2 className="mb-4 sm:mb-6 text-lg sm:text-xl lg:text-3xl font-bold text-white text-center animate-slide-up-fade">
           {questionData.question.text}
         </h2>
 
         {/* Answer area */}
         {submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="text-5xl mb-4">{avatar}</div>
-            <p className="text-2xl font-bold text-green-400">
+            <div className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4">{avatar}</div>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
               Risposta inviata!
             </p>
-            <p className="mt-2 text-gray-400">In attesa dei risultati...</p>
+            <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-400">In attesa dei risultati...</p>
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
@@ -352,23 +357,23 @@ export function PlayerView() {
     const content = (
       <div className="flex flex-col items-center">
         {isCorrect && <Confetti />}
-        <div className="text-8xl mb-4 animate-score-pop">
+        <div className="text-6xl sm:text-8xl lg:text-9xl mb-3 sm:mb-4 animate-score-pop">
           {isCorrect ? "\u2713" : "\u2717"}
         </div>
-        <div className="text-5xl mb-4">{avatar}</div>
-        <h2 className="mb-2 text-3xl font-extrabold text-white">
+        <div className="text-4xl sm:text-5xl lg:text-7xl mb-3 sm:mb-4">{avatar}</div>
+        <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
           {isCorrect ? "Corretto!" : "Sbagliato!"}
         </h2>
-        <p className="mb-1 text-xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
+        <p className="mb-1 text-lg sm:text-xl lg:text-2xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
           +{feedback.score} punti
         </p>
-        <p className="text-lg text-white/80 animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
+        <p className="text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
           Posizione: {feedback.position}
         </p>
-        <p className="mt-1 text-lg text-white/80 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
+        <p className="mt-1 text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
           Punteggio totale: {feedback.totalScore}
         </p>
-        <p className="mt-1 text-sm text-white/60 animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
+        <p className="mt-1 text-xs sm:text-sm lg:text-base text-white/60 animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
           Classe: {feedback.classCorrectPercent}% corretto
         </p>
       </div>
@@ -390,25 +395,25 @@ export function PlayerView() {
   if (phase === "podium" && podium) {
     const medals = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
     return (
-      <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-6 pt-12">
-        <h2 className="mb-8 text-3xl font-extrabold text-white">Classifica</h2>
+      <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-4 sm:p-6 lg:p-8 pt-8 sm:pt-12">
+        <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">Classifica</h2>
 
         {/* Top 3 */}
-        <div className="mb-8 w-full max-w-sm space-y-3">
+        <div className="mb-6 sm:mb-8 w-full max-w-sm md:max-w-lg space-y-2 sm:space-y-3 lg:space-y-4">
           {podium.podium.map((p, i) => (
             <div
               key={p.position}
-              className="flex items-center gap-3 bg-white/15 backdrop-blur-md rounded-2xl p-4 animate-podium-rise"
+              className="flex items-center gap-2 sm:gap-3 lg:gap-4 bg-white/15 backdrop-blur-md rounded-2xl p-3 sm:p-4 lg:p-5 animate-podium-rise"
               style={{ animationDelay: `${i * 300}ms` }}
             >
-              <span className="text-3xl">{medals[p.position - 1]}</span>
-              <span className="text-5xl">{p.playerAvatar ?? avatar}</span>
-              <div className="flex-1">
-                <span className="text-lg font-bold text-white block">
+              <span className="text-2xl sm:text-3xl lg:text-4xl">{medals[p.position - 1]}</span>
+              <span className="text-3xl sm:text-5xl lg:text-6xl">{p.playerAvatar ?? avatar}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-base sm:text-lg lg:text-xl font-bold text-white block truncate">
                   {p.playerName}
                 </span>
               </div>
-              <span className="text-lg font-semibold text-white/90">
+              <span className="text-base sm:text-lg lg:text-xl font-semibold text-white/90">
                 {p.score} pt
               </span>
             </div>
@@ -421,16 +426,16 @@ export function PlayerView() {
             {podium.fullResults.slice(3).map((p, i) => (
               <div
                 key={p.playerName}
-                className="flex items-center gap-3 bg-white/10 rounded-xl p-3"
+                className="flex items-center gap-2 sm:gap-3 lg:gap-4 bg-white/10 rounded-xl p-2.5 sm:p-3 lg:p-4"
               >
-                <span className="w-8 text-center font-bold text-white/70">
+                <span className="w-7 sm:w-8 text-center text-sm sm:text-base lg:text-lg font-bold text-white/70">
                   {i + 4}
                 </span>
-                <span className="text-2xl">{p.playerAvatar ?? avatar}</span>
-                <span className="flex-1 font-medium text-white/90">
+                <span className="text-xl sm:text-2xl lg:text-3xl">{p.playerAvatar ?? avatar}</span>
+                <span className="flex-1 text-sm sm:text-base lg:text-lg font-medium text-white/90 truncate">
                   {p.playerName}
                 </span>
-                <span className="text-sm text-white/70">{p.score} pt</span>
+                <span className="text-xs sm:text-sm lg:text-base text-white/70">{p.score} pt</span>
               </div>
             ))}
           </div>
@@ -502,37 +507,20 @@ function MultipleChoiceInput({
   options: MultipleChoiceOptions;
   onSubmit: (value: AnswerValue) => void;
 }) {
-  const [selected, setSelected] = useState<number[]>([]);
-
-  const toggle = (i: number) => {
-    setSelected((prev) =>
-      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i],
-    );
-  };
-
   return (
-    <>
-      <div className="grid flex-1 grid-cols-2 gap-3">
-        {options.choices.map((c, i) => (
-          <button
-            key={i}
-            onClick={() => toggle(i)}
-            className={`flex items-center justify-center rounded-2xl min-h-20 p-3 text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all ${
-              MC_GRADIENTS[i % MC_GRADIENTS.length]
-            } ${selected.includes(i) ? "ring-4 ring-white" : ""}`}
-          >
-            {c.text}
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={() => onSubmit({ selected })}
-        disabled={selected.length === 0}
-        className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
-      >
-        Conferma
-      </button>
-    </>
+    <div className="grid flex-1 grid-cols-2 gap-3">
+      {options.choices.map((c, i) => (
+        <button
+          key={i}
+          onClick={() => onSubmit({ selected: [i] })}
+          className={`flex items-center justify-center rounded-2xl min-h-16 sm:min-h-20 lg:min-h-24 p-2 sm:p-3 lg:p-4 text-white font-bold text-base sm:text-lg lg:text-xl shadow-lg hover:scale-105 active:scale-95 transition-all ${
+            MC_GRADIENTS[i % MC_GRADIENTS.length]
+          }`}
+        >
+          {c.text}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -547,13 +535,13 @@ function TrueFalseInput({
     <div className="flex flex-1 gap-4">
       <button
         onClick={() => onSubmit({ selected: true })}
-        className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 py-8 text-3xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
+        className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 py-6 sm:py-8 lg:py-10 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
       >
         Vero
       </button>
       <button
         onClick={() => onSubmit({ selected: false })}
-        className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 py-8 text-3xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
+        className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 py-6 sm:py-8 lg:py-10 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
       >
         Falso
       </button>

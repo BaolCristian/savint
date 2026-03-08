@@ -2,13 +2,13 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build a Kahoot-like live quiz platform for a school, with quiz creation, real-time gameplay, sharing between teachers, and advanced statistics.
+**Goal:** Build a live quiz platform for a school, with quiz creation, real-time gameplay, sharing between teachers, and advanced statistics.
 
 **Architecture:** Next.js 15 App Router monolith with Socket.io for real-time, PostgreSQL via Prisma ORM, Google OAuth via NextAuth v5. Deployed as Docker Compose on school server.
 
 **Tech Stack:** Next.js 15, TypeScript, React 19, Tailwind CSS 4, shadcn/ui, Socket.io 4, NextAuth v5, Prisma 6, PostgreSQL 16, Recharts, Zod, Vitest, Playwright.
 
-**Design doc:** `docs/plans/2026-03-06-kahoot-clone-design.md`
+**Design doc:** `docs/plans/2026-03-06-quizlive-clone-design.md`
 
 ---
 
@@ -22,7 +22,7 @@
 **Step 1: Create Next.js app**
 
 ```bash
-cd /Users/cristianvirgili/NetBeansProjects/kahoot
+cd /Users/cristianvirgili/NetBeansProjects/quizlive
 npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 ```
 
@@ -39,7 +39,7 @@ npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-libra
 
 Create `.env.example`:
 ```
-DATABASE_URL=postgresql://kahoot:kahoot@localhost:5432/kahoot
+DATABASE_URL=postgresql://quizlive:quizlive@localhost:5432/quizlive
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
@@ -76,9 +76,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: kahoot
-      POSTGRES_USER: kahoot
-      POSTGRES_PASSWORD: kahoot
+      POSTGRES_DB: quizlive
+      POSTGRES_USER: quizlive
+      POSTGRES_PASSWORD: quizlive
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -3369,9 +3369,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: kahoot
-      POSTGRES_USER: kahoot
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-kahoot}
+      POSTGRES_DB: quizlive
+      POSTGRES_USER: quizlive
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quizlive}
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always

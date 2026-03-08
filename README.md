@@ -1,6 +1,6 @@
 # Quiz Live
 
-Piattaforma di quiz live per la scuola, ispirata a Kahoot. Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo reale dal telefono.
+Piattaforma di quiz live per la scuola. Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo reale dal telefono.
 
 ## Funzionalita
 
@@ -40,7 +40,7 @@ Piattaforma di quiz live per la scuola, ispirata a Kahoot. Il docente crea quiz,
 
 ```bash
 git clone <url-del-repo>
-cd kahoot
+cd quizlive
 npm install
 ```
 
@@ -72,7 +72,7 @@ openssl rand -base64 32
 Il file `.env` dovra contenere:
 
 ```
-DATABASE_URL=postgresql://kahoot:kahoot@localhost:5432/kahoot
+DATABASE_URL=postgresql://quizlive:quizlive@localhost:5432/quizlive
 GOOGLE_CLIENT_ID=il-tuo-client-id
 GOOGLE_CLIENT_SECRET=il-tuo-client-secret
 NEXTAUTH_SECRET=il-secret-generato-sopra
@@ -159,7 +159,7 @@ Stessi passaggi, ma con il dominio reale:
 ## Struttura del progetto
 
 ```
-kahoot/
+quizlive/
   docker-compose.yml          # Produzione (app + db)
   docker-compose.dev.yml      # Sviluppo (solo db)
   Dockerfile                  # Build produzione multi-stage
@@ -234,7 +234,7 @@ kahoot/
 
 ```bash
 git clone <url-del-repo>
-cd kahoot
+cd quizlive
 ```
 
 #### 2. Crea il file `.env`
@@ -247,7 +247,7 @@ nano .env
 Configura tutti i valori:
 
 ```
-DATABASE_URL=postgresql://kahoot:UNA_PASSWORD_SICURA@db:5432/kahoot
+DATABASE_URL=postgresql://quizlive:UNA_PASSWORD_SICURA@db:5432/quizlive
 DB_PASSWORD=UNA_PASSWORD_SICURA
 GOOGLE_CLIENT_ID=il-tuo-client-id
 GOOGLE_CLIENT_SECRET=il-tuo-client-secret
@@ -316,7 +316,7 @@ Caddy ottiene e rinnova automaticamente i certificati SSL tramite Let's Encrypt.
 ### Aggiornamenti
 
 ```bash
-cd kahoot
+cd quizlive
 git pull
 docker compose build
 docker compose up -d
@@ -327,10 +327,10 @@ docker compose exec app npx prisma migrate deploy
 
 ```bash
 # Crea backup
-docker compose exec db pg_dump -U kahoot kahoot > backup_$(date +%Y%m%d).sql
+docker compose exec db pg_dump -U quizlive quizlive > backup_$(date +%Y%m%d).sql
 
 # Ripristina da backup
-cat backup.sql | docker compose exec -T db psql -U kahoot kahoot
+cat backup.sql | docker compose exec -T db psql -U quizlive quizlive
 ```
 
 ## Sistema di punteggio

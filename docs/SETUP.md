@@ -6,13 +6,14 @@ Questa guida e pensata per il tecnico IT della scuola che deve installare e conf
 
 1. [Prerequisiti](#1-prerequisiti)
 2. [Configurazione Google OAuth](#2-configurazione-google-oauth)
-3. [Installazione sul server](#3-installazione-sul-server)
-4. [Primo avvio](#4-primo-avvio)
-5. [Configurazione HTTPS](#5-configurazione-https)
-6. [Gestione quotidiana](#6-gestione-quotidiana)
-7. [Backup e ripristino](#7-backup-e-ripristino)
-8. [Aggiornamenti](#8-aggiornamenti)
-9. [Risoluzione problemi](#9-risoluzione-problemi)
+3. [Configurazione Pixabay (ricerca immagini)](#3-configurazione-pixabay-ricerca-immagini)
+4. [Installazione sul server](#4-installazione-sul-server)
+5. [Primo avvio](#5-primo-avvio)
+6. [Configurazione HTTPS](#6-configurazione-https)
+7. [Gestione quotidiana](#7-gestione-quotidiana)
+8. [Backup e ripristino](#8-backup-e-ripristino)
+9. [Aggiornamenti](#9-aggiornamenti)
+10. [Risoluzione problemi](#10-risoluzione-problemi)
 
 ---
 
@@ -90,15 +91,33 @@ Quiz Live usa Google per l'autenticazione dei docenti. Serve un progetto su Goog
 
 ---
 
-## 3. Installazione sul server
+## 3. Configurazione Pixabay (ricerca immagini)
+
+Quiz Live permette ai docenti di cercare immagini gratuite da Pixabay direttamente nell'editor delle domande. Questa funzionalita e opzionale ma consigliata.
+
+### Passo per passo
+
+1. Vai su https://pixabay.com/api/docs/ e clicca **Get Started** (o registrati su https://pixabay.com se non hai un account)
+2. Una volta loggato, la tua **API Key** viene mostrata nella pagina della documentazione API
+3. Copia la chiave e incollala nel file `.env`:
+
+```bash
+PIXABAY_API_KEY=la-tua-chiave-api
+```
+
+> La chiave Pixabay e gratuita e permette fino a 5.000 richieste al giorno, piu che sufficienti per l'uso scolastico. Le immagini restituite sono tutte libere da copyright (licenza Pixabay).
+
+---
+
+## 4. Installazione sul server
 
 ### Scarica il codice
 
 ```bash
 cd /opt
-sudo git clone <url-del-repo> kahoot
-sudo chown -R $USER:$USER /opt/kahoot
-cd /opt/kahoot
+sudo git clone <url-del-repo> quizlive
+sudo chown -R $USER:$USER /opt/quizlive
+cd /opt/quizlive
 ```
 
 ### Configura le variabili d'ambiente
@@ -112,7 +131,7 @@ Compila il file `.env`:
 
 ```bash
 # Database — cambia la password!
-DATABASE_URL=postgresql://kahoot:CAMBIA_QUESTA_PASSWORD@db:5432/kahoot
+DATABASE_URL=postgresql://quizlive:CAMBIA_QUESTA_PASSWORD@db:5432/quizlive
 DB_PASSWORD=CAMBIA_QUESTA_PASSWORD
 
 # Google OAuth — incolla i valori dal passo 2
@@ -124,6 +143,9 @@ NEXTAUTH_SECRET=
 
 # URL del sito — cambia con il tuo dominio
 NEXTAUTH_URL=https://quiz.tuascuola.it
+
+# Pixabay — ricerca immagini nell'editor (opzionale, vedi passo 3)
+PIXABAY_API_KEY=la-tua-chiave-pixabay
 ```
 
 Genera il segreto per le sessioni:
@@ -136,12 +158,12 @@ Copia il risultato e incollalo come valore di `NEXTAUTH_SECRET`.
 
 ---
 
-## 4. Primo avvio
+## 5. Primo avvio
 
 ### Avvia i container
 
 ```bash
-cd /opt/kahoot
+cd /opt/quizlive
 docker compose up -d
 ```
 
@@ -157,8 +179,8 @@ docker compose ps
 ```
 
 Devi vedere due container con stato `Up`:
-- `kahoot-app-1` (l'applicazione)
-- `kahoot-db-1` (il database)
+- `quizlive-app-1` (l'applicazione)
+- `quizlive-db-1` (il database)
 
 ### Inizializza il database
 
@@ -180,7 +202,7 @@ Se ricevi HTML, funziona. Apri il browser su `http://INDIRIZZO-IP-SERVER:3000`.
 
 ---
 
-## 5. Configurazione HTTPS
+## 6. Configurazione HTTPS
 
 HTTPS e fortemente consigliato (Google OAuth potrebbe richiederlo in produzione).
 
@@ -245,12 +267,12 @@ sudo certbot --nginx -d quiz.tuascuola.it
 
 ---
 
-## 6. Gestione quotidiana
+## 7. Gestione quotidiana
 
 ### Controllare lo stato
 
 ```bash
-cd /opt/kahoot
+cd /opt/quizlive
 docker compose ps          # Stato dei container
 docker compose logs -f app # Log dell'applicazione (Ctrl+C per uscire)
 docker compose logs -f db  # Log del database
@@ -287,18 +309,18 @@ Per ispezionare i dati direttamente:
 docker compose exec app npx prisma studio
 
 # Oppure da linea di comando
-docker compose exec db psql -U kahoot kahoot
+docker compose exec db psql -U quizlive quizlive
 ```
 
 ---
 
-## 7. Backup e ripristino
+## 8. Backup e ripristino
 
 ### Backup manuale
 
 ```bash
 # Crea un backup
-docker compose exec db pg_dump -U kahoot kahoot > backup_$(date +%Y%m%d_%H%M).sql
+docker compose exec db pg_dump -U quizlive quizlive > backup_$(date +%Y%m%d_%H%M).sql
 
 # Verifica che il file non sia vuoto
 ls -lh backup_*.sql
@@ -311,10 +333,10 @@ ls -lh backup_*.sql
 crontab -e
 
 # Aggiungi questa riga per un backup giornaliero alle 2 di notte
-0 2 * * * cd /opt/kahoot && docker compose exec -T db pg_dump -U kahoot kahoot > /opt/kahoot/backups/backup_$(date +\%Y\%m\%d).sql 2>/dev/null
+0 2 * * * cd /opt/quizlive && docker compose exec -T db pg_dump -U quizlive quizlive > /opt/quizlive/backups/backup_$(date +\%Y\%m\%d).sql 2>/dev/null
 
 # Crea la cartella backups
-mkdir -p /opt/kahoot/backups
+mkdir -p /opt/quizlive/backups
 ```
 
 ### Ripristino
@@ -324,7 +346,7 @@ mkdir -p /opt/kahoot/backups
 docker compose stop app
 
 # Ripristina il backup
-cat backup_20260307.sql | docker compose exec -T db psql -U kahoot kahoot
+cat backup_20260307.sql | docker compose exec -T db psql -U quizlive quizlive
 
 # Riavvia
 docker compose start app
@@ -332,12 +354,12 @@ docker compose start app
 
 ---
 
-## 8. Aggiornamenti
+## 9. Aggiornamenti
 
 Quando viene rilasciata una nuova versione:
 
 ```bash
-cd /opt/kahoot
+cd /opt/quizlive
 
 # Scarica gli aggiornamenti
 git pull
@@ -354,7 +376,7 @@ L'operazione richiede 2-3 minuti. Durante il build il sito resta online con la v
 
 ---
 
-## 9. Risoluzione problemi
+## 10. Risoluzione problemi
 
 ### Il sito non si apre
 
@@ -377,7 +399,7 @@ docker compose up -d
 docker compose ps db
 
 # Verifica la connessione
-docker compose exec db pg_isready -U kahoot
+docker compose exec db pg_isready -U quizlive
 
 # Se il volume e corrotto, ricrea (ATTENZIONE: perdi i dati!)
 # Fai prima un backup se possibile
@@ -423,5 +445,5 @@ docker compose exec app npx prisma migrate deploy
 docker system prune -af
 
 # Pulisci i backup vecchi
-find /opt/kahoot/backups -name "*.sql" -mtime +30 -delete
+find /opt/quizlive/backups -name "*.sql" -mtime +30 -delete
 ```

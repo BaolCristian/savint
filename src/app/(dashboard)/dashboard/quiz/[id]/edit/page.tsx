@@ -40,5 +40,9 @@ export default async function EditQuizPage({
     })),
   };
 
-  return <QuizEditor initialData={initialData} />;
+  return (
+    <div className="-m-4 md:-m-8">
+      <QuizEditor initialData={initialData} />
+    </div>
+  );
 }
