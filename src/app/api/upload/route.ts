@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
     );
 
   const quizId = formData.get("quizId");
-  const folder = typeof quizId === "string" && quizId ? quizId : "temp";
+  const folder = typeof quizId === "string" && quizId && /^[a-zA-Z0-9_-]+$/.test(quizId)
+    ? quizId
+    : "temp";
   const ext = EXT_MAP[file.type];
   const filename = `${crypto.randomUUID()}.${ext}`;
 

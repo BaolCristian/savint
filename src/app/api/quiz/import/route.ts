@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const imageFile = zip.file(q.image);
     if (!imageFile) continue;
 
-    const ext = q.image.split(".").pop() ?? "png";
+    const ext = (q.image.split(".").pop() ?? "png").replace(/[^a-zA-Z0-9]/g, "");
     const dir = join(process.cwd(), "public", "uploads", "quiz", quiz.id);
     const filename = `q${i}.${ext}`;
     const filePath = join(dir, filename);

@@ -21,7 +21,13 @@ export async function GET(
 
   const { id } = await params;
   const quiz = await prisma.quiz.findUnique({
-    where: { id },
+    where: {
+      id,
+      OR: [
+        { authorId: session.user.id },
+        { shares: { some: { sharedWithId: session.user.id } } },
+      ],
+    },
     include: { questions: { orderBy: { order: "asc" } } },
   });
 
@@ -57,6 +63,7 @@ export async function GET(
           }
         } else if (q.mediaUrl.startsWith("http")) {
           const res = await fetch(q.mediaUrl);
+          if (!res.ok) throw new Error("Fetch failed");
           buffer = Buffer.from(await res.arrayBuffer());
         } else {
           throw new Error("Unsupported media URL");
@@ -99,7 +106,7 @@ export async function GET(
     .replace(/_+/g, "_")
     .slice(0, 100);
 
-  return new Response(zipBuffer, {
+  return new Response(new Uint8Array(zipBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/zip",
