@@ -140,8 +140,13 @@ export function QuizEditor({ initialData }: Props) {
         );
       }
 
-      router.push("/dashboard/quiz");
-      router.refresh();
+      if (isEdit) {
+        router.refresh();
+      } else {
+        const created = await res.json();
+        router.push(`/dashboard/quiz/${created.id}/edit`);
+        router.refresh();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore sconosciuto.");
     } finally {
