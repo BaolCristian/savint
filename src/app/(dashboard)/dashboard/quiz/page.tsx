@@ -10,6 +10,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PlayQuizButton } from "@/components/quiz/play-button";
+import { ImportQuizButton } from "@/components/quiz/import-button";
 
 export default async function QuizListPage() {
   const session = await auth();
@@ -32,9 +34,12 @@ export default async function QuizListPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">I miei Quiz</h1>
-        <Link href="/dashboard/quiz/new">
-          <Button>Nuovo Quiz</Button>
-        </Link>
+        <div className="flex gap-2">
+          <ImportQuizButton />
+          <Link href="/dashboard/quiz/new">
+            <Button>Nuovo Quiz</Button>
+          </Link>
+        </div>
       </div>
 
       {quizzes.length === 0 ? (
@@ -62,6 +67,14 @@ export default async function QuizListPage() {
                     </Badge>
                   ))}
                 </div>
+                <PlayQuizButton quizId={quiz.id} />
+                <a
+                  href={`/api/quiz/${quiz.id}/export`}
+                  download
+                  className="inline-block mt-2 ml-2 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  Esporta .qlz
+                </a>
                 {quiz.authorId !== session!.user!.id && (
                   <p className="text-xs text-muted-foreground mt-2">
                     Condiviso da {quiz.author.name}
