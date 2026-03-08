@@ -18,6 +18,10 @@ enum QuestionType {
   OPEN_ANSWER
   ORDERING
   MATCHING
+  SPOT_ERROR
+  NUMERIC_ESTIMATION
+  IMAGE_HOTSPOT
+  CODE_COMPLETION
 }
 
 enum SessionStatus {
@@ -113,6 +117,7 @@ model Question {
   points    Int          @default(1000)
   order     Int
   options   Json
+  confidenceEnabled Boolean @default(false)
 
   quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers Answer[]
@@ -156,6 +161,7 @@ model Answer {
   isCorrect      Boolean
   responseTimeMs Int
   score          Int
+  confidenceLevel Int?
   createdAt      DateTime @default(now())
 
   session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
