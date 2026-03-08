@@ -1,6 +1,6 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db/client";
-import { checkAnswer, calculateScore } from "@/lib/scoring";
+import { checkAnswer, calculateScore, calculatePartialScore, applyConfidence } from "@/lib/scoring";
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -8,6 +8,10 @@ import type {
   MultipleChoiceOptions,
   OrderingOptions,
   MatchingOptions,
+  SpotErrorOptions,
+  NumericEstimationOptions,
+  ImageHotspotOptions,
+  CodeCompletionOptions,
 } from "@/types";
 import type { QuestionType } from "@prisma/client";
 
@@ -41,6 +45,7 @@ interface GameState {
     points: number;
     mediaUrl: string | null;
     order: number;
+    confidenceEnabled: boolean;
   }[];
   hostSocketId?: string;
 }
@@ -85,6 +90,37 @@ function sanitizeOptions(
       const lefts = mat.pairs.map((p) => p.left);
       const rights = mat.pairs.map((p) => p.right).sort(() => Math.random() - 0.5);
       return { pairs: lefts.map((l, i) => ({ left: l, right: rights[i] })) } as MatchingOptions;
+    }
+    case "SPOT_ERROR": {
+      const se = options as SpotErrorOptions;
+      return { lines: se.lines, errorIndices: [], explanation: undefined } as any;
+    }
+    case "NUMERIC_ESTIMATION": {
+      const ne = options as NumericEstimationOptions;
+      return { correctValue: 0, tolerance: 0, maxRange: 0, unit: ne.unit } as any;
+    }
+    case "IMAGE_HOTSPOT": {
+      const ih = options as ImageHotspotOptions;
+      return { imageUrl: ih.imageUrl, hotspot: { x: 0, y: 0, radius: 0 }, tolerance: 0 } as any;
+    }
+    case "CODE_COMPLETION": {
+      const cc = options as CodeCompletionOptions;
+      if (cc.mode === "choice" && cc.choices) {
+        const shuffled = [...cc.choices].sort(() => Math.random() - 0.5);
+        return {
+          codeLines: cc.codeLines,
+          blankLineIndex: cc.blankLineIndex,
+          correctAnswer: "",
+          mode: cc.mode,
+          choices: shuffled,
+        } as any;
+      }
+      return {
+        codeLines: cc.codeLines,
+        blankLineIndex: cc.blankLineIndex,
+        correctAnswer: "",
+        mode: cc.mode,
+      } as any;
     }
     default:
       return options;
@@ -199,6 +235,7 @@ export function setupSocketHandlers(io: TypedIO) {
               points: q.points,
               mediaUrl: q.mediaUrl,
               order: q.order,
+              confidenceEnabled: (q as any).confidenceEnabled ?? false,
             })),
           });
         }
@@ -290,12 +327,24 @@ export function setupSocketHandlers(io: TypedIO) {
       if (!question) return;
 
       const isCorrect = checkAnswer(question.type, question.options, value);
-      const score = calculateScore({
-        isCorrect,
-        responseTimeMs,
-        timeLimit: question.timeLimit,
-        maxPoints: question.points,
-      });
+
+      // Calculate score: use partial scoring for types that support it
+      let score: number;
+      const partialTypes = ["SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
+      if (partialTypes.includes(question.type)) {
+        const rawPartial = calculatePartialScore(question.type, question.options, value, question.points);
+        const timeLimitMs = question.timeLimit * 1000;
+        const timeRatio = Math.min(responseTimeMs / timeLimitMs, 1);
+        const timeMultiplier = 1.0 - timeRatio * 0.5;
+        score = Math.round(rawPartial * timeMultiplier);
+      } else {
+        score = calculateScore({
+          isCorrect,
+          responseTimeMs,
+          timeLimit: question.timeLimit,
+          maxPoints: question.points,
+        });
+      }
 
       // Update in-memory state
       const player = game.players.get(currentPlayerName);
@@ -359,12 +408,67 @@ export function setupSocketHandlers(io: TypedIO) {
         totalScore: player?.totalScore ?? 0,
         position,
         classCorrectPercent,
+        confidenceEnabled: question.confidenceEnabled,
       });
 
       // Broadcast answer count to room
       io.to(room(game.sessionId)).emit("answerCount", {
         count: game.answerCount,
         total,
+      });
+    });
+
+    // ------------------------------------------------------------------
+    // submitConfidence
+    // ------------------------------------------------------------------
+    socket.on("submitConfidence", async ({ confidenceLevel }) => {
+      if (!currentSessionId || !currentPlayerName) return;
+
+      const game = games.get(currentSessionId);
+      if (!game || game.currentQuestionIndex < 0) return;
+
+      const question = game.questions[game.currentQuestionIndex];
+      if (!question || !question.confidenceEnabled) return;
+
+      const player = game.players.get(currentPlayerName);
+      if (!player) return;
+
+      const oldDelta = player.lastDelta;
+      const isCorrect = oldDelta > 0;
+      const newDelta = applyConfidence(oldDelta, isCorrect, confidenceLevel);
+      const diff = newDelta - oldDelta;
+
+      player.totalScore += diff;
+      player.lastDelta = newDelta;
+
+      try {
+        await prisma.answer.update({
+          where: {
+            sessionId_questionId_playerName: {
+              sessionId: game.sessionId,
+              questionId: question.id,
+              playerName: currentPlayerName,
+            },
+          },
+          data: {
+            confidenceLevel,
+            score: newDelta,
+          },
+        });
+      } catch (err) {
+        console.error("submitConfidence DB error:", err);
+      }
+
+      const leaderboard = buildLeaderboard(game);
+      const position = leaderboard.findIndex((l) => l.playerName === currentPlayerName) + 1;
+
+      socket.emit("answerFeedback", {
+        isCorrect,
+        score: newDelta,
+        totalScore: player.totalScore,
+        position,
+        classCorrectPercent: 0,
+        confidenceEnabled: false,
       });
     });
 
