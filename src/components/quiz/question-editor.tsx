@@ -4,6 +4,11 @@ import { useState } from "react";
 import { type QuestionInput } from "@/lib/validators/quiz";
 import { Trash2, Plus, Clock, Star, Image, Upload, Search } from "lucide-react";
 import { ImageSearchDialog } from "@/components/quiz/image-search";
+import { SpotErrorEditor } from "@/components/quiz/spot-error-editor";
+import { NumericEstimationEditor } from "@/components/quiz/numeric-estimation-editor";
+import { ImageHotspotEditor } from "@/components/quiz/image-hotspot-editor";
+import { CodeCompletionEditor } from "@/components/quiz/code-completion-editor";
+import { ConfidenceToggle } from "@/components/quiz/confidence-toggle";
 
 interface Props {
   question: QuestionInput;
@@ -19,6 +24,10 @@ const QUESTION_TYPES = [
   { value: "OPEN_ANSWER", label: "Risposta aperta", icon: "✏️" },
   { value: "ORDERING", label: "Ordinamento", icon: "🔢" },
   { value: "MATCHING", label: "Abbinamento", icon: "🔗" },
+  { value: "SPOT_ERROR", label: "Trova l'errore", icon: "🔍" },
+  { value: "NUMERIC_ESTIMATION", label: "Stima numerica", icon: "🔢" },
+  { value: "IMAGE_HOTSPOT", label: "Hotspot immagine", icon: "🎯" },
+  { value: "CODE_COMPLETION", label: "Completa il codice", icon: "💻" },
 ] as const;
 
 type QuestionType = QuestionInput["type"];
@@ -35,6 +44,14 @@ function defaultOptionsForType(type: QuestionType): QuestionInput["options"] {
       return { items: ["", ""], correctOrder: [0, 1] };
     case "MATCHING":
       return { pairs: [{ left: "", right: "" }, { left: "", right: "" }] };
+    case "SPOT_ERROR":
+      return { lines: ["", ""], errorIndices: [], explanation: undefined };
+    case "NUMERIC_ESTIMATION":
+      return { correctValue: 0, tolerance: 5, maxRange: 50, unit: undefined };
+    case "IMAGE_HOTSPOT":
+      return { imageUrl: "", hotspot: { x: 0.5, y: 0.5, radius: 0.1 }, tolerance: 0.05 };
+    case "CODE_COMPLETION":
+      return { codeLines: ["", ""], blankLineIndex: 0, correctAnswer: "", mode: "text" as const };
   }
 }
 
@@ -192,6 +209,30 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
             onChange={(opts) => handleFieldChange("options", opts)}
           />
         )}
+        {question.type === "SPOT_ERROR" && (
+          <SpotErrorEditor
+            options={question.options as any}
+            onChange={(opts) => handleFieldChange("options", opts)}
+          />
+        )}
+        {question.type === "NUMERIC_ESTIMATION" && (
+          <NumericEstimationEditor
+            options={question.options as any}
+            onChange={(opts) => handleFieldChange("options", opts)}
+          />
+        )}
+        {question.type === "IMAGE_HOTSPOT" && (
+          <ImageHotspotEditor
+            options={question.options as any}
+            onChange={(opts) => handleFieldChange("options", opts)}
+          />
+        )}
+        {question.type === "CODE_COMPLETION" && (
+          <CodeCompletionEditor
+            options={question.options as any}
+            onChange={(opts) => handleFieldChange("options", opts)}
+          />
+        )}
       </div>
 
       {/* Settings — footer row */}
@@ -221,6 +262,10 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
           />
           <span className="text-base text-slate-400">punti</span>
         </div>
+        <ConfidenceToggle
+          enabled={(question as any).confidenceEnabled ?? false}
+          onChange={(enabled) => handleFieldChange("confidenceEnabled" as any, enabled)}
+        />
       </div>
 
       {/* Image search dialog */}
