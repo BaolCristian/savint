@@ -10,6 +10,10 @@ import type {
   OpenAnswerOptions,
   OrderingOptions,
   QuestionOptions,
+  SpotErrorOptions,
+  NumericEstimationOptions,
+  ImageHotspotOptions,
+  CodeCompletionOptions,
 } from "@/types";
 import type { QuestionType } from "@prisma/client";
 
@@ -92,6 +96,7 @@ export function PlayerView() {
   const [podium, setPodium] = useState<PodiumData | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [awaitingConfidence, setAwaitingConfidence] = useState(false);
 
   const [avatar, setAvatar] = useState("");
 
@@ -127,8 +132,11 @@ export function PlayerView() {
       setPhase("question");
     };
 
-    const onAnswerFeedback = (data: FeedbackData) => {
+    const onAnswerFeedback = (data: FeedbackData & { confidenceEnabled?: boolean }) => {
       setFeedback(data);
+      if (data.confidenceEnabled) {
+        setAwaitingConfidence(true);
+      }
       setPhase("feedback");
     };
 
@@ -353,6 +361,34 @@ export function PlayerView() {
   }
 
   if (phase === "feedback" && feedback) {
+    if (awaitingConfidence) {
+      return (
+        <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-indigo-500 to-purple-700 p-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+            Quanto sei sicuro della tua risposta?
+          </h2>
+          <div className="space-y-3 w-full max-w-xs">
+            {[
+              { level: 1, label: "Poco sicuro", color: "from-slate-500 to-slate-600" },
+              { level: 2, label: "Abbastanza sicuro", color: "from-amber-500 to-yellow-600" },
+              { level: 3, label: "Molto sicuro", color: "from-green-500 to-emerald-600" },
+            ].map(({ level, label, color }) => (
+              <button
+                key={level}
+                onClick={() => {
+                  socket?.emit("submitConfidence", { confidenceLevel: level });
+                  setAwaitingConfidence(false);
+                }}
+                className={`w-full py-4 rounded-2xl bg-gradient-to-r ${color} text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     const isCorrect = feedback.isCorrect;
     const content = (
       <div className="flex flex-col items-center">
@@ -486,6 +522,14 @@ function AnswerInput({
           onSubmit={onSubmit}
         />
       );
+    case "SPOT_ERROR":
+      return <SpotErrorInput options={options as any} onSubmit={onSubmit} />;
+    case "NUMERIC_ESTIMATION":
+      return <NumericEstimationInput options={options as any} onSubmit={onSubmit} />;
+    case "IMAGE_HOTSPOT":
+      return <ImageHotspotInput options={options as any} onSubmit={onSubmit} />;
+    case "CODE_COMPLETION":
+      return <CodeCompletionInput options={options as any} onSubmit={onSubmit} />;
     default:
       return null;
   }
@@ -747,5 +791,209 @@ function MatchingInput({
         Conferma
       </button>
     </>
+  );
+}
+
+/* ---------- SPOT_ERROR ---------- */
+
+function SpotErrorInput({
+  options,
+  onSubmit,
+}: {
+  options: { lines: string[] };
+  onSubmit: (value: AnswerValue) => void;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  const toggle = (i: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  };
+
+  return (
+    <>
+      <div className="flex-1 space-y-1.5 overflow-y-auto">
+        {options.lines.map((line, i) => (
+          <button
+            key={i}
+            onClick={() => toggle(i)}
+            className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
+              selected.has(i)
+                ? "bg-red-600 text-white ring-2 ring-red-400"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            <span className="text-sm font-bold text-white/60 w-6 text-center shrink-0">{i + 1}</span>
+            <span className="font-mono text-base">{line}</span>
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => onSubmit({ selected: [...selected] })}
+        disabled={selected.size === 0}
+        className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
+      >
+        Conferma ({selected.size} selezionat{selected.size === 1 ? "a" : "e"})
+      </button>
+    </>
+  );
+}
+
+/* ---------- NUMERIC_ESTIMATION ---------- */
+
+function NumericEstimationInput({
+  options,
+  onSubmit,
+}: {
+  options: { unit?: string };
+  onSubmit: (value: AnswerValue) => void;
+}) {
+  const [val, setVal] = useState("");
+
+  return (
+    <div className="flex flex-1 flex-col justify-end gap-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder="La tua stima..."
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          className="h-16 flex-1 bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-2xl font-bold text-center placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
+        />
+        {options.unit && (
+          <span className="text-xl font-semibold text-white/70">{options.unit}</span>
+        )}
+      </div>
+      <button
+        onClick={() => onSubmit({ value: Number(val) })}
+        disabled={val === "" || isNaN(Number(val))}
+        className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
+      >
+        Invia
+      </button>
+    </div>
+  );
+}
+
+/* ---------- IMAGE_HOTSPOT ---------- */
+
+function ImageHotspotInput({
+  options,
+  onSubmit,
+}: {
+  options: { imageUrl: string };
+  onSubmit: (value: AnswerValue) => void;
+}) {
+  const [tap, setTap] = useState<{ x: number; y: number } | null>(null);
+
+  const handleTap = (e: React.MouseEvent<HTMLImageElement> | React.TouchEvent<HTMLImageElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    let clientX: number, clientY: number;
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    const x = (clientX - rect.left) / rect.width;
+    const y = (clientY - rect.top) / rect.height;
+    setTap({ x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 });
+  };
+
+  return (
+    <>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <p className="text-sm text-gray-400 mb-3">Tocca il punto corretto sull&apos;immagine</p>
+        <div className="relative inline-block max-w-full">
+          <img
+            src={options.imageUrl}
+            alt="Domanda"
+            className="max-h-64 sm:max-h-80 max-w-full rounded-xl"
+            onClick={handleTap}
+            onTouchStart={handleTap}
+          />
+          {tap && (
+            <div
+              className="absolute w-6 h-6 -ml-3 -mt-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none animate-score-pop"
+              style={{ left: `${tap.x * 100}%`, top: `${tap.y * 100}%` }}
+            />
+          )}
+        </div>
+      </div>
+      <button
+        onClick={() => tap && onSubmit({ x: tap.x, y: tap.y })}
+        disabled={!tap}
+        className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
+      >
+        Conferma
+      </button>
+    </>
+  );
+}
+
+/* ---------- CODE_COMPLETION ---------- */
+
+function CodeCompletionInput({
+  options,
+  onSubmit,
+}: {
+  options: { codeLines: string[]; blankLineIndex: number; mode: "choice" | "text"; choices?: string[] };
+  onSubmit: (value: AnswerValue) => void;
+}) {
+  const [text, setText] = useState("");
+
+  return (
+    <div className="flex flex-1 flex-col">
+      {/* Code block */}
+      <div className="bg-slate-800 rounded-xl p-3 mb-4 font-mono text-sm overflow-x-auto">
+        {options.codeLines.map((line, i) => (
+          <div key={i} className="flex gap-2">
+            <span className="text-slate-500 w-6 text-right shrink-0">{i + 1}</span>
+            {i === options.blankLineIndex ? (
+              <span className="text-amber-400 font-bold">{"??? ←"}</span>
+            ) : (
+              <span className="text-green-300">{line}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {options.mode === "choice" && options.choices ? (
+        <div className="flex-1 space-y-2">
+          {options.choices.map((choice, i) => (
+            <button
+              key={i}
+              onClick={() => onSubmit({ selected: i })}
+              className="w-full text-left bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl px-4 py-3 text-base font-mono text-white transition-all active:scale-95"
+            >
+              {choice}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col justify-end gap-3 flex-1">
+          <input
+            type="text"
+            placeholder="Scrivi il codice mancante..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="h-14 w-full bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-lg font-mono placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
+          />
+          <button
+            onClick={() => onSubmit({ text })}
+            disabled={!text.trim()}
+            className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
+          >
+            Invia
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
