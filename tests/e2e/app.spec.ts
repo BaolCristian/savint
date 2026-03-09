@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Landing page", () => {
   test("shows PIN entry form", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Quiz Live")).toBeVisible();
+    await expect(page.getByText("SAVINT")).toBeVisible();
     await expect(page.getByPlaceholder("PIN")).toBeVisible();
     await expect(page.getByPlaceholder(/nome/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /entra/i })).toBeVisible();
@@ -29,7 +29,7 @@ test.describe("Landing page", () => {
 test.describe("Login page", () => {
   test("shows Google login button", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByText("Quiz Live")).toBeVisible();
+    await expect(page.getByText("SAVINT")).toBeVisible();
     await expect(page.getByRole("button", { name: /google/i })).toBeVisible();
   });
 });

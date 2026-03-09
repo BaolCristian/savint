@@ -30,10 +30,10 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-2">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-md">
-          Q
+          S
         </div>
         <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-          Quiz Live
+          SAVINT
         </span>
       </div>
 
@@ -116,9 +116,9 @@ export function DashboardSidebar({ user }: { user: any }) {
         </Sheet>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
-            Q
+            S
           </div>
-          <span className="text-lg font-extrabold">Quiz Live</span>
+          <span className="text-lg font-extrabold">SAVINT</span>
         </div>
       </div>
     </>

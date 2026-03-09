@@ -217,7 +217,7 @@ export function HostView({ session }: Props) {
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">1</span>
                   <span className="text-lg lg:text-xl text-indigo-100 font-medium">
-                    Vai su <span className="font-bold text-white underline underline-offset-4 decoration-2">quizlive.it</span>
+                    Vai su <span className="font-bold text-white underline underline-offset-4 decoration-2">savint.it</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

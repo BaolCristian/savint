@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quiz Live",
+  title: "SAVINT",
   description: "Quiz interattivi per la scuola",
 };
 
