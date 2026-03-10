@@ -90,6 +90,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Delete sessions and their answers first (no cascade on Session → Quiz)
+  await prisma.answer.deleteMany({
+    where: { session: { quizId: id } },
+  });
+  await prisma.session.deleteMany({ where: { quizId: id } });
   await prisma.quiz.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
