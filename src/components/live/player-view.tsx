@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket } from "@/lib/socket/client";
-import { EMOJI_CATEGORIES, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
+import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
 import type {
   AnswerValue,
   MatchingOptions,
@@ -110,12 +110,18 @@ export function PlayerView() {
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
 
   const [avatar, setAvatar] = useState("");
-
-  // Pick a random emoji only on the client to avoid hydration mismatch
-  useEffect(() => {
-    setAvatar((prev) => prev || randomEmoji());
-  }, []);
   const [avatarCategory, setAvatarCategory] = useState(0);
+  const [emojiCategories, setEmojiCategories] = useState(buildCategories([]));
+
+  // Load custom emoticons and pick a random avatar on mount
+  useEffect(() => {
+    fetchCustomEmoticons().then((custom) => {
+      const cats = buildCategories(custom);
+      setEmojiCategories(cats);
+      const allEmojis = cats.flatMap((c) => c.emojis);
+      setAvatar((prev) => prev || randomEmoji(allEmojis));
+    });
+  }, []);
 
   const questionStartTime = useRef<number>(0);
 
@@ -230,7 +236,7 @@ export function PlayerView() {
   /* ---------- render phases ---------- */
 
   if (phase === "join") {
-    const currentEmojis = EMOJI_CATEGORIES[avatarCategory]?.emojis ?? [];
+    const currentEmojis = emojiCategories[avatarCategory]?.emojis ?? [];
     const isFormValid = pin.length >= 5 && name.trim().length >= 2;
 
     return (
@@ -287,7 +293,7 @@ export function PlayerView() {
               </p>
               <button
                 type="button"
-                onClick={() => setAvatar(randomEmoji())}
+                onClick={() => setAvatar(randomEmoji(emojiCategories.flatMap((c) => c.emojis)))}
                 className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors"
                 title="Avatar casuale"
               >
@@ -304,7 +310,7 @@ export function PlayerView() {
 
             {/* Category tabs */}
             <div className="flex gap-1.5 mb-2.5">
-              {EMOJI_CATEGORIES.map((cat, i) => (
+              {emojiCategories.map((cat, i) => (
                 <button
                   key={cat.name}
                   onClick={() => setAvatarCategory(i)}

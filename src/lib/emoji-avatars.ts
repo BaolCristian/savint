@@ -8,19 +8,18 @@ export function isCustomAvatar(avatar: string): boolean {
   return avatar.startsWith("/emoticons/");
 }
 
-export const SAVINT_AVATARS = [
-  "/emoticons/emo1.png",
-  "/emoticons/emo2.png",
-  "/emoticons/emo3.png",
-  "/emoticons/emo4.png",
-  "/emoticons/emo6.png",
-];
+/** Fetch custom emoticons from the server (auto-discovers files in public/emoticons/) */
+export async function fetchCustomEmoticons(): Promise<string[]> {
+  try {
+    const res = await fetch("/api/emoticons");
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
 
-export const EMOJI_CATEGORIES: EmojiCategory[] = [
-  {
-    name: "SAVINT",
-    emojis: SAVINT_AVATARS,
-  },
+export const UNICODE_CATEGORIES: EmojiCategory[] = [
   {
     name: "Faccine",
     emojis: [
@@ -55,8 +54,20 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
 ];
 
-export const ALL_EMOJIS = EMOJI_CATEGORIES.flatMap((c) => c.emojis);
+/** Build full categories list with custom emoticons prepended */
+export function buildCategories(customEmoticons: string[]): EmojiCategory[] {
+  if (customEmoticons.length === 0) return UNICODE_CATEGORIES;
+  return [
+    { name: "SAVINT", emojis: customEmoticons },
+    ...UNICODE_CATEGORIES,
+  ];
+}
 
-export function randomEmoji(): string {
-  return ALL_EMOJIS[Math.floor(Math.random() * ALL_EMOJIS.length)];
+// Keep backward-compatible exports
+export const EMOJI_CATEGORIES = UNICODE_CATEGORIES;
+export const ALL_EMOJIS = UNICODE_CATEGORIES.flatMap((c) => c.emojis);
+
+export function randomEmoji(allEmojis?: string[]): string {
+  const pool = allEmojis ?? ALL_EMOJIS;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
