@@ -5,6 +5,15 @@ import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
 import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
 import type { QuestionType } from "@prisma/client";
+import { isCustomAvatar } from "@/lib/emoji-avatars";
+
+function HostAvatar({ avatar, className }: { avatar?: string; className?: string }) {
+  const av = avatar || "👤";
+  if (isCustomAvatar(av)) {
+    return <img src={av} alt="avatar" className={`object-contain inline-block ${className ?? ""}`} />;
+  }
+  return <span className={className}>{av}</span>;
+}
 
 type Phase = "lobby" | "question" | "result" | "podium";
 
@@ -281,7 +290,7 @@ export function HostView({ session }: Props) {
                       className="bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all animate-score-pop"
                       style={{ animationDelay: `${i * 50}ms` }}
                     >
-                      <span className="text-3xl lg:text-4xl">{player.avatar || "👤"}</span>
+                      <HostAvatar avatar={player.avatar} className={isCustomAvatar(player.avatar || "") ? "w-10 h-10 lg:w-12 lg:h-12" : "text-3xl lg:text-4xl"} />
                       <span className="text-sm lg:text-base font-semibold text-slate-200 truncate max-w-full text-center">
                         {player.name}
                       </span>
@@ -569,7 +578,7 @@ export function HostView({ session }: Props) {
                           <span className="text-xl lg:text-2xl font-black text-slate-500 w-8">
                             {i + 1}
                           </span>
-                          <span className="text-2xl lg:text-3xl">{entry.playerAvatar || "👤"}</span>
+                          <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
                           <span className="font-bold text-base lg:text-lg">{entry.playerName}</span>
                         </div>
                         <div className="flex items-center gap-3 lg:gap-4">
@@ -641,7 +650,7 @@ export function HostView({ session }: Props) {
                 className="flex-1 max-w-[200px] flex flex-col items-center animate-podium-rise"
                 style={{ animationDelay: `${position * 400}ms` }}
               >
-                <span className="text-5xl lg:text-7xl mb-2">{player.playerAvatar || "👤"}</span>
+                <HostAvatar avatar={player.playerAvatar} className={isCustomAvatar(player.playerAvatar || "") ? "w-20 h-20 lg:w-28 lg:h-28 mb-2" : "text-5xl lg:text-7xl mb-2"} />
                 <span className="text-3xl lg:text-4xl mb-1">{medals[position]}</span>
                 <span className="font-extrabold text-lg lg:text-2xl mb-1 text-center truncate max-w-full">
                   {player.playerName}
@@ -675,7 +684,7 @@ export function HostView({ session }: Props) {
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-black text-slate-500 w-8 text-lg">{i + 1}.</span>
-                    <span className="text-xl lg:text-2xl">{entry.playerAvatar || "👤"}</span>
+                    <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-xl lg:text-2xl"} />
                     <span className="font-semibold text-base lg:text-lg">{entry.playerName}</span>
                   </div>
                   <span className="font-extrabold text-lg lg:text-xl">{entry.score} pt</span>

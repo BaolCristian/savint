@@ -3,7 +3,24 @@ export interface EmojiCategory {
   emojis: string[];
 }
 
+/** Check if an avatar string is a custom image path (vs unicode emoji) */
+export function isCustomAvatar(avatar: string): boolean {
+  return avatar.startsWith("/emoticons/");
+}
+
+export const SAVINT_AVATARS = [
+  "/emoticons/emo1.png",
+  "/emoticons/emo2.png",
+  "/emoticons/emo3.png",
+  "/emoticons/emo4.png",
+  "/emoticons/emo6.png",
+];
+
 export const EMOJI_CATEGORIES: EmojiCategory[] = [
+  {
+    name: "SAVINT",
+    emojis: SAVINT_AVATARS,
+  },
   {
     name: "Faccine",
     emojis: [

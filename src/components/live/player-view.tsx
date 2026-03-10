@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket } from "@/lib/socket/client";
-import { EMOJI_CATEGORIES, randomEmoji } from "@/lib/emoji-avatars";
+import { EMOJI_CATEGORIES, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
 import type {
   AnswerValue,
   MatchingOptions,
@@ -78,6 +78,17 @@ function Confetti() {
       ))}
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Avatar renderer                                                    */
+/* ------------------------------------------------------------------ */
+
+function AvatarDisplay({ avatar, className }: { avatar: string; className?: string }) {
+  if (isCustomAvatar(avatar)) {
+    return <img src={avatar} alt="avatar" className={`object-contain inline-block ${className ?? ""}`} />;
+  }
+  return <span className={className}>{avatar}</span>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -286,8 +297,8 @@ export function PlayerView() {
 
             {/* Selected avatar preview */}
             <div className="flex justify-center mb-3">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-4xl sm:text-5xl">
-                {avatar}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
+                <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-14 h-14 sm:w-18 sm:h-18" : ""} />
               </div>
             </div>
 
@@ -315,13 +326,19 @@ export function PlayerView() {
                   key={emoji}
                   onClick={() => setAvatar(emoji)}
                   aria-label={`Avatar ${emoji}`}
-                  className={`text-2xl sm:text-3xl p-2 rounded-xl cursor-pointer transition-all ${
+                  className={`p-2 rounded-xl cursor-pointer transition-all flex items-center justify-center ${
+                    isCustomAvatar(emoji) ? "w-full aspect-square" : "text-2xl sm:text-3xl"
+                  } ${
                     avatar === emoji
                       ? "bg-emerald-100 ring-2 ring-emerald-500 scale-110 shadow-sm"
                       : "hover:bg-slate-50 hover:shadow-sm"
                   }`}
                 >
-                  {emoji}
+                  {isCustomAvatar(emoji) ? (
+                    <img src={emoji} alt="avatar" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+                  ) : (
+                    emoji
+                  )}
                 </button>
               ))}
             </div>
@@ -363,7 +380,9 @@ export function PlayerView() {
   if (phase === "waiting") {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
-        <div className="text-6xl sm:text-8xl lg:text-9xl mb-4 sm:mb-6 animate-float-bounce">{avatar}</div>
+        <div className="mb-4 sm:mb-6 animate-float-bounce">
+          <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40" : "text-6xl sm:text-8xl lg:text-9xl"} />
+        </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800 mb-2">{name}</h2>
         <p className="text-base sm:text-lg lg:text-xl text-emerald-600">
           In attesa che il prof avvii il quiz...
@@ -399,7 +418,9 @@ export function PlayerView() {
         {/* Answer area */}
         {submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4">{avatar}</div>
+            <div className="mb-3 sm:mb-4">
+              <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24" : "text-4xl sm:text-5xl lg:text-6xl"} />
+            </div>
             <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
               Risposta inviata!
             </p>
@@ -454,7 +475,9 @@ export function PlayerView() {
         <div className="text-6xl sm:text-8xl lg:text-9xl mb-3 sm:mb-4 animate-score-pop">
           {isCorrect ? "\u2713" : "\u2717"}
         </div>
-        <div className="text-4xl sm:text-5xl lg:text-7xl mb-3 sm:mb-4">{avatar}</div>
+        <div className="mb-3 sm:mb-4">
+          <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28" : "text-4xl sm:text-5xl lg:text-7xl"} />
+        </div>
         <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
           {isCorrect ? "Corretto!" : "Sbagliato!"}
         </h2>
