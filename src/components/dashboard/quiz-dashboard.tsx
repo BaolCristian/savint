@@ -404,7 +404,7 @@ function QuizCard({
 
   return (
     <div
-      className={`relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 transition-all hover:shadow-lg hover:-translate-y-0.5 group ${
+      className={`relative overflow-visible bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 transition-all hover:shadow-lg hover:-translate-y-0.5 group ${
         deleting ? "opacity-50 pointer-events-none" : ""
       }`}
     >
