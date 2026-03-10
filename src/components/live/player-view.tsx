@@ -227,7 +227,7 @@ export function PlayerView() {
         <div className="w-full max-w-md mx-auto flex flex-col gap-6 sm:gap-8 flex-1">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-emerald-700 mb-2">SAVINT</h1>
+            <img src="/logo_savint.png" alt="SAVINT" className="w-24 h-24 sm:w-32 sm:h-32 mx-auto object-contain mb-2" />
             <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
               Inserisci il PIN condiviso dal docente e scegli come apparirai nel gioco.
             </p>
