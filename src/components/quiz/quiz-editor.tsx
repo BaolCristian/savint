@@ -23,6 +23,7 @@ import {
   ChevronUp,
   FileText,
   Tag,
+  Shuffle,
 } from "lucide-react";
 
 interface Props {
@@ -191,6 +192,18 @@ export function QuizEditor({ initialData }: Props) {
   const handleAddQuestion = () => {
     setQuestions((prev) => [...prev, createDefaultQuestion(prev.length)]);
     setActiveQuestion(questions.length);
+  };
+
+  const handleShuffleQuestions = () => {
+    setQuestions((prev) => {
+      const shuffled = [...prev];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.map((q, i) => ({ ...q, order: i }));
+    });
+    setActiveQuestion(0);
   };
 
   const handleDuplicateQuestion = (index: number) => {
@@ -530,8 +543,8 @@ export function QuizEditor({ initialData }: Props) {
             })}
           </div>
 
-          {/* Add question */}
-          <div className="p-3 border-t border-slate-700 min-w-[19rem]">
+          {/* Add question + Shuffle */}
+          <div className="p-3 border-t border-slate-700 min-w-[19rem] space-y-2">
             <button
               onClick={handleAddQuestion}
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-600 text-slate-400 hover:border-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-all text-sm font-semibold"
@@ -539,6 +552,15 @@ export function QuizEditor({ initialData }: Props) {
               <Plus className="size-4" />
               Aggiungi domanda
             </button>
+            {questions.length > 1 && (
+              <button
+                onClick={handleShuffleQuestions}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-sm font-semibold"
+              >
+                <Shuffle className="size-4" />
+                Mescola domande
+              </button>
+            )}
           </div>
         </aside>
       </div>
