@@ -14,7 +14,7 @@ export default function LoginPage() {
         <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-20 h-20 sm:w-32 sm:h-32 mx-auto object-contain" />
         <p className="text-blue-200 text-sm sm:text-base">Accedi con il tuo account scolastico</p>
         <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          onClick={() => signIn("google", { callbackUrl: "/savint/dashboard" })}
           className="bg-white text-blue-800 px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-50 transition font-semibold text-sm sm:text-base w-full"
         >
           Accedi con Google
@@ -31,7 +31,7 @@ export default function LoginPage() {
               placeholder="docente@scuola.it"
             />
             <button
-              onClick={() => signIn("credentials", { email, callbackUrl: "/dashboard" })}
+              onClick={() => signIn("credentials", { email, callbackUrl: "/savint/dashboard" })}
               className="bg-yellow-400 text-blue-900 px-6 py-2.5 sm:py-3 rounded-lg hover:bg-yellow-300 transition font-semibold text-sm sm:text-base w-full"
             >
               Entra come docente

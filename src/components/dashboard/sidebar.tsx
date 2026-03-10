@@ -79,7 +79,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
           </div>
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut({ callbackUrl: "/savint" })}
           className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 transition-colors"
         >
           <LogOut className="h-4 w-4" />
