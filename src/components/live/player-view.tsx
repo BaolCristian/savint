@@ -241,12 +241,12 @@ export function PlayerView() {
     const isFormValid = pin.length >= 5 && name.trim().length >= 2;
 
     return (
-      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-5 sm:px-8 py-6 sm:py-10 overflow-y-auto">
-        <div className="w-full max-w-md mx-auto flex flex-col gap-6 sm:gap-8 flex-1">
+      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-5 sm:px-8 py-3 sm:py-10 overflow-y-auto">
+        <div className="w-full max-w-md mx-auto flex flex-col gap-3 sm:gap-8 flex-1">
           {/* Header */}
-          <div className="text-center">
-            <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-24 h-24 sm:w-32 sm:h-32 mx-auto object-contain mb-2" />
-            <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
+          <div className="flex items-center gap-3 sm:flex-col sm:text-center">
+            <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-12 h-12 sm:w-32 sm:h-32 object-contain shrink-0" />
+            <p className="text-xs sm:text-base text-slate-500 leading-snug">
               Inserisci il PIN condiviso dal docente e scegli come apparirai nel gioco.
             </p>
           </div>
@@ -266,7 +266,7 @@ export function PlayerView() {
               placeholder="Es: 482731"
               value={pin}
               onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 8)); setError(null); }}
-              className="h-14 sm:h-16 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-2xl sm:text-3xl font-bold tracking-[0.25em] px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="h-11 sm:h-16 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-xl sm:text-3xl font-bold tracking-[0.25em] px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -282,7 +282,7 @@ export function PlayerView() {
               placeholder="Es: Alex"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
-              className="h-12 sm:h-14 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-lg sm:text-xl font-semibold px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="h-10 sm:h-14 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-base sm:text-xl font-semibold px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -303,9 +303,9 @@ export function PlayerView() {
             </div>
 
             {/* Selected avatar preview */}
-            <div className="flex justify-center mb-3">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
-                <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-14 h-14 sm:w-18 sm:h-18" : ""} />
+            <div className="flex justify-center mb-2 sm:mb-3">
+              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-3xl sm:text-5xl overflow-hidden">
+                <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-10 h-10 sm:w-18 sm:h-18" : ""} />
               </div>
             </div>
 
@@ -327,7 +327,7 @@ export function PlayerView() {
             </div>
 
             {/* Emoji grid */}
-            <div className="grid grid-cols-5 gap-2 max-h-40 sm:max-h-48 overflow-y-auto p-2 bg-white rounded-xl border border-slate-200">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 max-h-28 sm:max-h-48 overflow-y-auto p-1.5 sm:p-2 bg-white rounded-xl border border-slate-200">
               {currentEmojis.map((emoji) => (
                 <button
                   key={emoji}
@@ -366,7 +366,7 @@ export function PlayerView() {
           <button
             onClick={handleJoin}
             disabled={!connected || !isFormValid}
-            className={`w-full font-bold text-lg sm:text-xl rounded-xl py-4 sm:py-5 transition-all ${
+            className={`w-full font-bold text-base sm:text-xl rounded-xl py-3 sm:py-5 transition-all ${
               !connected || !isFormValid
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                 : "bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-xl active:scale-[0.98]"
