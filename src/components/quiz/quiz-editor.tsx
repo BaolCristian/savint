@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { QuizInput, QuestionInput } from "@/lib/validators/quiz";
 import { QuestionEditor } from "@/components/quiz/question-editor";
 import { ShareDialog } from "@/components/quiz/share-dialog";
+import { ExcelImportButton } from "@/components/quiz/excel-import-button";
 import {
   Save,
   Loader2,
@@ -290,6 +291,13 @@ export function QuizEditor({ initialData }: Props) {
 
         <div className="flex items-center gap-2">
           <SaveStatusBadge />
+
+          {initialData?.id && (
+            <ExcelImportButton
+              quizId={initialData.id}
+              onImported={() => router.refresh()}
+            />
+          )}
 
           {initialData?.id && <ShareDialog quizId={initialData.id} />}
 
