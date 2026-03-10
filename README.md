@@ -1,21 +1,23 @@
-# Quiz Live
+# SAVINT
 
 **Piattaforma gratuita di quiz interattivi per la scuola.**
 
-Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo reale dal proprio telefono. Pensata per rendere le lezioni più coinvolgenti e la valutazione formativa più immediata.
+Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo reale dal proprio telefono. Pensata per rendere le lezioni piu' coinvolgenti e la valutazione formativa piu' immediata.
 
-> Quiz Live è e sarà sempre **gratuito per tutte le scuole**. Nuove funzionalità verranno aggiunte progressivamente per offrire un'esperienza sempre migliore a docenti e studenti.
+> SAVINT e' e sara' sempre **gratuito per tutte le scuole**. Nuove funzionalita' verranno aggiunte progressivamente per offrire un'esperienza sempre migliore a docenti e studenti.
 
-## Funzionalità
+## Funzionalita'
 
 - **9 tipi di domanda**: scelta multipla, vero/falso, risposta aperta, ordinamento, abbinamento, trova l'errore, stima numerica, hotspot su immagine, completamento codice
 - **Quiz live in tempo reale**: lobby con PIN a 6 cifre, countdown, classifica animata, podio finale
-- **Livello di confidenza**: lo studente indica quanto è sicuro della risposta, con bonus o malus sul punteggio
+- **Livello di confidenza**: lo studente indica quanto e' sicuro della risposta, con bonus o malus sul punteggio
+- **Import da Excel**: crea quiz da file Excel, con template scaricabile e supporto AI
 - **Dashboard docente**: crea e modifica quiz, storico sessioni, statistiche avanzate
 - **Statistiche**: per sessione, per quiz, per studente, per argomento, con grafici interattivi
 - **Condivisione**: condividi quiz tra colleghi con permessi (visualizza/duplica/modifica)
 - **Export/Import**: formato .qlz per condividere quiz tra scuole diverse, export risultati in CSV/PDF
 - **Upload immagini**: carica immagini nelle domande o usa URL esterni
+- **Emoticon personalizzate**: avatar custom per gli studenti (basta aggiungere PNG nella cartella `public/emoticons/`)
 - **Autenticazione**: login con Google Workspace scolastico
 - **Responsive**: interfaccia ottimizzata per LIM (docente) e telefono (studenti)
 
@@ -44,8 +46,8 @@ Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo r
 ### Installazione
 
 ```bash
-git clone https://github.com/tuouser/quizlive.git
-cd quizlive
+git clone https://github.com/BaolCristian/savint.git
+cd savint
 npm install
 ```
 
@@ -81,7 +83,7 @@ npm run dev:custom
 
 Il server parte su **http://localhost:3000** con Socket.io integrato.
 
-> **Nota:** usa sempre `dev:custom` e non `dev`, perché il server custom è necessario per Socket.io.
+> **Nota:** usa sempre `dev:custom` e non `dev`, perche' il server custom e' necessario per Socket.io.
 
 ## Come funziona
 
@@ -98,7 +100,7 @@ Il server parte su **http://localhost:3000** con Socket.io integrato.
 
 1. Apri il sito sul telefono
 2. Inserisci il PIN a 6 cifre mostrato sulla LIM
-3. Scegli un nickname
+3. Scegli un nickname e un avatar
 4. Rispondi alle domande entro il tempo limite
 5. Feedback immediato dopo ogni risposta
 6. Classifica finale e podio
@@ -107,7 +109,7 @@ Il server parte su **http://localhost:3000** con Socket.io integrato.
 
 | Tipo | Descrizione |
 |------|-------------|
-| Scelta multipla | 2-6 opzioni, una o più corrette |
+| Scelta multipla | 2-6 opzioni, una o piu' corrette |
 | Vero o falso | Classica domanda binaria |
 | Risposta aperta | Confronto con risposte accettate |
 | Ordinamento | Riordina elementi nella sequenza corretta |
@@ -132,39 +134,31 @@ Il server parte su **http://localhost:3000** con Socket.io integrato.
 
 ## Deploy in produzione
 
-### Con Docker Compose
+### Con Nginx (consigliato)
+
+SAVINT supporta il deploy sotto un subpath (es. `https://tuodominio.it/savint`) tramite Nginx come reverse proxy.
 
 ```bash
 cp .env.example .env
 # Configura .env con i valori di produzione
-docker compose up -d
-docker compose exec app npx prisma migrate deploy
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run build
+pm2 start npm --name savint -- run start:custom
 ```
 
-### HTTPS
-
-Si consiglia Caddy come reverse proxy per certificati SSL automatici tramite Let's Encrypt.
+Configura Nginx con un blocco `location /savint` che fa proxy_pass al server Node.js. Sono necessari gli header `Upgrade` e `Connection "upgrade"` per Socket.io.
 
 ## Configurazione Google OAuth
 
 1. Vai su [Google Cloud Console](https://console.cloud.google.com)
 2. Crea un progetto e configura la schermata di consenso OAuth
 3. Crea credenziali **ID client OAuth 2.0**
-   - Origini autorizzate: `http://localhost:3000` (dev) o `https://tuodominio.it` (prod)
-   - URI di reindirizzamento: `http://localhost:3000/api/auth/callback/google`
+   - URI di reindirizzamento (dev): `http://localhost:3000/api/auth/callback/google`
+   - URI di reindirizzamento (prod con subpath): `https://tuodominio.it/savint/api/auth/callback/google`
 4. Copia Client ID e Client Secret nel file `.env`
-
-## Roadmap
-
-Quiz Live è in sviluppo attivo. Tra le funzionalità in arrivo:
-
-- Modalità squadre
-- Timer personalizzabili per domanda
-- Temi e personalizzazione grafica
-- Report PDF avanzati per classe
-- Integrazione con Google Classroom
-- App mobile dedicata
 
 ## Licenza
 
-Quiz Live è gratuito per uso scolastico ed educativo.
+SAVINT e' rilasciato sotto licenza **AGPL-3.0**. Gratuito per uso scolastico ed educativo.

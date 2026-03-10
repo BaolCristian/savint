@@ -1,6 +1,6 @@
-# Guida all'installazione - Quiz Live
+# Guida all'installazione - SAVINT
 
-Questa guida e pensata per il tecnico IT della scuola che deve installare e configurare Quiz Live sul server scolastico.
+Questa guida e pensata per il tecnico IT della scuola che deve installare e configurare SAVINT sul server scolastico.
 
 ## Indice
 
@@ -63,25 +63,25 @@ docker compose version
 
 ## 2. Configurazione Google OAuth
 
-Quiz Live usa Google per l'autenticazione dei docenti. Serve un progetto su Google Cloud Console.
+SAVINT usa Google per l'autenticazione dei docenti. Serve un progetto su Google Cloud Console.
 
 ### Passo per passo
 
 1. Vai su https://console.cloud.google.com
 2. In alto, clicca sul selettore progetti e poi **Nuovo progetto**
-   - Nome: `Quiz Live Scuola`
+   - Nome: `SAVINT Scuola`
    - Clicca **Crea**
 3. Seleziona il progetto appena creato
 4. Nel menu laterale, vai su **API e servizi** > **Schermata di consenso OAuth**
    - Tipo di utente: **Interno** (se la scuola usa Google Workspace) oppure **Esterno**
-   - Nome app: `Quiz Live`
+   - Nome app: `SAVINT`
    - Email assistenza utenti: email del responsabile IT
    - Dominio autorizzato: `tuascuola.it` (o il dominio del server)
    - Clicca **Salva e continua** fino alla fine
 5. Nel menu laterale, vai su **API e servizi** > **Credenziali**
 6. Clicca **+ Crea credenziali** > **ID client OAuth 2.0**
    - Tipo di applicazione: **Applicazione web**
-   - Nome: `Quiz Live`
+   - Nome: `SAVINT`
    - **Origini JavaScript autorizzate**: aggiungi `https://quiz.tuascuola.it` (il dominio del server)
    - **URI di reindirizzamento autorizzati**: aggiungi `https://quiz.tuascuola.it/api/auth/callback/google`
    - Clicca **Crea**
@@ -93,7 +93,7 @@ Quiz Live usa Google per l'autenticazione dei docenti. Serve un progetto su Goog
 
 ## 3. Configurazione Pixabay (ricerca immagini)
 
-Quiz Live permette ai docenti di cercare immagini gratuite da Pixabay direttamente nell'editor delle domande. Questa funzionalita e opzionale ma consigliata.
+SAVINT permette ai docenti di cercare immagini gratuite da Pixabay direttamente nell'editor delle domande. Questa funzionalita e opzionale ma consigliata.
 
 ### Passo per passo
 
@@ -115,9 +115,9 @@ PIXABAY_API_KEY=la-tua-chiave-api
 
 ```bash
 cd /opt
-sudo git clone <url-del-repo> quizlive
-sudo chown -R $USER:$USER /opt/quizlive
-cd /opt/quizlive
+sudo git clone <url-del-repo> savint
+sudo chown -R $USER:$USER /opt/savint
+cd /opt/savint
 ```
 
 ### Configura le variabili d'ambiente
@@ -131,7 +131,7 @@ Compila il file `.env`:
 
 ```bash
 # Database — cambia la password!
-DATABASE_URL=postgresql://quizlive:CAMBIA_QUESTA_PASSWORD@db:5432/quizlive
+DATABASE_URL=postgresql://savint:CAMBIA_QUESTA_PASSWORD@db:5432/savint
 DB_PASSWORD=CAMBIA_QUESTA_PASSWORD
 
 # Google OAuth — incolla i valori dal passo 2
@@ -163,7 +163,7 @@ Copia il risultato e incollalo come valore di `NEXTAUTH_SECRET`.
 ### Avvia i container
 
 ```bash
-cd /opt/quizlive
+cd /opt/savint
 docker compose up -d
 ```
 
@@ -179,8 +179,8 @@ docker compose ps
 ```
 
 Devi vedere due container con stato `Up`:
-- `quizlive-app-1` (l'applicazione)
-- `quizlive-db-1` (il database)
+- `savint-app-1` (l'applicazione)
+- `savint-db-1` (il database)
 
 ### Inizializza il database
 
@@ -272,7 +272,7 @@ sudo certbot --nginx -d quiz.tuascuola.it
 ### Controllare lo stato
 
 ```bash
-cd /opt/quizlive
+cd /opt/savint
 docker compose ps          # Stato dei container
 docker compose logs -f app # Log dell'applicazione (Ctrl+C per uscire)
 docker compose logs -f db  # Log del database
@@ -309,7 +309,7 @@ Per ispezionare i dati direttamente:
 docker compose exec app npx prisma studio
 
 # Oppure da linea di comando
-docker compose exec db psql -U quizlive quizlive
+docker compose exec db psql -U savint savint
 ```
 
 ---
@@ -320,7 +320,7 @@ docker compose exec db psql -U quizlive quizlive
 
 ```bash
 # Crea un backup
-docker compose exec db pg_dump -U quizlive quizlive > backup_$(date +%Y%m%d_%H%M).sql
+docker compose exec db pg_dump -U savint savint > backup_$(date +%Y%m%d_%H%M).sql
 
 # Verifica che il file non sia vuoto
 ls -lh backup_*.sql
@@ -333,10 +333,10 @@ ls -lh backup_*.sql
 crontab -e
 
 # Aggiungi questa riga per un backup giornaliero alle 2 di notte
-0 2 * * * cd /opt/quizlive && docker compose exec -T db pg_dump -U quizlive quizlive > /opt/quizlive/backups/backup_$(date +\%Y\%m\%d).sql 2>/dev/null
+0 2 * * * cd /opt/savint && docker compose exec -T db pg_dump -U savint savint > /opt/savint/backups/backup_$(date +\%Y\%m\%d).sql 2>/dev/null
 
 # Crea la cartella backups
-mkdir -p /opt/quizlive/backups
+mkdir -p /opt/savint/backups
 ```
 
 ### Ripristino
@@ -346,7 +346,7 @@ mkdir -p /opt/quizlive/backups
 docker compose stop app
 
 # Ripristina il backup
-cat backup_20260307.sql | docker compose exec -T db psql -U quizlive quizlive
+cat backup_20260307.sql | docker compose exec -T db psql -U savint savint
 
 # Riavvia
 docker compose start app
@@ -359,7 +359,7 @@ docker compose start app
 Quando viene rilasciata una nuova versione:
 
 ```bash
-cd /opt/quizlive
+cd /opt/savint
 
 # Scarica gli aggiornamenti
 git pull
@@ -399,7 +399,7 @@ docker compose up -d
 docker compose ps db
 
 # Verifica la connessione
-docker compose exec db pg_isready -U quizlive
+docker compose exec db pg_isready -U savint
 
 # Se il volume e corrotto, ricrea (ATTENZIONE: perdi i dati!)
 # Fai prima un backup se possibile
@@ -445,5 +445,5 @@ docker compose exec app npx prisma migrate deploy
 docker system prune -af
 
 # Pulisci i backup vecchi
-find /opt/quizlive/backups -name "*.sql" -mtime +30 -delete
+find /opt/savint/backups -name "*.sql" -mtime +30 -delete
 ```
