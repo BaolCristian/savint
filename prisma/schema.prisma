@@ -37,13 +37,15 @@ enum SharePermission {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  role      Role     @default(TEACHER)
-  googleId  String?  @unique
-  avatarUrl String?
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  role          Role      @default(TEACHER)
+  googleId      String?   @unique
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
 
   quizzes        Quiz[]
   hostedSessions Session[]
