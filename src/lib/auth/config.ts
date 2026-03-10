@@ -33,6 +33,8 @@ if (process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true") 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers,
+  basePath: "/savint/api/auth",
+  trustHost: true,
   session: {
     strategy: (process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true") ? "jwt" : "database",
   },
