@@ -17,6 +17,20 @@ async function main() {
 
   console.log("Created teacher:", teacher.email);
 
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@scuola.it" },
+    update: {},
+    create: {
+      email: "admin@scuola.it",
+      name: "Admin",
+      role: Role.ADMIN,
+      googleId: "demo-admin-google-id",
+    },
+  });
+
+  console.log("Created admin:", admin.email);
+
   // Create demo quiz 1: Geografia
   const quiz1 = await prisma.quiz.create({
     data: {

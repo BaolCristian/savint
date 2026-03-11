@@ -39,10 +39,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: (process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true") ? "jwt" : "database",
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } });
+        token.role = dbUser?.role ?? "TEACHER";
+      }
+      return token;
+    },
     async session({ session, user, token }) {
       if (session.user) {
         // JWT mode (dev with credentials) uses token.sub, database mode uses user.id
         session.user.id = user?.id ?? token?.sub ?? "";
+        if (user) {
+          // Database session: fetch role from user
+          const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } });
+          session.user.role = (dbUser?.role as "TEACHER" | "ADMIN") ?? "TEACHER";
+        } else {
+          // JWT session
+          session.user.role = (token.role as "TEACHER" | "ADMIN") ?? "TEACHER";
+        }
       }
       return session;
     },

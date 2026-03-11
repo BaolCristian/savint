@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
-import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, LogOut, Moon, Sun } from "lucide-react";
+import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, LogOut, Moon, Sun, ShieldCheck } from "lucide-react";
 import { useTheme } from "@/components/dashboard/theme-provider";
 import { withBasePath } from "@/lib/base-path";
 import {
@@ -39,7 +39,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
 
       {/* Nav */}
       <nav className="space-y-1 flex-1">
-        {navItems.map((item) => {
+        {[...navItems, ...(user?.role === "ADMIN" ? [{ href: "/dashboard/admin", label: "Admin", icon: ShieldCheck }] : [])].map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
