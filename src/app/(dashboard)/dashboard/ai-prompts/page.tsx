@@ -54,8 +54,9 @@ REGOLE IMPORTANTI:
 - Genera il file .xlsx, NON un file .csv
 
 Ora crea un quiz sull'argomento: [ARGOMENTO]
+Lingua delle domande e risposte: [LINGUA, es. italiano, inglese, francese...]
 
-Genera almeno 10 domande distribuite su diversi tipi. Usa un mix di difficoltà.`;
+Genera almeno 10 domande distribuite su diversi tipi. Usa un mix di difficoltà. Scrivi TUTTE le domande, le opzioni di risposta e le risposte nella lingua indicata.`;
 
 export default function AiPromptsPage() {
   const [copied, setCopied] = useState(false);
@@ -94,8 +95,8 @@ export default function AiPromptsPage() {
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
           Copia il prompt qui sotto e incollalo nel tuo chatbot preferito (ChatGPT, Gemini, Claude, Copilot...).
-          Sostituisci <strong>[ARGOMENTO]</strong> con il tema del quiz. Il chatbot genererà un file Excel
-          che potrai importare direttamente in SAVINT.
+          Sostituisci <strong>[ARGOMENTO]</strong> con il tema del quiz e <strong>[LINGUA]</strong> con la lingua desiderata.
+          Il chatbot genererà un file Excel che potrai importare direttamente in SAVINT.
         </p>
       </div>
 
