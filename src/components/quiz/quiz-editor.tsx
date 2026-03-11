@@ -395,15 +395,21 @@ export function QuizEditor({ initialData }: Props) {
           <button
             onClick={doSave}
             disabled={saving}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white font-semibold px-5 py-2 rounded-full transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+            className={`flex items-center gap-2 text-white font-semibold px-5 py-2 rounded-full transition-all shadow-sm hover:shadow-md active:scale-[0.97] disabled:bg-slate-400 ${
+              saveStatus === "error"
+                ? "bg-red-500 hover:bg-red-600 animate-pulse"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
             {saving ? (
               <Loader2 className="size-4 animate-spin" />
+            ) : saveStatus === "error" ? (
+              <AlertCircle className="size-4" />
             ) : (
               <Save className="size-4" />
             )}
             <span className="hidden sm:inline">
-              {saving ? "Salvataggio..." : "Salva"}
+              {saving ? "Salvataggio..." : saveStatus === "error" ? "Riprova" : "Salva"}
             </span>
           </button>
         </div>
