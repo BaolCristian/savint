@@ -413,31 +413,38 @@ export function QuizEditor({ initialData }: Props) {
       <div className="flex-1 flex overflow-hidden">
         {/* ── Left: active question editor ── */}
         <main className="flex-1 overflow-y-auto">
-          {/* Quiz settings — collapsible with clear separation */}
-          <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+          {/* Quiz settings */}
+          <div className="mx-4 lg:mx-8 mt-4 mb-2 rounded-xl border border-indigo-100 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/30">
             <button
               type="button"
               onClick={() => setSettingsOpen(!settingsOpen)}
-              className="w-full px-6 lg:px-10 py-3 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="w-full px-4 py-3 flex items-center gap-3 text-left rounded-xl hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors"
             >
               <div className="flex items-center gap-2 flex-1">
-                <FileText className="size-4 text-slate-400" />
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                <FileText className="size-4 text-indigo-500" />
+                <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
                   Impostazioni quiz
                 </span>
-                {(description || tagsText) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                {isPublic && (
+                  <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full">
+                    Pubblico
+                  </span>
+                )}
+                {!settingsOpen && (description || tagsText) && (
+                  <span className="text-xs text-slate-400 truncate max-w-48">
+                    {[description, tagsText].filter(Boolean).join(" · ")}
+                  </span>
                 )}
               </div>
               {settingsOpen ? (
-                <ChevronUp className="size-4 text-slate-400" />
+                <ChevronUp className="size-4 text-indigo-400" />
               ) : (
-                <ChevronDown className="size-4 text-slate-400" />
+                <ChevronDown className="size-4 text-indigo-400" />
               )}
             </button>
 
             {settingsOpen && (
-              <div className="px-6 lg:px-10 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="px-4 pb-4 space-y-4 border-t border-indigo-100 dark:border-indigo-900 pt-4">
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                     <FileText className="size-3.5" />
@@ -448,7 +455,7 @@ export function QuizEditor({ initialData }: Props) {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Descrizione opzionale del quiz..."
                     rows={2}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                   />
                 </div>
                 <div>
@@ -460,7 +467,7 @@ export function QuizEditor({ initialData }: Props) {
                     value={tagsText}
                     onChange={(e) => setTagsText(e.target.value)}
                     placeholder="matematica, geometria, ..."
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                   />
                 </div>
                 <label className="flex items-center gap-3 cursor-pointer select-none pt-1">
@@ -473,7 +480,7 @@ export function QuizEditor({ initialData }: Props) {
                     />
                     <div
                       className={`w-11 h-6 rounded-full transition-colors ${
-                        isPublic ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-600"
+                        isPublic ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"
                       }`}
                     />
                     <div
