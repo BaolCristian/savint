@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
   const filename = `${crypto.randomUUID()}.${ext}`;
 
   const relativeDir = join("uploads", "quiz", folder);
-  const absoluteDir = join(process.cwd(), "public", relativeDir);
+  const baseDir = process.env.APP_ROOT || process.cwd();
+  const absoluteDir = join(baseDir, "public", relativeDir);
 
   await mkdir(absoluteDir, { recursive: true });
 

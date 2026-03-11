@@ -22,7 +22,9 @@ export async function GET(
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  const filePath = join(process.cwd(), "public", "uploads", relativePath);
+  // Try both process.cwd() and __dirname-based paths for pm2 compatibility
+  const baseDir = process.env.APP_ROOT || process.cwd();
+  const filePath = join(baseDir, "public", "uploads", relativePath);
   const ext = extname(filePath).toLowerCase();
   const mime = MIME_TYPES[ext];
 

@@ -100,7 +100,7 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
           onClick={handleImageClick}
         >
           <img
-            src={imageUrl}
+            src={imageUrl.startsWith("/") ? withBasePath(imageUrl) : imageUrl}
             alt="Hotspot"
             className="w-full max-h-96 object-contain"
             draggable={false}
@@ -119,13 +119,37 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => update({ imageUrl: "" })}
-        className="text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-1 rounded-lg text-base font-medium transition-colors"
-      >
-        Cambia immagine
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setShowImageSearch(true)}
+          className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold px-4 py-2 rounded-xl text-sm border border-indigo-200 dark:border-indigo-700 transition-colors"
+        >
+          <Search className="size-3.5" />
+          Cerca altra immagine
+        </button>
+        <label className="flex items-center gap-1.5 cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-semibold px-4 py-2 rounded-xl text-sm transition-colors">
+          <Upload className="size-3.5" />
+          Carica nuova
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => update({ imageUrl: "" })}
+          className="flex items-center gap-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+        >
+          Rimuovi
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
