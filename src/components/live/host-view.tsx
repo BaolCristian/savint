@@ -16,6 +16,66 @@ function HostAvatar({ avatar, className }: { avatar?: string; className?: string
   return <span className={className}>{av}</span>;
 }
 
+function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options: QuestionOptions }) {
+  const cls = "text-base lg:text-lg text-white/90";
+  if (!type) return null;
+
+  switch (type) {
+    case "MULTIPLE_CHOICE": {
+      const mc = options as MultipleChoiceOptions;
+      const correct = mc.choices.filter((c) => c.isCorrect).map((c) => c.text);
+      return <p className={cls}>{correct.join(", ")}</p>;
+    }
+    case "TRUE_FALSE": {
+      const tf = options as { correct: boolean };
+      return <p className={cls}>{tf.correct ? "Vero" : "Falso"}</p>;
+    }
+    case "OPEN_ANSWER": {
+      const oa = options as { acceptedAnswers: string[] };
+      return <p className={cls}>{oa.acceptedAnswers.join(", ")}</p>;
+    }
+    case "ORDERING": {
+      const ord = options as { items: string[]; correctOrder: number[] };
+      const ordered = ord.correctOrder.map((i) => ord.items[i]);
+      return (
+        <ol className={`${cls} list-decimal list-inside space-y-0.5`}>
+          {ordered.map((item, i) => <li key={i}>{item}</li>)}
+        </ol>
+      );
+    }
+    case "MATCHING": {
+      const m = options as { pairs: { left: string; right: string }[] };
+      return (
+        <div className={`${cls} space-y-0.5`}>
+          {m.pairs.map((p, i) => <p key={i}>{p.left} → {p.right}</p>)}
+        </div>
+      );
+    }
+    case "SPOT_ERROR": {
+      const se = options as { lines: string[]; errorIndices: number[]; explanation?: string };
+      return (
+        <div className={cls}>
+          <p>Righe con errore: {se.errorIndices.map((i) => i + 1).join(", ")}</p>
+          {se.explanation && <p className="text-sm text-emerald-300/70 mt-1">{se.explanation}</p>}
+        </div>
+      );
+    }
+    case "NUMERIC_ESTIMATION": {
+      const ne = options as { correctValue: number; unit?: string };
+      return <p className={cls}>{ne.correctValue}{ne.unit ? ` ${ne.unit}` : ""}</p>;
+    }
+    case "IMAGE_HOTSPOT": {
+      return <p className={cls}>Punto corretto indicato sull&apos;immagine</p>;
+    }
+    case "CODE_COMPLETION": {
+      const cc = options as { correctAnswer: string };
+      return <pre className={`${cls} bg-slate-900/50 rounded-lg px-3 py-2 font-mono text-sm`}>{cc.correctAnswer}</pre>;
+    }
+    default:
+      return null;
+  }
+}
+
 type Phase = "lobby" | "question" | "result" | "podium";
 
 interface Props {
@@ -531,9 +591,18 @@ export function HostView({ session }: Props) {
           </div>
         ) : (
           <div className="flex-1 flex flex-col lg:flex-row gap-6 p-6 lg:p-10 overflow-auto">
-            {/* Left: Distribution chart */}
+            {/* Left: Correct answer + Distribution chart */}
             {resultData && (
-              <section className="lg:w-1/2 bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex flex-col">
+              <section className="lg:w-1/2 flex flex-col gap-6">
+              {/* Correct answer */}
+              <div className="bg-emerald-800/40 border border-emerald-600/50 rounded-2xl p-5 lg:p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">✅</span>
+                  <h3 className="text-lg lg:text-xl font-bold text-emerald-300">Risposta corretta</h3>
+                </div>
+                <CorrectAnswerDisplay type={q?.question.type} options={resultData.correctAnswer} />
+              </div>
+              <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-2xl">📊</span>
                   <h3 className="text-xl lg:text-2xl font-bold">Distribuzione risposte</h3>
@@ -556,6 +625,7 @@ export function HostView({ session }: Props) {
                     );
                   })}
                 </div>
+              </div>
               </section>
             )}
 
