@@ -1076,7 +1076,7 @@ function ImageHotspotInput({
         <p className="text-sm text-gray-400 mb-3">Tocca il punto corretto sull&apos;immagine</p>
         <div className="relative inline-block max-w-full">
           <img
-            src={options.imageUrl}
+            src={options.imageUrl.startsWith("/") ? withBasePath(options.imageUrl) : options.imageUrl}
             alt="Domanda"
             className="max-h-64 sm:max-h-80 max-w-full rounded-xl"
             onClick={handleTap}

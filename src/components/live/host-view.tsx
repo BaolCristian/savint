@@ -516,7 +516,7 @@ export function HostView({ session }: Props) {
           <div className="px-6 lg:px-10 pb-6 flex justify-center">
             <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700">
               <img
-                src={(q.question.options as any).imageUrl}
+                src={((q.question.options as any).imageUrl || "").startsWith("/") ? withBasePath((q.question.options as any).imageUrl) : (q.question.options as any).imageUrl}
                 alt="Hotspot"
                 className="max-h-64 lg:max-h-96 rounded-xl"
               />
