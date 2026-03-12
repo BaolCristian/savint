@@ -60,6 +60,8 @@ const disconnectedPlayers = new Map<string, {
 }>();
 
 const RECONNECT_GRACE_PERIOD_MS = 120_000; // 2 minutes to reconnect
+const SESSION_TIMEOUT_MS =
+  (Number(process.env.SESSION_TIMEOUT_HOURS) || 2) * 60 * 60 * 1000;
 
 function disconnectKey(sessionId: string, playerName: string) {
   return `${sessionId}:${playerName}`;
@@ -203,6 +205,38 @@ type TypedIO = SocketIOServer<ClientToServerEvents, ServerToClientEvents>;
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export function setupSocketHandlers(io: TypedIO) {
+  // ----- Periodic session cleanup -----
+  setInterval(async () => {
+    try {
+      const cutoff = new Date(Date.now() - SESSION_TIMEOUT_MS);
+      const expired = await prisma.session.findMany({
+        where: {
+          status: { in: ["LOBBY", "IN_PROGRESS"] },
+          createdAt: { lt: cutoff },
+        },
+        select: { id: true },
+      });
+
+      for (const { id } of expired) {
+        await prisma.session.update({
+          where: { id },
+          data: { status: "FINISHED", endedAt: new Date() },
+        });
+
+        // Clean up in-memory state and notify connected clients
+        const game = games.get(id);
+        if (game) {
+          io.to(room(id)).emit("gameOver", { podium: [], fullResults: [] });
+          games.delete(id);
+        }
+
+        console.log(`[cleanup] Session ${id} auto-terminated (timeout)`);
+      }
+    } catch (err) {
+      console.error("[cleanup] Error during session cleanup:", err);
+    }
+  }, 15 * 60 * 1000); // run every 15 minutes
+
   io.on("connection", (socket: TypedSocket) => {
     /** Track which session + playerName this socket belongs to */
     let currentSessionId: string | null = null;
