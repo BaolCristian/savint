@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
@@ -15,6 +16,7 @@ export function ExcelImportButton({ quizId, onImported }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("quiz");
 
   async function handleImport(file: File) {
     setLoading(true);
@@ -32,26 +34,26 @@ export function ExcelImportButton({ quizId, onImported }: Props) {
 
       if (res.status === 422) {
         const errMsgs = body.errors
-          .map((e: { sheet: string; row: number; message: string }) => `${e.sheet}, riga ${e.row}: ${e.message}`)
+          .map((e: { sheet: string; row: number; message: string }) => `${e.sheet}, ${t("excelRow")} ${e.row}: ${e.message}`)
           .join("\n");
-        alert(`Errori nel file:\n\n${errMsgs}`);
+        alert(`${t("excelErrorHeader")}\n\n${errMsgs}`);
         setLoading(false);
         return;
       }
 
       if (!res.ok) {
-        throw new Error(body.error || "Errore nell'importazione");
+        throw new Error(body.error || t("importError"));
       }
 
       if (quizId) {
-        alert(`${body.added} domande aggiunte al quiz`);
+        alert(`${body.added} ${t("excelQuestionsAdded")}`);
         onImported?.();
       } else {
         router.push(`/dashboard/quiz/${body.id}/edit`);
         router.refresh();
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Errore nell'importazione");
+      alert(err instanceof Error ? err.message : t("importError"));
     } finally {
       setLoading(false);
     }
@@ -80,7 +82,7 @@ export function ExcelImportButton({ quizId, onImported }: Props) {
         ) : (
           <FileSpreadsheet className="size-4 mr-2" />
         )}
-        Importa Excel
+        {t("importExcel")}
       </Button>
     </>
   );

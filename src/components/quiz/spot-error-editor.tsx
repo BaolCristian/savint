@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Trash2, Plus } from "lucide-react";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function SpotErrorEditor({ options, onChange }: Props) {
+  const t = useTranslations("spotErrorEditor");
   const { lines, errorIndices, explanation } = options;
 
   const toggleError = (i: number) => {
@@ -54,7 +56,7 @@ export function SpotErrorEditor({ options, onChange }: Props) {
               <input
                 value={line}
                 onChange={(e) => updateLine(i, e.target.value)}
-                placeholder={`Riga ${i + 1}`}
+                placeholder={t("linePlaceholder", { n: i + 1 })}
                 className={`flex-1 font-mono rounded-xl border px-4 py-3 text-lg lg:text-xl placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
                   isError
                     ? "bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200"
@@ -76,7 +78,7 @@ export function SpotErrorEditor({ options, onChange }: Props) {
 
       {errorIndices.length === 0 && (
         <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">
-          ⚠ Seleziona almeno una riga come errore cliccando il numero a sinistra.
+          {t("warning")}
         </p>
       )}
 
@@ -84,17 +86,17 @@ export function SpotErrorEditor({ options, onChange }: Props) {
         onClick={addLine}
         className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
       >
-        <Plus className="size-5" /> Aggiungi riga
+        <Plus className="size-5" /> {t("addLine")}
       </button>
 
       <div className="pt-2">
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-          Spiegazione (opzionale)
+          {t("explanation")}
         </label>
         <input
           value={explanation ?? ""}
           onChange={(e) => onChange({ ...options, explanation: e.target.value || undefined })}
-          placeholder="Spiega perché queste righe sono errate..."
+          placeholder={t("explanationPlaceholder")}
           className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
       </div>

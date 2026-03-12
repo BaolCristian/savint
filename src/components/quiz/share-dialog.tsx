@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -28,12 +29,6 @@ interface ShareEntry {
   sharedWith: { id: string; name: string | null; email: string };
 }
 
-const permissionLabel: Record<Permission, string> = {
-  VIEW: "Visualizza",
-  DUPLICATE: "Duplica",
-  EDIT: "Modifica",
-};
-
 export function ShareDialog({ quizId }: { quizId: string }) {
   const [open, setOpen] = useState(false);
   const [shares, setShares] = useState<ShareEntry[]>([]);
@@ -41,6 +36,14 @@ export function ShareDialog({ quizId }: { quizId: string }) {
   const [permission, setPermission] = useState<Permission>("VIEW");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("shareDialog");
+  const tc = useTranslations("common");
+
+  const permissionLabel: Record<Permission, string> = {
+    VIEW: t("view"),
+    DUPLICATE: t("duplicate"),
+    EDIT: t("edit"),
+  };
 
   const fetchShares = useCallback(async () => {
     const res = await fetch(withBasePath(`/api/quiz/${quizId}/share`));
@@ -67,7 +70,7 @@ export function ShareDialog({ quizId }: { quizId: string }) {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Errore");
+        setError(data.error ?? tc("error"));
         return;
       }
       setEmail("");
@@ -93,13 +96,13 @@ export function ShareDialog({ quizId }: { quizId: string }) {
         render={
           <Button variant="outline" size="sm">
             <Share2Icon className="size-4 mr-1" />
-            Condividi
+            {t("share")}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Condividi Quiz</DialogTitle>
+          <DialogTitle>{t("shareQuiz")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -107,11 +110,11 @@ export function ShareDialog({ quizId }: { quizId: string }) {
           <div className="flex gap-2 items-end">
             <div className="flex-1">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Email
+                {t("email")}
               </label>
               <Input
                 type="email"
-                placeholder="docente@scuola.it"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => {
@@ -121,7 +124,7 @@ export function ShareDialog({ quizId }: { quizId: string }) {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Permesso
+                {t("permission")}
               </label>
               <Select
                 value={permission}
@@ -131,14 +134,14 @@ export function ShareDialog({ quizId }: { quizId: string }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="VIEW">Visualizza</SelectItem>
-                  <SelectItem value="DUPLICATE">Duplica</SelectItem>
-                  <SelectItem value="EDIT">Modifica</SelectItem>
+                  <SelectItem value="VIEW">{t("view")}</SelectItem>
+                  <SelectItem value="DUPLICATE">{t("duplicate")}</SelectItem>
+                  <SelectItem value="EDIT">{t("edit")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Button onClick={handleAdd} disabled={loading} size="sm">
-              Aggiungi
+              {tc("add")}
             </Button>
           </div>
 
@@ -150,7 +153,7 @@ export function ShareDialog({ quizId }: { quizId: string }) {
           {shares.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">
-                Condiviso con
+                {t("sharedWith")}
               </p>
               <ul className="space-y-1">
                 {shares.map((s) => (

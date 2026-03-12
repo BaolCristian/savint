@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
 import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
@@ -17,6 +18,8 @@ function HostAvatar({ avatar, className }: { avatar?: string; className?: string
 }
 
 function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options: QuestionOptions }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const cls = "text-base lg:text-lg text-white/90";
   if (!type) return null;
 
@@ -28,7 +31,7 @@ function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options:
     }
     case "TRUE_FALSE": {
       const tf = options as { correct: boolean };
-      return <p className={cls}>{tf.correct ? "Vero" : "Falso"}</p>;
+      return <p className={cls}>{tf.correct ? tc("true") : tc("false")}</p>;
     }
     case "OPEN_ANSWER": {
       const oa = options as { acceptedAnswers: string[] };
@@ -55,7 +58,7 @@ function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options:
       const se = options as { lines: string[]; errorIndices: number[]; explanation?: string };
       return (
         <div className={cls}>
-          <p>Righe con errore: {se.errorIndices.map((i) => i + 1).join(", ")}</p>
+          <p>{t("errorRows", { indices: se.errorIndices.map((i) => i + 1).join(", ") })}</p>
           {se.explanation && <p className="text-sm text-emerald-300/70 mt-1">{se.explanation}</p>}
         </div>
       );
@@ -65,7 +68,7 @@ function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options:
       return <p className={cls}>{ne.correctValue}{ne.unit ? ` ${ne.unit}` : ""}</p>;
     }
     case "IMAGE_HOTSPOT": {
-      return <p className={cls}>Punto corretto indicato sull&apos;immagine</p>;
+      return <p className={cls}>{t("hotspotCorrect")}</p>;
     }
     case "CODE_COMPLETION": {
       const cc = options as { correctAnswer: string };
@@ -120,6 +123,8 @@ const MC_COLORS = [
 const MC_ICONS = ["\u25B2", "\u25C6", "\u25CF", "\u25A0"];
 
 export function HostView({ session }: Props) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const { socket, connected } = useSocket();
   const [phase, setPhase] = useState<Phase>("lobby");
   const [players, setPlayers] = useState<{ name: string; avatar?: string }[]>([]);
@@ -282,7 +287,7 @@ export function HostView({ session }: Props) {
           </div>
           <div className="flex items-center gap-4 shrink-0">
             <span className="text-sm text-slate-400 hidden sm:inline">
-              {session.quiz.questions.length} domande
+              {tc("questions", { count: session.quiz.questions.length })}
             </span>
             <div className="flex items-center gap-2">
               <span className={`inline-block w-2.5 h-2.5 rounded-full ${connected ? "bg-green-400" : "bg-red-400 animate-pulse"}`} />
@@ -304,12 +309,12 @@ export function HostView({ session }: Props) {
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">1</span>
                   <span className="text-lg lg:text-xl text-indigo-100 font-medium">
-                    Vai su <span className="font-bold text-white underline underline-offset-4 decoration-2">savint.it</span>
+                    {t("goTo")} <span className="font-bold text-white underline underline-offset-4 decoration-2">savint.it</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">2</span>
-                  <span className="text-lg lg:text-xl text-indigo-100 font-medium">Inserisci questo PIN</span>
+                  <span className="text-lg lg:text-xl text-indigo-100 font-medium">{t("enterThisPin")}</span>
                 </div>
               </div>
             </div>
@@ -317,7 +322,7 @@ export function HostView({ session }: Props) {
             {/* PIN card */}
             <div className="relative z-10 bg-white rounded-3xl px-10 lg:px-14 xl:px-20 py-6 lg:py-8 shadow-2xl shadow-black/30">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400 text-center mb-2 font-semibold">
-                Game PIN
+                {t("gamePin")}
               </p>
               <p className="text-7xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.2em] text-center tabular-nums leading-none">
                 {formattedPin}
@@ -326,7 +331,7 @@ export function HostView({ session }: Props) {
 
             {/* Quiz info */}
             <div className="relative z-10 mt-8 flex items-center gap-4 text-indigo-200 text-sm lg:text-base">
-              <span>{session.quiz.questions.length} domande</span>
+              <span>{tc("questions", { count: session.quiz.questions.length })}</span>
             </div>
           </section>
 
@@ -336,7 +341,7 @@ export function HostView({ session }: Props) {
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl lg:text-2xl font-bold text-slate-200">
-                  Giocatori
+                  {t("players")}
                 </h2>
               </div>
               <div className="flex items-center gap-3">
@@ -351,7 +356,7 @@ export function HostView({ session }: Props) {
               {players.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-slate-500">
                   <span className="text-5xl lg:text-6xl mb-4 animate-float-bounce">⏳</span>
-                  <p className="text-lg lg:text-xl font-medium">In attesa di giocatori</p>
+                  <p className="text-lg lg:text-xl font-medium">{t("waitingForPlayers")}</p>
                   <p className="text-sm text-slate-600 mt-1 flex items-center gap-1">
                     <span className="inline-flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse" style={{ animationDelay: "0ms" }} />
@@ -389,8 +394,8 @@ export function HostView({ session }: Props) {
               }`}
             >
               {playerCount === 0
-                ? "In attesa di giocatori..."
-                : `Avvia Quiz (${playerCount} giocator${playerCount === 1 ? "e" : "i"})`}
+                ? t("waitingForPlayersBtn")
+                : t("startQuiz", { count: playerCount, suffix: playerCount === 1 ? "e" : "i" })}
             </button>
           </section>
         </div>
@@ -416,7 +421,7 @@ export function HostView({ session }: Props) {
         <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-sm lg:text-base font-semibold text-slate-400">
-              Domanda {q.questionIndex + 1} / {q.totalQuestions}
+              {t("questionHeader", { index: q.questionIndex + 1, total: q.totalQuestions })}
             </span>
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-32 lg:w-48 bg-slate-700 rounded-full h-2.5">
@@ -491,10 +496,10 @@ export function HostView({ session }: Props) {
         {q.question.type === "TRUE_FALSE" && (
           <div className="grid grid-cols-2 gap-3 lg:gap-4 px-6 lg:px-10 pb-6">
             <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 lg:p-8 flex items-center justify-center shadow-lg">
-              <span className="text-2xl lg:text-3xl font-extrabold">Vero</span>
+              <span className="text-2xl lg:text-3xl font-extrabold">{tc("true")}</span>
             </div>
             <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 lg:p-8 flex items-center justify-center shadow-lg">
-              <span className="text-2xl lg:text-3xl font-extrabold">Falso</span>
+              <span className="text-2xl lg:text-3xl font-extrabold">{tc("false")}</span>
             </div>
           </div>
         )}
@@ -519,7 +524,7 @@ export function HostView({ session }: Props) {
             <div className="bg-slate-800 rounded-2xl px-8 py-6 flex items-center gap-3 border border-slate-700">
               <span className="text-4xl lg:text-5xl">🔢</span>
               <span className="text-xl lg:text-2xl font-semibold text-slate-300">
-                Inserisci un valore numerico
+                {t("enterNumericValue")}
                 {(q.question.options as any).unit && (
                   <span className="text-slate-400 ml-2">({(q.question.options as any).unit})</span>
                 )}
@@ -537,7 +542,7 @@ export function HostView({ session }: Props) {
                 alt="Hotspot"
                 className="max-h-64 lg:max-h-96 rounded-xl"
               />
-              <p className="text-center text-sm text-slate-400 mt-2">Tocca il punto corretto</p>
+              <p className="text-center text-sm text-slate-400 mt-2">{t("tapCorrectPoint")}</p>
             </div>
           </div>
         )}
@@ -569,7 +574,7 @@ export function HostView({ session }: Props) {
             />
           </div>
           <p className="text-center text-sm text-slate-500 mt-2">
-            {progressPercent}% ha risposto
+            {t("answeredPercent", { value: progressPercent })}
           </p>
         </div>
       </div>
@@ -588,7 +593,7 @@ export function HostView({ session }: Props) {
         {/* Top bar */}
         <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-4 flex items-center justify-between">
           <h2 className="text-xl lg:text-2xl font-bold">
-            Risultati — Domanda {q ? q.questionIndex + 1 : ""}
+            {t("resultsHeader", { index: q ? q.questionIndex + 1 : "" })}
           </h2>
           <span className="text-sm lg:text-base text-slate-400">
             {q ? `${q.questionIndex + 1} / ${q.totalQuestions}` : ""}
@@ -598,12 +603,12 @@ export function HostView({ session }: Props) {
         {!resultsRevealed ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <span className="text-7xl">📊</span>
-            <p className="text-xl lg:text-2xl text-slate-400">Pronto a mostrare i risultati?</p>
+            <p className="text-xl lg:text-2xl text-slate-400">{t("readyToShowResults")}</p>
             <button
               onClick={handleShowResults}
               className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-900 font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-amber-900/30 hover:scale-105 active:scale-95"
             >
-              Mostra risultati
+              {t("showResults")}
             </button>
           </div>
         ) : (
@@ -615,14 +620,14 @@ export function HostView({ session }: Props) {
               <div className="bg-emerald-800/40 border border-emerald-600/50 rounded-2xl p-5 lg:p-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xl">✅</span>
-                  <h3 className="text-lg lg:text-xl font-bold text-emerald-300">Risposta corretta</h3>
+                  <h3 className="text-lg lg:text-xl font-bold text-emerald-300">{t("correctAnswer")}</h3>
                 </div>
                 <CorrectAnswerDisplay type={q?.question.type} options={resultData.correctAnswer} />
               </div>
               <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-2xl">📊</span>
-                  <h3 className="text-xl lg:text-2xl font-bold">Distribuzione risposte</h3>
+                  <h3 className="text-xl lg:text-2xl font-bold">{t("answerDistribution")}</h3>
                 </div>
                 <div className="flex-1 flex items-end gap-3 lg:gap-5 min-h-[200px] lg:min-h-[280px]">
                   {Object.entries(resultData.distribution).map(([key, value], i) => {
@@ -653,7 +658,7 @@ export function HostView({ session }: Props) {
                 <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
                   <div className="flex items-center gap-2 mb-6">
                     <span className="text-2xl">🏆</span>
-                    <h3 className="text-xl lg:text-2xl font-bold">Top 5 Classifica</h3>
+                    <h3 className="text-xl lg:text-2xl font-bold">{t("top5")}</h3>
                   </div>
                   <div className="space-y-3">
                     {resultData.leaderboard.slice(0, 5).map((entry, i) => (
@@ -688,14 +693,14 @@ export function HostView({ session }: Props) {
                     onClick={handleEndGame}
                     className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    🏆 Mostra podio
+                    {t("showPodium")}
                   </button>
                 ) : (
                   <button
                     onClick={handleNextQuestion}
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-green-900/30 hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    Prossima domanda →
+                    {t("nextQuestion")}
                   </button>
                 )}
               </div>
@@ -723,7 +728,7 @@ export function HostView({ session }: Props) {
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col">
         {/* Header */}
         <header className="text-center pt-8 lg:pt-12 pb-4">
-          <h2 className="text-4xl lg:text-6xl font-black">🏆 Podio 🏆</h2>
+          <h2 className="text-4xl lg:text-6xl font-black">{t("podiumTitle")}</h2>
           <p className="text-lg lg:text-xl text-slate-400 mt-2">{session.quiz.title}</p>
         </header>
 
@@ -761,7 +766,7 @@ export function HostView({ session }: Props) {
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">📋</span>
-              <h3 className="text-lg lg:text-xl font-bold">Classifica completa</h3>
+              <h3 className="text-lg lg:text-xl font-bold">{t("fullLeaderboard")}</h3>
             </div>
             <div className="space-y-2">
               {gameOverData.fullResults.map((entry, i) => (
@@ -788,7 +793,7 @@ export function HostView({ session }: Props) {
             href="/dashboard"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-lg lg:text-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
           >
-            ← Torna alla dashboard
+            {t("backToDashboard")}
           </Link>
         </footer>
       </div>

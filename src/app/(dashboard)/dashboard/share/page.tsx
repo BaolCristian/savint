@@ -8,16 +8,18 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const permissionLabel: Record<string, string> = {
-  VIEW: "Visualizza",
-  DUPLICATE: "Duplica",
-  EDIT: "Modifica",
-};
+import { getTranslations } from "next-intl/server";
 
 export default async function SharePage() {
+  const t = await getTranslations("share");
   const session = await auth();
   const userId = session!.user!.id!;
+
+  const permissionLabel: Record<string, string> = {
+    VIEW: t("view"),
+    DUPLICATE: t("duplicate"),
+    EDIT: t("edit"),
+  };
 
   const sharedByMe = await prisma.quizShare.findMany({
     where: { quiz: { authorId: userId } },
@@ -58,14 +60,14 @@ export default async function SharePage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Condivisioni</h1>
+      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t("title")}</h1>
 
       {/* Shared by me */}
       <section>
-        <h2 className="text-lg font-semibold mb-4">Quiz condivisi da me</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("sharedByMe")}</h2>
         {Object.keys(byQuiz).length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            Non hai condiviso nessun quiz.
+            {t("noSharedByMe")}
           </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -74,8 +76,7 @@ export default async function SharePage() {
                 <CardHeader>
                   <CardTitle className="text-base">{title}</CardTitle>
                   <CardDescription>
-                    Condiviso con {shares.length}{" "}
-                    {shares.length === 1 ? "persona" : "persone"}
+                    {t("sharedWith", { count: shares.length })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -103,10 +104,10 @@ export default async function SharePage() {
 
       {/* Shared with me */}
       <section>
-        <h2 className="text-lg font-semibold mb-4">Quiz condivisi con me</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("sharedWithMe")}</h2>
         {sharedWithMe.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            Nessun quiz condiviso con te.
+            {t("noSharedWithMe")}
           </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -115,7 +116,7 @@ export default async function SharePage() {
                 <CardHeader>
                   <CardTitle className="text-base">{s.quiz.title}</CardTitle>
                   <CardDescription>
-                    Da {s.quiz.author.name ?? s.quiz.author.email}
+                    {t("from", { author: s.quiz.author.name ?? s.quiz.author.email })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import { CURRENT_TERMS_VERSION } from "@/lib/config/legal";
 
 export function TermsAcceptanceModal({ onAccepted }: { onAccepted: () => void }) {
+  const t = useTranslations("legal");
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +25,10 @@ export function TermsAcceptanceModal({ onAccepted }: { onAccepted: () => void })
           version: CURRENT_TERMS_VERSION,
         }),
       });
-      if (!res.ok) throw new Error("Errore durante il salvataggio");
+      if (!res.ok) throw new Error(t("termsSaveError"));
       onAccepted();
     } catch {
-      setError("Errore durante il salvataggio. Riprova.");
+      setError(t("termsSaveErrorRetry"));
     } finally {
       setLoading(false);
     }
@@ -37,34 +39,24 @@ export function TermsAcceptanceModal({ onAccepted }: { onAccepted: () => void })
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
         <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            Accettazione delle condizioni di utilizzo
+            {t("termsTitle")}
           </h2>
         </div>
 
         <div className="overflow-y-auto px-6 py-5 space-y-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
           <p>
-            Registrandoti su questa piattaforma dichiari di aver letto e accettato le{" "}
+            {t("termsIntro").split(t("termsOfUse"))[0]}
             <Link href="/terms" className="text-indigo-600 dark:text-indigo-400 underline" target="_blank">
-              Condizioni di utilizzo
-            </Link>{" "}
-            e l&apos;
+              {t("termsOfUse")}
+            </Link>
+            {" e l'"}
             <Link href="/privacy" className="text-indigo-600 dark:text-indigo-400 underline" target="_blank">
-              Informativa sulla privacy
+              {t("privacyPolicy")}
             </Link>.
           </p>
-          <p>
-            I contenuti pubblicati sulla piattaforma sono responsabilità esclusiva
-            degli utenti che li caricano.
-          </p>
-          <p>
-            L&apos;utente si impegna a pubblicare esclusivamente contenuti di cui
-            possiede i diritti oppure contenuti originali.
-          </p>
-          <p>
-            Non è consentito pubblicare materiali coperti da copyright (ad esempio
-            contenuti tratti da libri di testo, manuali o piattaforme editoriali)
-            senza autorizzazione dei titolari dei diritti.
-          </p>
+          <p>{t("termsP1")}</p>
+          <p>{t("termsP2")}</p>
+          <p>{t("termsP3")}</p>
         </div>
 
         <div className="px-6 py-5 border-t border-slate-200 dark:border-slate-700 space-y-4">
@@ -76,8 +68,7 @@ export function TermsAcceptanceModal({ onAccepted }: { onAccepted: () => void })
               className="mt-0.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
-              Dichiaro di aver letto e accettato le condizioni di utilizzo e
-              l&apos;informativa sulla privacy.
+              {t("termsCheckbox")}
             </span>
           </label>
 
@@ -91,7 +82,7 @@ export function TermsAcceptanceModal({ onAccepted }: { onAccepted: () => void })
             className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
-            Accetto
+            {t("accept")}
           </button>
         </div>
       </div>

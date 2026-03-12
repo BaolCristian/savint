@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,8 @@ interface QuizItem {
 
 export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
   const router = useRouter();
+  const t = useTranslations("library");
+  const tc = useTranslations("common");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [pendingDuplicate, setPendingDuplicate] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
         router.push(`/live/host/${session.id}`);
       }
     } catch {
-      alert("Errore nell'avvio della sessione");
+      alert(t("playError"));
     } finally {
       setLoading(null);
     }
@@ -77,7 +80,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
       router.push("/dashboard/quiz");
       router.refresh();
     } catch {
-      alert("Errore nella duplicazione");
+      alert(t("duplicateError"));
     } finally {
       setLoading(null);
     }
@@ -91,14 +94,14 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cerca per titolo o descrizione..."
+          placeholder={t("searchPlaceholder")}
           className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">
-          {search ? "Nessun quiz trovato." : "Nessun quiz pubblico disponibile al momento."}
+          {search ? t("noQuizFound") : t("noPublicQuizzes")}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,12 +112,11 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                   {quiz.title}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  di {quiz.authorName} &middot;{" "}
-                  {new Date(quiz.createdAt).toLocaleDateString("it-IT", {
+                  {t("byAuthor", { author: quiz.authorName, date: new Date(quiz.createdAt).toLocaleDateString("it-IT", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
-                  })}
+                  }) })}
                 </p>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-3">
@@ -130,7 +132,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                     </Badge>
                   ))}
                   <Badge variant="secondary" className="text-xs">
-                    {quiz.questionCount} domande
+                    {tc("questions", { count: quiz.questionCount })}
                   </Badge>
                 </div>
                 <a
@@ -149,7 +151,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
                   >
                     <Play className="h-3.5 w-3.5" />
-                    Gioca
+                    {t("play")}
                   </button>
                   <button
                     onClick={() => handleDuplicate(quiz.id)}
@@ -157,12 +159,12 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                   >
                     <Copy className="h-3.5 w-3.5" />
-                    Duplica
+                    {t("duplicate")}
                   </button>
                   <button
                     onClick={() => setReportingQuiz(quiz.id)}
                     className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 hover:border-red-300 dark:hover:text-red-400 transition-colors"
-                    title="Segnala contenuto"
+                    title={t("reportContent")}
                   >
                     <Flag className="h-3.5 w-3.5" />
                   </button>

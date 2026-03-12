@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface Props {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
 }
 
 export function ConfidenceToggle({ enabled, onChange }: Props) {
+  const t = useTranslations("confidence");
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <div className="relative">
@@ -27,14 +30,14 @@ export function ConfidenceToggle({ enabled, onChange }: Props) {
         />
       </div>
       <span className="text-base text-slate-600 dark:text-slate-400 font-medium">
-        Livello di confidenza
+        {t("label")}
       </span>
       <span className="relative group">
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-help">
           ?
         </span>
         <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-slate-800 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50">
-          Dopo ogni risposta il giocatore indica quanto è sicuro. Se molto sicuro e corretto: +20% punti. Se molto sicuro e sbagliato: −200 punti.
+          {t("tooltip")}
         </span>
       </span>
     </label>

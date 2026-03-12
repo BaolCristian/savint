@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 
 export function ExcelTemplateButton() {
   const [loading, setLoading] = useState(false);
+  const t = useTranslations("quiz");
 
   async function handleDownload() {
     setLoading(true);
     try {
       const res = await fetch(withBasePath("/api/quiz/excel-template"));
-      if (!res.ok) throw new Error("Errore nel download");
+      if (!res.ok) throw new Error(t("downloadError"));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -21,7 +23,7 @@ export function ExcelTemplateButton() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Errore nel download");
+      alert(err instanceof Error ? err.message : t("downloadError"));
     } finally {
       setLoading(false);
     }
@@ -34,7 +36,7 @@ export function ExcelTemplateButton() {
       ) : (
         <Download className="size-4 mr-2" />
       )}
-      Template Excel
+      {t("templateExcel")}
     </Button>
   );
 }

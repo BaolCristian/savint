@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Ban, Archive, Eye, Trash2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 
@@ -14,18 +15,11 @@ interface ReportItem {
   reporter: { name: string | null; email: string };
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "In attesa", color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" },
-  REVIEWED: { label: "Revisionata", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  RESOLVED: { label: "Risolta", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  DISMISSED: { label: "Archiviata", color: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" },
-};
-
-const REASON_LABELS: Record<string, string> = {
-  COPYRIGHT: "Violazione copyright",
-  PERSONAL_DATA: "Dati personali",
-  OFFENSIVE: "Contenuto offensivo",
-  OTHER: "Altro",
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  REVIEWED: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  RESOLVED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  DISMISSED: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
 };
 
 export function ReportsClient() {
@@ -33,6 +27,22 @@ export function ReportsClient() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("PENDING");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const t = useTranslations("admin");
+  const tl = useTranslations("legal");
+
+  const STATUS_LABELS: Record<string, string> = {
+    PENDING: t("pending"),
+    REVIEWED: t("reviewed"),
+    RESOLVED: t("resolved"),
+    DISMISSED: t("dismissed"),
+  };
+
+  const REASON_LABELS: Record<string, string> = {
+    COPYRIGHT: tl("reasonCopyright"),
+    PERSONAL_DATA: tl("reasonPersonalData"),
+    OFFENSIVE: tl("reasonOffensive"),
+    OTHER: tl("reasonOther"),
+  };
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -59,7 +69,7 @@ export function ReportsClient() {
     suspendQuiz?: boolean;
     deleteQuiz?: boolean;
   }) => {
-    if (action.deleteQuiz && !confirm("Sei sicuro di voler eliminare definitivamente questo quiz?")) return;
+    if (action.deleteQuiz && !confirm(t("deleteConfirm"))) return;
 
     setActionLoading(reportId);
     try {
@@ -70,7 +80,7 @@ export function ReportsClient() {
       });
       fetchReports();
     } catch {
-      alert("Errore nell'aggiornamento");
+      alert(t("updateError"));
     } finally {
       setActionLoading(null);
     }
@@ -90,7 +100,7 @@ export function ReportsClient() {
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
             }`}
           >
-            {s ? STATUS_LABELS[s]?.label || s : "Tutte"}
+            {s ? STATUS_LABELS[s] || s : t("allFilter")}
           </button>
         ))}
       </div>
@@ -101,7 +111,7 @@ export function ReportsClient() {
         </div>
       ) : reports.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">
-          Nessuna segnalazione.
+          {t("noReports")}
         </p>
       ) : (
         <div className="space-y-3">
@@ -113,21 +123,21 @@ export function ReportsClient() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-bold text-slate-800 dark:text-white">
-                    {report.quiz?.title ?? "Quiz eliminato"}
+                    {report.quiz?.title ?? t("deletedQuiz")}
                   </h3>
                   <p className="text-xs text-slate-500">
                     di {report.quiz?.author?.name ?? "?"} ({report.quiz?.author?.email ?? "?"}) &middot;{" "}
                     Segnalato da {report.reporter?.name ?? "?"} ({report.reporter?.email})
                   </p>
                 </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${STATUS_LABELS[report.status]?.color ?? ""}`}>
-                  {STATUS_LABELS[report.status]?.label ?? report.status}
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${STATUS_COLORS[report.status] ?? ""}`}>
+                  {STATUS_LABELS[report.status] ?? report.status}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
                 <span className="text-slate-600 dark:text-slate-400">
-                  Motivo: <strong>{REASON_LABELS[report.reason] ?? report.reason}</strong>
+                  {t("reason", { reason: REASON_LABELS[report.reason] ?? report.reason })}
                 </span>
                 <span className="text-slate-400">
                   {new Date(report.createdAt).toLocaleDateString("it-IT", {
@@ -150,7 +160,7 @@ export function ReportsClient() {
                       disabled={actionLoading === report.id}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950 transition-colors"
                     >
-                      <Eye className="size-3.5" /> Segna come revisionata
+                      <Eye className="size-3.5" /> {t("markReviewed")}
                     </button>
                   )}
                   <button
@@ -158,21 +168,21 @@ export function ReportsClient() {
                     disabled={actionLoading === report.id}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950 transition-colors"
                   >
-                    <Ban className="size-3.5" /> Sospendi quiz
+                    <Ban className="size-3.5" /> {t("suspendQuiz")}
                   </button>
                   <button
                     onClick={() => handleAction(report.id, { status: "DISMISSED" })}
                     disabled={actionLoading === report.id}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <Archive className="size-3.5" /> Archivia
+                    <Archive className="size-3.5" /> {t("dismiss")}
                   </button>
                   <button
                     onClick={() => handleAction(report.id, { status: "RESOLVED", deleteQuiz: true })}
                     disabled={actionLoading === report.id}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 transition-colors"
                   >
-                    <Trash2 className="size-3.5" /> Elimina quiz
+                    <Trash2 className="size-3.5" /> {t("deleteQuiz")}
                   </button>
                 </div>
               )}

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
@@ -10,6 +11,7 @@ export function ImportQuizButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("quiz");
 
   async function handleImport(file: File) {
     setLoading(true);
@@ -22,13 +24,13 @@ export function ImportQuizButton() {
       });
       if (!res.ok) {
         const body = await res.json();
-        throw new Error(body.error || "Errore nell'importazione");
+        throw new Error(body.error || t("importError"));
       }
       const { id } = await res.json();
       router.push(`/dashboard/quiz/${id}/edit`);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Errore nell'importazione");
+      alert(err instanceof Error ? err.message : t("importError"));
       setLoading(false);
     }
   }
@@ -56,7 +58,7 @@ export function ImportQuizButton() {
         ) : (
           <Upload className="size-4 mr-2" />
         )}
-        Importa .qlz
+        {t("importQlz")}
       </Button>
     </>
   );

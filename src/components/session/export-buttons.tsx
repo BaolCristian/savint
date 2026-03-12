@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
 export function ExportButtons({ sessionId }: { sessionId: string }) {
+  const t = useTranslations("sessions");
   return (
     <div className="flex gap-2">
       <Link
@@ -12,7 +14,7 @@ export function ExportButtons({ sessionId }: { sessionId: string }) {
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <Download className="mr-2 h-4 w-4" />
-        Esporta CSV
+        {t("exportCSV")}
       </Link>
       <Link
         href={`/api/stats/export?sessionId=${sessionId}&format=pdf`}
@@ -20,7 +22,7 @@ export function ExportButtons({ sessionId }: { sessionId: string }) {
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <Download className="mr-2 h-4 w-4" />
-        Esporta PDF
+        {t("exportPDF")}
       </Link>
     </div>
   );

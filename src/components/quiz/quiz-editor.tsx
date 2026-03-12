@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuizInput, QuestionInput } from "@/lib/validators/quiz";
@@ -38,33 +39,33 @@ interface ValidationError {
   message: string;
 }
 
-function validateQuestions(title: string, questions: QuestionInput[]): ValidationError[] {
+function validateQuestions(title: string, questions: QuestionInput[], vt: (key: string) => string): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!title.trim()) {
-    errors.push({ questionIndex: -1, message: "Il titolo del quiz è obbligatorio" });
+    errors.push({ questionIndex: -1, message: vt("titleRequired") });
   }
 
   questions.forEach((q, i) => {
     if (!q.text.trim()) {
-      errors.push({ questionIndex: i, message: `Domanda ${i + 1}: manca il testo della domanda` });
+      errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("missingText")}` });
     }
 
     if (q.type === "MULTIPLE_CHOICE") {
       const opts = (q.options as { choices: { text: string; isCorrect: boolean }[] }).choices;
       const filled = opts.filter((o) => o.text.trim());
       if (filled.length < 2) {
-        errors.push({ questionIndex: i, message: `Domanda ${i + 1}: servono almeno 2 opzioni compilate` });
+        errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("needTwoOptions")}` });
       }
       if (!opts.some((o) => o.isCorrect && o.text.trim())) {
-        errors.push({ questionIndex: i, message: `Domanda ${i + 1}: nessuna risposta corretta selezionata` });
+        errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("noCorrectAnswer")}` });
       }
     }
 
     if (q.type === "OPEN_ANSWER") {
       const opts = q.options as { acceptedAnswers: string[] };
       if (!opts.acceptedAnswers?.some((a) => a.trim())) {
-        errors.push({ questionIndex: i, message: `Domanda ${i + 1}: serve almeno una risposta accettata` });
+        errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("needOneAccepted")}` });
       }
     }
 
@@ -72,14 +73,14 @@ function validateQuestions(title: string, questions: QuestionInput[]): Validatio
       const opts = q.options as { items: string[] };
       const filled = opts.items?.filter((item) => item.trim()) ?? [];
       if (filled.length < 2) {
-        errors.push({ questionIndex: i, message: `Domanda ${i + 1}: servono almeno 2 elementi` });
+        errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("needTwoElements")}` });
       }
     }
 
     if (q.type === "NUMERIC_ESTIMATION") {
       const opts = q.options as { correctValue?: number; tolerance?: number; maxRange?: number };
       if (opts.correctValue === undefined || opts.correctValue === null) {
-        errors.push({ questionIndex: i, message: `Domanda ${i + 1}: manca il valore corretto` });
+        errors.push({ questionIndex: i, message: `${vt("questionLabel")} ${i + 1}: ${vt("missingCorrectValue")}` });
       }
     }
   });
@@ -107,6 +108,8 @@ function createDefaultQuestion(order: number): QuestionInput {
 
 export function QuizEditor({ initialData, hasConsent = false }: Props) {
   const router = useRouter();
+  const t = useTranslations("editor");
+  const tc = useTranslations("common");
 
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(
@@ -142,7 +145,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
 
     const tags = tagsText
       .split(",")
-      .map((t) => t.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
 
     const payload = {
@@ -175,8 +178,8 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
         throw new Error(
           body?.error?.formErrors?.[0] ??
             body?.error?.fieldErrors
-              ? "Verifica i campi e riprova."
-              : `Errore durante il salvataggio (${res.status}).`,
+              ? t("fixAndRetry")
+              : `${t("saveError")} (${res.status}).`,
         );
       }
 
@@ -190,7 +193,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
         router.refresh();
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Errore sconosciuto.";
+      const msg = err instanceof Error ? err.message : t("unknownError");
       setError(msg);
       setSaveStatus("error");
     } finally {
@@ -203,7 +206,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
     setError(null);
     setValidationErrors([]);
 
-    const vErrors = validateQuestions(title, questions);
+    const vErrors = validateQuestions(title, questions, t);
     if (vErrors.length > 0) {
       setValidationErrors(vErrors);
       setSaveStatus("error");
@@ -308,19 +311,19 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
     if (saveStatus === "saving")
       return (
         <span className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Loader2 className="size-3 animate-spin" /> Salvataggio...
+          <Loader2 className="size-3 animate-spin" /> {t("saving")}
         </span>
       );
     if (saveStatus === "saved")
       return (
         <span className="flex items-center gap-1.5 text-xs text-emerald-600">
-          <Check className="size-3" /> Salvato
+          <Check className="size-3" /> {t("saved")}
         </span>
       );
     if (saveStatus === "error")
       return (
         <span className="flex items-center gap-1.5 text-xs text-red-500">
-          <AlertCircle className="size-3" /> Errore
+          <AlertCircle className="size-3" /> {tc("error")}
         </span>
       );
     return null;
@@ -343,7 +346,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titolo del quiz..."
+          placeholder={t("titlePlaceholder")}
           className="flex-1 text-xl font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-400"
         />
 
@@ -360,7 +363,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="hidden lg:flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title={sidebarOpen ? "Nascondi pannello" : "Mostra pannello"}
+            title={sidebarOpen ? t("hidePanel") : t("showPanel")}
           >
             {sidebarOpen ? (
               <PanelRightClose className="size-5" />
@@ -386,7 +389,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
               <Save className="size-4" />
             )}
             <span className="hidden sm:inline">
-              {saving ? "Salvataggio..." : saveStatus === "error" ? "Riprova" : "Salva"}
+              {saving ? t("saving") : saveStatus === "error" ? t("retry") : tc("save")}
             </span>
           </button>
         </div>
@@ -422,7 +425,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 />
               </div>
               <span className={`text-sm font-bold ${isPublic ? "text-green-700 dark:text-green-300" : "text-slate-600 dark:text-slate-400"}`}>
-                {isPublic ? "Quiz pubblico nella libreria" : "Quiz privato"}
+                {isPublic ? t("publicQuiz") : t("privateQuiz")}
               </span>
             </label>
             <span className="relative group">
@@ -430,7 +433,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 ?
               </span>
               <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-72 rounded-lg bg-slate-800 px-3 py-2.5 text-xs leading-relaxed text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50">
-                Condividi il tuo quiz con tutti i docenti! I quiz pubblici appaiono nella Libreria: altri docenti possono giocarli direttamente o duplicarli e adattarli alle proprie classi. Insieme creiamo una raccolta di risorse didattiche libere e gratuite.
+                {t("publicTooltip")}
               </span>
             </span>
           </div>
@@ -445,7 +448,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
               <div className="flex items-center gap-2 flex-1">
                 <FileText className="size-4 text-indigo-500" />
                 <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
-                  Impostazioni quiz
+                  {t("quizSettings")}
                 </span>
                 {!settingsOpen && (description || tagsText) && (
                   <span className="text-xs text-slate-400 truncate max-w-48">
@@ -465,12 +468,12 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                     <FileText className="size-3.5" />
-                    Descrizione
+                    {t("description")}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Descrizione opzionale del quiz..."
+                    placeholder={t("descriptionPlaceholder")}
                     rows={2}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                   />
@@ -478,12 +481,12 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                     <Tag className="size-3.5" />
-                    Tag (separati da virgola)
+                    {t("tagsLabel")}
                   </label>
                   <input
                     value={tagsText}
                     onChange={(e) => setTagsText(e.target.value)}
-                    placeholder="matematica, geometria, ..."
+                    placeholder={t("tagsPlaceholder")}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                   />
                 </div>
@@ -518,7 +521,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                   <AlertCircle className="size-5 text-red-500 shrink-0" />
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Correggi prima di salvare
+                    {t("fixBeforeSave")}
                   </h2>
                 </div>
                 <div className="overflow-y-auto p-4 space-y-2">
@@ -542,7 +545,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                     onClick={() => setValidationErrors([])}
                     className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   >
-                    Chiudi
+                    {tc("close")}
                   </button>
                 </div>
               </div>
@@ -567,7 +570,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
           <div className="px-4 py-3 border-b border-slate-700 min-w-[19rem]">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-                Domande
+                {t("questionsPanel")}
               </p>
               <span className="text-xs font-semibold text-slate-400 bg-slate-700 px-2 py-0.5 rounded-full">
                 {questions.length}
@@ -621,7 +624,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                     >
                       <span className="text-xs">{typeInfo.icon}</span>
                       <span className="text-[10px] font-bold text-slate-600 uppercase">
-                        {typeInfo.label}
+                        {t(typeInfo.labelKey)}
                       </span>
                     </div>
 
@@ -633,7 +636,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                           handleDuplicateQuestion(i);
                         }}
                         className="p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-600 transition-colors"
-                        title="Duplica"
+                        title={t("duplicateQuestion")}
                       >
                         <Copy className="size-3.5" />
                       </button>
@@ -644,7 +647,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                             handleQuestionRemove(i);
                           }}
                           className="p-1 rounded text-slate-400 hover:text-red-400 hover:bg-slate-600 transition-colors"
-                          title="Elimina"
+                          title={t("deleteQuestion")}
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -658,7 +661,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                   }`}>
                     {q.text || (
                       <span className="text-slate-500 italic">
-                        Domanda vuota...
+                        {t("emptyQuestion")}
                       </span>
                     )}
                   </p>
@@ -688,7 +691,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-600 text-slate-400 hover:border-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-all text-sm font-semibold"
             >
               <Plus className="size-4" />
-              Aggiungi domanda
+              {t("addQuestion")}
             </button>
             {questions.length > 1 && (
               <button
@@ -696,7 +699,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-sm font-semibold"
               >
                 <Shuffle className="size-4" />
-                Mescola domande
+                {t("shuffleQuestions")}
               </button>
             )}
           </div>
@@ -731,51 +734,51 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
 
 const THUMB_TYPES: Record<
   string,
-  { icon: string; label: string; color: string }
+  { icon: string; labelKey: string; color: string }
 > = {
   MULTIPLE_CHOICE: {
     icon: "🔘",
-    label: "Scelta",
+    labelKey: "typeChoice",
     color: "bg-blue-50 border border-blue-200",
   },
   TRUE_FALSE: {
     icon: "✅",
-    label: "V/F",
+    labelKey: "typeTF",
     color: "bg-emerald-50 border border-emerald-200",
   },
   OPEN_ANSWER: {
     icon: "✏️",
-    label: "Aperta",
+    labelKey: "typeOpen",
     color: "bg-amber-50 border border-amber-200",
   },
   ORDERING: {
     icon: "🔢",
-    label: "Ordina",
+    labelKey: "typeOrder",
     color: "bg-purple-50 border border-purple-200",
   },
   MATCHING: {
     icon: "🔗",
-    label: "Abbina",
+    labelKey: "typeMatch",
     color: "bg-rose-50 border border-rose-200",
   },
   SPOT_ERROR: {
     icon: "🔍",
-    label: "Errore",
+    labelKey: "typeError",
     color: "bg-red-50 border border-red-200",
   },
   NUMERIC_ESTIMATION: {
     icon: "🔢",
-    label: "Stima",
+    labelKey: "typeEstimate",
     color: "bg-cyan-50 border border-cyan-200",
   },
   IMAGE_HOTSPOT: {
     icon: "🎯",
-    label: "Hotspot",
+    labelKey: "typeHotspot",
     color: "bg-orange-50 border border-orange-200",
   },
   CODE_COMPLETION: {
     icon: "💻",
-    label: "Codice",
+    labelKey: "typeCode",
     color: "bg-indigo-50 border border-indigo-200",
   },
 };

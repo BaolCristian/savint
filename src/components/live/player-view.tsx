@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSocket } from "@/lib/socket/client";
 import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
@@ -97,6 +98,8 @@ function AvatarDisplay({ avatar, className }: { avatar: string; className?: stri
 /* ------------------------------------------------------------------ */
 
 export function PlayerView() {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const { socket, connected } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("join");
@@ -273,12 +276,12 @@ export function PlayerView() {
   const handleJoin = () => {
     if (!socket || !connected) return;
     if (!pin || !/^\d{5,8}$/.test(pin)) {
-      setError("Inserisci il PIN del gioco (5-8 cifre)");
+      setError(t("enterPin"));
       return;
     }
     const trimmedName = name.trim();
     if (trimmedName.length < 2) {
-      setError("Il nome deve avere almeno 2 caratteri");
+      setError(t("invalidName"));
       return;
     }
     setError(null);
@@ -298,14 +301,14 @@ export function PlayerView() {
           <div className="flex items-center gap-3 sm:flex-col sm:text-center">
             <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-12 h-12 sm:w-32 sm:h-32 object-contain shrink-0" />
             <p className="text-xs sm:text-base text-slate-500 leading-snug">
-              Inserisci il PIN condiviso dal docente e scegli come apparirai nel gioco.
+              {t("joinInstruction")}
             </p>
           </div>
 
           {/* Game PIN */}
           <div>
             <label htmlFor="pin-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
-              PIN del gioco
+              {t("pinLabel")}
             </label>
             <input
               id="pin-input"
@@ -314,7 +317,7 @@ export function PlayerView() {
               pattern="[0-9]*"
               maxLength={8}
               autoFocus
-              placeholder="Es: 482731"
+              placeholder={t("pinPlaceholder")}
               value={pin}
               onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 8)); setError(null); }}
               className="h-11 sm:h-16 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-xl sm:text-3xl font-bold tracking-[0.25em] px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
@@ -324,13 +327,13 @@ export function PlayerView() {
           {/* Nickname */}
           <div>
             <label htmlFor="name-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Il tuo nome
+              {t("yourName")}
             </label>
             <input
               id="name-input"
               type="text"
               maxLength={24}
-              placeholder="Es: Alex"
+              placeholder={t("namePlaceholder")}
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
               className="h-10 sm:h-14 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-base sm:text-xl font-semibold px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
@@ -341,7 +344,7 @@ export function PlayerView() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-slate-700">
-                Scegli un avatar <span className="text-slate-400 font-normal">(opzionale)</span>
+                {t("chooseAvatar")}
               </p>
               <button
                 type="button"
@@ -349,7 +352,7 @@ export function PlayerView() {
                 className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors"
                 title="Avatar casuale"
               >
-                <span className="text-sm">🎲</span> Random
+                <span className="text-sm">🎲</span> {t("random")}
               </button>
             </div>
 
@@ -443,7 +446,7 @@ export function PlayerView() {
         </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800 mb-2">{name}</h2>
         <p className="text-base sm:text-lg lg:text-xl text-emerald-600">
-          In attesa che il prof avvii il quiz...
+          {t("waitingForStart")}
         </p>
       </div>
     );
@@ -455,7 +458,7 @@ export function PlayerView() {
         {/* Header */}
         <div className="mb-3 sm:mb-4 flex items-center justify-between">
           <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-400">
-            Domanda {questionData.questionIndex + 1}/{questionData.totalQuestions}
+            {t("questionCounter", { index: questionData.questionIndex + 1, total: questionData.totalQuestions })}
           </span>
           <span
             className={`rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-base sm:text-lg lg:text-xl font-bold ${
@@ -480,9 +483,9 @@ export function PlayerView() {
               <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24" : "text-4xl sm:text-5xl lg:text-6xl"} />
             </div>
             <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
-              Risposta inviata!
+              {t("answerSubmitted")}
             </p>
-            <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-400">In attesa dei risultati...</p>
+            <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-400">{t("waitingResults")}</p>
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
@@ -502,13 +505,13 @@ export function PlayerView() {
       return (
         <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-indigo-500 to-purple-700 p-6 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-            Quanto sei sicuro della tua risposta?
+            {t("confidenceQuestion")}
           </h2>
           <div className="space-y-3 w-full max-w-xs">
             {[
-              { level: 1, label: "Poco sicuro", color: "from-slate-500 to-slate-600" },
-              { level: 2, label: "Abbastanza sicuro", color: "from-amber-500 to-yellow-600" },
-              { level: 3, label: "Molto sicuro", color: "from-green-500 to-emerald-600" },
+              { level: 1, label: t("notSure"), color: "from-slate-500 to-slate-600" },
+              { level: 2, label: t("somewhatSure"), color: "from-amber-500 to-yellow-600" },
+              { level: 3, label: t("verySure"), color: "from-green-500 to-emerald-600" },
             ].map(({ level, label, color }) => (
               <button
                 key={level}
@@ -537,19 +540,19 @@ export function PlayerView() {
           <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28" : "text-4xl sm:text-5xl lg:text-7xl"} />
         </div>
         <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
-          {isCorrect ? "Corretto!" : "Sbagliato!"}
+          {isCorrect ? t("correct") : t("wrong")}
         </h2>
         <p className="mb-1 text-lg sm:text-xl lg:text-2xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
-          +{feedback.score} punti
+          {t("points", { score: feedback.score })}
         </p>
         <p className="text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
-          Posizione: {feedback.position}
+          {t("position", { position: feedback.position })}
         </p>
         <p className="mt-1 text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
-          Punteggio totale: {feedback.totalScore}
+          {t("totalScore", { totalScore: feedback.totalScore })}
         </p>
         <p className="mt-1 text-xs sm:text-sm lg:text-base text-white/60 animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
-          Classe: {feedback.classCorrectPercent}% corretto
+          {t("classCorrect", { percent: feedback.classCorrectPercent })}
         </p>
       </div>
     );
@@ -571,7 +574,7 @@ export function PlayerView() {
     const medals = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
     return (
       <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-4 sm:p-6 lg:p-8 pt-8 sm:pt-12">
-        <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">Classifica</h2>
+        <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">{t("podium")}</h2>
 
         {/* Top 3 */}
         <div className="mb-6 sm:mb-8 w-full max-w-sm md:max-w-lg space-y-2 sm:space-y-3 lg:space-y-4">
@@ -714,19 +717,20 @@ function TrueFalseInput({
 }: {
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const tc = useTranslations("common");
   return (
     <div className="flex flex-1 gap-4">
       <button
         onClick={() => onSubmit({ selected: true })}
         className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 py-6 sm:py-8 lg:py-10 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
       >
-        Vero
+        {tc("true")}
       </button>
       <button
         onClick={() => onSubmit({ selected: false })}
         className="flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 py-6 sm:py-8 lg:py-10 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
       >
-        Falso
+        {tc("false")}
       </button>
     </div>
   );
@@ -739,13 +743,15 @@ function OpenAnswerInput({
 }: {
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const [text, setText] = useState("");
 
   return (
     <div className="flex flex-1 flex-col justify-end gap-4">
       <input
         type="text"
-        placeholder="La tua risposta..."
+        placeholder={t("openAnswerPlaceholder")}
         value={text}
         onChange={(e) => setText(e.target.value)}
         className="h-14 w-full bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-lg placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
@@ -755,7 +761,7 @@ function OpenAnswerInput({
         disabled={!text.trim()}
         className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
       >
-        Invia
+        {tc("submit")}
       </button>
     </div>
   );
@@ -770,6 +776,8 @@ function OrderingInput({
   options: OrderingOptions;
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const [order, setOrder] = useState<number[]>(() =>
     options.items.map((_, i) => i),
   );
@@ -873,7 +881,7 @@ function OrderingInput({
                 onClick={() => swap(pos, pos - 1)}
                 disabled={pos === 0}
                 className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-base font-bold disabled:opacity-20 active:bg-white/20"
-                aria-label="Sposta su"
+                aria-label={t("moveUp")}
               >
                 &#9650;
               </button>
@@ -881,7 +889,7 @@ function OrderingInput({
                 onClick={() => swap(pos, pos + 1)}
                 disabled={pos === order.length - 1}
                 className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-base font-bold disabled:opacity-20 active:bg-white/20"
-                aria-label="Sposta giu"
+                aria-label={t("moveDown")}
               >
                 &#9660;
               </button>
@@ -893,7 +901,7 @@ function OrderingInput({
         onClick={() => onSubmit({ order })}
         className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95"
       >
-        Conferma
+        {tc("confirm")}
       </button>
     </>
   );
@@ -908,6 +916,7 @@ function MatchingInput({
   options: MatchingOptions;
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const tc = useTranslations("common");
   const [matches, setMatches] = useState<[number, number][]>([]);
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
 
@@ -1003,7 +1012,7 @@ function MatchingInput({
         disabled={matches.length === 0}
         className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
       >
-        Conferma
+        {tc("confirm")}
       </button>
     </>
   );
@@ -1018,6 +1027,7 @@ function SpotErrorInput({
   options: { lines: string[] };
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const toggle = (i: number) => {
@@ -1052,7 +1062,7 @@ function SpotErrorInput({
         disabled={selected.size === 0}
         className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
       >
-        Conferma ({selected.size} selezionat{selected.size === 1 ? "a" : "e"})
+        {t("confirmCount", { count: selected.size, suffix: selected.size === 1 ? "a" : "e" })}
       </button>
     </>
   );
@@ -1067,6 +1077,8 @@ function NumericEstimationInput({
   options: { unit?: string };
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const [val, setVal] = useState("");
 
   return (
@@ -1075,7 +1087,7 @@ function NumericEstimationInput({
         <input
           type="number"
           inputMode="decimal"
-          placeholder="La tua stima..."
+          placeholder={t("estimatePlaceholder")}
           value={val}
           onChange={(e) => setVal(e.target.value)}
           className="h-16 flex-1 bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-2xl font-bold text-center placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
@@ -1089,7 +1101,7 @@ function NumericEstimationInput({
         disabled={val === "" || isNaN(Number(val))}
         className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
       >
-        Invia
+        {tc("submit")}
       </button>
     </div>
   );
@@ -1104,6 +1116,8 @@ function ImageHotspotInput({
   options: { imageUrl: string };
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const [tap, setTap] = useState<{ x: number; y: number } | null>(null);
 
   const handleTap = (e: React.MouseEvent<HTMLImageElement> | React.TouchEvent<HTMLImageElement>) => {
@@ -1124,7 +1138,7 @@ function ImageHotspotInput({
   return (
     <>
       <div className="flex-1 flex flex-col items-center justify-center">
-        <p className="text-sm text-gray-400 mb-3">Tocca il punto corretto sull&apos;immagine</p>
+        <p className="text-sm text-gray-400 mb-3">{t("tapCorrectPoint")}</p>
         <div className="relative inline-block max-w-full">
           <img
             src={options.imageUrl.startsWith("/") ? withBasePath(options.imageUrl) : options.imageUrl}
@@ -1146,7 +1160,7 @@ function ImageHotspotInput({
         disabled={!tap}
         className="mt-4 h-14 w-full rounded-2xl bg-white text-xl font-bold text-gray-900 transition active:scale-95 disabled:opacity-40"
       >
-        Conferma
+        {tc("confirm")}
       </button>
     </>
   );
@@ -1161,6 +1175,8 @@ function CodeCompletionInput({
   options: { codeLines: string[]; blankLineIndex: number; mode: "choice" | "text"; choices?: string[] };
   onSubmit: (value: AnswerValue) => void;
 }) {
+  const t = useTranslations("live");
+  const tc = useTranslations("common");
   const [text, setText] = useState("");
 
   return (
@@ -1195,7 +1211,7 @@ function CodeCompletionInput({
         <div className="flex flex-col justify-end gap-3 flex-1">
           <input
             type="text"
-            placeholder="Scrivi il codice mancante..."
+            placeholder={t("writeCode")}
             value={text}
             onChange={(e) => setText(e.target.value)}
             className="h-14 w-full bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-lg font-mono placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
@@ -1205,7 +1221,7 @@ function CodeCompletionInput({
             disabled={!text.trim()}
             className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
           >
-            Invia
+            {tc("submit")}
           </button>
         </div>
       )}

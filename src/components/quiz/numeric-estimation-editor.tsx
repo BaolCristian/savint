@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface Props {
   options: { correctValue: number; tolerance: number; maxRange: number; unit?: string };
   onChange: (opts: Props["options"]) => void;
 }
 
 export function NumericEstimationEditor({ options, onChange }: Props) {
+  const t = useTranslations("numericEditor");
   const { correctValue, tolerance, maxRange, unit } = options;
 
   const update = (partial: Partial<Props["options"]>) => {
@@ -17,7 +20,7 @@ export function NumericEstimationEditor({ options, onChange }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Valore corretto
+            {t("correctValue")}
           </label>
           <input
             type="number"
@@ -28,13 +31,13 @@ export function NumericEstimationEditor({ options, onChange }: Props) {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Unità di misura
+            {t("unit")}
           </label>
           <input
             type="text"
             value={unit ?? ""}
             onChange={(e) => update({ unit: e.target.value || undefined })}
-            placeholder="es. km, kg, °C..."
+            placeholder={t("unitPlaceholder")}
             className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
         </div>
@@ -43,7 +46,7 @@ export function NumericEstimationEditor({ options, onChange }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Tolleranza (punteggio pieno)
+            {t("tolerance")}
           </label>
           <input
             type="number"
@@ -55,7 +58,7 @@ export function NumericEstimationEditor({ options, onChange }: Props) {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Range massimo (punteggio parziale)
+            {t("maxRange")}
           </label>
           <input
             type="number"
@@ -69,11 +72,11 @@ export function NumericEstimationEditor({ options, onChange }: Props) {
 
       <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 px-4 py-3 text-base text-indigo-700 dark:text-indigo-300 space-y-1">
         <p>
-          <span className="font-semibold">Pieno:</span>{" "}
+          <span className="font-semibold">{t("fullScore")}</span>{" "}
           {correctValue - tolerance} — {correctValue + tolerance} {unit ?? ""}
         </p>
         <p>
-          <span className="font-semibold">Parziale:</span> fino a ±{maxRange} {unit ?? ""}
+          <span className="font-semibold">{t("partialScore")}</span> fino a ±{maxRange} {unit ?? ""}
         </p>
       </div>
     </div>

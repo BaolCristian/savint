@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, Library, LogOut, Moon, Sun, ShieldCheck } from "lucide-react";
 import { useTheme } from "@/components/dashboard/theme-provider";
 import { withBasePath } from "@/lib/base-path";
+import { useTranslations } from "next-intl";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import {
   Sheet,
   SheetTrigger,
@@ -13,19 +15,20 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const navItems = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/dashboard/quiz", label: "I miei Quiz", icon: BookOpen },
-  { href: "/dashboard/sessions", label: "Sessioni", icon: Play },
-  { href: "/dashboard/stats", label: "Statistiche", icon: BarChart3 },
-  { href: "/dashboard/share", label: "Condivisioni", icon: Share2 },
-  { href: "/dashboard/library", label: "Libreria", icon: Library },
-  { href: "/dashboard/ai-prompts", label: "Crea con AI", icon: Sparkles },
-];
-
 function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
+  const t = useTranslations("sidebar");
+
+  const navItems = [
+    { href: "/dashboard", label: "Home", icon: Home },
+    { href: "/dashboard/quiz", label: t("myQuizzes"), icon: BookOpen },
+    { href: "/dashboard/sessions", label: t("sessions"), icon: Play },
+    { href: "/dashboard/stats", label: t("statistics"), icon: BarChart3 },
+    { href: "/dashboard/share", label: t("shares"), icon: Share2 },
+    { href: "/dashboard/library", label: t("library"), icon: Library },
+    { href: "/dashboard/ai-prompts", label: t("createWithAI"), icon: Sparkles },
+  ];
 
   return (
     <>
@@ -60,15 +63,18 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
         })}
       </nav>
 
-      {/* Theme toggle + User */}
+      {/* Theme toggle + Locale + User */}
       <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
         <button
           onClick={toggle}
-          className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mb-2"
+          className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mb-1"
         >
           {theme === "dark" ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-slate-400" />}
-          {theme === "dark" ? "Modalita chiara" : "Modalita scura"}
+          {theme === "dark" ? t("lightMode") : t("darkMode")}
         </button>
+        <div className="px-3 py-2 mb-2">
+          <LocaleSwitcher />
+        </div>
         <div className="flex items-center gap-3 px-2 mb-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {user?.name?.charAt(0)?.toUpperCase() || "?"}
@@ -83,7 +89,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
           className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 transition-colors"
         >
           <LogOut className="h-4 w-4" />
-          Esci
+          {t("logout")}
         </button>
       </div>
     </>
@@ -92,6 +98,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
 
 export function DashboardSidebar({ user }: { user: any }) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("sidebar");
 
   return (
     <>
@@ -105,12 +112,12 @@ export function DashboardSidebar({ user }: { user: any }) {
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
             className="inline-flex items-center justify-center rounded-lg p-2 hover:bg-slate-100 transition-colors"
-            aria-label="Apri menu"
+            aria-label={t("openMenu")}
           >
             <Menu className="h-5 w-5 text-slate-600" />
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-4 flex flex-col">
-            <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
+            <SheetTitle className="sr-only">{t("navigationMenu")}</SheetTitle>
             <SidebarContent user={user} onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>

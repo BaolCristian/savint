@@ -2,8 +2,11 @@ import Link from "next/link";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 
 export default async function DashboardHome() {
+  const t = await getTranslations("dashboard");
+  const tc = await getTranslations("common");
   const session = await auth();
   const userId = session!.user!.id!;
 
@@ -61,9 +64,9 @@ export default async function DashboardHome() {
   );
 
   const statusLabels: Record<string, string> = {
-    LOBBY: "In attesa",
-    IN_PROGRESS: "In corso",
-    FINISHED: "Terminata",
+    LOBBY: t("lobby"),
+    IN_PROGRESS: t("inProgress"),
+    FINISHED: t("finished"),
   };
 
   const statusColors: Record<string, string> = {
@@ -73,18 +76,18 @@ export default async function DashboardHome() {
   };
 
   const stats = [
-    { label: "Quiz creati", value: quizCount, icon: "📝", color: "from-indigo-500 to-purple-600", bg: "bg-indigo-50 border-indigo-100 dark:bg-indigo-950 dark:border-indigo-800" },
-    { label: "Sessioni giocate", value: sessionCount, icon: "🎮", color: "from-emerald-500 to-teal-600", bg: "bg-emerald-50 border-emerald-100 dark:bg-emerald-950 dark:border-emerald-800" },
-    { label: "Studenti totali", value: studentCount, icon: "👥", color: "from-amber-500 to-orange-600", bg: "bg-amber-50 border-amber-100 dark:bg-amber-950 dark:border-amber-800" },
-    { label: "Correttezza media", value: `${correctnessRate}%`, icon: "🎯", color: "from-rose-500 to-pink-600", bg: "bg-rose-50 border-rose-100 dark:bg-rose-950 dark:border-rose-800" },
+    { label: t("quizzesCreated"), value: quizCount, icon: "\u{1F4DD}", color: "from-indigo-500 to-purple-600", bg: "bg-indigo-50 border-indigo-100 dark:bg-indigo-950 dark:border-indigo-800" },
+    { label: t("sessionsPlayed"), value: sessionCount, icon: "\u{1F3AE}", color: "from-emerald-500 to-teal-600", bg: "bg-emerald-50 border-emerald-100 dark:bg-emerald-950 dark:border-emerald-800" },
+    { label: t("totalStudents"), value: studentCount, icon: "\u{1F465}", color: "from-amber-500 to-orange-600", bg: "bg-amber-50 border-amber-100 dark:bg-amber-950 dark:border-amber-800" },
+    { label: t("avgCorrectness"), value: `${correctnessRate}%`, icon: "\u{1F3AF}", color: "from-rose-500 to-pink-600", bg: "bg-rose-50 border-rose-100 dark:bg-rose-950 dark:border-rose-800" },
   ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Dashboard</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Benvenuto, {session!.user!.name || "Docente"}!</p>
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t("title")}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{t("welcome", { name: session!.user!.name || "Docente" })}</p>
       </div>
 
       {/* Quick Stats */}
@@ -108,19 +111,19 @@ export default async function DashboardHome() {
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🎮</span>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">Sessioni recenti</h2>
+              <span className="text-xl">{"\u{1F3AE}"}</span>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t("recentSessions")}</h2>
             </div>
             <Link href="/dashboard/sessions" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
-              Vedi tutte →
+              {t("viewAll")}
             </Link>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {recentSessions.length === 0 ? (
               <div className="px-6 py-10 text-center">
-                <span className="text-4xl block mb-2">🎲</span>
-                <p className="text-slate-500">Nessuna sessione ancora.</p>
-                <p className="text-sm text-slate-400 mt-1">Avvia il tuo primo quiz!</p>
+                <span className="text-4xl block mb-2">{"\u{1F3B2}"}</span>
+                <p className="text-slate-500">{t("noSessionsYet")}</p>
+                <p className="text-sm text-slate-400 mt-1">{t("startFirstQuiz")}</p>
               </div>
             ) : (
               recentSessions.map((s) => (
@@ -129,7 +132,7 @@ export default async function DashboardHome() {
                     <div className="space-y-0.5">
                       <p className="font-semibold text-slate-800 dark:text-slate-200">{s.quiz.title}</p>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {playerCountMap[s.id] ?? 0} studenti · {s.createdAt.toLocaleDateString("it-IT", {
+                        {t("students", { count: playerCountMap[s.id] ?? 0 })} · {s.createdAt.toLocaleDateString("it-IT", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
@@ -150,20 +153,20 @@ export default async function DashboardHome() {
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">📝</span>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">Quiz recenti</h2>
+              <span className="text-xl">{"\u{1F4DD}"}</span>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t("recentQuizzes")}</h2>
             </div>
             <Link href="/dashboard/quiz" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
-              Vedi tutti →
+              {t("viewAllQuizzes")}
             </Link>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {recentQuizzes.length === 0 ? (
               <div className="px-6 py-10 text-center">
-                <span className="text-4xl block mb-2">📚</span>
-                <p className="text-slate-500">Nessun quiz ancora.</p>
+                <span className="text-4xl block mb-2">{"\u{1F4DA}"}</span>
+                <p className="text-slate-500">{t("noQuizzesYet")}</p>
                 <Link href="/dashboard/quiz/new" className="text-sm text-indigo-600 font-semibold hover:underline mt-1 block">
-                  Crea il tuo primo quiz →
+                  {t("createFirstQuiz")}
                 </Link>
               </div>
             ) : (
@@ -173,10 +176,10 @@ export default async function DashboardHome() {
                     <div className="space-y-0.5">
                       <p className="font-semibold text-slate-800 dark:text-slate-200">{q.title}</p>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {q._count.questions} domande
+                        {tc("questions", { count: q._count.questions })}
                       </p>
                     </div>
-                    <span className="text-slate-400 text-sm">→</span>
+                    <span className="text-slate-400 text-sm">{"\u2192"}</span>
                   </div>
                 </Link>
               ))

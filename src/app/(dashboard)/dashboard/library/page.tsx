@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { LibraryClient } from "@/components/library/library-client";
+import { getTranslations } from "next-intl/server";
 
 export default async function LibraryPage() {
+  const t = await getTranslations("library");
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -34,9 +36,9 @@ export default async function LibraryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Libreria Quiz</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Esplora i quiz condivisi da altri docenti. Puoi giocarli direttamente o duplicarli nel tuo account.
+          {t("description")}
         </p>
       </div>
       <LibraryClient quizzes={data} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Trash2, Plus } from "lucide-react";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function CodeCompletionEditor({ options, onChange }: Props) {
+  const t = useTranslations("codeEditor");
   const { codeLines, blankLineIndex, correctAnswer, mode, choices } = options;
 
   const update = (partial: Partial<Props["options"]>) => {
@@ -81,7 +83,7 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
               <input
                 value={line}
                 onChange={(e) => updateLine(i, e.target.value)}
-                placeholder={isBlank ? "← riga da completare" : `Riga ${i + 1}`}
+                placeholder={isBlank ? t("blankLine") : t("linePlaceholder", { n: i + 1 })}
                 className={`flex-1 font-mono rounded-lg border px-3 py-2 text-base placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                   isBlank
                     ? "bg-amber-950 border-amber-700 text-amber-200"
@@ -105,18 +107,18 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
         onClick={addLine}
         className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
       >
-        <Plus className="size-5" /> Aggiungi riga
+        <Plus className="size-5" /> {t("addLine")}
       </button>
 
       {/* Correct answer */}
       <div>
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-          Risposta corretta
+          {t("correctAnswer")}
         </label>
         <input
           value={correctAnswer}
           onChange={(e) => update({ correctAnswer: e.target.value })}
-          placeholder="Codice corretto per la riga vuota..."
+          placeholder={t("correctPlaceholder")}
           className="w-full font-mono rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
       </div>
@@ -132,7 +134,7 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
               : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:border-indigo-300"
           }`}
         >
-          Scelta multipla
+          {t("multipleChoice")}
         </button>
         <button
           type="button"
@@ -143,7 +145,7 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
               : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:border-indigo-300"
           }`}
         >
-          Testo libero
+          {t("freeText")}
         </button>
       </div>
 
@@ -162,7 +164,7 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
               <input
                 value={choice}
                 onChange={(e) => updateChoice(i, e.target.value)}
-                placeholder={`Scelta ${i + 1}`}
+                placeholder={t("choicePlaceholder", { n: i + 1 })}
                 className="flex-1 font-mono rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
               />
               {choices.length > 2 && (
@@ -180,7 +182,7 @@ export function CodeCompletionEditor({ options, onChange }: Props) {
               onClick={addChoice}
               className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
             >
-              <Plus className="size-5" /> Aggiungi scelta
+              <Plus className="size-5" /> {t("addChoice")}
             </button>
           )}
         </div>

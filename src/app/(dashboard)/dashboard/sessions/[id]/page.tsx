@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getTranslations } from "next-intl/server";
 
 export default async function SessionDetailPage({
   params,
@@ -27,6 +28,9 @@ export default async function SessionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const t = await getTranslations("sessions");
+  const tc = await getTranslations("common");
+  const tq = await getTranslations("questionEditor");
   const authSession = await auth();
   if (!authSession?.user?.id) redirect("/api/auth/signin");
 
@@ -110,11 +114,11 @@ export default async function SessionDetailPage({
   }
 
   const questionTypeLabel: Record<string, string> = {
-    MULTIPLE_CHOICE: "Scelta multipla",
-    TRUE_FALSE: "Vero/Falso",
-    OPEN_ANSWER: "Risposta aperta",
-    ORDERING: "Ordinamento",
-    MATCHING: "Abbinamento",
+    MULTIPLE_CHOICE: tq("multipleChoice"),
+    TRUE_FALSE: tq("trueFalse"),
+    OPEN_ANSWER: tq("openAnswer"),
+    ORDERING: tq("ordering"),
+    MATCHING: tq("matching"),
   };
 
   return (
@@ -123,11 +127,12 @@ export default async function SessionDetailPage({
         <div>
           <h1 className="text-2xl font-bold">{session.quiz.title}</h1>
           <p className="text-muted-foreground">
-            PIN: {session.pin} &middot; Sessione del{" "}
-            {session.createdAt.toLocaleDateString("it-IT", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
+            {t("pin", { pin: session.pin })} &middot; {t("sessionDate", {
+              date: session.createdAt.toLocaleDateString("it-IT", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }),
             })}
           </p>
         </div>
@@ -139,7 +144,7 @@ export default async function SessionDetailPage({
                 target="_blank"
                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-full transition-all shadow-md"
               >
-                Rientra nella sessione
+                {t("rejoin")}
               </Link>
               <TerminateButton sessionId={session.id} />
             </>
@@ -153,7 +158,7 @@ export default async function SessionDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Partecipanti
+              {t("participants")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -163,7 +168,7 @@ export default async function SessionDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Domande
+              {t("question")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -173,7 +178,7 @@ export default async function SessionDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Piu difficile
+              {t("hardest")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -194,7 +199,7 @@ export default async function SessionDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Piu facile
+              {t("easiest")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -216,18 +221,18 @@ export default async function SessionDetailPage({
 
       {/* Classifica */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Classifica</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("leaderboard")}</h2>
         {leaderboard.length === 0 ? (
-          <p className="text-muted-foreground">Nessun partecipante.</p>
+          <p className="text-muted-foreground">{t("noParticipants")}</p>
         ) : (
           <Card>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-16">#</TableHead>
-                  <TableHead>Giocatore</TableHead>
-                  <TableHead className="text-right">Punteggio</TableHead>
-                  <TableHead className="text-right">Corrette</TableHead>
+                  <TableHead>{t("player")}</TableHead>
+                  <TableHead className="text-right">{t("score")}</TableHead>
+                  <TableHead className="text-right">{t("correct")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -251,16 +256,16 @@ export default async function SessionDetailPage({
 
       {/* Dettaglio domande */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Dettaglio domande</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("questionDetail")}</h2>
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
-                <TableHead>Domanda</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">% Corrette</TableHead>
-                <TableHead className="text-right">Tempo medio</TableHead>
+                <TableHead>{t("question")}</TableHead>
+                <TableHead>{t("type")}</TableHead>
+                <TableHead className="text-right">{t("pctCorrect")}</TableHead>
+                <TableHead className="text-right">{t("avgTime")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

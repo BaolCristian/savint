@@ -9,8 +9,11 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 
 export default async function TopicsStatsPage() {
+  const t = await getTranslations("stats");
+  const tc = await getTranslations("common");
   const session = await auth();
   const userId = session!.user!.id!;
 
@@ -75,11 +78,11 @@ export default async function TopicsStatsPage() {
   }
 
   const tags = [...tagMap.values()]
-    .map((t) => ({
-      ...t,
+    .map((tg) => ({
+      ...tg,
       avgCorrectPct:
-        t.totalAnswers > 0
-          ? Math.round((t.correctAnswers / t.totalAnswers) * 100)
+        tg.totalAnswers > 0
+          ? Math.round((tg.correctAnswers / tg.totalAnswers) * 100)
           : null,
     }))
     .sort((a, b) => (a.avgCorrectPct ?? 0) - (b.avgCorrectPct ?? 0));
@@ -109,11 +112,11 @@ export default async function TopicsStatsPage() {
           href="/dashboard/stats"
           className="text-sm text-muted-foreground hover:underline"
         >
-          &larr; Torna alle statistiche
+          {t("backToStats")}
         </Link>
-        <h1 className="text-2xl font-bold mt-2">Analisi per argomento</h1>
+        <h1 className="text-2xl font-bold mt-2">{t("topicAnalysis")}</h1>
         <p className="text-muted-foreground">
-          Identifica gli argomenti che necessitano di revisione
+          {t("topicSubtitle")}
         </p>
       </div>
 
@@ -121,15 +124,15 @@ export default async function TopicsStatsPage() {
       <div className="flex gap-4 text-sm">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red-500" />
-          <span>Debole (&lt;50%)</span>
+          <span>{t("weak")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-yellow-500" />
-          <span>Sufficiente (50-70%)</span>
+          <span>{t("sufficient")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-green-500" />
-          <span>Buono (&gt;70%)</span>
+          <span>{t("good")}</span>
         </div>
       </div>
 
@@ -137,54 +140,52 @@ export default async function TopicsStatsPage() {
         <Card>
           <CardContent className="py-8">
             <p className="text-center text-muted-foreground">
-              Nessun tag assegnato ai quiz. Aggiungi tag ai tuoi quiz per vedere
-              le statistiche per argomento.
+              {t("noTags")}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {tags.map((t) => (
-            <Card key={t.tag} className={`border ${getColorClasses(t.avgCorrectPct)}`}>
+          {tags.map((tg) => (
+            <Card key={tg.tag} className={`border ${getColorClasses(tg.avgCorrectPct)}`}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{t.tag}</CardTitle>
-                  {t.avgCorrectPct !== null ? (
+                  <CardTitle className="text-lg">{tg.tag}</CardTitle>
+                  {tg.avgCorrectPct !== null ? (
                     <Badge
                       variant={
-                        t.avgCorrectPct < 50
+                        tg.avgCorrectPct < 50
                           ? "destructive"
-                          : t.avgCorrectPct < 70
+                          : tg.avgCorrectPct < 70
                             ? "secondary"
                             : "default"
                       }
                     >
-                      {t.avgCorrectPct}% corrette
+                      {t("correctPercent", { count: tg.avgCorrectPct })}
                     </Badge>
                   ) : (
-                    <Badge variant="outline">Nessun dato</Badge>
+                    <Badge variant="outline">{tc("noData")}</Badge>
                   )}
                 </div>
                 <CardDescription>
-                  {t.quizCount} {t.quizCount === 1 ? "quiz" : "quiz"} &middot;{" "}
-                  {t.totalSessions} {t.totalSessions === 1 ? "sessione" : "sessioni"} &middot;{" "}
-                  {t.totalAnswers} risposte
+                  {tg.quizCount} {tg.quizCount === 1 ? "quiz" : "quiz"} &middot;{" "}
+                  {tg.totalSessions} {tg.totalSessions === 1 ? "sessione" : "sessioni"} &middot;{" "}
+                  {tc("answers", { count: tg.totalAnswers })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Progress bar */}
-                {t.avgCorrectPct !== null && (
+                {tg.avgCorrectPct !== null && (
                   <div className="w-full bg-muted rounded-full h-2.5 mb-3">
                     <div
-                      className={`h-2.5 rounded-full ${getBarColor(t.avgCorrectPct)}`}
-                      style={{ width: `${t.avgCorrectPct}%` }}
+                      className={`h-2.5 rounded-full ${getBarColor(tg.avgCorrectPct)}`}
+                      style={{ width: `${tg.avgCorrectPct}%` }}
                     />
                   </div>
                 )}
                 <div className="text-sm">
-                  <span className="font-medium">Quiz: </span>
-                  {t.quizTitles.slice(0, 3).join(", ")}
-                  {t.quizTitles.length > 3 && ` (+${t.quizTitles.length - 3})`}
+                  <span className="font-medium">{t("quizLabel", { titles: tg.quizTitles.slice(0, 3).join(", ") })}</span>
+                  {tg.quizTitles.length > 3 && ` (+${tg.quizTitles.length - 3})`}
                 </div>
               </CardContent>
             </Card>
@@ -194,9 +195,7 @@ export default async function TopicsStatsPage() {
 
       {quizzesWithoutTags > 0 && (
         <p className="text-sm text-muted-foreground">
-          {quizzesWithoutTags} {quizzesWithoutTags === 1 ? "quiz non ha" : "quiz non hanno"}{" "}
-          tag assegnati e {quizzesWithoutTags === 1 ? "non e incluso" : "non sono inclusi"}{" "}
-          in questa analisi.
+          {t("untaggedQuizzes", { count: quizzesWithoutTags })}
         </p>
       )}
     </div>

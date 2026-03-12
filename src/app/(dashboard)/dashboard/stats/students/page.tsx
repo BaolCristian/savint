@@ -16,8 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getTranslations } from "next-intl/server";
 
 export default async function StudentsStatsPage() {
+  const t = await getTranslations("stats");
   const session = await auth();
   const userId = session!.user!.id!;
 
@@ -170,9 +172,9 @@ export default async function StudentsStatsPage() {
     .sort((a, b) => b.avgScore - a.avgScore);
 
   const trendLabel: Record<string, string> = {
-    improving: "In miglioramento",
-    declining: "In calo",
-    stable: "Stabile",
+    improving: t("improving"),
+    declining: t("declining"),
+    stable: t("stable"),
   };
 
   const trendVariant: Record<
@@ -191,11 +193,11 @@ export default async function StudentsStatsPage() {
           href="/dashboard/stats"
           className="text-sm text-muted-foreground hover:underline"
         >
-          &larr; Torna alle statistiche
+          {t("backToStats")}
         </Link>
-        <h1 className="text-2xl font-bold mt-2">Performance studenti</h1>
+        <h1 className="text-2xl font-bold mt-2">{t("studentPerformance")}</h1>
         <p className="text-muted-foreground">
-          Tracciamento cross-sessione di tutti gli studenti
+          {t("studentSubtitle")}
         </p>
       </div>
 
@@ -203,7 +205,7 @@ export default async function StudentsStatsPage() {
         <Card>
           <CardContent className="py-8">
             <p className="text-center text-muted-foreground">
-              Nessuno studente ha ancora partecipato a sessioni completate.
+              {t("noStudentsYet")}
             </p>
           </CardContent>
         </Card>
@@ -211,19 +213,19 @@ export default async function StudentsStatsPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {students.length} {students.length === 1 ? "studente" : "studenti"}
+              {t("studentCount", { count: students.length })}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Sessioni</TableHead>
-                  <TableHead className="text-right">Punteggio medio</TableHead>
-                  <TableHead className="text-right">% Corrette</TableHead>
-                  <TableHead className="text-center">Trend</TableHead>
+                  <TableHead>{t("name")}</TableHead>
+                  <TableHead>{t("email")}</TableHead>
+                  <TableHead className="text-right">{t("sessions")}</TableHead>
+                  <TableHead className="text-right">{t("avgScore")}</TableHead>
+                  <TableHead className="text-right">{t("pctCorrect")}</TableHead>
+                  <TableHead className="text-center">{t("trend")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -266,7 +268,7 @@ export default async function StudentsStatsPage() {
       {/* Per-student session detail (expanded view) */}
       {students.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Dettaglio per studente</h2>
+          <h2 className="text-lg font-semibold">{t("studentDetail")}</h2>
           {students.map((student) => (
             <Card key={student.name}>
               <CardHeader className="pb-2">
@@ -283,11 +285,11 @@ export default async function StudentsStatsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Quiz</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead className="text-right">Punteggio</TableHead>
-                      <TableHead className="text-right">Risposte</TableHead>
-                      <TableHead className="text-right">% Corrette</TableHead>
+                      <TableHead>{t("quiz")}</TableHead>
+                      <TableHead>{t("date")}</TableHead>
+                      <TableHead className="text-right">{t("score")}</TableHead>
+                      <TableHead className="text-right">{t("correctLabel")}</TableHead>
+                      <TableHead className="text-right">{t("pctCorrect")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Search, Upload } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import { ImageSearchDialog } from "@/components/quiz/image-search";
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function ImageHotspotEditor({ options, onChange }: Props) {
+  const t = useTranslations("imageHotspot");
+  const tc = useTranslations("common");
   const { imageUrl, hotspot, tolerance } = options;
   const [showImageSearch, setShowImageSearch] = useState(false);
 
@@ -38,7 +41,7 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
       const { url } = await res.json();
       update({ imageUrl: url });
     } catch {
-      alert("Errore nel caricamento dell'immagine");
+      alert(t("uploadError"));
     }
   };
 
@@ -48,7 +51,7 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
         <div className="flex items-center gap-3">
           <input
             type="url"
-            placeholder="URL immagine..."
+            placeholder={t("urlPlaceholder")}
             onBlur={(e) => {
               if (e.target.value && /^https?:\/\//.test(e.target.value))
                 update({ imageUrl: e.target.value });
@@ -61,11 +64,11 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
             className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold px-4 py-2 rounded-xl text-base border border-indigo-200 dark:border-indigo-700 transition-colors shrink-0"
           >
             <Search className="size-4" />
-            Cerca
+            {tc("search")}
           </button>
           <label className="flex items-center gap-2 cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-semibold px-4 py-2 rounded-xl text-base transition-colors shrink-0">
             <Upload className="size-4" />
-            Carica
+            {tc("upload")}
             <input
               type="file"
               accept="image/png,image/jpeg,image/gif,image/webp"
@@ -101,7 +104,7 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
         >
           <img
             src={imageUrl.startsWith("/") ? withBasePath(imageUrl) : imageUrl}
-            alt="Hotspot"
+            alt={t("altText")}
             className="w-full max-h-96 object-contain"
             draggable={false}
           />
@@ -126,11 +129,11 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
           className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold px-4 py-2 rounded-xl text-sm border border-indigo-200 dark:border-indigo-700 transition-colors"
         >
           <Search className="size-3.5" />
-          Cerca altra immagine
+          {t("searchAnother")}
         </button>
         <label className="flex items-center gap-1.5 cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-semibold px-4 py-2 rounded-xl text-sm transition-colors">
           <Upload className="size-3.5" />
-          Carica nuova
+          {t("uploadNew")}
           <input
             type="file"
             accept="image/png,image/jpeg,image/gif,image/webp"
@@ -147,14 +150,14 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
           onClick={() => update({ imageUrl: "" })}
           className="flex items-center gap-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
         >
-          Rimuovi
+          {tc("remove")}
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Raggio hotspot ({Math.round(hotspot.radius * 100)}%)
+            {t("radius")} ({Math.round(hotspot.radius * 100)}%)
           </label>
           <input
             type="range"
@@ -170,7 +173,7 @@ export function ImageHotspotEditor({ options, onChange }: Props) {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-            Tolleranza ({Math.round(tolerance * 100)}%)
+            {t("tolerance")} ({Math.round(tolerance * 100)}%)
           </label>
           <input
             type="range"

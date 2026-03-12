@@ -16,8 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 
 export default async function AdminPage() {
+  const t = await getTranslations("admin");
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if (session.user.role !== "ADMIN") notFound();
@@ -46,14 +48,14 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Pannello Admin</h1>
+      <h1 className="text-2xl font-bold">{t("panelTitle")}</h1>
 
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Docenti
+              {t("teachers")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -63,7 +65,7 @@ export default async function AdminPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Admin
+              {t("admins")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -73,7 +75,7 @@ export default async function AdminPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Quiz totali
+              {t("totalQuizzes")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -83,7 +85,7 @@ export default async function AdminPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sessioni totali
+              {t("totalSessions")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -94,31 +96,31 @@ export default async function AdminPage() {
 
       {/* Users table */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Utenti registrati</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("registeredUsers")}</h2>
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ruolo</TableHead>
-                <TableHead className="text-right">Quiz</TableHead>
-                <TableHead className="text-right">Sessioni</TableHead>
-                <TableHead>Registrato il</TableHead>
+                <TableHead>{t("name")}</TableHead>
+                <TableHead>{t("email")}</TableHead>
+                <TableHead>{t("role")}</TableHead>
+                <TableHead className="text-right">{t("quizzes")}</TableHead>
+                <TableHead className="text-right">{t("sessions")}</TableHead>
+                <TableHead>{t("registeredOn")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">
-                    {u.name || "—"}
+                    {u.name || "\u2014"}
                   </TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>
                     <Badge
                       variant={u.role === "ADMIN" ? "default" : "outline"}
                     >
-                      {u.role === "ADMIN" ? "Admin" : "Docente"}
+                      {u.role === "ADMIN" ? t("admin") : t("teacher")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

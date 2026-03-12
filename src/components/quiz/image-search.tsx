@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Search, X, Loader2 } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 
@@ -20,6 +21,8 @@ export function ImageSearchDialog({
   onSelect: (url: string) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations("imageSearch");
+  const tc = useTranslations("common");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ImageHit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,12 +44,12 @@ export function ImageSearchDialog({
       console.log("[image-search] response:", res.status, data);
 
       if (!res.ok) {
-        throw new Error(data.error || "Errore nella ricerca");
+        throw new Error(data.error || t("searchError"));
       }
 
       setResults(data.hits ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore nella ricerca");
+      setError(err instanceof Error ? err.message : t("searchError"));
       setResults([]);
     } finally {
       setLoading(false);
@@ -60,7 +63,7 @@ export function ImageSearchDialog({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Search className="size-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-800">Cerca immagini</h2>
+            <h2 className="text-lg font-bold text-slate-800">{t("title")}</h2>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
             <X className="size-5" />
@@ -82,7 +85,7 @@ export function ImageSearchDialog({
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Es: scuola, matematica, natura, scienza..."
+                placeholder={t("placeholder")}
                 className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
                 autoFocus
               />
@@ -92,7 +95,7 @@ export function ImageSearchDialog({
               disabled={loading || !query.trim()}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-semibold px-6 py-2.5 rounded-xl transition-all active:scale-[0.97]"
             >
-              {loading ? <Loader2 className="size-4 animate-spin" /> : "Cerca"}
+              {loading ? <Loader2 className="size-4 animate-spin" /> : tc("search")}
             </button>
           </form>
         </div>
@@ -108,23 +111,23 @@ export function ImageSearchDialog({
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <Loader2 className="size-8 animate-spin mb-3" />
-              <p className="text-sm">Ricerca in corso...</p>
+              <p className="text-sm">{t("searching")}</p>
             </div>
           )}
 
           {!loading && searched && results.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <span className="text-5xl mb-3">🔍</span>
-              <p className="text-sm font-medium">Nessun risultato trovato</p>
-              <p className="text-xs mt-1">Prova con un termine diverso</p>
+              <p className="text-sm font-medium">{t("noResults")}</p>
+              <p className="text-xs mt-1">{t("tryDifferent")}</p>
             </div>
           )}
 
           {!loading && !searched && (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <span className="text-5xl mb-3">🖼️</span>
-              <p className="text-sm font-medium">Cerca immagini gratuite da Pixabay</p>
-              <p className="text-xs mt-1">Le immagini sono libere da copyright</p>
+              <p className="text-sm font-medium">{t("initialMessage")}</p>
+              <p className="text-xs mt-1">{t("copyrightFree")}</p>
             </div>
           )}
 
@@ -148,7 +151,7 @@ export function ImageSearchDialog({
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="bg-white/90 text-indigo-700 font-bold text-xs px-3 py-1.5 rounded-full shadow">
-                      Usa questa
+                      {t("useThis")}
                     </span>
                   </div>
                 </button>
@@ -160,7 +163,7 @@ export function ImageSearchDialog({
         {/* Footer */}
         <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 text-center">
           <p className="text-[11px] text-slate-400">
-            Immagini fornite da <a href="https://pixabay.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline font-medium">Pixabay</a> — libere da copyright
+            {t("providedBy")} <a href="https://pixabay.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline font-medium">Pixabay</a> — {t("copyrightInfo")}
           </p>
         </div>
       </div>

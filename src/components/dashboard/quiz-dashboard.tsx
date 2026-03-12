@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { PlayQuizButton } from "@/components/quiz/play-button";
 import { ImportQuizButton } from "@/components/quiz/import-button";
@@ -43,12 +44,7 @@ export interface QuizItem {
 
 type SortKey = "newest" | "oldest" | "most_played" | "alphabetical";
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "newest", label: "Piu recenti" },
-  { value: "oldest", label: "Meno recenti" },
-  { value: "most_played", label: "Piu giocati" },
-  { value: "alphabetical", label: "A → Z" },
-];
+/* SORT_OPTIONS is built inside the component using translations */
 
 /* ------------------------------------------------------------------ */
 /*  Dashboard                                                          */
@@ -61,6 +57,16 @@ export function QuizDashboard({
   quizzes: QuizItem[];
   userId: string;
 }) {
+  const t = useTranslations("quiz");
+  const tc = useTranslations("common");
+
+  const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+    { value: "newest", label: t("sortNewest") },
+    { value: "oldest", label: t("sortOldest") },
+    { value: "most_played", label: t("sortMostPlayed") },
+    { value: "alphabetical", label: t("sortAZ") },
+  ];
+
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -69,7 +75,7 @@ export function QuizDashboard({
   // All unique tags
   const allTags = useMemo(() => {
     const set = new Set<string>();
-    quizzes.forEach((q) => q.tags.forEach((t) => set.add(t)));
+    quizzes.forEach((q) => q.tags.forEach((tag) => set.add(tag)));
     return [...set].sort();
   }, [quizzes]);
 
@@ -83,7 +89,7 @@ export function QuizDashboard({
       list = list.filter(
         (quiz) =>
           quiz.title.toLowerCase().includes(q) ||
-          quiz.tags.some((t) => t.toLowerCase().includes(q)),
+          quiz.tags.some((tag) => tag.toLowerCase().includes(q)),
       );
     }
 
@@ -130,12 +136,12 @@ export function QuizDashboard({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-            I miei Quiz
+            {t("myQuizzes")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Gestisci, modifica e avvia i tuoi quiz
+            {t("manageDescription")}
             <span className="ml-2 text-slate-400 dark:text-slate-500">
-              · {quizzes.length} quiz in libreria
+              · {quizzes.length} {t("quizzesInLibrary")}
             </span>
           </p>
         </div>
@@ -146,7 +152,7 @@ export function QuizDashboard({
           <Link href="/dashboard/quiz/new">
             <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-full transition-all shadow-md shadow-indigo-200 dark:shadow-none hover:shadow-lg active:scale-[0.97]">
               <Plus className="size-4" />
-              Nuovo Quiz
+              {t("newQuiz")}
             </button>
           </Link>
         </div>
@@ -156,16 +162,16 @@ export function QuizDashboard({
       <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
         <svg className="size-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.41 15.06c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99zm6.24 0c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99z"/></svg>
         <p>
-          Tutti i quiz resi pubblici sono rilasciati sotto licenza{" "}
+          {t("ccNotice")}{" "}
           <a
             href="https://creativecommons.org/licenses/by/4.0/"
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
           >
-            Creative Commons 4.0 International
+            {t("ccLink")}
           </a>
-          . Pubblicando un quiz accetti che altri docenti possano riutilizzarlo secondo i termini della licenza scelta.
+          {t("ccNoticeEnd")}
         </p>
       </div>
 
@@ -178,7 +184,7 @@ export function QuizDashboard({
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Cerca tra i tuoi quiz..."
+                placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all"
@@ -217,7 +223,7 @@ export function QuizDashboard({
                 }`}
               >
                 <SlidersHorizontal className="size-4" />
-                <span className="hidden sm:inline">Filtri</span>
+                <span className="hidden sm:inline">{t("filters")}</span>
               </button>
             )}
           </div>
@@ -233,7 +239,7 @@ export function QuizDashboard({
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
                 }`}
               >
-                Tutti
+                {t("all")}
               </button>
               {allTags.map((tag) => (
                 <button
@@ -262,10 +268,10 @@ export function QuizDashboard({
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
           <Search className="size-10 text-slate-300 mx-auto mb-3" />
           <p className="text-lg font-semibold text-slate-600 dark:text-slate-400">
-            Nessun quiz trovato
+            {t("noQuizFound")}
           </p>
           <p className="text-sm text-slate-400 mt-1">
-            Prova a cambiare i termini di ricerca o i filtri
+            {t("tryDifferentSearch")}
           </p>
         </div>
       ) : (
@@ -273,7 +279,7 @@ export function QuizDashboard({
           {/* ── My quizzes ── */}
           {myQuizzes.length > 0 && (
             <QuizSection
-              title="Creati da me"
+              title={t("createdByMe")}
               count={myQuizzes.length}
               badgeColor="bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
             >
@@ -286,7 +292,7 @@ export function QuizDashboard({
           {/* ── Shared quizzes ── */}
           {sharedQuizzes.length > 0 && (
             <QuizSection
-              title="Condivisi con me"
+              title={t("sharedWithMe")}
               count={sharedQuizzes.length}
               badgeColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
             >
@@ -340,14 +346,15 @@ function QuizSection({
 /* ------------------------------------------------------------------ */
 
 function EmptyLibrary() {
+  const t = useTranslations("quiz");
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-16 text-center">
       <span className="text-7xl block mb-4">📚</span>
       <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-300 mb-2">
-        La libreria è vuota
+        {t("emptyLibrary")}
       </h2>
       <p className="text-slate-500 mb-8 max-w-md mx-auto">
-        Crea il tuo primo quiz interattivo o importa un file .qlz da un collega
+        {t("emptyLibraryDesc")}
       </p>
       <div className="flex justify-center gap-3">
         <ExcelTemplateButton />
@@ -355,7 +362,7 @@ function EmptyLibrary() {
         <ImportQuizButton />
         <Link href="/dashboard/quiz/new">
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-full transition-colors shadow-md shadow-indigo-200">
-            Crea Quiz
+            {t("createQuiz")}
           </button>
         </Link>
       </div>
@@ -375,6 +382,8 @@ function QuizCard({
   isOwner: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("quiz");
+  const tc = useTranslations("common");
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pendingDuplicate, setPendingDuplicate] = useState(false);
@@ -387,7 +396,7 @@ function QuizCard({
       if (!res.ok) throw new Error();
       router.refresh();
     } catch {
-      alert("Errore nell'eliminazione");
+      alert(t("deleteError"));
       setDeleting(false);
     }
   };
@@ -404,7 +413,7 @@ function QuizCard({
       if (!res.ok) throw new Error();
       const data = await res.json();
       const payload = {
-        title: `${data.title} (copia)`,
+        title: `${data.title} ${t("copyLabel")}`,
         description: data.description,
         isPublic: false,
         tags: data.tags,
@@ -429,7 +438,7 @@ function QuizCard({
       if (!createRes.ok) throw new Error();
       router.refresh();
     } catch {
-      alert("Errore nella duplicazione");
+      alert(t("duplicateError"));
     }
   };
 
@@ -444,18 +453,18 @@ function QuizCard({
         {/* Title */}
         <Link href={`/dashboard/quiz/${quiz.id}/edit`}>
           <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
-            {quiz.title || "Quiz senza titolo"}
+            {quiz.title || t("untitledQuiz")}
           </h3>
         </Link>
         {quiz.suspended && (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded-md">
-            Sospeso
+            {t("suspended")}
           </span>
         )}
 
         {/* Author (shared) */}
         {!isOwner && quiz.author.name && (
-          <p className="text-xs text-slate-400">di {quiz.author.name}</p>
+          <p className="text-xs text-slate-400">{t("by")} {quiz.author.name}</p>
         )}
 
         {/* Metadata */}
@@ -466,13 +475,13 @@ function QuizCard({
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span className="font-medium">{quiz._count.questions}</span> domande
+            {tc("questions", { count: quiz._count.questions })}
           </span>
           <span className="flex items-center gap-1.5">
             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            <span className="font-medium">{quiz._count.sessions}</span>x giocato
+            <span className="font-medium">{quiz._count.sessions}</span>{t("played")}
           </span>
         </div>
 
@@ -507,8 +516,8 @@ function QuizCard({
       <div className="flex items-center gap-1.5 px-4 py-3 border-t border-slate-100 dark:border-slate-800 overflow-visible">
         {/* Play — primary */}
         {quiz.suspended ? (
-          <span className="flex items-center gap-1.5 text-sm font-medium text-slate-400 p-2" title="Quiz sospeso">
-            <Play className="size-4" /> Sospeso
+          <span className="flex items-center gap-1.5 text-sm font-medium text-slate-400 p-2" title={t("suspended")}>
+            <Play className="size-4" /> {t("suspended")}
           </span>
         ) : (
           <PlayQuizButton quizId={quiz.id} />
@@ -518,7 +527,7 @@ function QuizCard({
         <Link
           href={`/dashboard/quiz/${quiz.id}/edit`}
           className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Modifica"
+          title={tc("edit")}
         >
           <Pencil className="size-4" />
         </Link>
@@ -528,7 +537,7 @@ function QuizCard({
           <Link
             href={`/dashboard/quiz/${quiz.id}/stats`}
             className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
-            title="Statistiche"
+            title={t("stats")}
           >
             <BarChart3 className="size-4" />
           </Link>
@@ -555,7 +564,7 @@ function QuizCard({
                   className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <Copy className="size-4" />
-                  Duplica
+                  {tc("duplicate")}
                 </button>
                 <a
                   href={`/api/quiz/${quiz.id}/export`}
@@ -564,7 +573,7 @@ function QuizCard({
                   className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <Download className="size-4" />
-                  Esporta .qlz
+                  {t("exportQlz")}
                 </a>
                 {isOwner && (
                   <button
@@ -572,7 +581,7 @@ function QuizCard({
                     className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                   >
                     <Trash2 className="size-4" />
-                    Elimina
+                    {tc("delete")}
                   </button>
                 )}
               </div>

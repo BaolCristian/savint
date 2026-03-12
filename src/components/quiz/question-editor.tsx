@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { type QuestionInput } from "@/lib/validators/quiz";
 import { Trash2, Plus, Clock, Star, Image, Upload, Search, HelpCircle } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
@@ -21,15 +22,15 @@ interface Props {
 }
 
 const QUESTION_TYPES = [
-  { value: "MULTIPLE_CHOICE", label: "Scelta multipla", icon: "🔘" },
-  { value: "TRUE_FALSE", label: "Vero / Falso", icon: "✅" },
-  { value: "OPEN_ANSWER", label: "Risposta aperta", icon: "✏️" },
-  { value: "ORDERING", label: "Ordinamento", icon: "🔢" },
-  { value: "MATCHING", label: "Abbinamento", icon: "🔗" },
-  { value: "SPOT_ERROR", label: "Trova l'errore", icon: "🔍" },
-  { value: "NUMERIC_ESTIMATION", label: "Stima numerica", icon: "🔢" },
-  { value: "IMAGE_HOTSPOT", label: "Hotspot immagine", icon: "🎯" },
-  { value: "CODE_COMPLETION", label: "Completa il codice", icon: "💻" },
+  { value: "MULTIPLE_CHOICE", labelKey: "multipleChoice", icon: "🔘" },
+  { value: "TRUE_FALSE", labelKey: "trueFalse", icon: "✅" },
+  { value: "OPEN_ANSWER", labelKey: "openAnswer", icon: "✏️" },
+  { value: "ORDERING", labelKey: "ordering", icon: "🔢" },
+  { value: "MATCHING", labelKey: "matching", icon: "🔗" },
+  { value: "SPOT_ERROR", labelKey: "spotError", icon: "🔍" },
+  { value: "NUMERIC_ESTIMATION", labelKey: "numericEstimation", icon: "🔢" },
+  { value: "IMAGE_HOTSPOT", labelKey: "imageHotspot", icon: "🎯" },
+  { value: "CODE_COMPLETION", labelKey: "codeCompletion", icon: "💻" },
 ] as const;
 
 type QuestionType = QuestionInput["type"];
@@ -58,6 +59,9 @@ function defaultOptionsForType(type: QuestionType): QuestionInput["options"] {
 }
 
 export function QuestionEditor({ question, index, total, onChange, onRemove }: Props) {
+  const t = useTranslations("questionEditor");
+  const tc = useTranslations("common");
+  const te = useTranslations("editor");
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -69,14 +73,14 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
     onChange(index, { ...question, type: newType, options: defaultOptionsForType(newType) });
   };
 
-  const currentType = QUESTION_TYPES.find((t) => t.value === question.type);
+  const currentType = QUESTION_TYPES.find((qt) => qt.value === question.type);
 
   return (
     <div className="px-6 py-5 lg:px-10 lg:py-6 space-y-6">
       {/* ── Header: question number + delete ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white">
-          Domanda {index + 1}
+          {te("questionLabel")} {index + 1}
           <span className="text-slate-400 font-normal text-lg lg:text-xl ml-1">
             / {total}
           </span>
@@ -85,7 +89,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
           onClick={() => onRemove(index)}
           disabled={total <= 1}
           className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 p-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Elimina domanda"
+          title={t("deleteQuestion")}
         >
           <Trash2 className="size-5" />
         </button>
@@ -94,23 +98,23 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
       {/* ── Type selector — prominent row ── */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
-          Tipo di domanda
+          {t("questionType")}
         </label>
         <div className="flex items-center gap-2">
           <div className="flex-1 grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5">
-            {QUESTION_TYPES.map((t) => (
+            {QUESTION_TYPES.map((qt) => (
               <button
-                key={t.value}
+                key={qt.value}
                 type="button"
-                onClick={() => handleTypeChange(t.value as QuestionType)}
+                onClick={() => handleTypeChange(qt.value as QuestionType)}
                 className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all ${
-                  question.type === t.value
+                  question.type === qt.value
                     ? "bg-indigo-100 dark:bg-indigo-900 ring-2 ring-indigo-500 text-indigo-700 dark:text-indigo-300"
                     : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
                 }`}
               >
-                <span className="text-lg">{t.icon}</span>
-                <span className="text-[10px] font-semibold leading-tight">{t.label}</span>
+                <span className="text-lg">{qt.icon}</span>
+                <span className="text-[10px] font-semibold leading-tight">{t(qt.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -118,7 +122,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
             type="button"
             onClick={() => setShowHelp(true)}
             className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors shrink-0 self-start"
-            title="Aiuto su questo tipo di domanda"
+            title={t("helpTitle")}
           >
             <HelpCircle className="size-5" />
           </button>
@@ -128,12 +132,12 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
       {/* ── Question text — prominent ── */}
       <div>
         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
-          Testo della domanda
+          {t("questionText")}
         </label>
         <textarea
           value={question.text}
           onChange={(e) => handleFieldChange("text", e.target.value)}
-          placeholder="Scrivi qui la domanda..."
+          placeholder={t("questionPlaceholder")}
           rows={3}
           className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-5 py-4 text-xl lg:text-2xl font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 resize-none"
         />
@@ -142,7 +146,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
       {/* ── Media block — clear actions ── */}
       <div>
         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
-          Immagine (opzionale)
+          {t("imageOptional")}
         </label>
         {question.mediaUrl ? (
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
@@ -150,7 +154,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
               {(/^https?:\/\//.test(question.mediaUrl) || question.mediaUrl.startsWith("/uploads/") || question.mediaUrl.startsWith("/api/uploads/")) && (
                 <img
                   src={question.mediaUrl.startsWith("/") ? withBasePath(question.mediaUrl) : question.mediaUrl}
-                  alt="Anteprima"
+                  alt={tc("preview")}
                   className="max-h-48 max-w-full object-contain rounded-xl"
                 />
               )}
@@ -164,7 +168,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
                   className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Search className="size-3.5" />
-                  Cambia
+                  {tc("change")}
                 </button>
                 <button
                   type="button"
@@ -172,7 +176,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
                   className="flex items-center gap-1.5 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Trash2 className="size-3.5" />
-                  Rimuovi
+                  {tc("remove")}
                 </button>
               </div>
             </div>
@@ -183,7 +187,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
               <Image className="size-6 text-slate-400" />
               <input
                 type="url"
-                placeholder="Incolla URL immagine..."
+                placeholder={t("pasteUrl")}
                 onBlur={(e) => {
                   if (e.target.value && /^https?:\/\//.test(e.target.value))
                     handleFieldChange("mediaUrl", e.target.value);
@@ -197,11 +201,11 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
                   className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold px-3 py-2 rounded-lg text-sm border border-indigo-200 dark:border-indigo-700 transition-colors"
                 >
                   <Search className="size-3.5" />
-                  Cerca
+                  {tc("search")}
                 </button>
                 <label className="flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-semibold px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-600 transition-colors">
                   <Upload className="size-3.5" />
-                  Carica
+                  {tc("upload")}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/gif,image/webp"
@@ -220,7 +224,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
                         const { url } = await res.json();
                         handleFieldChange("mediaUrl", url);
                       } catch {
-                        alert("Errore nel caricamento dell'immagine");
+                        alert(t("imageUploadError"));
                       }
                       e.target.value = "";
                     }}
@@ -237,7 +241,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">{currentType?.icon}</span>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Risposte
+            {t("answersLabel")}
           </p>
         </div>
         {question.type === "MULTIPLE_CHOICE" && (
@@ -308,7 +312,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
             onChange={(e) => handleFieldChange("timeLimit", Number(e.target.value))}
             className="w-12 bg-transparent text-base font-semibold text-slate-700 dark:text-slate-300 outline-none text-center"
           />
-          <span className="text-sm text-slate-400">sec</span>
+          <span className="text-sm text-slate-400">{t("secLabel")}</span>
         </div>
         <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
           <Star className="size-4 text-amber-500" />
@@ -321,7 +325,7 @@ export function QuestionEditor({ question, index, total, onChange, onRemove }: P
             onChange={(e) => handleFieldChange("points", Number(e.target.value))}
             className="w-16 bg-transparent text-base font-semibold text-slate-700 dark:text-slate-300 outline-none text-center"
           />
-          <span className="text-sm text-slate-400">pt</span>
+          <span className="text-sm text-slate-400">{t("ptLabel")}</span>
         </div>
         <ConfidenceToggle
           enabled={(question as any).confidenceEnabled ?? false}
@@ -365,6 +369,7 @@ function MultipleChoiceEditor({
   options: { choices: { text: string; isCorrect: boolean }[] };
   onChange: (opts: { choices: { text: string; isCorrect: boolean }[] }) => void;
 }) {
+  const t = useTranslations("questionEditor");
   const { choices } = options;
 
   const updateChoice = (i: number, partial: Partial<{ text: string; isCorrect: boolean }>) => {
@@ -399,7 +404,7 @@ function MultipleChoiceEditor({
               <input
                 value={choice.text}
                 onChange={(e) => updateChoice(i, { text: e.target.value })}
-                placeholder={`Scelta ${i + 1}`}
+                placeholder={t("choicePlaceholder", { n: i + 1 })}
                 className="flex-1 bg-transparent text-lg lg:text-xl font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none"
               />
               {choices.length > 2 && (
@@ -419,7 +424,7 @@ function MultipleChoiceEditor({
           onClick={() => onChange({ choices: [...choices, { text: "", isCorrect: false }] })}
           className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
         >
-          <Plus className="size-5" /> Aggiungi scelta
+          <Plus className="size-5" /> {t("addChoice")}
         </button>
       )}
     </div>
@@ -432,6 +437,7 @@ function TrueFalseEditor({
   options: { correct: boolean };
   onChange: (opts: { correct: boolean }) => void;
 }) {
+  const tc = useTranslations("common");
   return (
     <div className="grid grid-cols-2 gap-3">
       <button
@@ -442,7 +448,7 @@ function TrueFalseEditor({
             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:border-emerald-300"
         }`}
       >
-        Vero
+        {tc("true")}
       </button>
       <button
         onClick={() => onChange({ correct: false })}
@@ -452,7 +458,7 @@ function TrueFalseEditor({
             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:border-red-300"
         }`}
       >
-        Falso
+        {tc("false")}
       </button>
     </div>
   );
@@ -464,6 +470,7 @@ function OpenAnswerEditor({
   options: { acceptedAnswers: string[] };
   onChange: (opts: { acceptedAnswers: string[] }) => void;
 }) {
+  const t = useTranslations("questionEditor");
   const { acceptedAnswers } = options;
 
   return (
@@ -479,7 +486,7 @@ function OpenAnswerEditor({
               const next = acceptedAnswers.map((a, idx) => (idx === i ? e.target.value : a));
               onChange({ acceptedAnswers: next });
             }}
-            placeholder={`Risposta ${i + 1}`}
+            placeholder={t("answerPlaceholder", { n: i + 1 })}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg lg:text-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
           {acceptedAnswers.length > 1 && (
@@ -493,7 +500,7 @@ function OpenAnswerEditor({
         onClick={() => onChange({ acceptedAnswers: [...acceptedAnswers, ""] })}
         className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
       >
-        <Plus className="size-5" /> Aggiungi risposta
+        <Plus className="size-5" /> {t("addAnswer")}
       </button>
     </div>
   );
@@ -505,6 +512,7 @@ function OrderingEditor({
   options: { items: string[]; correctOrder: number[] };
   onChange: (opts: { items: string[]; correctOrder: number[] }) => void;
 }) {
+  const t = useTranslations("questionEditor");
   const { items } = options;
 
   return (
@@ -520,7 +528,7 @@ function OrderingEditor({
               const next = items.map((it, idx) => (idx === i ? e.target.value : it));
               onChange({ items: next, correctOrder: next.map((_, idx) => idx) });
             }}
-            placeholder={`Elemento ${i + 1}`}
+            placeholder={t("elementPlaceholder", { n: i + 1 })}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg lg:text-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
           {items.length > 2 && (
@@ -543,7 +551,7 @@ function OrderingEditor({
         }}
         className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
       >
-        <Plus className="size-5" /> Aggiungi elemento
+        <Plus className="size-5" /> {t("addElement")}
       </button>
     </div>
   );
@@ -555,6 +563,7 @@ function MatchingEditor({
   options: { pairs: { left: string; right: string }[] };
   onChange: (opts: { pairs: { left: string; right: string }[] }) => void;
 }) {
+  const t = useTranslations("questionEditor");
   const { pairs } = options;
 
   return (
@@ -570,7 +579,7 @@ function MatchingEditor({
               const next = pairs.map((p, idx) => (idx === i ? { ...p, left: e.target.value } : p));
               onChange({ pairs: next });
             }}
-            placeholder={`Sinistra ${i + 1}`}
+            placeholder={t("leftPlaceholder", { n: i + 1 })}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg lg:text-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
           <span className="text-slate-400 text-lg">↔</span>
@@ -580,7 +589,7 @@ function MatchingEditor({
               const next = pairs.map((p, idx) => (idx === i ? { ...p, right: e.target.value } : p));
               onChange({ pairs: next });
             }}
-            placeholder={`Destra ${i + 1}`}
+            placeholder={t("rightPlaceholder", { n: i + 1 })}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-lg lg:text-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
           {pairs.length > 2 && (
@@ -597,7 +606,7 @@ function MatchingEditor({
         onClick={() => onChange({ pairs: [...pairs, { left: "", right: "" }] })}
         className="flex items-center gap-2 text-lg font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 px-3 py-2 rounded-lg transition-colors"
       >
-        <Plus className="size-5" /> Aggiungi coppia
+        <Plus className="size-5" /> {t("addPair")}
       </button>
     </div>
   );
