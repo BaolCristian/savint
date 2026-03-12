@@ -50,6 +50,13 @@ function getAttr(xml: string, tag: string, attr: string): string | null {
   return match ? match[1] : null;
 }
 
+/** Get the full raw block for a tag (including the tag itself) */
+function getTagBlock(xml: string, tag: string): string | null {
+  const re = new RegExp(`<${tag}[^>]*>[\\s\\S]*?</${tag}>`, "i");
+  const match = xml.match(re);
+  return match ? match[0] : null;
+}
+
 /** Get all matching tag blocks */
 function getAllTags(xml: string, tag: string): string[] {
   const results: string[] = [];
@@ -97,13 +104,14 @@ function extractImageUrl(html: string): string | null {
 
 /** Extract question text and optional image from Moodle XML question block */
 function getQuestionTextAndImage(questionXml: string): { text: string; mediaUrl: string | null } {
-  const questiontext = getTagContent(questionXml, "questiontext");
-  if (!questiontext) return { text: "", mediaUrl: null };
-  const rawText = getTagContent(questiontext, "text");
+  // Use the full questiontext block (not just CDATA) to find <file> tags
+  const questiontextBlock = getTagBlock(questionXml, "questiontext");
+  if (!questiontextBlock) return { text: "", mediaUrl: null };
+  const rawText = getTagContent(questiontextBlock, "text");
   if (!rawText) return { text: "", mediaUrl: null };
 
   // Resolve @@PLUGINFILE@@ references to data URIs
-  const fileMap = buildFileMap(questiontext);
+  const fileMap = buildFileMap(questiontextBlock);
   const resolvedHtml = fileMap.size > 0 ? resolvePluginFiles(rawText, fileMap) : rawText;
 
   const mediaUrl = extractImageUrl(resolvedHtml);
