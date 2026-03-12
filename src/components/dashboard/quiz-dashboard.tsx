@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
+import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -355,6 +356,7 @@ function QuizCard({
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pendingDuplicate, setPendingDuplicate] = useState(false);
 
   const handleDelete = async () => {
     if (!confirm(`Eliminare "${quiz.title}"?`)) return;
@@ -369,8 +371,13 @@ function QuizCard({
     }
   };
 
-  const handleDuplicate = async () => {
+  const handleDuplicate = () => {
     setMenuOpen(false);
+    setPendingDuplicate(true);
+  };
+
+  const confirmDuplicate = async (license: "CC_BY" | "CC_BY_SA") => {
+    setPendingDuplicate(false);
     try {
       const res = await fetch(withBasePath(`/api/quiz/${quiz.id}`));
       if (!res.ok) throw new Error();
@@ -380,6 +387,8 @@ function QuizCard({
         description: data.description,
         isPublic: false,
         tags: data.tags,
+        consentAccepted: true,
+        license,
         questions: data.questions.map((q: any) => ({
           type: q.type,
           text: q.text,
@@ -527,6 +536,13 @@ function QuizCard({
           )}
         </div>
       </div>
+
+      {pendingDuplicate && (
+        <PublishDeclarationModal
+          onConfirm={confirmDuplicate}
+          onCancel={() => setPendingDuplicate(false)}
+        />
+      )}
     </div>
   );
 }

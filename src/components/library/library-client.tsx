@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Play, Copy } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
+import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 
 interface QuizItem {
   id: string;
@@ -21,6 +22,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  const [pendingDuplicate, setPendingDuplicate] = useState<string | null>(null);
 
   const filtered = quizzes.filter((q) => {
     const term = search.toLowerCase();
@@ -51,13 +53,21 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
     }
   };
 
-  const handleDuplicate = async (quizId: string) => {
+  const handleDuplicate = (quizId: string) => {
+    setPendingDuplicate(quizId);
+  };
+
+  const confirmDuplicate = async (license: "CC_BY" | "CC_BY_SA") => {
+    const quizId = pendingDuplicate;
+    setPendingDuplicate(null);
+    if (!quizId) return;
+
     setLoading(quizId);
     try {
       const res = await fetch(withBasePath("/api/quiz/duplicate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizId }),
+        body: JSON.stringify({ quizId, consentAccepted: true, license }),
       });
       if (!res.ok) throw new Error();
       router.push("/dashboard/quiz");
@@ -141,6 +151,12 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
             </Card>
           ))}
         </div>
+      )}
+      {pendingDuplicate && (
+        <PublishDeclarationModal
+          onConfirm={confirmDuplicate}
+          onCancel={() => setPendingDuplicate(null)}
+        />
       )}
     </>
   );
