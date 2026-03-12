@@ -69,15 +69,15 @@ export default async function SessionsListPage() {
                     {s._count.answers} risposte
                   </p>
                   {(s.status === "LOBBY" || s.status === "IN_PROGRESS") && (
-                    <Link
-                      href={`/live/host/${s.id}`}
+                    <a
+                      href={`/savint/live/host/${s.id}`}
                       target="_blank"
-                      onClick={(e) => e.stopPropagation()}
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
                       <Play className="size-3.5" />
                       Rientra nella sessione
-                    </Link>
+                    </a>
                   )}
                 </CardContent>
               </Card>
