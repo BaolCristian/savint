@@ -152,6 +152,23 @@ export function QuizDashboard({
         </div>
       </div>
 
+      {/* ── CC 4.0 notice ── */}
+      <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <svg className="size-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.41 15.06c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99zm6.24 0c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99z"/></svg>
+        <p>
+          Tutti i quiz resi pubblici sono rilasciati sotto licenza{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
+          >
+            Creative Commons 4.0 International
+          </a>
+          . Pubblicando un quiz accetti che altri docenti possano riutilizzarlo secondo i termini della licenza scelta.
+        </p>
+      </div>
+
       {/* ── Search + Filters ── */}
       {quizzes.length > 0 && (
         <div className="space-y-3">
