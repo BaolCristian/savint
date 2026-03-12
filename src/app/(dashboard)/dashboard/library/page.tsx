@@ -25,6 +25,7 @@ export default async function LibraryPage() {
     title: q.title,
     description: q.description,
     tags: q.tags,
+    license: q.license,
     authorName: q.author.name ?? "Anonimo",
     questionCount: q._count.questions,
     createdAt: q.createdAt.toISOString(),

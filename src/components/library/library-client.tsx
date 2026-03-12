@@ -8,12 +8,14 @@ import { Search, Play, Copy, Flag } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 import { ReportModal } from "@/components/legal/report-modal";
+import { LICENSE_SHORT_LABELS, LICENSE_URLS } from "@/lib/config/legal";
 
 interface QuizItem {
   id: string;
   title: string;
   description: string | null;
   tags: string[];
+  license: string;
   authorName: string;
   questionCount: number;
   createdAt: string;
@@ -131,6 +133,15 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                     {quiz.questionCount} domande
                   </Badge>
                 </div>
+                <a
+                  href={LICENSE_URLS[quiz.license] ?? LICENSE_URLS.CC_BY}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.41 15.06c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99zm6.24 0c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99z"/></svg>
+                  {LICENSE_SHORT_LABELS[quiz.license] ?? "CC BY 4.0"}
+                </a>
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
                     onClick={() => handlePlay(quiz.id)}

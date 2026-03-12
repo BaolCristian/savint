@@ -41,8 +41,9 @@ export function PublishDeclarationModal({ onConfirm, onCancel, loading }: Props)
               Licenza del contenuto
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-              I quiz pubblicati su questa piattaforma sono condivisi per scopi
-              didattici. Selezionando una licenza autorizzi altri utenti a utilizzare
+              Tutti i quiz pubblicati su questa piattaforma sono rilasciati sotto
+              licenza Creative Commons 4.0 International per scopi didattici.
+              Selezionando una licenza autorizzi altri utenti a utilizzare
               il quiz secondo le condizioni indicate.
             </p>
             <select
@@ -50,8 +51,8 @@ export function PublishDeclarationModal({ onConfirm, onCancel, loading }: Props)
               onChange={(e) => setLicense(e.target.value as "CC_BY" | "CC_BY_SA")}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             >
-              <option value="CC_BY">Creative Commons Attribution (CC BY)</option>
-              <option value="CC_BY_SA">Creative Commons Attribution-ShareAlike (CC BY-SA)</option>
+              <option value="CC_BY">Creative Commons Attribution 4.0 (CC BY 4.0)</option>
+              <option value="CC_BY_SA">Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0)</option>
             </select>
           </div>
         </div>
