@@ -361,6 +361,7 @@ function EmptyLibrary() {
       <div className="flex justify-center gap-3">
         <ExcelTemplateButton />
         <ExcelImportButton />
+        <MoodleImportButton />
         <ImportQuizButton />
         <Link href="/dashboard/quiz/new">
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-full transition-colors shadow-md shadow-indigo-200">
