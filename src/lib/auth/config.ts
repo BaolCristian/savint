@@ -31,8 +31,18 @@ if (process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true") 
   );
 }
 
+// PrismaAdapter expects prisma.session for auth sessions, but our Session
+// model is for live quiz sessions (has required pin/quizId/hostId).
+// Auth sessions live in AuthSession (@@map("auth_session")), accessible
+// via prisma.authSession. We proxy the prisma client so the adapter
+// uses the correct model.
+const prismaForAuth = {
+  ...prisma,
+  session: prisma.authSession,
+} as unknown as typeof prisma;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prismaForAuth),
   providers,
   basePath: "/savint/api/auth",
   trustHost: true,
