@@ -11,9 +11,10 @@ const providers: Provider[] = [
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     authorization: { params: { prompt: "select_account" } },
-    // Use nonce check (embedded in ID token) instead of PKCE/state
-    // which rely on cookies that fail behind reverse proxy with basePath.
-    checks: ["nonce"],
+    // All OAuth checks (pkce, state, nonce) rely on cookies which fail
+    // behind the reverse proxy with basePath. Disabled until nginx cookie
+    // forwarding is fixed. TODO: re-enable once proxy is configured.
+    checks: [],
   }),
 ];
 
