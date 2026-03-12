@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json({ locale });
   res.cookies.set("locale", locale, {
-    path: "/",
+    path: "/savint",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
