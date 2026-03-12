@@ -126,12 +126,33 @@ export function PlayerView() {
 
   const questionStartTime = useRef<number>(0);
 
+  /* ---------- auto-rejoin on reconnect ---------- */
+
+  useEffect(() => {
+    if (!socket || !connected) return;
+    // If we're past the join phase, we were in a game — try to rejoin
+    const saved = sessionStorage.getItem("savint-session");
+    if (!saved) return;
+
+    try {
+      const { sessionId, playerName } = JSON.parse(saved);
+      if (sessionId && playerName && phase === "join") {
+        setName(playerName);
+        socket.emit("rejoinSession", { sessionId, playerName });
+      }
+    } catch {
+      sessionStorage.removeItem("savint-session");
+    }
+  }, [socket, connected]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ---------- socket listeners ---------- */
 
   useEffect(() => {
     if (!socket) return;
 
     const onSessionError = (data: { message: string }) => {
+      // If rejoin failed, clear saved session and stay on join screen
+      sessionStorage.removeItem("savint-session");
       setError(data.message);
     };
 
@@ -139,6 +160,31 @@ export function PlayerView() {
       if (data.playerName === name) {
         setPhase("waiting");
         setError(null);
+      }
+    };
+
+    const onGameState = (data: { sessionId: string }) => {
+      // Save session info for reconnection
+      if (data.sessionId && name) {
+        sessionStorage.setItem("savint-session", JSON.stringify({
+          sessionId: data.sessionId,
+          playerName: name,
+        }));
+      }
+    };
+
+    const onRejoinSuccess = (data: {
+      totalScore: number;
+      currentQuestion?: number;
+      totalQuestions: number;
+      phase: "waiting" | "question" | "feedback";
+    }) => {
+      setError(null);
+      if (data.phase === "question" || data.phase === "feedback") {
+        // Player is back mid-game — show waiting for next question
+        setPhase("waiting");
+      } else {
+        setPhase("waiting");
       }
     };
 
@@ -161,10 +207,13 @@ export function PlayerView() {
     const onGameOver = (data: PodiumData) => {
       setPodium(data);
       setPhase("podium");
+      sessionStorage.removeItem("savint-session");
     };
 
     socket.on("sessionError", onSessionError);
     socket.on("playerJoined", onPlayerJoined);
+    socket.on("gameState", onGameState);
+    socket.on("rejoinSuccess", onRejoinSuccess);
     socket.on("questionStart", onQuestionStart);
     socket.on("answerFeedback", onAnswerFeedback);
     socket.on("gameOver", onGameOver);
@@ -172,6 +221,8 @@ export function PlayerView() {
     return () => {
       socket.off("sessionError", onSessionError);
       socket.off("playerJoined", onPlayerJoined);
+      socket.off("gameState", onGameState);
+      socket.off("rejoinSuccess", onRejoinSuccess);
       socket.off("questionStart", onQuestionStart);
       socket.off("answerFeedback", onAnswerFeedback);
       socket.off("gameOver", onGameOver);

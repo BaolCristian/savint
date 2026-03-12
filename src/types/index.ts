@@ -86,6 +86,13 @@ export type AnswerValue =
 export interface ServerToClientEvents {
   playerJoined: (data: { playerName: string; playerCount: number; playerAvatar?: string }) => void;
   playerLeft: (data: { playerName: string; playerCount: number }) => void;
+  playerReconnected: (data: { playerName: string; playerCount: number }) => void;
+  rejoinSuccess: (data: {
+    totalScore: number;
+    currentQuestion?: number;
+    totalQuestions: number;
+    phase: "waiting" | "question" | "feedback";
+  }) => void;
   questionStart: (data: {
     questionIndex: number;
     totalQuestions: number;
@@ -117,11 +124,12 @@ export interface ServerToClientEvents {
     fullResults: { playerName: string; score: number; playerAvatar?: string }[];
   }) => void;
   sessionError: (data: { message: string }) => void;
-  gameState: (data: { status: string; currentQuestion?: number }) => void;
+  gameState: (data: { status: string; currentQuestion?: number; sessionId: string }) => void;
 }
 
 export interface ClientToServerEvents {
   joinSession: (data: { pin: string; playerName: string; playerEmail?: string; playerAvatar?: string }) => void;
+  rejoinSession: (data: { sessionId: string; playerName: string }) => void;
   startGame: () => void;
   nextQuestion: () => void;
   submitAnswer: (data: { value: AnswerValue; responseTimeMs: number }) => void;

@@ -158,6 +158,10 @@ export function HostView({ session }: Props) {
       setPlayerCount(data.playerCount);
     };
 
+    const handlePlayerReconnected = (data: { playerName: string; playerCount: number }) => {
+      setPlayerCount(data.playerCount);
+    };
+
     const handleQuestionStart = (data: QuestionData) => {
       setCurrentQuestion(data);
       setTimeLeft(data.question.timeLimit);
@@ -183,6 +187,7 @@ export function HostView({ session }: Props) {
 
     socket.on("playerJoined", handlePlayerJoined);
     socket.on("playerLeft", handlePlayerLeft);
+    socket.on("playerReconnected", handlePlayerReconnected);
     socket.on("questionStart", handleQuestionStart);
     socket.on("answerCount", handleAnswerCount);
     socket.on("questionResult", handleQuestionResult);
@@ -191,6 +196,7 @@ export function HostView({ session }: Props) {
     return () => {
       socket.off("playerJoined", handlePlayerJoined);
       socket.off("playerLeft", handlePlayerLeft);
+      socket.off("playerReconnected", handlePlayerReconnected);
       socket.off("questionStart", handleQuestionStart);
       socket.off("answerCount", handleAnswerCount);
       socket.off("questionResult", handleQuestionResult);

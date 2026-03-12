@@ -52,6 +52,19 @@ interface GameState {
 
 const games = new Map<string, GameState>(); // keyed by sessionId
 
+// Track disconnected players for reconnection (sessionId:playerName → timeout)
+const disconnectedPlayers = new Map<string, {
+  player: PlayerInfo;
+  sessionId: string;
+  timeout: ReturnType<typeof setTimeout>;
+}>();
+
+const RECONNECT_GRACE_PERIOD_MS = 120_000; // 2 minutes to reconnect
+
+function disconnectKey(sessionId: string, playerName: string) {
+  return `${sessionId}:${playerName}`;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -263,6 +276,7 @@ export function setupSocketHandlers(io: TypedIO) {
 
         // Send current game state to the newly joined player
         socket.emit("gameState", {
+          sessionId,
           status: session.status,
           currentQuestion:
             game.currentQuestionIndex >= 0
@@ -547,7 +561,53 @@ export function setupSocketHandlers(io: TypedIO) {
     });
 
     // ------------------------------------------------------------------
-    // disconnect
+    // rejoinSession
+    // ------------------------------------------------------------------
+    socket.on("rejoinSession", ({ sessionId, playerName }) => {
+      const key = disconnectKey(sessionId, playerName);
+      const entry = disconnectedPlayers.get(key);
+      const game = games.get(sessionId);
+
+      if (!entry || !game) {
+        socket.emit("sessionError", { message: "Session not found or expired" });
+        return;
+      }
+
+      // Cancel the removal timeout
+      clearTimeout(entry.timeout);
+      disconnectedPlayers.delete(key);
+
+      // Restore player with updated socket ID
+      const player = entry.player;
+      player.socketId = socket.id;
+      game.players.set(playerName, player);
+
+      currentSessionId = sessionId;
+      currentPlayerName = playerName;
+      socket.join(room(sessionId));
+
+      // Determine current phase
+      let phase: "waiting" | "question" | "feedback" = "waiting";
+      if (game.currentQuestionIndex >= 0) {
+        phase = "question";
+      }
+
+      socket.emit("rejoinSuccess", {
+        totalScore: player.totalScore,
+        currentQuestion: game.currentQuestionIndex >= 0 ? game.currentQuestionIndex : undefined,
+        totalQuestions: game.questions.length,
+        phase,
+      });
+
+      // Notify others
+      io.to(room(sessionId)).emit("playerReconnected", {
+        playerName,
+        playerCount: realPlayerCount(game),
+      });
+    });
+
+    // ------------------------------------------------------------------
+    // disconnect — grace period before removal
     // ------------------------------------------------------------------
     socket.on("disconnect", () => {
       if (!currentSessionId || !currentPlayerName) return;
@@ -555,17 +615,39 @@ export function setupSocketHandlers(io: TypedIO) {
       const game = games.get(currentSessionId);
       if (!game) return;
 
-      game.players.delete(currentPlayerName);
+      // Host disconnection: don't remove (host can refresh)
+      if (currentPlayerName === "__host__") return;
 
-      io.to(room(currentSessionId)).emit("playerLeft", {
-        playerName: currentPlayerName,
-        playerCount: realPlayerCount(game),
-      });
+      const player = game.players.get(currentPlayerName);
+      if (!player) return;
 
-      // If no players left, clean up
-      if (game.players.size === 0) {
-        games.delete(currentSessionId);
-      }
+      // Move player to disconnected list instead of removing immediately
+      const key = disconnectKey(currentSessionId, currentPlayerName);
+      const sessionId = currentSessionId;
+      const playerName = currentPlayerName;
+
+      const timeout = setTimeout(() => {
+        // Grace period expired — remove for real
+        disconnectedPlayers.delete(key);
+        const g = games.get(sessionId);
+        if (!g) return;
+
+        g.players.delete(playerName);
+        io.to(room(sessionId)).emit("playerLeft", {
+          playerName,
+          playerCount: realPlayerCount(g),
+        });
+
+        if (g.players.size === 0) {
+          games.delete(sessionId);
+        }
+      }, RECONNECT_GRACE_PERIOD_MS);
+
+      disconnectedPlayers.set(key, { player, sessionId, timeout });
+
+      // Don't remove from game.players yet — keep score intact
+      // but clear the socketId so we know they're disconnected
+      player.socketId = "";
     });
   });
 }
