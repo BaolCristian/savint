@@ -18,12 +18,24 @@ export const GET = async (req: NextRequest) => {
   const cookieNames = req.cookies.getAll().map(c => c.name);
   console.log("[AUTH DEBUG] GET", req.nextUrl.pathname, "cookies:", cookieNames);
   const rewritten = rewriteRequest(req);
-  const rewrittenCookieNames = rewritten.cookies.getAll().map(c => c.name);
-  console.log("[AUTH DEBUG] rewritten cookies:", rewrittenCookieNames, "url:", rewritten.url);
-  return handlers.GET(rewritten);
+  console.log("[AUTH DEBUG] rewritten url:", rewritten.url);
+  const response = await handlers.GET(rewritten);
+  // Log Set-Cookie headers from the response
+  const setCookies = response.headers.getSetCookie?.() ?? [];
+  if (setCookies.length > 0) {
+    console.log("[AUTH DEBUG] GET response Set-Cookie:", setCookies.map(c => c.split("=")[0]));
+  }
+  return response;
 };
+
 export const POST = async (req: NextRequest) => {
   const cookieNames = req.cookies.getAll().map(c => c.name);
   console.log("[AUTH DEBUG] POST", req.nextUrl.pathname, "cookies:", cookieNames);
-  return handlers.POST(rewriteRequest(req));
+  const response = await handlers.POST(rewriteRequest(req));
+  // Log Set-Cookie headers from the response
+  const setCookies = response.headers.getSetCookie?.() ?? [];
+  if (setCookies.length > 0) {
+    console.log("[AUTH DEBUG] POST response Set-Cookie:", setCookies.map(c => c.split("=")[0]));
+  }
+  return response;
 };
