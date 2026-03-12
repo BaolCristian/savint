@@ -1,8 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState } from "react";
 import { Globe } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 
@@ -13,22 +12,18 @@ const LOCALES = [
 
 export function LocaleSwitcher() {
   const locale = useLocale();
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const current = LOCALES.find((l) => l.code === locale) ?? LOCALES[0];
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
     if (newLocale === locale) return;
-    startTransition(async () => {
-      await fetch(withBasePath("/api/locale"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locale: newLocale }),
-      });
-      router.refresh();
+    setIsPending(true);
+    await fetch(withBasePath("/api/locale"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locale: newLocale }),
     });
+    window.location.reload();
   };
 
   return (
