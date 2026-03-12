@@ -6,7 +6,7 @@ import { z } from "zod";
 const consentSchema = z.object({
   type: z.enum(["TERMS_ACCEPTANCE", "QUIZ_PUBLISH_DECLARATION"]),
   version: z.string().min(1),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       type: parsed.data.type,
       version: parsed.data.version,
-      metadata: parsed.data.metadata ?? undefined,
+      metadata: (parsed.data.metadata as any) ?? undefined,
     },
   });
 
