@@ -11,6 +11,9 @@ const providers: Provider[] = [
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     authorization: { params: { prompt: "select_account" } },
+    // Disable PKCE — state check is sufficient and avoids cookie path
+    // issues when running behind a reverse proxy with basePath.
+    checks: ["state"],
   }),
 ];
 
