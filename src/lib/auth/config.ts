@@ -11,9 +11,9 @@ const providers: Provider[] = [
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     authorization: { params: { prompt: "select_account" } },
-    // Disable PKCE — state check is sufficient and avoids cookie path
-    // issues when running behind a reverse proxy with basePath.
-    checks: ["state"],
+    // Use nonce check (embedded in ID token) instead of PKCE/state
+    // which rely on cookies that fail behind reverse proxy with basePath.
+    checks: ["nonce"],
   }),
 ];
 
@@ -98,24 +98,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
       return session;
-    },
-  },
-  cookies: {
-    pkceCodeVerifier: {
-      name: "authjs.pkce.code_verifier",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true, maxAge: 900 },
-    },
-    state: {
-      name: "authjs.state",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true, maxAge: 900 },
-    },
-    callbackUrl: {
-      name: "authjs.callback-url",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
-    },
-    sessionToken: {
-      name: "authjs.session-token",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
     },
   },
   pages: {
