@@ -41,5 +41,9 @@ export default async function EditQuizPage({
     })),
   };
 
-  return <QuizEditor initialData={initialData} />;
+  const hasConsent = !!(await prisma.consent.findFirst({
+    where: { userId: session.user.id, type: "QUIZ_PUBLISH_DECLARATION" },
+  }));
+
+  return <QuizEditor initialData={initialData} hasConsent={hasConsent} />;
 }

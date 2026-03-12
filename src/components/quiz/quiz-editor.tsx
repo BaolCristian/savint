@@ -30,6 +30,7 @@ import {
 
 interface Props {
   initialData?: QuizInput & { id?: string };
+  hasConsent?: boolean;
 }
 
 interface ValidationError {
@@ -104,7 +105,7 @@ function createDefaultQuestion(order: number): QuestionInput {
   };
 }
 
-export function QuizEditor({ initialData }: Props) {
+export function QuizEditor({ initialData, hasConsent = false }: Props) {
   const router = useRouter();
 
   const [title, setTitle] = useState(initialData?.title ?? "");
@@ -132,21 +133,6 @@ export function QuizEditor({ initialData }: Props) {
   const [showDeclaration, setShowDeclaration] = useState(false);
 
   const isEdit = !!initialData?.id;
-
-  const requestSave = useCallback(() => {
-    if (saving) return;
-    setError(null);
-    setValidationErrors([]);
-
-    const vErrors = validateQuestions(title, questions);
-    if (vErrors.length > 0) {
-      setValidationErrors(vErrors);
-      setSaveStatus("error");
-      return;
-    }
-
-    setShowDeclaration(true);
-  }, [saving, title, questions]);
 
   const doSave = useCallback(async (license: "CC_BY" | "CC_BY_SA") => {
     if (saving) return;
@@ -211,6 +197,26 @@ export function QuizEditor({ initialData }: Props) {
       setSaving(false);
     }
   }, [saving, title, description, tagsText, isPublic, questions, initialData, isEdit, router]);
+
+  const requestSave = useCallback(() => {
+    if (saving) return;
+    setError(null);
+    setValidationErrors([]);
+
+    const vErrors = validateQuestions(title, questions);
+    if (vErrors.length > 0) {
+      setValidationErrors(vErrors);
+      setSaveStatus("error");
+      return;
+    }
+
+    // Skip declaration modal if user already gave consent
+    if (hasConsent) {
+      doSave("CC_BY");
+    } else {
+      setShowDeclaration(true);
+    }
+  }, [saving, title, questions, hasConsent, doSave]);
 
   /* ---------- question handlers ---------- */
 
