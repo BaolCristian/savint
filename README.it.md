@@ -214,6 +214,17 @@ npx prisma studio
 
 ---
 
+## Privacy e GDPR
+
+SAVINT e' progettato con il principio di minimizzazione dei dati:
+
+- **Dati studenti**: vengono memorizzati solo nickname, email opzionale e risposte al gioco. Non vengono creati account per gli studenti.
+- **Cancellazione automatica**: le sessioni terminate e tutte le risposte associate vengono eliminate automaticamente dopo un periodo di conservazione configurabile (default: **365 giorni**). Questo garantisce la conformita' ai principi di conservazione dei dati del GDPR.
+- **Cancellazione manuale**: i docenti possono eliminare le proprie sessioni in qualsiasi momento dalla dashboard. Gli admin possono eliminare qualsiasi sessione.
+- **Configurazione**: imposta `SESSION_RETENTION_DAYS` nel file `.env` per personalizzare il periodo di conservazione (es. `180` per 6 mesi).
+
+---
+
 ## Configurazione Google OAuth
 
 1. Vai su [Google Cloud Console](https://console.cloud.google.com)

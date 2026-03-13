@@ -214,6 +214,17 @@ npx prisma studio
 
 ---
 
+## Privacy and GDPR
+
+SAVINT is designed with data minimization in mind:
+
+- **Student data**: only nickname, optional email, and game responses are stored. No accounts are created for students.
+- **Automatic deletion**: finished sessions and all associated answers are automatically deleted after a configurable retention period (default: **365 days**). This ensures compliance with GDPR data retention principles.
+- **Manual deletion**: teachers can delete any of their own sessions at any time from the dashboard. Admins can delete any session.
+- **Configuration**: set `SESSION_RETENTION_DAYS` in `.env` to customize the retention period (e.g. `180` for 6 months).
+
+---
+
 ## Google OAuth Setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com)

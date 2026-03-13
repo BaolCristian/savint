@@ -62,6 +62,8 @@ const disconnectedPlayers = new Map<string, {
 const RECONNECT_GRACE_PERIOD_MS = 120_000; // 2 minutes to reconnect
 const SESSION_TIMEOUT_MS =
   (Number(process.env.SESSION_TIMEOUT_HOURS) || 2) * 60 * 60 * 1000;
+const SESSION_RETENTION_DAYS =
+  Number(process.env.SESSION_RETENTION_DAYS) || 365;
 
 function disconnectKey(sessionId: string, playerName: string) {
   return `${sessionId}:${playerName}`;
@@ -231,6 +233,24 @@ export function setupSocketHandlers(io: TypedIO) {
         }
 
         console.log(`[cleanup] Session ${id} auto-terminated (timeout)`);
+      }
+
+      // GDPR: delete finished sessions older than retention period
+      const retentionCutoff = new Date(
+        Date.now() - SESSION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+      );
+      const oldSessions = await prisma.session.findMany({
+        where: {
+          status: "FINISHED",
+          createdAt: { lt: retentionCutoff },
+        },
+        select: { id: true },
+      });
+
+      for (const { id } of oldSessions) {
+        await prisma.answer.deleteMany({ where: { sessionId: id } });
+        await prisma.session.delete({ where: { id } });
+        console.log(`[cleanup] Session ${id} deleted (GDPR retention: ${SESSION_RETENTION_DAYS}d)`);
       }
     } catch (err) {
       console.error("[cleanup] Error during session cleanup:", err);
