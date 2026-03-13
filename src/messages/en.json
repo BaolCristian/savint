@@ -339,7 +339,9 @@
     "hotspotCorrect": "Correct point shown on image",
     "skipToResults": "Skip",
     "leave": "Leave",
-    "leaveConfirm": "Are you sure you want to leave the game?"
+    "leaveConfirm": "Are you sure you want to leave the game?",
+    "selectMultiple": "Select all correct answers",
+    "confirmAnswer": "Confirm"
   },
   "legal": {
     "termsTitle": "Terms of use acceptance",

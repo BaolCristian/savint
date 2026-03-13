@@ -339,7 +339,9 @@
     "hotspotCorrect": "Punto corretto indicato sull'immagine",
     "skipToResults": "Avanti",
     "leave": "Esci",
-    "leaveConfirm": "Sei sicuro di voler abbandonare la partita?"
+    "leaveConfirm": "Sei sicuro di voler abbandonare la partita?",
+    "selectMultiple": "Seleziona tutte le risposte corrette",
+    "confirmAnswer": "Conferma"
   },
   "legal": {
     "termsTitle": "Accettazione delle condizioni di utilizzo",
