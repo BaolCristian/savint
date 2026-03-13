@@ -276,7 +276,11 @@
     "terminate": "Termina sessione",
     "terminating": "Terminando...",
     "terminateConfirm": "Terminare questa sessione? I giocatori verranno disconnessi.",
-    "terminateError": "Errore nella terminazione della sessione"
+    "terminateError": "Errore nella terminazione della sessione",
+    "deleteSession": "Elimina sessione",
+    "deleting": "Eliminando...",
+    "deleteConfirm": "Eliminare questa sessione e tutti i risultati? L'operazione non puo essere annullata.",
+    "deleteError": "Errore nell'eliminazione della sessione"
   },
   "live": {
     "gamePin": "Game PIN",

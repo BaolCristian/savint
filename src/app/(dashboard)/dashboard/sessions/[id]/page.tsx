@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 import { ExportButtons } from "@/components/session/export-buttons";
 import Link from "next/link";
 import { TerminateButton } from "@/components/session/terminate-button";
+import { DeleteSessionButton } from "@/components/session/delete-session-button";
 import {
   Table,
   TableBody,
@@ -149,6 +150,7 @@ export default async function SessionDetailPage({
               <TerminateButton sessionId={session.id} />
             </>
           )}
+          <DeleteSessionButton sessionId={session.id} redirectToList />
           <ExportButtons sessionId={id} />
         </div>
       </div>

@@ -276,7 +276,11 @@
     "terminate": "Terminate session",
     "terminating": "Terminating...",
     "terminateConfirm": "Terminate this session? Players will be disconnected.",
-    "terminateError": "Error terminating session"
+    "terminateError": "Error terminating session",
+    "deleteSession": "Delete session",
+    "deleting": "Deleting...",
+    "deleteConfirm": "Delete this session and all its results? This action cannot be undone.",
+    "deleteError": "Error deleting session"
   },
   "live": {
     "gamePin": "Game PIN",

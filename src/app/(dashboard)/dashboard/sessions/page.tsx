@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Play } from "lucide-react";
 import { TerminateButton } from "@/components/session/terminate-button";
+import { DeleteSessionButton } from "@/components/session/delete-session-button";
 import { getTranslations } from "next-intl/server";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -72,20 +73,23 @@ export default async function SessionsListPage() {
                   <p className="text-sm text-muted-foreground">
                     {tc("answers", { count: s._count.answers })}
                   </p>
-                  {(s.status === "LOBBY" || s.status === "IN_PROGRESS") && (
-                    <div className="flex items-center gap-3">
-                      <a
-                        href={`/savint/live/host/${s.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                      >
-                        <Play className="size-3.5" />
-                        {t("rejoin")}
-                      </a>
-                      <TerminateButton sessionId={s.id} />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {(s.status === "LOBBY" || s.status === "IN_PROGRESS") && (
+                      <>
+                        <a
+                          href={`/savint/live/host/${s.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        >
+                          <Play className="size-3.5" />
+                          {t("rejoin")}
+                        </a>
+                        <TerminateButton sessionId={s.id} />
+                      </>
+                    )}
+                    <DeleteSessionButton sessionId={s.id} />
+                  </div>
                 </CardContent>
               </Card>
             </Link>
