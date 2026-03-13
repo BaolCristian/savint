@@ -266,14 +266,15 @@ export function HostView({ session }: Props) {
     socket?.emit("endGame");
   }, [socket]);
 
+  // Format PIN with spacing for readability (e.g. "982 025")
+  const formattedPin = session.pin.length === 6
+    ? `${session.pin.slice(0, 3)} ${session.pin.slice(3)}`
+    : session.pin;
+
   /* ================================================================== */
   /*  LOBBY                                                              */
   /* ================================================================== */
   if (phase === "lobby") {
-    // Format PIN with spacing for readability (e.g. "982 025")
-    const formattedPin = session.pin.length === 6
-      ? `${session.pin.slice(0, 3)} ${session.pin.slice(3)}`
-      : session.pin;
 
     return (
       <div className="min-h-screen bg-slate-900 text-white flex flex-col">
@@ -434,6 +435,12 @@ export function HostView({ session }: Props) {
           </div>
 
           <div className="flex items-center gap-4 lg:gap-6">
+            {/* PIN badge */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+              <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
+            </div>
+
             {/* Answer counter */}
             <div className="flex items-center gap-2 bg-slate-700 rounded-xl px-4 py-2">
               <span className="text-lg">✋</span>
@@ -603,9 +610,15 @@ export function HostView({ session }: Props) {
           <h2 className="text-xl lg:text-2xl font-bold">
             {t("resultsHeader", { index: q ? q.questionIndex + 1 : "" })}
           </h2>
-          <span className="text-sm lg:text-base text-slate-400">
-            {q ? `${q.questionIndex + 1} / ${q.totalQuestions}` : ""}
-          </span>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+              <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
+            </div>
+            <span className="text-sm lg:text-base text-slate-400">
+              {q ? `${q.questionIndex + 1} / ${q.totalQuestions}` : ""}
+            </span>
+          </div>
         </header>
 
         {!resultsRevealed ? (
@@ -735,7 +748,11 @@ export function HostView({ session }: Props) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col">
         {/* Header */}
-        <header className="text-center pt-8 lg:pt-12 pb-4">
+        <header className="text-center pt-8 lg:pt-12 pb-4 relative">
+          <div className="absolute top-4 right-6 lg:right-10 hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
+            <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+            <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
+          </div>
           <h2 className="text-4xl lg:text-6xl font-black">{t("podiumTitle")}</h2>
           <p className="text-lg lg:text-xl text-slate-400 mt-2">{session.quiz.title}</p>
         </header>
