@@ -669,13 +669,13 @@ export function HostView({ session }: Props) {
                       const heightPercent = (value / maxVal) * 100;
                       const isCorrect = correctTexts.has(key);
                       return (
-                        <div key={key} className="flex-1 flex flex-col items-center gap-2 min-w-0">
+                        <div key={key} className={`flex-1 flex flex-col items-center gap-2 min-w-0 rounded-xl px-2 py-3 ${isCorrect ? "bg-emerald-500/20 border border-emerald-500/40" : ""}`}>
                           <span className="text-lg lg:text-xl font-bold">{value}</span>
                           <div
                             className={`bg-gradient-to-t ${MC_COLORS[i % MC_COLORS.length]} w-full rounded-t-xl transition-all duration-700`}
                             style={{ height: `${heightPercent}%`, minHeight: 8 }}
                           />
-                          <div className={`flex items-center gap-1.5 max-w-full px-2 py-1 rounded-lg ${isCorrect ? "bg-emerald-500/20 border border-emerald-500/40" : ""}`}>
+                          <div className="flex items-center gap-1 max-w-full">
                             {isCorrect && <span className="text-emerald-400 text-sm shrink-0">✓</span>}
                             <span className={`text-xs lg:text-sm text-center leading-tight line-clamp-2 ${isCorrect ? "text-emerald-300 font-semibold" : "text-slate-400"}`}>
                               {q?.question.type === "TRUE_FALSE" ? (key === "true" ? tc("true") : tc("false")) : key}
