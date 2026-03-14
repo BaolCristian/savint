@@ -459,7 +459,7 @@ export function setupSocketHandlers(io: TypedIO) {
 
       // Calculate score: use partial scoring for types that support it
       let score: number;
-      const partialTypes = ["SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
+      const partialTypes = ["MULTIPLE_CHOICE", "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
       if (partialTypes.includes(question.type)) {
         const rawPartial = calculatePartialScore(question.type, question.options, value, question.points);
         const timeLimitMs = question.timeLimit * 1000;

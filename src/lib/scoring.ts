@@ -16,11 +16,16 @@ export function calculateScore({ isCorrect, responseTimeMs, timeLimit, maxPoints
 export function checkAnswer(type: string, options: any, value: any): boolean {
   switch (type) {
     case "MULTIPLE_CHOICE": {
-      const correct = options.choices
-        .map((c: any, i: number) => (c.isCorrect ? i : -1))
-        .filter((i: number) => i >= 0);
-      const selected = [...value.selected].sort();
-      return JSON.stringify(correct.sort()) === JSON.stringify(selected);
+      const correctSet = new Set(
+        options.choices
+          .map((c: any, i: number) => (c.isCorrect ? i : -1))
+          .filter((i: number) => i >= 0)
+      );
+      const selected: number[] = value.selected ?? [];
+      // Correct if at least one correct selected and no wrong ones
+      const hasWrong = selected.some((i: number) => !correctSet.has(i));
+      const hasCorrect = selected.some((i: number) => correctSet.has(i));
+      return hasCorrect && !hasWrong;
     }
     case "TRUE_FALSE":
       return value.selected === options.correct;
@@ -71,6 +76,29 @@ export function checkAnswer(type: string, options: any, value: any): boolean {
 /** For types with partial scoring, returns raw points (before time bonus). */
 export function calculatePartialScore(type: string, options: any, value: any, maxPoints: number): number {
   switch (type) {
+    case "MULTIPLE_CHOICE": {
+      const choices = options.choices as { isCorrect: boolean }[];
+      const correctIndices = new Set(
+        choices.map((c, i) => (c.isCorrect ? i : -1)).filter((i) => i >= 0)
+      );
+      const totalCorrect = correctIndices.size;
+      const totalWrong = choices.length - totalCorrect;
+      const selected: number[] = value.selected ?? [];
+      // Each correct answer gives points proportional to total correct
+      // Each wrong answer penalizes proportional to total wrong options
+      // This way: all correct + all wrong = maxPoints - maxPoints = 0
+      const pointsPerCorrect = maxPoints / totalCorrect;
+      const penaltyPerWrong = totalWrong > 0 ? maxPoints / totalWrong : maxPoints;
+      let score = 0;
+      for (const s of selected) {
+        if (correctIndices.has(s)) {
+          score += pointsPerCorrect;
+        } else {
+          score -= penaltyPerWrong;
+        }
+      }
+      return Math.max(0, Math.round(score));
+    }
     case "SPOT_ERROR": {
       const errorIndices = new Set(options.errorIndices as number[]);
       const selected = new Set(value.selected as number[]);
