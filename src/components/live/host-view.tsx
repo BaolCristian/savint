@@ -633,12 +633,9 @@ export function HostView({ session }: Props) {
             </button>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col lg:flex-row gap-6 p-6 lg:p-10 overflow-auto">
-            {/* Left: Correct answer + Distribution chart */}
-            {resultData && (
-              <section className="lg:w-1/2 flex flex-col gap-6">
-              {/* Correct answer — hidden for MC and TRUE_FALSE (shown in chart) */}
-              {q?.question.type !== "MULTIPLE_CHOICE" && q?.question.type !== "TRUE_FALSE" && (
+          <div className="flex-1 flex flex-col gap-6 p-6 lg:p-10 overflow-auto">
+            {/* Correct answer — only for types where chart can't show it */}
+            {resultData && q?.question.type !== "MULTIPLE_CHOICE" && q?.question.type !== "TRUE_FALSE" && (
               <div className="bg-emerald-800/40 border border-emerald-600/50 rounded-2xl p-5 lg:p-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xl">✅</span>
@@ -646,7 +643,12 @@ export function HostView({ session }: Props) {
                 </div>
                 <CorrectAnswerDisplay type={q?.question.type} options={resultData.correctAnswer} />
               </div>
-              )}
+            )}
+
+            {/* Distribution + Leaderboard side by side */}
+            <div className="flex-1 flex flex-col lg:flex-row gap-6">
+            {resultData && (
+              <section className="lg:w-3/5 flex flex-col">
               <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-2xl">📊</span>
@@ -690,8 +692,8 @@ export function HostView({ session }: Props) {
               </section>
             )}
 
-            {/* Right: Leaderboard + actions */}
-            <section className="lg:w-1/2 flex flex-col gap-6">
+            {/* Leaderboard + actions */}
+            <section className="lg:w-2/5 flex flex-col gap-6">
               {/* Leaderboard */}
               {resultData && resultData.leaderboard.length > 0 && (
                 <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
@@ -744,6 +746,7 @@ export function HostView({ session }: Props) {
                 )}
               </div>
             </section>
+            </div>
           </div>
         )}
       </div>
