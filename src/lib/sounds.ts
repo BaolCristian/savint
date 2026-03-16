@@ -5,7 +5,11 @@ let _muted = false;
 
 export function isMuted() { return _muted; }
 export function setMuted(v: boolean) { _muted = v; }
-export function toggleMute() { _muted = !_muted; return _muted; }
+export function toggleMute() {
+  _muted = !_muted;
+  if (_muted) stopBgm();
+  return _muted;
+}
 
 function getCtx(): AudioContext | null {
   if (_muted) return null;
@@ -110,6 +114,91 @@ export function playFanfare() {
     osc.stop(start + 1.5);
   });
 }
+
+/* ------------------------------------------------------------------ */
+/*  Background music (host only) — synthesized loop                    */
+/* ------------------------------------------------------------------ */
+
+let bgmInterval: ReturnType<typeof setInterval> | null = null;
+let bgmGain: GainNode | null = null;
+let bgmPlaying = false;
+
+/** Start a looping background melody (game-show style) */
+export function startBgm() {
+  if (bgmPlaying || _muted) return;
+  const ctx = getCtx();
+  if (!ctx) return;
+  bgmPlaying = true;
+
+  // Master gain for BGM (low volume so it doesn't overwhelm)
+  bgmGain = ctx.createGain();
+  bgmGain.gain.value = 0.07;
+  bgmGain.connect(ctx.destination);
+
+  // Melody pattern (pentatonic, upbeat game-show feel)
+  const melody = [
+    392, 440, 523.25, 440, 392, 523.25, 587.33, 523.25,  // G4 A4 C5 A4 G4 C5 D5 C5
+    440, 523.25, 587.33, 659.25, 587.33, 523.25, 440, 392, // A4 C5 D5 E5 D5 C5 A4 G4
+  ];
+  const bassNotes = [196, 196, 220, 220, 196, 196, 220, 220]; // G3 G3 A3 A3 ...
+  const noteDuration = 0.25; // seconds per note
+  let noteIndex = 0;
+
+  const playNote = () => {
+    if (!bgmPlaying || _muted || !bgmGain) return;
+    const c = getCtx();
+    if (!c) return;
+    const now = c.currentTime;
+
+    // Melody note
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = melody[noteIndex % melody.length];
+    g.gain.setValueAtTime(0.3, now);
+    g.gain.exponentialRampToValueAtTime(0.01, now + noteDuration * 0.9);
+    osc.connect(g).connect(bgmGain!);
+    osc.start(now);
+    osc.stop(now + noteDuration);
+
+    // Bass note (every 2 beats)
+    if (noteIndex % 2 === 0) {
+      const bassOsc = c.createOscillator();
+      const bassG = c.createGain();
+      bassOsc.type = "sine";
+      bassOsc.frequency.value = bassNotes[(noteIndex / 2) % bassNotes.length];
+      bassG.gain.setValueAtTime(0.4, now);
+      bassG.gain.exponentialRampToValueAtTime(0.01, now + noteDuration * 1.8);
+      bassOsc.connect(bassG).connect(bgmGain!);
+      bassOsc.start(now);
+      bassOsc.stop(now + noteDuration * 2);
+    }
+
+    noteIndex++;
+  };
+
+  // Play first note immediately, then loop
+  playNote();
+  bgmInterval = setInterval(playNote, noteDuration * 1000);
+}
+
+/** Stop background music */
+export function stopBgm() {
+  bgmPlaying = false;
+  if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+  if (bgmGain) {
+    bgmGain.gain.exponentialRampToValueAtTime(0.001, (audioCtx?.currentTime ?? 0) + 0.3);
+    bgmGain = null;
+  }
+}
+
+/** Check if BGM is playing */
+export function isBgmPlaying() { return bgmPlaying; }
+
+/* ------------------------------------------------------------------ */
 
 /** Time's up — urgent double beep */
 export function playTimeUp() {

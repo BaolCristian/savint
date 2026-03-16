@@ -8,7 +8,7 @@ import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
 import type { QuestionType } from "@prisma/client";
 import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
-import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute } from "@/lib/sounds";
+import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute, startBgm, stopBgm } from "@/lib/sounds";
 import { Volume2, VolumeX } from "lucide-react";
 
 function HostConfetti() {
@@ -332,6 +332,16 @@ export function HostView({ session }: Props) {
       setPhase("result");
     }
   }, [phase, answerCount]);
+
+  // Background music: play during question, stop otherwise
+  useEffect(() => {
+    if (phase === "question") {
+      startBgm();
+    } else {
+      stopBgm();
+    }
+    return () => { stopBgm(); };
+  }, [phase]);
 
   const handleStartGame = useCallback(() => {
     setPhase("countdown");
