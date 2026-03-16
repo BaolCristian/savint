@@ -735,52 +735,105 @@ export function PlayerView() {
 
   if (phase === "podium" && podium) {
     const medals = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
+    // Check if the current player is on the podium
+    const myPodiumEntry = podium.podium.find((p) => p.playerName === name);
+    const myPosition = myPodiumEntry
+      ? myPodiumEntry.position
+      : podium.fullResults.findIndex((p) => p.playerName === name) + 1;
+
+    const handlePlayAgain = () => {
+      setPhase("join");
+      setPin("");
+      setQuestionData(null);
+      setFeedback(null);
+      setPodium(null);
+      setSubmitted(false);
+      setAwaitingConfidence(false);
+      setConfidenceRevealing(false);
+      sessionStorage.removeItem("savint-session");
+    };
+
     return (
       <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-4 sm:p-6 lg:p-8 pt-8 sm:pt-12">
-        <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">{t("podium")}</h2>
+        {myPodiumEntry && <Confetti />}
+        <h2 className="mb-4 sm:mb-6 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">{t("podium")}</h2>
+
+        {/* Personal result banner */}
+        {myPodiumEntry ? (
+          <div className="mb-6 sm:mb-8 text-center animate-zoom-in-bounce">
+            <span className="text-6xl sm:text-7xl lg:text-8xl block mb-2">{medals[myPodiumEntry.position - 1]}</span>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-black text-white">
+              {t("youFinished", { position: myPodiumEntry.position })}
+            </p>
+          </div>
+        ) : myPosition > 0 ? (
+          <div className="mb-6 sm:mb-8 text-center animate-slide-up-fade">
+            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white/90">
+              {t("youFinished", { position: myPosition })}
+            </p>
+          </div>
+        ) : null}
 
         {/* Top 3 */}
         <div className="mb-6 sm:mb-8 w-full max-w-sm md:max-w-lg space-y-2 sm:space-y-3 lg:space-y-4">
-          {podium.podium.map((p, i) => (
-            <div
-              key={p.position}
-              className="flex items-center gap-2 sm:gap-3 lg:gap-4 bg-white/15 backdrop-blur-md rounded-2xl p-3 sm:p-4 lg:p-5 animate-podium-rise"
-              style={{ animationDelay: `${i * 300}ms` }}
-            >
-              <span className="text-2xl sm:text-3xl lg:text-4xl">{medals[p.position - 1]}</span>
-              <AvatarDisplay avatar={p.playerAvatar ?? avatar} className={isCustomAvatar(p.playerAvatar ?? avatar) ? "w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16" : "text-3xl sm:text-5xl lg:text-6xl"} />
-              <div className="flex-1 min-w-0">
-                <span className="text-base sm:text-lg lg:text-xl font-bold text-white block truncate">
-                  {p.playerName}
+          {podium.podium.map((p, i) => {
+            const isMe = p.playerName === name;
+            return (
+              <div
+                key={p.position}
+                className={`flex items-center gap-2 sm:gap-3 lg:gap-4 backdrop-blur-md rounded-2xl p-3 sm:p-4 lg:p-5 animate-podium-rise ${
+                  isMe ? "bg-white/30 ring-2 ring-white" : "bg-white/15"
+                }`}
+                style={{ animationDelay: `${i * 300}ms` }}
+              >
+                <span className="text-2xl sm:text-3xl lg:text-4xl">{medals[p.position - 1]}</span>
+                <AvatarDisplay avatar={p.playerAvatar ?? avatar} className={isCustomAvatar(p.playerAvatar ?? avatar) ? "w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16" : "text-3xl sm:text-5xl lg:text-6xl"} />
+                <div className="flex-1 min-w-0">
+                  <span className={`text-base sm:text-lg lg:text-xl font-bold text-white block truncate ${isMe ? "underline" : ""}`}>
+                    {p.playerName}
+                  </span>
+                </div>
+                <span className="text-base sm:text-lg lg:text-xl font-semibold text-white/90">
+                  {p.score} pt
                 </span>
               </div>
-              <span className="text-base sm:text-lg lg:text-xl font-semibold text-white/90">
-                {p.score} pt
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Full list (4+) */}
         {podium.fullResults.length > 3 && (
-          <div className="w-full max-w-sm space-y-2">
-            {podium.fullResults.slice(3).map((p, i) => (
-              <div
-                key={p.playerName}
-                className="flex items-center gap-2 sm:gap-3 lg:gap-4 bg-white/10 rounded-xl p-2.5 sm:p-3 lg:p-4"
-              >
-                <span className="w-7 sm:w-8 text-center text-sm sm:text-base lg:text-lg font-bold text-white/70">
-                  {i + 4}
-                </span>
-                <AvatarDisplay avatar={p.playerAvatar ?? avatar} className={isCustomAvatar(p.playerAvatar ?? avatar) ? "w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10" : "text-xl sm:text-2xl lg:text-3xl"} />
-                <span className="flex-1 text-sm sm:text-base lg:text-lg font-medium text-white/90 truncate">
-                  {p.playerName}
-                </span>
-                <span className="text-xs sm:text-sm lg:text-base text-white/70">{p.score} pt</span>
-              </div>
-            ))}
+          <div className="w-full max-w-sm space-y-2 mb-6">
+            {podium.fullResults.slice(3).map((p, i) => {
+              const isMe = p.playerName === name;
+              return (
+                <div
+                  key={p.playerName}
+                  className={`flex items-center gap-2 sm:gap-3 lg:gap-4 rounded-xl p-2.5 sm:p-3 lg:p-4 ${
+                    isMe ? "bg-white/25 ring-2 ring-white" : "bg-white/10"
+                  }`}
+                >
+                  <span className="w-7 sm:w-8 text-center text-sm sm:text-base lg:text-lg font-bold text-white/70">
+                    {i + 4}
+                  </span>
+                  <AvatarDisplay avatar={p.playerAvatar ?? avatar} className={isCustomAvatar(p.playerAvatar ?? avatar) ? "w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10" : "text-xl sm:text-2xl lg:text-3xl"} />
+                  <span className={`flex-1 text-sm sm:text-base lg:text-lg font-medium text-white/90 truncate ${isMe ? "underline font-bold" : ""}`}>
+                    {p.playerName}
+                  </span>
+                  <span className="text-xs sm:text-sm lg:text-base text-white/70">{p.score} pt</span>
+                </div>
+              );
+            })}
           </div>
         )}
+
+        {/* Play again button */}
+        <button
+          onClick={handlePlayAgain}
+          className="w-full max-w-sm mt-auto mb-4 py-4 rounded-2xl bg-white text-gray-900 font-bold text-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+        >
+          {t("playAgain")}
+        </button>
       </div>
     );
   }

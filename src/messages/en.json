@@ -349,7 +349,9 @@
     "orderingTapTarget": "Now tap the position where you want to move it",
     "selectMultiple": "Select all correct answers",
     "confirmAnswer": "Confirm",
-    "reconnecting": "Reconnecting..."
+    "reconnecting": "Reconnecting...",
+    "youFinished": "You finished {position}!",
+    "playAgain": "Play again"
   },
   "legal": {
     "termsTitle": "Terms of use acceptance",

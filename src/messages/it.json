@@ -349,7 +349,9 @@
     "orderingTapTarget": "Ora tocca la posizione dove vuoi spostarlo",
     "selectMultiple": "Seleziona tutte le risposte corrette",
     "confirmAnswer": "Conferma",
-    "reconnecting": "Riconnessione in corso..."
+    "reconnecting": "Riconnessione in corso...",
+    "youFinished": "Sei arrivato {position}°!",
+    "playAgain": "Gioca ancora"
   },
   "legal": {
     "termsTitle": "Accettazione delle condizioni di utilizzo",
