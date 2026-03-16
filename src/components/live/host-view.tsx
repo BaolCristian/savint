@@ -769,11 +769,10 @@ export function HostView({ session }: Props) {
                   <span className="text-2xl">📊</span>
                   <h3 className="text-xl lg:text-2xl font-bold">{t("answerDistribution")}</h3>
                 </div>
-                <div className="flex-1 flex items-end gap-3 lg:gap-5 min-h-[200px] lg:min-h-[280px]">
+                <div className="flex-1 flex flex-col justify-center gap-2 lg:gap-3">
                   {(() => {
                     const entries = Object.entries(resultData.distribution);
                     const maxVal = Math.max(...entries.map(([, v]) => v), 1);
-                    // Build a set of correct answer texts for highlighting
                     const correctTexts = new Set<string>();
                     if (q?.question.type === "MULTIPLE_CHOICE") {
                       const choices = (resultData.correctAnswer as MultipleChoiceOptions)?.choices ?? [];
@@ -783,20 +782,38 @@ export function HostView({ session }: Props) {
                       correctTexts.add(String(tf.correct));
                     }
                     return entries.map(([key, value], i) => {
-                      const heightPercent = (value / maxVal) * 100;
+                      const widthPercent = (value / maxVal) * 100;
                       const isCorrect = correctTexts.has(key);
+                      const label = q?.question.type === "TRUE_FALSE" ? (key === "true" ? tc("true") : tc("false")) : key;
+                      const barColor = MC_COLORS[i % MC_COLORS.length].replace("from-", "").replace(/ to-.*/, "");
                       return (
-                        <div key={key} className={`flex-1 flex flex-col items-center gap-2 min-w-0 rounded-xl px-2 py-3 animate-slot-reveal ${isCorrect ? "bg-emerald-500/20 border border-emerald-500/40" : ""}`} style={{ animationDelay: `${i * 200}ms` }}>
-                          <span className="text-lg lg:text-xl font-bold animate-zoom-in-bounce" style={{ animationDelay: `${i * 200 + 300}ms` }}>{value}</span>
-                          <div
-                            className={`bg-gradient-to-t ${MC_COLORS[i % MC_COLORS.length]} w-full rounded-t-xl transition-all duration-1000`}
-                            style={{ height: `${heightPercent}%`, minHeight: 8, transitionDelay: `${i * 200}ms` }}
-                          />
-                          <div className="flex items-center gap-1.5 max-w-full">
+                        <div
+                          key={key}
+                          className={`flex items-center gap-3 rounded-xl px-3 py-2 animate-slot-reveal ${isCorrect ? "bg-emerald-500/20 border border-emerald-500/40" : ""}`}
+                          style={{ animationDelay: `${i * 150}ms` }}
+                        >
+                          {/* Answer label */}
+                          <div className="w-[35%] lg:w-[30%] shrink-0 flex items-center gap-1.5 min-w-0">
                             {isCorrect && <span className="text-emerald-400 text-base lg:text-lg shrink-0">✓</span>}
-                            <span className={`text-sm lg:text-base text-center leading-tight line-clamp-2 ${isCorrect ? "text-emerald-300 font-bold" : "text-slate-400"}`}>
-                              {q?.question.type === "TRUE_FALSE" ? (key === "true" ? tc("true") : tc("false")) : key}
+                            <span className={`text-sm lg:text-base leading-tight truncate ${isCorrect ? "text-emerald-300 font-bold" : "text-slate-300"}`} title={label}>
+                              {label}
                             </span>
+                          </div>
+                          {/* Bar */}
+                          <div className="flex-1 flex items-center gap-2">
+                            <div className="flex-1 bg-slate-700/50 rounded-lg h-8 lg:h-10 overflow-hidden">
+                              <div
+                                className={`h-full bg-gradient-to-r ${MC_COLORS[i % MC_COLORS.length]} rounded-lg transition-all duration-1000 flex items-center justify-end pr-2`}
+                                style={{ width: `${Math.max(widthPercent, 4)}%`, transitionDelay: `${i * 150}ms` }}
+                              >
+                                {widthPercent > 15 && (
+                                  <span className="text-sm lg:text-base font-bold text-white/90">{value}</span>
+                                )}
+                              </div>
+                            </div>
+                            {widthPercent <= 15 && (
+                              <span className="text-sm lg:text-base font-bold text-slate-300 w-6 shrink-0">{value}</span>
+                            )}
                           </div>
                         </div>
                       );
