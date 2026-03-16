@@ -342,6 +342,8 @@
     "skipToResults": "Avanti",
     "leave": "Esci",
     "leaveConfirm": "Sei sicuro di voler abbandonare la partita?",
+    "orderingInstruction": "Tocca un elemento e poi tocca dove vuoi spostarlo, oppure usa le frecce",
+    "orderingTapTarget": "Ora tocca la posizione dove vuoi spostarlo",
     "selectMultiple": "Seleziona tutte le risposte corrette",
     "confirmAnswer": "Conferma",
     "reconnecting": "Riconnessione in corso..."

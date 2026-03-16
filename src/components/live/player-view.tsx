@@ -862,121 +862,86 @@ function OrderingInput({
   const [order, setOrder] = useState<number[]>(() =>
     options.items.map((_, i) => i),
   );
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef(0);
-  const draggedEl = useRef<HTMLElement | null>(null);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
-  const swap = (a: number, b: number) => {
-    if (b < 0 || b >= order.length) return;
+  const moveItem = (from: number, to: number) => {
+    if (to < 0 || to >= order.length) return;
     setOrder((prev) => {
       const next = [...prev];
-      [next[a], next[b]] = [next[b], next[a]];
+      const [removed] = next.splice(from, 1);
+      next.splice(to, 0, removed);
       return next;
     });
   };
 
-  // Find which item index the Y coordinate is over
-  const getIndexAtY = (clientY: number): number | null => {
-    if (!listRef.current) return null;
-    const children = listRef.current.children;
-    for (let i = 0; i < children.length; i++) {
-      const rect = children[i].getBoundingClientRect();
-      if (clientY >= rect.top && clientY <= rect.bottom) return i;
+  const handleTap = (pos: number) => {
+    if (activeIdx === null) {
+      // First tap: select the item to move
+      setActiveIdx(pos);
+    } else if (activeIdx === pos) {
+      // Tap same item: deselect
+      setActiveIdx(null);
+    } else {
+      // Second tap: move the selected item to this position
+      moveItem(activeIdx, pos);
+      setActiveIdx(null);
     }
-    return null;
-  };
-
-  const handleTouchStart = (pos: number, e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    draggedEl.current = e.currentTarget as HTMLElement;
-    setDragIdx(pos);
-    setOverIdx(pos);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (dragIdx === null) return;
-    e.preventDefault();
-    const clientY = e.touches[0].clientY;
-    const idx = getIndexAtY(clientY);
-    if (idx !== null && idx !== overIdx) {
-      setOverIdx(idx);
-    }
-    // Visual feedback: translate the dragged element
-    if (draggedEl.current) {
-      const delta = clientY - touchStartY.current;
-      draggedEl.current.style.transform = `translateY(${delta}px)`;
-      draggedEl.current.style.zIndex = "50";
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
-      setOrder((prev) => {
-        const next = [...prev];
-        const [removed] = next.splice(dragIdx, 1);
-        next.splice(overIdx, 0, removed);
-        return next;
-      });
-    }
-    // Reset visual
-    if (draggedEl.current) {
-      draggedEl.current.style.transform = "";
-      draggedEl.current.style.zIndex = "";
-    }
-    setDragIdx(null);
-    setOverIdx(null);
-    draggedEl.current = null;
   };
 
   return (
     <>
-      <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto" onTouchMove={(e) => e.preventDefault()}>
-        {order.map((itemIdx, pos) => (
-          <div
-            key={itemIdx}
-            onTouchStart={(e) => handleTouchStart(pos, e)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            className={`flex items-center gap-2 rounded-xl px-4 py-3 transition-all touch-none select-none ${
-              dragIdx === pos
-                ? "bg-indigo-500/30 backdrop-blur-md ring-2 ring-indigo-400 scale-[1.02]"
-                : overIdx === pos && dragIdx !== null && dragIdx !== pos
-                  ? "bg-white/20 backdrop-blur-md border-t-2 border-indigo-400"
-                  : "bg-white/10 backdrop-blur-md"
-            }`}
-          >
-            {/* Drag handle */}
-            <span className="text-white/40 text-lg shrink-0 cursor-grab active:cursor-grabbing">☰</span>
-            {/* Position number */}
-            <span className="w-7 h-7 rounded-full bg-white/15 text-sm font-bold flex items-center justify-center shrink-0">
-              {pos + 1}
-            </span>
-            <span className="flex-1 text-lg font-medium">
-              {options.items[itemIdx]}
-            </span>
-            {/* Fallback arrow buttons */}
-            <div className="flex gap-1">
-              <button
-                onClick={() => swap(pos, pos - 1)}
-                disabled={pos === 0}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-base font-bold disabled:opacity-20 active:bg-white/20"
-                aria-label={t("moveUp")}
-              >
-                &#9650;
-              </button>
-              <button
-                onClick={() => swap(pos, pos + 1)}
-                disabled={pos === order.length - 1}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-base font-bold disabled:opacity-20 active:bg-white/20"
-                aria-label={t("moveDown")}
-              >
-                &#9660;
-              </button>
+      <p className="text-center text-sm text-white/60 mb-2">
+        {activeIdx !== null ? t("orderingTapTarget") : t("orderingInstruction")}
+      </p>
+      <div className="flex-1 space-y-2 overflow-y-auto">
+        {order.map((itemIdx, pos) => {
+          const isActive = activeIdx === pos;
+          return (
+            <div
+              key={itemIdx}
+              onClick={() => handleTap(pos)}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all select-none cursor-pointer ${
+                isActive
+                  ? "bg-indigo-500/40 ring-2 ring-indigo-400 scale-[1.03] shadow-lg shadow-indigo-500/20"
+                  : activeIdx !== null
+                    ? "bg-white/10 hover:bg-white/20 ring-1 ring-dashed ring-white/20"
+                    : "bg-white/10 hover:bg-white/15 active:scale-[0.98]"
+              }`}
+            >
+              {/* Position number */}
+              <span className={`w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0 transition-colors ${
+                isActive
+                  ? "bg-indigo-500 text-white"
+                  : "bg-white/20 text-white/80"
+              }`}>
+                {pos + 1}
+              </span>
+              {/* Item text */}
+              <span className="flex-1 text-base sm:text-lg font-medium">
+                {options.items[itemIdx]}
+              </span>
+              {/* Arrow buttons */}
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); moveItem(pos, pos - 1); setActiveIdx(null); }}
+                  disabled={pos === 0}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-sm font-bold disabled:opacity-20 active:bg-white/30 transition-colors"
+                  aria-label={t("moveUp")}
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); moveItem(pos, pos + 1); setActiveIdx(null); }}
+                  disabled={pos === order.length - 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-sm font-bold disabled:opacity-20 active:bg-white/30 transition-colors"
+                  aria-label={t("moveDown")}
+                >
+                  ▼
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <button
         onClick={() => onSubmit({ order, orderedTexts: order.map((i) => options.items[i]) })}

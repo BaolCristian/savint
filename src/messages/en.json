@@ -342,6 +342,8 @@
     "skipToResults": "Skip",
     "leave": "Leave",
     "leaveConfirm": "Are you sure you want to leave the game?",
+    "orderingInstruction": "Tap an item then tap where to move it, or use the arrows",
+    "orderingTapTarget": "Now tap the position where you want to move it",
     "selectMultiple": "Select all correct answers",
     "confirmAnswer": "Confirm",
     "reconnecting": "Reconnecting..."
