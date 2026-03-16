@@ -733,6 +733,13 @@ export function HostView({ session }: Props) {
             <span className="text-sm lg:text-base text-slate-400">
               {q ? `${q.questionIndex + 1} / ${q.totalQuestions}` : ""}
             </span>
+            <button
+              onClick={handleToggleMute}
+              className="p-2.5 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+              title={muted ? t("unmute") : t("mute")}
+            >
+              {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+            </button>
           </div>
         </header>
 
