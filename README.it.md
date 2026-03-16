@@ -248,4 +248,4 @@ Questo progetto e stato costruito attraverso una collaborazione tra **Cristian V
 
 SAVINT e un esempio concreto di cio che diventa possibile quando un docente con un'idea chiara e un assistente AI lavorano insieme: una piattaforma completa e pronta per la produzione, realizzata in una frazione del tempo che sarebbe stato tradizionalmente necessario, senza compromessi sulla qualita.
 
-Crediamo che questo tipo di collaborazione rappresenti il futuro dello sviluppo software — non l'AI che sostituisce l'uomo, ma uomini e AI che costruiscono insieme cio che nessuno dei due potrebbe realizzare da solo.
+Credo che questo tipo di collaborazione rappresenti il futuro dello sviluppo software — non l'AI che sostituisce l'uomo, ma uomini e AI che costruiscono insieme cio che nessuno dei due potrebbe realizzare da solo.
