@@ -343,7 +343,8 @@
     "leave": "Esci",
     "leaveConfirm": "Sei sicuro di voler abbandonare la partita?",
     "selectMultiple": "Seleziona tutte le risposte corrette",
-    "confirmAnswer": "Conferma"
+    "confirmAnswer": "Conferma",
+    "reconnecting": "Riconnessione in corso..."
   },
   "legal": {
     "termsTitle": "Accettazione delle condizioni di utilizzo",

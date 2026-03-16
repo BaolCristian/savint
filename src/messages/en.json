@@ -343,7 +343,8 @@
     "leave": "Leave",
     "leaveConfirm": "Are you sure you want to leave the game?",
     "selectMultiple": "Select all correct answers",
-    "confirmAnswer": "Confirm"
+    "confirmAnswer": "Confirm",
+    "reconnecting": "Reconnecting..."
   },
   "legal": {
     "termsTitle": "Terms of use acceptance",

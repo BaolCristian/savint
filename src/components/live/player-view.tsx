@@ -100,7 +100,7 @@ function AvatarDisplay({ avatar, className }: { avatar: string; className?: stri
 export function PlayerView() {
   const t = useTranslations("live");
   const tc = useTranslations("common");
-  const { socket, connected } = useSocket();
+  const { socket, connected, reconnecting } = useSocket();
 
   const [phase, setPhase] = useState<Phase>("join");
   const [pin, setPin] = useState("");
@@ -133,13 +133,13 @@ export function PlayerView() {
 
   useEffect(() => {
     if (!socket || !connected) return;
-    // If we're past the join phase, we were in a game — try to rejoin
+    // On (re)connect, try to rejoin if we have saved session info
     const saved = sessionStorage.getItem("savint-session");
     if (!saved) return;
 
     try {
       const { sessionId, playerName } = JSON.parse(saved);
-      if (sessionId && playerName && phase === "join") {
+      if (sessionId && playerName) {
         setName(playerName);
         socket.emit("rejoinSession", { sessionId, playerName });
       }
@@ -465,6 +465,13 @@ export function PlayerView() {
     </button>
   );
 
+  /* ---------- Reconnection banner ---------- */
+  const reconnectionBanner = reconnecting ? (
+    <div className="fixed top-0 inset-x-0 z-50 bg-amber-500 text-amber-950 text-center text-sm font-semibold py-2 px-4 animate-pulse">
+      {t("reconnecting")}
+    </div>
+  ) : null;
+
   /* ---------- PIN badge (shown on all in-game screens) ---------- */
   const pinBadge = (dark = true) => pin ? (
     <div className={`absolute top-3 left-3 z-10 rounded-full backdrop-blur-sm px-3 py-1 text-xs font-bold select-none ${
@@ -477,6 +484,7 @@ export function PlayerView() {
   if (phase === "waiting") {
     return (
       <div className="relative flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
+        {reconnectionBanner}
         {pinBadge(false)}
         {leaveButton(false)}
         <div className="mb-4 sm:mb-6 animate-float-bounce">
@@ -493,6 +501,7 @@ export function PlayerView() {
   if (phase === "question" && questionData) {
     return (
       <div className="relative flex min-h-dvh flex-col bg-gray-950 p-3 sm:p-4 lg:p-6 text-white">
+        {reconnectionBanner}
         {pinBadge()}
         {leaveButton()}
         {/* Header */}
@@ -544,6 +553,7 @@ export function PlayerView() {
     if (awaitingConfidence) {
       return (
         <div className="relative flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-indigo-500 to-purple-700 p-6 text-center">
+          {reconnectionBanner}
           {pinBadge()}
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
             {t("confidenceQuestion")}
@@ -606,6 +616,7 @@ export function PlayerView() {
             : "bg-gradient-to-b from-red-400 to-rose-600"
         }`}
       >
+        {reconnectionBanner}
         {pinBadge()}
         {isCorrect ? content : <div className="animate-shake">{content}</div>}
       </div>
