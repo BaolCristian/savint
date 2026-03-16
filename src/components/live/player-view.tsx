@@ -271,10 +271,10 @@ export function PlayerView() {
     return () => clearInterval(id);
   }, [phase, questionData, timeLeft]);
 
-  /* ---------- vibrate on wrong answer ---------- */
+  /* ---------- sound + vibrate on feedback (after confidence if applicable) ---------- */
 
   useEffect(() => {
-    if (phase === "feedback" && feedback) {
+    if (phase === "feedback" && feedback && !awaitingConfidence) {
       if (feedback.isCorrect) {
         playCorrect();
       } else {
@@ -282,7 +282,7 @@ export function PlayerView() {
         navigator.vibrate?.(200);
       }
     }
-  }, [phase, feedback]);
+  }, [phase, feedback, awaitingConfidence]);
 
   /* ---------- submit handler ---------- */
 
@@ -853,13 +853,22 @@ function OpenAnswerInput({
   const tc = useTranslations("common");
   const [text, setText] = useState("");
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && text.trim()) {
+      e.preventDefault();
+      onSubmit({ text });
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col justify-end gap-4">
       <input
         type="text"
+        enterKeyHint="send"
         placeholder={t("openAnswerPlaceholder")}
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
         className="h-14 w-full bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-lg placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
       />
       <button
@@ -1152,15 +1161,26 @@ function NumericEstimationInput({
   const tc = useTranslations("common");
   const [val, setVal] = useState("");
 
+  const canSubmit = val !== "" && !isNaN(Number(val));
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && canSubmit) {
+      e.preventDefault();
+      onSubmit({ value: Number(val) });
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col justify-end gap-4">
       <div className="flex items-center gap-3">
         <input
           type="number"
           inputMode="decimal"
+          enterKeyHint="send"
           placeholder={t("estimatePlaceholder")}
           value={val}
           onChange={(e) => setVal(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="h-16 flex-1 bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-2xl font-bold text-center placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
         />
         {options.unit && (
@@ -1169,7 +1189,7 @@ function NumericEstimationInput({
       </div>
       <button
         onClick={() => onSubmit({ value: Number(val) })}
-        disabled={val === "" || isNaN(Number(val))}
+        disabled={!canSubmit}
         className="h-14 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 text-xl font-bold text-white transition active:scale-95 disabled:opacity-40"
       >
         {tc("submit")}
@@ -1282,9 +1302,11 @@ function CodeCompletionInput({
         <div className="flex flex-col justify-end gap-3 flex-1">
           <input
             type="text"
+            enterKeyHint="send"
             placeholder={t("writeCode")}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && text.trim()) { e.preventDefault(); onSubmit({ text }); } }}
             className="h-14 w-full bg-white/10 backdrop-blur text-white border border-white/20 rounded-2xl px-4 text-lg font-mono placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
           />
           <button
