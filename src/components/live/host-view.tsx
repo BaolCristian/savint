@@ -57,7 +57,7 @@ function HostAvatar({ avatar, className }: { avatar?: string; className?: string
 function CorrectAnswerDisplay({ type, options }: { type?: QuestionType; options: QuestionOptions }) {
   const t = useTranslations("live");
   const tc = useTranslations("common");
-  const cls = "text-base lg:text-lg text-white/90";
+  const cls = "text-lg lg:text-2xl text-white/90 font-semibold";
   if (!type) return null;
 
   switch (type) {
@@ -792,9 +792,9 @@ export function HostView({ session }: Props) {
                             className={`bg-gradient-to-t ${MC_COLORS[i % MC_COLORS.length]} w-full rounded-t-xl transition-all duration-1000`}
                             style={{ height: `${heightPercent}%`, minHeight: 8, transitionDelay: `${i * 200}ms` }}
                           />
-                          <div className="flex items-center gap-1 max-w-full">
-                            {isCorrect && <span className="text-emerald-400 text-sm shrink-0">✓</span>}
-                            <span className={`text-xs lg:text-sm text-center leading-tight line-clamp-2 ${isCorrect ? "text-emerald-300 font-semibold" : "text-slate-400"}`}>
+                          <div className="flex items-center gap-1.5 max-w-full">
+                            {isCorrect && <span className="text-emerald-400 text-base lg:text-lg shrink-0">✓</span>}
+                            <span className={`text-sm lg:text-base text-center leading-tight line-clamp-2 ${isCorrect ? "text-emerald-300 font-bold" : "text-slate-400"}`}>
                               {q?.question.type === "TRUE_FALSE" ? (key === "true" ? tc("true") : tc("false")) : key}
                             </span>
                           </div>
@@ -950,13 +950,16 @@ export function HostView({ session }: Props) {
         </section>
 
         {/* Footer action */}
-        <footer className="bg-slate-900 border-t border-slate-700 px-6 lg:px-16 py-5 flex justify-center">
+        <footer className="bg-slate-900 border-t border-slate-700 px-6 lg:px-16 py-5 flex flex-col items-center gap-3">
           <Link
             href="/dashboard"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-lg lg:text-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
           >
             {t("backToDashboard")}
           </Link>
+          <p className="text-xs text-slate-500">
+            SAVINT — {t("madeBy")} Cristian Virgili
+          </p>
         </footer>
       </div>
     );

@@ -339,6 +339,7 @@
     "ready": "PRONTI",
     "set": "PARTENZA",
     "go": "VIA!",
+    "madeBy": "creato da",
     "podiumTitle": "🏆 Podio 🏆",
     "fullLeaderboard": "Classifica completa",
     "backToDashboard": "← Torna alla dashboard",

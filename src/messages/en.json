@@ -339,6 +339,7 @@
     "ready": "READY",
     "set": "SET",
     "go": "GO!",
+    "madeBy": "made by",
     "podiumTitle": "🏆 Podium 🏆",
     "fullLeaderboard": "Full leaderboard",
     "backToDashboard": "← Back to dashboard",
