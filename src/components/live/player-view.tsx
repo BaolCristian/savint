@@ -253,12 +253,7 @@ export function PlayerView() {
       setTimeLeft(data.question.timeLimit);
       setSubmitted(false);
       questionStartTime.current = Date.now();
-      // Show countdown only for the first question
-      if (data.questionIndex === 0) {
-        setPhase("countdown");
-      } else {
-        setPhase("question");
-      }
+      setPhase("question");
     };
 
     const onAnswerFeedback = (data: FeedbackData & { confidenceEnabled?: boolean }) => {
