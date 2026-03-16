@@ -983,7 +983,7 @@ export function HostView({ session }: Props) {
             {t("backToDashboard")}
           </Link>
           <p className="text-xs text-slate-500">
-            SAVINT v1.0.0 — {t("madeBy")} Cristian Virgili · {t("updated")} 16/03/2026
+            SAVINT v1.0.0 — {t("madeBy")} Cristian Virgili · {t("updated")} 16/03/2026 · AGPL-3.0
           </p>
         </footer>
       </div>
