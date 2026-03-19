@@ -82,25 +82,29 @@ export default function AiPromptsPage() {
           <Sparkles className="size-4 text-amber-500" />
           {t("formTitle")}
         </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t("formDescription")}
+        </p>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          {/* Topic */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="ai-topic"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              {t("topicLabel")}
-            </label>
-            <input
-              id="ai-topic"
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder={t("topicPlaceholder")}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        {/* Topic — full width */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="ai-topic"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            {t("topicLabel")}
+          </label>
+          <input
+            id="ai-topic"
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder={t("topicPlaceholder")}
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
 
           {/* Target */}
           <div className="space-y-1.5">

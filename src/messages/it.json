@@ -503,6 +503,7 @@
     "highlights": "Sostituisci [ARGOMENTO], [TARGET] e [LINGUA] con i tuoi valori.",
     "importHint": "Il chatbot genererà un file Excel che potrai importare direttamente in SAVINT.",
     "formTitle": "Personalizza il prompt",
+    "formDescription": "Compila i campi qui sotto e il sistema creerà automaticamente il prompt personalizzato, pronto da copiare e incollare nel tuo chatbot preferito.",
     "topicLabel": "Argomento",
     "topicPlaceholder": "es. Rivoluzione francese, Fotosintesi...",
     "targetLabel": "Destinatari",
