@@ -197,6 +197,9 @@ function buildDistribution(
       break;
     }
     case "TRUE_FALSE":
+      // Initialize both options so the correct answer always appears
+      dist["true"] = 0;
+      dist["false"] = 0;
       for (const a of answers) {
         const key = String((a.value as any).selected);
         dist[key] = (dist[key] || 0) + 1;
