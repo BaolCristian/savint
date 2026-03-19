@@ -700,36 +700,10 @@ export function PlayerView() {
     }
 
     const isCorrect = feedback.isCorrect;
-    const content = (
-      <div className="flex flex-col items-center">
-        {isCorrect && <Confetti />}
-        <div className={`text-7xl sm:text-9xl lg:text-[10rem] mb-3 sm:mb-4 animate-zoom-in-bounce ${isCorrect ? "animate-pulse-glow rounded-full" : ""}`}>
-          {isCorrect ? "\u2713" : "\u2717"}
-        </div>
-        <div className="mb-3 sm:mb-4">
-          <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28" : "text-4xl sm:text-5xl lg:text-7xl"} />
-        </div>
-        <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
-          {isCorrect ? t("correct") : t("wrong")}
-        </h2>
-        <p className="mb-1 text-lg sm:text-xl lg:text-2xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
-          {t("points", { score: feedback.score })}
-        </p>
-        <p className="text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
-          {t("position", { position: feedback.position })}
-        </p>
-        <p className="mt-1 text-base sm:text-lg lg:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
-          {t("totalScore", { totalScore: feedback.totalScore })}
-        </p>
-        <p className="mt-1 text-xs sm:text-sm lg:text-base text-white/60 animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
-          {t("classCorrect", { percent: feedback.classCorrectPercent })}
-        </p>
-      </div>
-    );
 
     return (
       <div
-        className={`relative flex min-h-dvh flex-col items-center justify-center p-6 text-center ${
+        className={`relative flex min-h-dvh flex-col p-4 sm:p-6 ${
           isCorrect
             ? "bg-gradient-to-b from-emerald-400 to-green-600"
             : "bg-gradient-to-b from-red-400 to-rose-600"
@@ -737,7 +711,56 @@ export function PlayerView() {
       >
         {reconnectionBanner}
         {pinBadge()}
-        {isCorrect ? content : <div className="animate-shake">{content}</div>}
+        {isCorrect && <Confetti />}
+
+        <div className={`flex flex-1 flex-col items-center justify-center gap-4 sm:gap-5 text-center ${isCorrect ? "" : "animate-shake"}`}>
+          {/* Question text reminder */}
+          {questionData && (
+            <div className="w-full max-w-lg bg-black/20 backdrop-blur-sm rounded-2xl px-4 py-3 sm:px-6 sm:py-4 animate-slide-up-fade">
+              <p className="text-xs sm:text-sm text-white/60 mb-1">{t("questionWas")}</p>
+              <p className="text-base sm:text-lg lg:text-xl font-semibold text-white leading-snug">
+                {questionData.question.text}
+              </p>
+            </div>
+          )}
+
+          {/* Result icon + label */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className={`text-5xl sm:text-7xl lg:text-8xl animate-zoom-in-bounce ${isCorrect ? "animate-pulse-glow rounded-full" : ""}`}>
+              {isCorrect ? "\u2713" : "\u2717"}
+            </div>
+            <div className="text-left">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
+                {isCorrect ? t("correct") : t("wrong")}
+              </h2>
+              <p className="text-lg sm:text-xl lg:text-2xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
+                +{feedback.score} {t("pointsLabel")}
+              </p>
+            </div>
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
+              <p className="text-2xl sm:text-3xl font-black text-white">{feedback.position}&deg;</p>
+              <p className="text-xs sm:text-sm text-white/70">{t("positionLabel")}</p>
+            </div>
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
+              <p className="text-2xl sm:text-3xl font-black text-white">{feedback.totalScore.toLocaleString()}</p>
+              <p className="text-xs sm:text-sm text-white/70">{t("totalScoreLabel")}</p>
+            </div>
+          </div>
+
+          {/* Class correct % */}
+          <p className="text-sm sm:text-base text-white/60 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
+            {t("classCorrect", { percent: feedback.classCorrectPercent })}
+          </p>
+
+          {/* Avatar small */}
+          <div className="animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
+            <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-10 h-10 sm:w-12 sm:h-12" : "text-2xl sm:text-3xl"} />
+          </div>
+        </div>
       </div>
     );
   }
