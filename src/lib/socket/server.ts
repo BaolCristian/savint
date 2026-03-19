@@ -35,6 +35,7 @@ interface GameState {
   players: Map<string, PlayerInfo>; // keyed by playerName
   questionStartTime?: number;
   answerCount: number;
+  confidenceCount: number;
   /** Cache of questions for the session (loaded once on startGame) */
   questions: {
     id: string;
@@ -310,6 +311,7 @@ export function setupSocketHandlers(io: TypedIO) {
             currentQuestionIndex: -1,
             players: new Map(),
             answerCount: 0,
+            confidenceCount: 0,
             questions: session.quiz.questions.map((q) => ({
               id: q.id,
               text: q.text,
@@ -600,6 +602,14 @@ export function setupSocketHandlers(io: TypedIO) {
         classCorrectPercent: 0,
         confidenceEnabled: false,
       });
+
+      // Broadcast confidence count to host
+      game.confidenceCount += 1;
+      const total = realPlayerCount(game);
+      io.to(room(game.sessionId)).emit("confidenceCount", {
+        count: game.confidenceCount,
+        total,
+      });
     });
 
     // ------------------------------------------------------------------
@@ -883,6 +893,7 @@ function findGameForSocket(socket: TypedSocket): GameState | null {
 function emitQuestion(io: TypedIO, game: GameState, index: number) {
   game.currentQuestionIndex = index;
   game.answerCount = 0;
+  game.confidenceCount = 0;
   game.questionStartTime = Date.now();
 
   // Reset per-round deltas
@@ -902,6 +913,7 @@ function emitQuestion(io: TypedIO, game: GameState, index: number) {
       timeLimit: question.timeLimit,
       points: question.points,
       mediaUrl: question.mediaUrl,
+      confidenceEnabled: question.confidenceEnabled,
     },
   });
 }

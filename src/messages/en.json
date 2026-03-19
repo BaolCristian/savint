@@ -328,6 +328,7 @@
     "answeredPercent": "{value}% answered",
     "resultsHeader": "Results — Question {index}",
     "readyToShowResults": "Ready to show results?",
+    "confidencePending": "Confidence level: {count}/{total} responses received. Some students haven't indicated their confidence level yet.",
     "showResults": "Show results",
     "correctAnswer": "Correct answer",
     "answerDistribution": "Answer distribution",

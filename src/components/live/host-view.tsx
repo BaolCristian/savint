@@ -136,6 +136,7 @@ interface QuestionData {
     timeLimit: number;
     points: number;
     mediaUrl: string | null;
+    confidenceEnabled?: boolean;
   };
 }
 
@@ -204,6 +205,7 @@ export function HostView({ session }: Props) {
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [answerCount, setAnswerCount] = useState({ count: 0, total: 0 });
+  const [confidenceCount, setConfidenceCount] = useState({ count: 0, total: 0 });
   const [resultData, setResultData] = useState<ResultData | null>(null);
   const [gameOverData, setGameOverData] = useState<GameOverData | null>(null);
   const [resultsRevealed, setResultsRevealed] = useState(false);
@@ -259,6 +261,7 @@ export function HostView({ session }: Props) {
       setCurrentQuestion(data);
       setTimeLeft(data.question.timeLimit);
       setAnswerCount({ count: 0, total: 0 });
+      setConfidenceCount({ count: 0, total: 0 });
       setResultData(null);
       setResultsRevealed(false);
       setPhase("question");
@@ -266,6 +269,10 @@ export function HostView({ session }: Props) {
 
     const handleAnswerCount = (data: { count: number; total: number }) => {
       setAnswerCount(data);
+    };
+
+    const handleConfidenceCount = (data: { count: number; total: number }) => {
+      setConfidenceCount(data);
     };
 
     const handleQuestionResult = (data: ResultData) => {
@@ -287,6 +294,7 @@ export function HostView({ session }: Props) {
     socket.on("playerReconnected", handlePlayerReconnected);
     socket.on("questionStart", handleQuestionStart);
     socket.on("answerCount", handleAnswerCount);
+    socket.on("confidenceCount", handleConfidenceCount);
     socket.on("questionResult", handleQuestionResult);
     socket.on("gameOver", handleGameOver);
 
@@ -297,6 +305,7 @@ export function HostView({ session }: Props) {
       socket.off("playerReconnected", handlePlayerReconnected);
       socket.off("questionStart", handleQuestionStart);
       socket.off("answerCount", handleAnswerCount);
+      socket.off("confidenceCount", handleConfidenceCount);
       socket.off("questionResult", handleQuestionResult);
       socket.off("gameOver", handleGameOver);
     };
@@ -567,6 +576,21 @@ export function HostView({ session }: Props) {
               </span>
             </div>
 
+            {/* Confidence counter — only when enabled */}
+            {q.question.confidenceEnabled && answerCount.count > 0 && (
+              <div className={`flex items-center gap-2 rounded-xl px-4 py-2 ${
+                confidenceCount.count < answerCount.count
+                  ? "bg-amber-600/30 border border-amber-500/40"
+                  : "bg-emerald-600/30 border border-emerald-500/40"
+              }`}>
+                <span className="text-lg">🎯</span>
+                <span className="text-base lg:text-lg font-bold">
+                  {confidenceCount.count}
+                  <span className="text-slate-400 font-normal">/{answerCount.count}</span>
+                </span>
+              </div>
+            )}
+
             {/* Timer */}
             <div
               className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center text-2xl lg:text-3xl font-black transition-colors ${
@@ -758,6 +782,20 @@ export function HostView({ session }: Props) {
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <span className="text-7xl">📊</span>
             <p className="text-xl lg:text-2xl text-slate-400">{t("readyToShowResults")}</p>
+
+            {/* Warning: confidence responses still pending */}
+            {q?.question.confidenceEnabled && answerCount.count > 0 && confidenceCount.count < answerCount.count && (
+              <div className="bg-amber-600/20 border border-amber-500/40 rounded-xl px-6 py-3 text-amber-200 text-sm lg:text-base flex items-center gap-3">
+                <span className="text-xl">🎯</span>
+                <span>
+                  {t("confidencePending", {
+                    count: confidenceCount.count,
+                    total: answerCount.count,
+                  })}
+                </span>
+              </div>
+            )}
+
             <button
               onClick={handleShowResults}
               className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-900 font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-amber-900/30 hover:scale-105 active:scale-95"

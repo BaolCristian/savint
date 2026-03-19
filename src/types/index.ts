@@ -103,9 +103,11 @@ export interface ServerToClientEvents {
       timeLimit: number;
       points: number;
       mediaUrl: string | null;
+      confidenceEnabled?: boolean;
     };
   }) => void;
   answerCount: (data: { count: number; total: number }) => void;
+  confidenceCount: (data: { count: number; total: number }) => void;
   questionResult: (data: {
     correctAnswer: QuestionOptions;
     distribution: Record<string, number>;
