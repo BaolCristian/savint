@@ -282,7 +282,15 @@
     "deleteSession": "Delete session",
     "deleting": "Deleting...",
     "deleteConfirm": "Delete this session and all its results? This action cannot be undone.",
-    "deleteError": "Error deleting session"
+    "deleteError": "Error deleting session",
+    "classAvgScore": "Class average",
+    "classAvgCorrect": "{pct}% correct answers",
+    "bestStudent": "Best student",
+    "worstStudent": "Weakest student",
+    "points": "points",
+    "scoreDistribution": "Score distribution",
+    "questionsByError": "Questions by error rate",
+    "studentCount": "Students"
   },
   "live": {
     "gamePin": "Game PIN",

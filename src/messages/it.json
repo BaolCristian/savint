@@ -282,7 +282,15 @@
     "deleteSession": "Elimina sessione",
     "deleting": "Eliminando...",
     "deleteConfirm": "Eliminare questa sessione e tutti i risultati? L'operazione non puo essere annullata.",
-    "deleteError": "Errore nell'eliminazione della sessione"
+    "deleteError": "Errore nell'eliminazione della sessione",
+    "classAvgScore": "Media classe",
+    "classAvgCorrect": "{pct}% risposte corrette",
+    "bestStudent": "Migliore",
+    "worstStudent": "Peggiore",
+    "points": "punti",
+    "scoreDistribution": "Distribuzione punteggi",
+    "questionsByError": "Domande per tasso di errore",
+    "studentCount": "Studenti"
   },
   "live": {
     "gamePin": "Game PIN",

@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getTranslations } from "next-intl/server";
+import { SessionStatsCharts } from "@/components/stats/session-stats-charts";
 
 export default async function SessionDetailPage({
   params,
@@ -108,6 +109,51 @@ export default async function SessionDetailPage({
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.score - a.score);
 
+  // Best / worst student
+  const bestStudent = leaderboard.length > 0 ? leaderboard[0] : null;
+  const worstStudent = leaderboard.length > 0 ? leaderboard[leaderboard.length - 1] : null;
+
+  // Class average score & correct %
+  const classAvgScore = leaderboard.length > 0
+    ? Math.round(leaderboard.reduce((sum, p) => sum + p.score, 0) / leaderboard.length)
+    : 0;
+  const classAvgCorrectPct = leaderboard.length > 0
+    ? Math.round(
+        (leaderboard.reduce((sum, p) => sum + (p.total > 0 ? p.correct / p.total : 0), 0) /
+          leaderboard.length) *
+          100,
+      )
+    : 0;
+
+  // Score distribution — build histogram buckets
+  const scoreDistribution = (() => {
+    if (leaderboard.length === 0) return [];
+    const scores = leaderboard.map((p) => p.score);
+    const maxScore = Math.max(...scores);
+    const bucketCount = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(leaderboard.length))));
+    const bucketSize = maxScore > 0 ? Math.ceil(maxScore / bucketCount) : 1;
+    const buckets: { label: string; count: number }[] = [];
+
+    for (let i = 0; i < bucketCount; i++) {
+      const lo = i * bucketSize;
+      const hi = lo + bucketSize;
+      buckets.push({
+        label: `${lo.toLocaleString()}-${hi.toLocaleString()}`,
+        count: scores.filter((s) => s >= lo && (i === bucketCount - 1 ? s <= hi : s < hi)).length,
+      });
+    }
+    return buckets;
+  })();
+
+  // Questions sorted by error rate (most errors first)
+  const questionsByError = answeredStats
+    .map((q) => ({
+      label: `D${q.number}`,
+      pctWrong: 100 - q.pctCorrect,
+      pctCorrect: q.pctCorrect,
+    }))
+    .sort((a, b) => b.pctWrong - a.pctWrong);
+
   function pctColor(pct: number) {
     if (pct < 30) return "text-red-600";
     if (pct > 70) return "text-green-600";
@@ -155,7 +201,7 @@ export default async function SessionDetailPage({
         </div>
       </div>
 
-      {/* Summary cards */}
+      {/* Summary cards — row 1 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -180,6 +226,19 @@ export default async function SessionDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t("classAvgScore")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{classAvgScore.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("classAvgCorrect", { pct: classAvgCorrectPct })}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("hardest")}
             </CardTitle>
           </CardHeader>
@@ -191,6 +250,48 @@ export default async function SessionDetailPage({
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   D{hardest.number}: {hardest.text}
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">N/A</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Summary cards — row 2: best/worst + easiest */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t("bestStudent")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {bestStudent ? (
+              <>
+                <p className="text-2xl font-bold text-green-600">{bestStudent.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {bestStudent.score.toLocaleString()} {t("points")} &middot; {bestStudent.correct}/{bestStudent.total} {t("correct")}
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">N/A</p>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t("worstStudent")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {worstStudent && leaderboard.length > 1 ? (
+              <>
+                <p className="text-2xl font-bold text-red-600">{worstStudent.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {worstStudent.score.toLocaleString()} {t("points")} &middot; {worstStudent.correct}/{worstStudent.total} {t("correct")}
                 </p>
               </>
             ) : (
@@ -220,6 +321,12 @@ export default async function SessionDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts */}
+      <SessionStatsCharts
+        scoreDistribution={scoreDistribution}
+        questionsByError={questionsByError}
+      />
 
       {/* Classifica */}
       <div>
