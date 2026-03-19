@@ -778,6 +778,15 @@ export function HostView({ session }: Props) {
           </div>
         </header>
 
+        {/* Question text reminder */}
+        {q && (
+          <div className="mx-6 lg:mx-10 mt-4 bg-slate-800/80 border border-slate-700 rounded-2xl px-6 py-4">
+            <p className="text-lg lg:text-xl xl:text-2xl font-semibold text-white text-center leading-relaxed">
+              {q.question.text}
+            </p>
+          </div>
+        )}
+
         {!resultsRevealed ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <span className="text-7xl">📊</span>
