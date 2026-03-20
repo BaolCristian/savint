@@ -718,17 +718,42 @@ export function setupSocketHandlers(io: TypedIO) {
       const entry = disconnectedPlayers.get(key);
       const game = games.get(sessionId);
 
-      if (!entry || !game) {
+      if (!game) {
         socket.emit("sessionError", { message: "Session not found or expired" });
         return;
       }
 
-      // Cancel the removal timeout
-      clearTimeout(entry.timeout);
-      disconnectedPlayers.delete(key);
+      let player: PlayerInfo;
+
+      if (entry) {
+        // Player is still within grace period — restore from disconnected map
+        clearTimeout(entry.timeout);
+        disconnectedPlayers.delete(key);
+        player = entry.player;
+      } else if (game.players.has(playerName)) {
+        // Player is still in the game (e.g. quick reconnect without disconnect firing)
+        player = game.players.get(playerName)!;
+      } else {
+        // Grace period expired — rebuild player from DB
+        const dbAnswers = await prisma.answer.findMany({
+          where: { sessionId: game.sessionId, playerName },
+          select: { score: true },
+        });
+        if (dbAnswers.length === 0) {
+          // Player was never in this session
+          socket.emit("sessionError", { message: "Session not found or expired" });
+          return;
+        }
+        const totalScore = dbAnswers.reduce((sum, a) => sum + a.score, 0);
+        player = {
+          socketId: "",
+          name: playerName,
+          totalScore,
+          lastDelta: 0,
+        };
+      }
 
       // Restore player with updated socket ID
-      const player = entry.player;
       player.socketId = socket.id;
       game.players.set(playerName, player);
 
