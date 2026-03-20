@@ -1261,7 +1261,7 @@ function MatchingInput({
           matches,
           matchedPairs: matches.map(([l, r]) => ({
             left: leftItems[l],
-            right: rightItems[shuffledRight.current[r]],
+            right: rightItems[r],
           })),
         })}
         disabled={matches.length === 0}
