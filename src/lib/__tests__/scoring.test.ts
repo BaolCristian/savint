@@ -287,3 +287,66 @@ describe("calculateScore", () => {
     expect(calculateScore({ isCorrect: false, responseTimeMs: 0, timeLimit: 30, maxPoints: 1000 })).toBe(0);
   });
 });
+
+// ── checkAnswer: MATCHING ───────────────────────────────────────────
+
+describe("checkAnswer – MATCHING", () => {
+  const opts = {
+    pairs: [
+      { left: "Italia", right: "Roma" },
+      { left: "Francia", right: "Parigi" },
+      { left: "Spagna", right: "Madrid" },
+    ],
+  };
+
+  it("all pairs correct → true", () => {
+    const value = {
+      matchedPairs: [
+        { left: "Italia", right: "Roma" },
+        { left: "Francia", right: "Parigi" },
+        { left: "Spagna", right: "Madrid" },
+      ],
+    };
+    expect(checkAnswer("MATCHING", opts, value)).toBe(true);
+  });
+
+  it("correct pairs in different order → true", () => {
+    const value = {
+      matchedPairs: [
+        { left: "Spagna", right: "Madrid" },
+        { left: "Italia", right: "Roma" },
+        { left: "Francia", right: "Parigi" },
+      ],
+    };
+    expect(checkAnswer("MATCHING", opts, value)).toBe(true);
+  });
+
+  it("one pair wrong → false", () => {
+    const value = {
+      matchedPairs: [
+        { left: "Italia", right: "Parigi" },
+        { left: "Francia", right: "Roma" },
+        { left: "Spagna", right: "Madrid" },
+      ],
+    };
+    expect(checkAnswer("MATCHING", opts, value)).toBe(false);
+  });
+
+  it("missing a pair → false", () => {
+    const value = {
+      matchedPairs: [
+        { left: "Italia", right: "Roma" },
+        { left: "Francia", right: "Parigi" },
+      ],
+    };
+    expect(checkAnswer("MATCHING", opts, value)).toBe(false);
+  });
+
+  it("empty matchedPairs → false", () => {
+    expect(checkAnswer("MATCHING", opts, { matchedPairs: [] })).toBe(false);
+  });
+
+  it("undefined matchedPairs → false", () => {
+    expect(checkAnswer("MATCHING", opts, {})).toBe(false);
+  });
+});

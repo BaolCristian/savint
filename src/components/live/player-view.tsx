@@ -1170,15 +1170,8 @@ function MatchingInput({
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
 
   const leftItems = options.pairs.map((p) => p.left);
+  // Right items are already shuffled by the server in sanitizeOptions
   const rightItems = options.pairs.map((p) => p.right);
-
-  // Shuffle right side once using a stable ref
-  const shuffledRight = useRef<number[]>([]);
-  if (shuffledRight.current.length === 0) {
-    shuffledRight.current = rightItems
-      .map((_, i) => i)
-      .sort(() => Math.random() - 0.5);
-  }
 
   const usedLeft = new Set(matches.map(([l]) => l));
   const usedRight = new Set(matches.map(([, r]) => r));
@@ -1226,17 +1219,17 @@ function MatchingInput({
 
         {/* Right column */}
         <div className="flex flex-1 flex-col gap-2">
-          {shuffledRight.current.map((origIdx) => (
+          {rightItems.map((item, i) => (
             <button
-              key={origIdx}
-              onClick={() => handleRightTap(origIdx)}
+              key={i}
+              onClick={() => handleRightTap(i)}
               className={`rounded-xl px-3 py-3 text-left text-base font-medium transition backdrop-blur-md ${
-                usedRight.has(origIdx)
+                usedRight.has(i)
                   ? "bg-green-700 text-white"
                   : "bg-white/10 text-white"
               }`}
             >
-              {rightItems[origIdx]}
+              {item}
             </button>
           ))}
         </div>
