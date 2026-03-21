@@ -592,12 +592,12 @@ export function PlayerView() {
         {pinBadge()}
         {leaveButton()}
         {/* Header */}
-        <div className="mb-3 sm:mb-4 flex items-center justify-between">
+        <div className="mb-1 sm:mb-2 flex items-center justify-between">
           <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-400">
             {t("questionCounter", { index: questionData.questionIndex + 1, total: questionData.totalQuestions })}
           </span>
           <span
-            className={`rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-base sm:text-lg lg:text-xl font-bold ${
+            className={`rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-base sm:text-lg lg:text-xl font-bold tabular-nums ${
               timeLeft <= 5 && timeLeft > 0
                 ? "bg-red-500 text-white animate-countdown-pulse"
                 : "bg-gray-800 text-white"
@@ -606,6 +606,22 @@ export function PlayerView() {
             {timeLeft}s
           </span>
         </div>
+
+        {/* Progress bar timer */}
+        {questionData.question.timeLimit > 0 && (
+          <div className="mb-3 sm:mb-4 h-2 sm:h-2.5 rounded-full bg-gray-800 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                timeLeft <= 5 && timeLeft > 0
+                  ? "bg-red-500"
+                  : timeLeft <= 10 && timeLeft > 0
+                    ? "bg-amber-500"
+                    : "bg-emerald-500"
+              }`}
+              style={{ width: `${(timeLeft / questionData.question.timeLimit) * 100}%` }}
+            />
+          </div>
+        )}
 
         {/* Question text */}
         <h2 className="mb-4 sm:mb-6 text-lg sm:text-xl lg:text-3xl font-bold text-white text-center animate-slide-up-fade">
