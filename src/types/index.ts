@@ -117,9 +117,16 @@ export interface ServerToClientEvents {
     isCorrect: boolean;
     score: number;
     totalScore: number;
-    position: number;
     classCorrectPercent: number;
     confidenceEnabled?: boolean;
+  }) => void;
+  playerStats: (data: {
+    position: number;
+    totalPlayers: number;
+    responseTimeMs: number;
+    correctCount: number;
+    totalAnswered: number;
+    streak: number;
   }) => void;
   gameOver: (data: {
     podium: { playerName: string; score: number; position: number; playerAvatar?: string }[];

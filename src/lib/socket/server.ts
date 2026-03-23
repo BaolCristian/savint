@@ -561,11 +561,6 @@ export function setupSocketHandlers(io: TypedIO) {
         console.error("submitAnswer DB error:", err);
       }
 
-      // Compute position and class correct %
-      const leaderboard = buildLeaderboard(game);
-      const position =
-        leaderboard.findIndex((l) => l.playerName === currentPlayerName) + 1;
-
       // Count how many got it right so far this round
       const correctCount = [...game.players.values()].filter(
         (p) => p.lastDelta > 0
@@ -581,7 +576,6 @@ export function setupSocketHandlers(io: TypedIO) {
         isCorrect,
         score,
         totalScore: player?.totalScore ?? 0,
-        position,
         classCorrectPercent,
         confidenceEnabled: question.confidenceEnabled,
       });
@@ -650,14 +644,10 @@ export function setupSocketHandlers(io: TypedIO) {
         console.error("submitConfidence DB error:", err);
       }
 
-      const leaderboard = buildLeaderboard(game);
-      const position = leaderboard.findIndex((l) => l.playerName === currentPlayerName) + 1;
-
       socket.emit("answerFeedback", {
         isCorrect,
         score: newDelta,
         totalScore: player.totalScore,
-        position,
         classCorrectPercent: 0,
         confidenceEnabled: false,
       });
@@ -704,6 +694,54 @@ export function setupSocketHandlers(io: TypedIO) {
           distribution,
           leaderboard: leaderboard.slice(0, 10), // top 10
         });
+
+        // Send personal stats to each player
+        const allSessionAnswers = await prisma.answer.findMany({
+          where: { sessionId: game.sessionId },
+          select: {
+            playerName: true,
+            questionId: true,
+            isCorrect: true,
+            responseTimeMs: true,
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+        const totalPlayers = realPlayerCount(game);
+
+        for (const [playerName, player] of game.players) {
+          if (playerName === "__host__") continue;
+
+          const playerAnswers = allSessionAnswers.filter(
+            (a) => a.playerName === playerName
+          );
+          const currentAnswer = playerAnswers.find(
+            (a) => a.questionId === question.id
+          );
+          const position =
+            leaderboard.findIndex((l) => l.playerName === playerName) + 1;
+          const correctCount = playerAnswers.filter((a) => a.isCorrect).length;
+          const totalAnswered = playerAnswers.length;
+
+          // Calculate current streak (consecutive correct from latest backwards)
+          let streak = 0;
+          for (let i = playerAnswers.length - 1; i >= 0; i--) {
+            if (playerAnswers[i].isCorrect) streak++;
+            else break;
+          }
+
+          const playerSocket = io.sockets.sockets.get(player.socketId);
+          if (playerSocket) {
+            playerSocket.emit("playerStats", {
+              position,
+              totalPlayers,
+              responseTimeMs: currentAnswer?.responseTimeMs ?? 0,
+              correctCount,
+              totalAnswered,
+              streak,
+            });
+          }
+        }
       } catch (err) {
         console.error("showResults error:", err);
         socket.emit("sessionError", { message: "Failed to load results" });
@@ -830,9 +868,6 @@ export function setupSocketHandlers(io: TypedIO) {
         if (q) {
           if (existingAnswer) {
             // Player already answered — show feedback, not the question
-            const leaderboard = buildLeaderboard(game);
-            const position =
-              leaderboard.findIndex((l) => l.playerName === playerName) + 1;
             const correctCount = [...game.players.values()].filter(
               (p) => p.lastDelta > 0
             ).length;
@@ -847,7 +882,6 @@ export function setupSocketHandlers(io: TypedIO) {
               isCorrect: existingAnswer.isCorrect,
               score: existingAnswer.score,
               totalScore: player.totalScore,
-              position,
               classCorrectPercent,
               confidenceEnabled: q.confidenceEnabled && !alreadyConfident,
             });

@@ -43,8 +43,16 @@ interface FeedbackData {
   isCorrect: boolean;
   score: number;
   totalScore: number;
-  position: number;
   classCorrectPercent: number;
+}
+
+interface PlayerStatsData {
+  position: number;
+  totalPlayers: number;
+  responseTimeMs: number;
+  correctCount: number;
+  totalAnswered: number;
+  streak: number;
 }
 
 interface PodiumData {
@@ -164,6 +172,7 @@ export function PlayerView() {
   const [error, setError] = useState<string | null>(null);
   const [questionData, setQuestionData] = useState<QuestionData | null>(null);
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
+  const [playerStats, setPlayerStats] = useState<PlayerStatsData | null>(null);
   const [podium, setPodium] = useState<PodiumData | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -252,6 +261,7 @@ export function PlayerView() {
       setQuestionData(data);
       setTimeLeft(data.question.timeLimit);
       setSubmitted(false);
+      setPlayerStats(null);
       questionStartTime.current = Date.now();
       setPhase("question");
     };
@@ -270,6 +280,10 @@ export function PlayerView() {
       sessionStorage.removeItem("savint-session");
     };
 
+    const onPlayerStats = (data: PlayerStatsData) => {
+      setPlayerStats(data);
+    };
+
     const onMuteChanged = ({ muted }: { muted: boolean }) => {
       setMuted(muted);
     };
@@ -280,6 +294,7 @@ export function PlayerView() {
     socket.on("rejoinSuccess", onRejoinSuccess);
     socket.on("questionStart", onQuestionStart);
     socket.on("answerFeedback", onAnswerFeedback);
+    socket.on("playerStats", onPlayerStats);
     socket.on("gameOver", onGameOver);
     socket.on("muteChanged", onMuteChanged);
 
@@ -290,6 +305,7 @@ export function PlayerView() {
       socket.off("rejoinSuccess", onRejoinSuccess);
       socket.off("questionStart", onQuestionStart);
       socket.off("answerFeedback", onAnswerFeedback);
+      socket.off("playerStats", onPlayerStats);
       socket.off("gameOver", onGameOver);
       socket.off("muteChanged", onMuteChanged);
     };
@@ -381,6 +397,7 @@ export function PlayerView() {
     setName("");
     setQuestionData(null);
     setFeedback(null);
+    setPlayerStats(null);
     setPodium(null);
   }, [socket, t]);
 
@@ -754,12 +771,8 @@ export function PlayerView() {
             </div>
           </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-              <p className="text-2xl sm:text-3xl font-black text-white">{feedback.position}&deg;</p>
-              <p className="text-xs sm:text-sm text-white/70">{t("positionLabel")}</p>
-            </div>
+          {/* Total score */}
+          <div className="w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
               <p className="text-2xl sm:text-3xl font-black text-white">{feedback.totalScore.toLocaleString()}</p>
               <p className="text-xs sm:text-sm text-white/70">{t("totalScoreLabel")}</p>
@@ -771,8 +784,32 @@ export function PlayerView() {
             {t("classCorrect", { percent: feedback.classCorrectPercent })}
           </p>
 
+          {/* Player stats (shown when host reveals results) */}
+          {playerStats && (
+            <div className="w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "100ms" }}>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{playerStats.position}&deg;</p>
+                  <p className="text-xs text-white/70">{t("positionLabel")}</p>
+                </div>
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{(playerStats.responseTimeMs / 1000).toFixed(1)}s</p>
+                  <p className="text-xs text-white/70">{t("responseTimeLabel")}</p>
+                </div>
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{playerStats.correctCount}/{playerStats.totalAnswered}</p>
+                  <p className="text-xs text-white/70">{t("correctCountLabel")}</p>
+                </div>
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{playerStats.streak}</p>
+                  <p className="text-xs text-white/70">{t("streakLabel")}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Avatar small */}
-          <div className="animate-slide-up-fade" style={{ animationDelay: "500ms" }}>
+          <div className="animate-slide-up-fade" style={{ animationDelay: playerStats ? "200ms" : "500ms" }}>
             <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-10 h-10 sm:w-12 sm:h-12" : "text-2xl sm:text-3xl"} />
           </div>
         </div>
