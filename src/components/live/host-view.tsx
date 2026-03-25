@@ -450,7 +450,7 @@ export function HostView({ session }: Props) {
                 </p>
                 <div className="bg-white rounded-2xl p-3 shadow-lg shadow-black/20">
                   <QRCodeSVG
-                    value={`${origin}/play?pin=${session.pin}`}
+                    value={`${origin}${withBasePath("/play")}?pin=${session.pin}`}
                     size={160}
                     level="M"
                     includeMargin={false}
