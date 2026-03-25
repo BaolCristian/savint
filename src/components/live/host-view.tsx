@@ -375,6 +375,9 @@ export function HostView({ session }: Props) {
     socket?.emit("endGame");
   }, [socket]);
 
+  const [origin, setOrigin] = useState("");
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+
   // Format PIN with spacing for readability (e.g. "982 025")
   const formattedPin = session.pin.length === 6
     ? `${session.pin.slice(0, 3)} ${session.pin.slice(3)}`
@@ -440,19 +443,21 @@ export function HostView({ session }: Props) {
             </div>
 
             {/* QR code */}
-            <div className="relative z-10 mt-6 flex flex-col items-center gap-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-indigo-200/70 font-semibold">
-                {t("orScanQr")}
-              </p>
-              <div className="bg-white rounded-2xl p-3 shadow-lg shadow-black/20">
-                <QRCodeSVG
-                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/play?pin=${session.pin}`}
-                  size={160}
-                  level="M"
-                  includeMargin={false}
-                />
+            {origin && (
+              <div className="relative z-10 mt-6 flex flex-col items-center gap-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-indigo-200/70 font-semibold">
+                  {t("orScanQr")}
+                </p>
+                <div className="bg-white rounded-2xl p-3 shadow-lg shadow-black/20">
+                  <QRCodeSVG
+                    value={`${origin}/play?pin=${session.pin}`}
+                    size={160}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quiz info */}
             <div className="relative z-10 mt-6 flex items-center gap-4 text-indigo-200 text-sm lg:text-base">
