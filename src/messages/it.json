@@ -338,6 +338,7 @@
     "writeCode": "Scrivi il codice mancante...",
     "goTo": "Vai su",
     "enterThisPin": "Inserisci questo PIN",
+    "orScanQr": "Oppure inquadra il QR code",
     "players": "Giocatori",
     "waitingForPlayers": "In attesa di giocatori",
     "startQuiz": "Avvia Quiz ({count} giocator{suffix})",

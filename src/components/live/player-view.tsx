@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSocket } from "@/lib/socket/client";
 import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
+import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { playCorrect, playWrong, playTick, playTimeUp, setMuted } from "@/lib/sounds";
 import type {
@@ -165,9 +166,10 @@ export function PlayerView() {
   const t = useTranslations("live");
   const tc = useTranslations("common");
   const { socket, connected, reconnecting } = useSocket();
+  const searchParams = useSearchParams();
 
   const [phase, setPhase] = useState<Phase>("join");
-  const [pin, setPin] = useState("");
+  const [pin, setPin] = useState(() => searchParams.get("pin") ?? "");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [questionData, setQuestionData] = useState<QuestionData | null>(null);

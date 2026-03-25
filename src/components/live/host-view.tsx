@@ -10,6 +10,7 @@ import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
 import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute, startBgm, stopBgm } from "@/lib/sounds";
 import { Volume2, VolumeX } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 function HostConfetti() {
   const colors = [
@@ -438,8 +439,23 @@ export function HostView({ session }: Props) {
               </p>
             </div>
 
+            {/* QR code */}
+            <div className="relative z-10 mt-6 flex flex-col items-center gap-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-indigo-200/70 font-semibold">
+                {t("orScanQr")}
+              </p>
+              <div className="bg-white rounded-2xl p-3 shadow-lg shadow-black/20">
+                <QRCodeSVG
+                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/play?pin=${session.pin}`}
+                  size={160}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+            </div>
+
             {/* Quiz info */}
-            <div className="relative z-10 mt-8 flex items-center gap-4 text-indigo-200 text-sm lg:text-base">
+            <div className="relative z-10 mt-6 flex items-center gap-4 text-indigo-200 text-sm lg:text-base">
               <span>{tc("questions", { count: session.quiz.questions.length })}</span>
             </div>
           </section>

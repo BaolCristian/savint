@@ -338,6 +338,7 @@
     "writeCode": "Write the missing code...",
     "goTo": "Go to",
     "enterThisPin": "Enter this PIN",
+    "orScanQr": "Or scan the QR code",
     "players": "Players",
     "waitingForPlayers": "Waiting for players",
     "startQuiz": "Start Quiz ({count} player{suffix})",
