@@ -17,7 +17,15 @@ export default async function TestSessionPage({
 
   const gameSession = await prisma.session.findUnique({
     where: { id: sessionId },
-    include: { quiz: { select: { title: true } } },
+    include: {
+      quiz: {
+        include: {
+          questions: {
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+    },
   });
 
   if (!gameSession) notFound();
@@ -26,9 +34,14 @@ export default async function TestSessionPage({
 
   return (
     <TestView
-      sessionId={gameSession.id}
-      pin={gameSession.pin}
-      quizTitle={gameSession.quiz.title}
+      session={{
+        id: gameSession.id,
+        pin: gameSession.pin,
+        quiz: {
+          title: gameSession.quiz.title,
+          questions: gameSession.quiz.questions,
+        },
+      }}
     />
   );
 }

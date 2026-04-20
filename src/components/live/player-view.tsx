@@ -162,15 +162,21 @@ function AvatarDisplay({ avatar, className }: { avatar: string; className?: stri
 /*  PlayerView                                                         */
 /* ------------------------------------------------------------------ */
 
-export function PlayerView() {
+interface PlayerViewProps {
+  testMode?: boolean;
+  testPin?: string;
+  testPlayerName?: string;
+}
+
+export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProps = {}) {
   const t = useTranslations("live");
   const tc = useTranslations("common");
   const { socket, connected, reconnecting } = useSocket();
   const searchParams = useSearchParams();
 
-  const [phase, setPhase] = useState<Phase>("join");
-  const [pin, setPin] = useState(() => searchParams.get("pin") ?? "");
-  const [name, setName] = useState("");
+  const [phase, setPhase] = useState<Phase>(testMode ? "waiting" : "join");
+  const [pin, setPin] = useState(() => (testMode ? testPin ?? "" : searchParams.get("pin") ?? ""));
+  const [name, setName] = useState(testMode ? testPlayerName ?? "" : "");
   const [error, setError] = useState<string | null>(null);
   const [questionData, setQuestionData] = useState<QuestionData | null>(null);
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
@@ -201,6 +207,7 @@ export function PlayerView() {
 
   useEffect(() => {
     if (!socket || !connected) return;
+    if (testMode) return; // skip auto-rejoin in test mode
     // On (re)connect, try to rejoin if we have saved session info
     const saved = sessionStorage.getItem("savint-session");
     if (!saved) return;
@@ -215,6 +222,17 @@ export function PlayerView() {
       sessionStorage.removeItem("savint-session");
     }
   }, [socket, connected]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---------- auto-join in test mode ---------- */
+
+  const testJoinedRef = useRef(false);
+  useEffect(() => {
+    if (!testMode || !socket || !connected) return;
+    if (testJoinedRef.current) return;
+    if (!testPin || !testPlayerName) return;
+    testJoinedRef.current = true;
+    socket.emit("joinSession", { pin: testPin, playerName: testPlayerName });
+  }, [testMode, socket, connected, testPin, testPlayerName]);
 
   /* ---------- socket listeners ---------- */
 
