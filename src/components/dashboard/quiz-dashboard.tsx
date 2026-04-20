@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { PlayQuizButton } from "@/components/quiz/play-button";
+import { TestQuizButton } from "@/components/quiz/test-quiz-button";
 import { ImportQuizButton } from "@/components/quiz/import-button";
 import { ExcelImportButton } from "@/components/quiz/excel-import-button";
 import { ExcelTemplateButton } from "@/components/quiz/excel-template-button";
@@ -545,7 +546,10 @@ function QuizCard({
             <Play className="size-4" /> {t("suspended")}
           </span>
         ) : (
-          <PlayQuizButton quizId={quiz.id} />
+          <>
+            <PlayQuizButton quizId={quiz.id} />
+            {isOwner && <TestQuizButton quizId={quiz.id} />}
+          </>
         )}
 
         {/* Edit */}
