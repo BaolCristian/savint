@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 
   const session = await prisma.session.findUnique({
-    where: { id: sessionId, hostId: authSession.user.id },
+    where: { id: sessionId, hostId: authSession.user.id, isTest: false },
     include: {
       quiz: {
         include: {

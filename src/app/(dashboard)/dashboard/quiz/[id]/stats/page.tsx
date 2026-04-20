@@ -29,7 +29,7 @@ export default async function QuizStatsPage({
     include: {
       questions: { orderBy: { order: "asc" } },
       sessions: {
-        where: { status: "FINISHED" },
+        where: { status: "FINISHED", isTest: false },
         orderBy: { endedAt: "asc" },
         include: {
           answers: true,

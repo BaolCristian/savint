@@ -21,7 +21,7 @@ export default async function StatsOverviewPage() {
     await Promise.all([
       prisma.quiz.count({ where: { authorId: userId } }),
       prisma.session.findMany({
-        where: { hostId: userId, status: "FINISHED" },
+        where: { hostId: userId, status: "FINISHED", isTest: false },
         include: {
           quiz: { select: { title: true, id: true } },
           answers: {
@@ -37,7 +37,7 @@ export default async function StatsOverviewPage() {
         orderBy: { endedAt: "desc" },
       }),
       prisma.answer.findMany({
-        where: { session: { hostId: userId } },
+        where: { session: { hostId: userId, isTest: false } },
         select: {
           playerName: true,
           playerEmail: true,
@@ -50,7 +50,7 @@ export default async function StatsOverviewPage() {
           id: true,
           tags: true,
           sessions: {
-            where: { status: "FINISHED" },
+            where: { status: "FINISHED", isTest: false },
             select: {
               answers: {
                 select: { isCorrect: true },

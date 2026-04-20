@@ -25,7 +25,7 @@ export default async function TopicsStatsPage() {
       title: true,
       tags: true,
       sessions: {
-        where: { status: "FINISHED" },
+        where: { status: "FINISHED", isTest: false },
         select: {
           id: true,
           answers: {

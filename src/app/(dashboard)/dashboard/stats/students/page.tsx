@@ -25,7 +25,7 @@ export default async function StudentsStatsPage() {
 
   // Get all finished sessions with their answers
   const finishedSessions = await prisma.session.findMany({
-    where: { hostId: userId, status: "FINISHED" },
+    where: { hostId: userId, status: "FINISHED", isTest: false },
     include: {
       quiz: { select: { title: true } },
       answers: {

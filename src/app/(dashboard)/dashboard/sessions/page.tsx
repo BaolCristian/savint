@@ -26,7 +26,7 @@ export default async function SessionsListPage() {
   const session = await auth();
 
   const sessions = await prisma.session.findMany({
-    where: { hostId: session!.user!.id },
+    where: { hostId: session!.user!.id, isTest: false },
     include: {
       quiz: { select: { title: true } },
       _count: { select: { answers: true } },

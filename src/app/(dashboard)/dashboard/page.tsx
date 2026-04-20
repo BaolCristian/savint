@@ -12,16 +12,16 @@ export default async function DashboardHome() {
 
   const [quizCount, sessionCount, studentsResult] = await Promise.all([
     prisma.quiz.count({ where: { authorId: userId } }),
-    prisma.session.count({ where: { hostId: userId } }),
+    prisma.session.count({ where: { hostId: userId, isTest: false } }),
     prisma.answer.findMany({
-      where: { session: { hostId: userId } },
+      where: { session: { hostId: userId, isTest: false } },
       select: { playerName: true },
       distinct: ["playerName"],
     }),
   ]);
 
   const allAnswers = await prisma.answer.findMany({
-    where: { session: { hostId: userId } },
+    where: { session: { hostId: userId, isTest: false } },
     select: { isCorrect: true },
   });
   const totalAnswers = allAnswers.length;
@@ -33,7 +33,7 @@ export default async function DashboardHome() {
 
   const [recentSessions, recentQuizzes] = await Promise.all([
     prisma.session.findMany({
-      where: { hostId: userId },
+      where: { hostId: userId, isTest: false },
       include: {
         quiz: { select: { title: true } },
         _count: { select: { answers: true } },
