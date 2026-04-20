@@ -32,6 +32,7 @@ Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo r
 
 - **9 tipi di domanda**: scelta multipla, vero/falso, risposta aperta, ordinamento, abbinamento, trova l'errore, stima numerica, hotspot su immagine, completamento codice
 - **Quiz live in tempo reale**: lobby con PIN a 6 cifre, countdown, classifica animata, podio finale
+- **Modalita' test (prova quiz)**: il docente puo' giocare da solo il proprio quiz per verificarlo end-to-end prima di usarlo in classe; i risultati non vengono salvati nelle statistiche
 - **Livello di confidenza**: lo studente indica quanto e' sicuro della risposta, con bonus o malus sul punteggio
 - **Import da Excel**: crea quiz da file Excel, con template scaricabile e supporto AI
 - **Import da Moodle**: importa quiz dal formato Moodle XML (scelta multipla, vero/falso, risposta breve, abbinamento, numerica)
@@ -124,10 +125,11 @@ Il server parte su **http://localhost:3000** con Socket.io integrato.
 
 1. Accedi con Google su `/login`
 2. Crea un quiz con le domande desiderate
-3. Clicca **Gioca** per avviare una sessione live
-4. Proietta lo schermo sulla LIM — gli studenti vedono il PIN
-5. Avvia il quiz e gestisci il flusso delle domande
-6. A fine quiz: podio e statistiche dettagliate
+3. (Opzionale) Clicca **Prova** per giocare il quiz da solo in modalita' test e verificare che funzioni come previsto (nessuna statistica viene salvata)
+4. Clicca **Gioca** per avviare una sessione live
+5. Proietta lo schermo sulla LIM — gli studenti vedono il PIN
+6. Avvia il quiz e gestisci il flusso delle domande
+7. A fine quiz: podio e statistiche dettagliate
 
 ### Studente
 

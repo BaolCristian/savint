@@ -32,6 +32,7 @@ Teachers create quizzes, project them on the interactive whiteboard and students
 
 - **9 question types**: multiple choice, true/false, open answer, ordering, matching, find the error, numeric estimation, image hotspot, code completion
 - **Real-time live quizzes**: lobby with 6-digit PIN, countdown, animated leaderboard, final podium
+- **Test mode (play solo)**: teachers can preview their quiz end-to-end as a single player before running it in class; results are not saved to stats
 - **Confidence level**: students indicate how confident they are in their answer, with score bonus or penalty
 - **Excel import**: create quizzes from Excel files, with downloadable template and AI support
 - **Moodle import**: import quizzes from Moodle XML format (multichoice, truefalse, shortanswer, matching, numerical)
@@ -124,10 +125,11 @@ The server starts at **http://localhost:3000** with built-in Socket.io.
 
 1. Log in with Google at `/login`
 2. Create a quiz with the desired questions
-3. Click **Play** to start a live session
-4. Project the screen on the whiteboard — students see the PIN
-5. Start the quiz and manage the question flow
-6. At the end: podium and detailed statistics
+3. (Optional) Click **Try** to play the quiz solo in test mode and verify it works as expected (no stats are recorded)
+4. Click **Play** to start a live session
+5. Project the screen on the whiteboard — students see the PIN
+6. Start the quiz and manage the question flow
+7. At the end: podium and detailed statistics
 
 ### Student
 
