@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { QuizInput, QuestionInput } from "@/lib/validators/quiz";
 import { QuestionEditor } from "@/components/quiz/question-editor";
 import { ShareDialog } from "@/components/quiz/share-dialog";
+import { TestQuizButton } from "@/components/quiz/test-quiz-button";
 import { ExcelImportButton } from "@/components/quiz/excel-import-button";
 import { MoodleImportButton } from "@/components/quiz/moodle-import-button";
 import { withBasePath } from "@/lib/base-path";
@@ -367,6 +368,8 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
           )}
 
           {initialData?.id && <ShareDialog quizId={initialData.id} />}
+
+          {initialData?.id && <TestQuizButton quizId={initialData.id} />}
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
