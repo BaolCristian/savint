@@ -62,3 +62,6 @@ docker-compose*.yml
 
 # docs interni / piani di sviluppo
 docs/plans/
+
+# git worktrees
+.worktrees/
