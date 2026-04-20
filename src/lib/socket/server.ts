@@ -49,6 +49,7 @@ interface GameState {
     confidenceEnabled: boolean;
   }[];
   hostSocketId?: string;
+  isTest: boolean;
 }
 
 const games = new Map<string, GameState>(); // keyed by sessionId
@@ -326,6 +327,7 @@ export function setupSocketHandlers(io: TypedIO) {
               order: q.order,
               confidenceEnabled: (q as any).confidenceEnabled ?? false,
             })),
+            isTest: session.isTest,
           });
         }
 
