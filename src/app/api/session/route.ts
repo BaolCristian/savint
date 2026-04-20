@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { quizId } = await req.json();
+  const { quizId, isTest } = await req.json();
   if (!quizId) return NextResponse.json({ error: "quizId required" }, { status: 400 });
 
   const quiz = await prisma.quiz.findUnique({ where: { id: quizId } });
@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       quizId,
       hostId: session.user.id,
       pin,
+      isTest: isTest === true,
     },
   });
 
@@ -55,7 +56,7 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const sessions = await prisma.session.findMany({
-    where: { hostId: session.user.id },
+    where: { hostId: session.user.id, isTest: false },
     include: {
       quiz: { select: { title: true } },
       _count: { select: { answers: true } },
