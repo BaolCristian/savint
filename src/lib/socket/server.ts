@@ -587,6 +587,10 @@ export function setupSocketHandlers(io: TypedIO) {
         count: game.answerCount,
         total,
       });
+
+      if (game.isTest) {
+        await runShowResults(io, game);
+      }
     });
 
     // ------------------------------------------------------------------
@@ -668,86 +672,8 @@ export function setupSocketHandlers(io: TypedIO) {
     // ------------------------------------------------------------------
     socket.on("showResults", async () => {
       const game = findGameForSocket(socket);
-      if (!game || game.currentQuestionIndex < 0) return;
-
-      const question = game.questions[game.currentQuestionIndex];
-      if (!question) return;
-
-      // Fetch answers from DB for distribution
-      try {
-        const dbAnswers = await prisma.answer.findMany({
-          where: {
-            sessionId: game.sessionId,
-            questionId: question.id,
-          },
-          select: { value: true, isCorrect: true },
-        });
-
-        const distribution = buildDistribution(
-          question.type,
-          dbAnswers.map((a) => ({ value: a.value, isCorrect: a.isCorrect })),
-          question.options
-        );
-
-        const leaderboard = buildLeaderboard(game);
-
-        io.to(room(game.sessionId)).emit("questionResult", {
-          correctAnswer: question.options,
-          distribution,
-          leaderboard: leaderboard.slice(0, 10), // top 10
-        });
-
-        // Send personal stats to each player
-        const allSessionAnswers = await prisma.answer.findMany({
-          where: { sessionId: game.sessionId },
-          select: {
-            playerName: true,
-            questionId: true,
-            isCorrect: true,
-            responseTimeMs: true,
-          },
-          orderBy: { createdAt: "asc" },
-        });
-
-        const totalPlayers = realPlayerCount(game);
-
-        for (const [playerName, player] of game.players) {
-          if (playerName === "__host__") continue;
-
-          const playerAnswers = allSessionAnswers.filter(
-            (a) => a.playerName === playerName
-          );
-          const currentAnswer = playerAnswers.find(
-            (a) => a.questionId === question.id
-          );
-          const position =
-            leaderboard.findIndex((l) => l.playerName === playerName) + 1;
-          const correctCount = playerAnswers.filter((a) => a.isCorrect).length;
-          const totalAnswered = playerAnswers.length;
-
-          // Calculate current streak (consecutive correct from latest backwards)
-          let streak = 0;
-          for (let i = playerAnswers.length - 1; i >= 0; i--) {
-            if (playerAnswers[i].isCorrect) streak++;
-            else break;
-          }
-
-          const playerSocket = io.sockets.sockets.get(player.socketId);
-          if (playerSocket) {
-            playerSocket.emit("playerStats", {
-              position,
-              totalPlayers,
-              responseTimeMs: currentAnswer?.responseTimeMs ?? 0,
-              correctCount,
-              totalAnswered,
-              streak,
-            });
-          }
-        }
-      } catch (err) {
-        console.error("showResults error:", err);
-        socket.emit("sessionError", { message: "Failed to load results" });
-      }
+      if (!game) return;
+      await runShowResults(io, game);
     });
 
     // ------------------------------------------------------------------
@@ -1014,6 +940,69 @@ function findGameForSocket(socket: TypedSocket): GameState | null {
   }
   socket.emit("sessionError", { message: "Not in a session" });
   return null;
+}
+
+/** Run the showResults logic (extracted so test-mode auto-advance can reuse it) */
+async function runShowResults(io: TypedIO, game: GameState) {
+  if (game.currentQuestionIndex < 0) return;
+  const question = game.questions[game.currentQuestionIndex];
+  if (!question) return;
+
+  try {
+    const dbAnswers = await prisma.answer.findMany({
+      where: { sessionId: game.sessionId, questionId: question.id },
+      select: { value: true, isCorrect: true },
+    });
+
+    const distribution = buildDistribution(
+      question.type,
+      dbAnswers.map((a) => ({ value: a.value, isCorrect: a.isCorrect })),
+      question.options
+    );
+
+    const leaderboard = buildLeaderboard(game);
+
+    io.to(room(game.sessionId)).emit("questionResult", {
+      correctAnswer: question.options,
+      distribution,
+      leaderboard: leaderboard.slice(0, 10),
+    });
+
+    const allSessionAnswers = await prisma.answer.findMany({
+      where: { sessionId: game.sessionId },
+      select: { playerName: true, questionId: true, isCorrect: true, responseTimeMs: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const totalPlayers = realPlayerCount(game);
+
+    for (const [playerName, player] of game.players) {
+      if (playerName === "__host__") continue;
+      const playerAnswers = allSessionAnswers.filter((a) => a.playerName === playerName);
+      const currentAnswer = playerAnswers.find((a) => a.questionId === question.id);
+      const position = leaderboard.findIndex((l) => l.playerName === playerName) + 1;
+      const correctCount = playerAnswers.filter((a) => a.isCorrect).length;
+      const totalAnswered = playerAnswers.length;
+      let streak = 0;
+      for (let i = playerAnswers.length - 1; i >= 0; i--) {
+        if (playerAnswers[i].isCorrect) streak++;
+        else break;
+      }
+      const playerSocket = io.sockets.sockets.get(player.socketId);
+      if (playerSocket) {
+        playerSocket.emit("playerStats", {
+          position,
+          totalPlayers,
+          responseTimeMs: currentAnswer?.responseTimeMs ?? 0,
+          correctCount,
+          totalAnswered,
+          streak,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("runShowResults error:", err);
+  }
 }
 
 /** Emit a question to all players in the room */
