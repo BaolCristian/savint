@@ -204,6 +204,7 @@ model Session {
   hostId    String
   pin       String        @unique
   status    SessionStatus @default(LOBBY)
+  isTest    Boolean       @default(false)
   startedAt DateTime?
   endedAt   DateTime?
   createdAt DateTime      @default(now())
