@@ -47,6 +47,7 @@ Teachers create quizzes, project them on the interactive whiteboard and students
 - **Multilingual**: Italian (default) and English, with automatic browser language detection and easy extensibility
 - **Player reconnection**: players who switch apps or lose connection can automatically rejoin within 2 minutes
 - **Session management**: teachers can rejoin active sessions and terminate them from the dashboard; sessions auto-expire after a configurable timeout (default 2 hours)
+- **Remove disruptive players**: during the lobby, the teacher can kick a player from the session; the kicked nickname is blocked from rejoining that session
 - **Content moderation**: report system, admin review panel, quiz suspension
 - **Responsive**: optimized for interactive whiteboards (teacher) and phones (students)
 

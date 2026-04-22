@@ -47,6 +47,7 @@ Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo r
 - **Multilingua**: italiano (default) e inglese, con rilevamento automatico della lingua del browser e facile estensibilita'
 - **Riconnessione giocatori**: gli studenti che cambiano app o perdono la connessione possono rientrare automaticamente entro 2 minuti
 - **Gestione sessioni**: i docenti possono rientrare nelle sessioni attive e terminarle dalla dashboard; le sessioni scadono automaticamente dopo un timeout configurabile (default 2 ore)
+- **Rimozione di giocatori**: durante la lobby, il docente può espellere un giocatore dalla sessione; il nickname espulso non può più rientrare in quella sessione
 - **Moderazione contenuti**: sistema di segnalazione, pannello di revisione admin, sospensione quiz
 - **Responsive**: interfaccia ottimizzata per LIM (docente) e telefono (studenti)
 
