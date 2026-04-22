@@ -337,6 +337,11 @@ export function setupSocketHandlers(io: TypedIO) {
 
         const game = games.get(sessionId)!;
 
+        if (playerName !== "__host__" && game.kickedNames.has(playerName)) {
+          socket.emit("sessionError", { message: "nicknameKicked" });
+          return;
+        }
+
         // Check if this player name is already actively connected
         const existingPlayer = game.players.get(playerName);
         if (existingPlayer && existingPlayer.socketId && existingPlayer.socketId !== socket.id && playerName !== "__host__") {
