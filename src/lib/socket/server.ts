@@ -50,6 +50,8 @@ interface GameState {
   }[];
   hostSocketId?: string;
   isTest: boolean;
+  kickedNames: Set<string>;
+  phase: "lobby" | "in-question" | "between-questions" | "ended";
 }
 
 const games = new Map<string, GameState>(); // keyed by sessionId
@@ -328,6 +330,8 @@ export function setupSocketHandlers(io: TypedIO) {
               confidenceEnabled: (q as any).confidenceEnabled ?? false,
             })),
             isTest: session.isTest,
+            kickedNames: new Set<string>(),
+            phase: "lobby",
           });
         }
 
@@ -704,6 +708,8 @@ export function setupSocketHandlers(io: TypedIO) {
 
         io.to(room(game.sessionId)).emit("gameOver", { podium, fullResults });
 
+        game.phase = "ended";
+
         // Clean up in-memory state
         games.delete(game.sessionId);
       } catch (err) {
@@ -1000,6 +1006,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
         });
       }
     }
+    game.phase = "between-questions";
   } catch (err) {
     console.error("runShowResults error:", err);
   }
@@ -1011,6 +1018,7 @@ function emitQuestion(io: TypedIO, game: GameState, index: number) {
   game.answerCount = 0;
   game.confidenceCount = 0;
   game.questionStartTime = Date.now();
+  game.phase = "in-question";
 
   // Reset per-round deltas
   for (const player of game.players.values()) {
