@@ -50,6 +50,8 @@ interface GameState {
   }[];
   hostSocketId?: string;
   isTest: boolean;
+  kickedNames: Set<string>;
+  phase: "lobby" | "in-question" | "between-questions" | "ended";
 }
 
 const games = new Map<string, GameState>(); // keyed by sessionId
@@ -328,10 +330,17 @@ export function setupSocketHandlers(io: TypedIO) {
               confidenceEnabled: (q as any).confidenceEnabled ?? false,
             })),
             isTest: session.isTest,
+            kickedNames: new Set<string>(),
+            phase: "lobby",
           });
         }
 
         const game = games.get(sessionId)!;
+
+        if (playerName !== "__host__" && game.kickedNames.has(playerName)) {
+          socket.emit("sessionError", { message: "nicknameKicked" });
+          return;
+        }
 
         // Check if this player name is already actively connected
         const existingPlayer = game.players.get(playerName);
@@ -704,6 +713,8 @@ export function setupSocketHandlers(io: TypedIO) {
 
         io.to(room(game.sessionId)).emit("gameOver", { podium, fullResults });
 
+        game.phase = "ended";
+
         // Clean up in-memory state
         games.delete(game.sessionId);
       } catch (err) {
@@ -845,6 +856,46 @@ export function setupSocketHandlers(io: TypedIO) {
     socket.on("toggleMute", ({ muted }) => {
       if (!currentSessionId || currentPlayerName !== "__host__") return;
       io.to(room(currentSessionId)).emit("muteChanged", { muted });
+    });
+
+    // ------------------------------------------------------------------
+    // kickPlayer (host only) — remove a player in lobby or between questions
+    // ------------------------------------------------------------------
+    socket.on("kickPlayer", ({ playerName }) => {
+      if (!currentSessionId || currentPlayerName !== "__host__") return;
+      if (playerName === "__host__") return;
+
+      const game = games.get(currentSessionId);
+      if (!game) return;
+
+      if (game.phase === "in-question") {
+        socket.emit("sessionError", { message: "kickDuringQuestion" });
+        return;
+      }
+
+      const target = game.players.get(playerName);
+      if (!target) return;
+
+      game.kickedNames.add(playerName);
+      game.players.delete(playerName);
+
+      const dKey = disconnectKey(currentSessionId, playerName);
+      const dEntry = disconnectedPlayers.get(dKey);
+      if (dEntry) {
+        clearTimeout(dEntry.timeout);
+        disconnectedPlayers.delete(dKey);
+      }
+
+      if (target.socketId) {
+        const targetSocket = io.sockets.sockets.get(target.socketId);
+        targetSocket?.emit("kicked", { reason: "host" });
+        targetSocket?.leave(room(currentSessionId));
+      }
+
+      io.to(room(currentSessionId)).emit("playerLeft", {
+        playerName,
+        playerCount: realPlayerCount(game),
+      });
     });
 
     // ------------------------------------------------------------------
@@ -1000,6 +1051,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
         });
       }
     }
+    game.phase = "between-questions";
   } catch (err) {
     console.error("runShowResults error:", err);
   }
@@ -1011,6 +1063,7 @@ function emitQuestion(io: TypedIO, game: GameState, index: number) {
   game.answerCount = 0;
   game.confidenceCount = 0;
   game.questionStartTime = Date.now();
+  game.phase = "in-question";
 
   // Reset per-round deltas
   for (const player of game.players.values()) {

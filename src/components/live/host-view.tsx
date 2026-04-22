@@ -9,8 +9,17 @@ import type { QuestionType } from "@prisma/client";
 import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
 import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute, startBgm, stopBgm } from "@/lib/sounds";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, X, AlertCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 function HostConfetti() {
   const colors = [
@@ -211,6 +220,8 @@ export function HostView({ session }: Props) {
   const [gameOverData, setGameOverData] = useState<GameOverData | null>(null);
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [muted, setMutedState] = useState(false);
+  const [kickTarget, setKickTarget] = useState<string | null>(null);
+  const [kickError, setKickError] = useState<string | null>(null);
 
   const handleToggleMute = () => {
     const newVal = toggleMute();
@@ -295,6 +306,13 @@ export function HostView({ session }: Props) {
       setTimeout(() => playFanfare(), 2000);
     };
 
+    const handleSessionError = (data: { message: string }) => {
+      if (data.message === "kickDuringQuestion") {
+        setKickError("kickDuringQuestion");
+        setTimeout(() => setKickError(null), 4000);
+      }
+    };
+
     socket.on("playerJoined", handlePlayerJoined);
     socket.on("gameState", handleGameState);
     socket.on("playerLeft", handlePlayerLeft);
@@ -304,6 +322,7 @@ export function HostView({ session }: Props) {
     socket.on("confidenceCount", handleConfidenceCount);
     socket.on("questionResult", handleQuestionResult);
     socket.on("gameOver", handleGameOver);
+    socket.on("sessionError", handleSessionError);
 
     return () => {
       socket.off("playerJoined", handlePlayerJoined);
@@ -315,6 +334,7 @@ export function HostView({ session }: Props) {
       socket.off("confidenceCount", handleConfidenceCount);
       socket.off("questionResult", handleQuestionResult);
       socket.off("gameOver", handleGameOver);
+      socket.off("sessionError", handleSessionError);
     };
   }, [socket]);
 
@@ -375,6 +395,12 @@ export function HostView({ session }: Props) {
   const handleEndGame = useCallback(() => {
     socket?.emit("endGame");
   }, [socket]);
+
+  const handleConfirmKick = useCallback(() => {
+    if (!kickTarget) return;
+    socket?.emit("kickPlayer", { playerName: kickTarget });
+    setKickTarget(null);
+  }, [socket, kickTarget]);
 
   const [origin, setOrigin] = useState("");
   useEffect(() => { setOrigin(window.location.origin); }, []);
@@ -438,7 +464,7 @@ export function HostView({ session }: Props) {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400 text-center mb-2 font-semibold">
                 {t("gamePin")}
               </p>
-              <p className="text-7xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.2em] text-center tabular-nums leading-none">
+              <p data-testid="session-pin" className="text-7xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.2em] text-center tabular-nums leading-none">
                 {formattedPin}
               </p>
             </div>
@@ -501,9 +527,19 @@ export function HostView({ session }: Props) {
                   {players.map((player, i) => (
                     <div
                       key={player.name}
-                      className="bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all animate-score-pop"
+                      data-testid="player-card"
+                      className="relative bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all animate-score-pop"
                       style={{ animationDelay: `${i * 50}ms` }}
                     >
+                      <button
+                        type="button"
+                        onClick={() => setKickTarget(player.name)}
+                        aria-label={t("kickPlayer")}
+                        title={t("kickPlayer")}
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                       <HostAvatar avatar={player.avatar} className={isCustomAvatar(player.avatar || "") ? "w-10 h-10 lg:w-12 lg:h-12" : "text-3xl lg:text-4xl"} />
                       <span className="text-sm lg:text-base font-semibold text-slate-200 truncate max-w-full text-center">
                         {player.name}
@@ -539,6 +575,30 @@ export function HostView({ session }: Props) {
             </div>
           </section>
         </div>
+
+        <Dialog open={kickTarget !== null} onOpenChange={(open) => !open && setKickTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("kickConfirmTitle", { name: kickTarget ?? "" })}</DialogTitle>
+              <DialogDescription>{t("kickConfirmDescription")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setKickTarget(null)}>
+                {tc("cancel")}
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmKick}>
+                {t("kickConfirmAction")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {kickError && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-amber-500/95 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-50">
+            <AlertCircle className="w-5 h-5" />
+            <span>{t("kickDuringQuestion")}</span>
+          </div>
+        )}
       </div>
     );
   }
