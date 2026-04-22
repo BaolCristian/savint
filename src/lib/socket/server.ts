@@ -859,6 +859,46 @@ export function setupSocketHandlers(io: TypedIO) {
     });
 
     // ------------------------------------------------------------------
+    // kickPlayer (host only) — remove a player in lobby or between questions
+    // ------------------------------------------------------------------
+    socket.on("kickPlayer", ({ playerName }) => {
+      if (!currentSessionId || currentPlayerName !== "__host__") return;
+      if (playerName === "__host__") return;
+
+      const game = games.get(currentSessionId);
+      if (!game) return;
+
+      if (game.phase === "in-question") {
+        socket.emit("sessionError", { message: "kickDuringQuestion" });
+        return;
+      }
+
+      const target = game.players.get(playerName);
+      if (!target) return;
+
+      game.kickedNames.add(playerName);
+      game.players.delete(playerName);
+
+      const dKey = disconnectKey(currentSessionId, playerName);
+      const dEntry = disconnectedPlayers.get(dKey);
+      if (dEntry) {
+        clearTimeout(dEntry.timeout);
+        disconnectedPlayers.delete(dKey);
+      }
+
+      if (target.socketId) {
+        const targetSocket = io.sockets.sockets.get(target.socketId);
+        targetSocket?.emit("kicked", { reason: "host" });
+        targetSocket?.leave(room(currentSessionId));
+      }
+
+      io.to(room(currentSessionId)).emit("playerLeft", {
+        playerName,
+        playerCount: realPlayerCount(game),
+      });
+    });
+
+    // ------------------------------------------------------------------
     // leaveSession — player voluntarily leaves the game
     // ------------------------------------------------------------------
     socket.on("leaveSession", () => {

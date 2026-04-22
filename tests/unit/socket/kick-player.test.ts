@@ -67,10 +67,14 @@ class FakeIO {
   }
 }
 
+let sessionCounter = 0;
+let currentTestSessionId = "sess-1";
+let currentTestPin = "123456";
+
 function makeSession(overrides: Partial<any> = {}) {
   return {
-    id: "sess-1",
-    pin: "123456",
+    id: currentTestSessionId,
+    pin: currentTestPin,
     status: "WAITING",
     isTest: false,
     quiz: { questions: [] },
@@ -80,7 +84,7 @@ function makeSession(overrides: Partial<any> = {}) {
 
 async function joinAs(socket: FakeSocket, playerName: string) {
   (prisma.session.findUnique as any).mockResolvedValue(makeSession());
-  socket.emit("joinSession", { pin: "123456", playerName });
+  socket.emit("joinSession", { pin: currentTestPin, playerName });
   await new Promise<void>((resolve) => setImmediate(resolve));
   await new Promise<void>((resolve) => setImmediate(resolve));
 }
@@ -92,6 +96,9 @@ describe("kickPlayer / join rejection", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionCounter += 1;
+    currentTestSessionId = `sess-${sessionCounter}`;
+    currentTestPin = `pin-${sessionCounter}`;
     io = new FakeIO();
     hostSocket = new FakeSocket("host-1");
     playerSocket = new FakeSocket("player-1");
@@ -116,5 +123,42 @@ describe("kickPlayer / join rejection", () => {
 
     const err = retrySocket.emitted.find((e) => e.event === "sessionError");
     expect(err?.payload.message).toBe("nicknameKicked");
+  });
+
+  it("emits `kicked` to the target socket and `playerLeft` to the room in lobby phase", async () => {
+    await joinAs(hostSocket, "__host__");
+    await joinAs(playerSocket, "Alice");
+
+    hostSocket.emit("kickPlayer", { playerName: "Alice" });
+    await new Promise((r) => setImmediate(r));
+
+    const kickedEmit = playerSocket.emitted.find((e) => e.event === "kicked");
+    expect(kickedEmit?.payload).toEqual({ reason: "host" });
+
+    const playerLeft = io.getRoomEmits().find(
+      (e) => e.event === "playerLeft" && e.payload.playerName === "Alice"
+    );
+    expect(playerLeft).toBeDefined();
+  });
+
+  it("ignores kickPlayer when the caller is not __host__", async () => {
+    await joinAs(hostSocket, "__host__");
+    await joinAs(playerSocket, "Alice");
+    const impostor = new FakeSocket("impostor-1");
+    io.sockets.sockets.set(impostor.id, impostor);
+    io.fireConnection(impostor);
+    await joinAs(impostor, "Bob");
+
+    impostor.emit("kickPlayer", { playerName: "Alice" });
+    await new Promise((r) => setImmediate(r));
+
+    expect(playerSocket.emitted.find((e) => e.event === "kicked")).toBeUndefined();
+  });
+
+  it("ignores kickPlayer when targeting __host__", async () => {
+    await joinAs(hostSocket, "__host__");
+    hostSocket.emit("kickPlayer", { playerName: "__host__" });
+    await new Promise((r) => setImmediate(r));
+    expect(hostSocket.emitted.find((e) => e.event === "kicked")).toBeUndefined();
   });
 });
