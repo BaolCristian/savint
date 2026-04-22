@@ -161,4 +161,51 @@ describe("kickPlayer / join rejection", () => {
     await new Promise((r) => setImmediate(r));
     expect(hostSocket.emitted.find((e) => e.event === "kicked")).toBeUndefined();
   });
+
+  it("rejects kickPlayer during an active question", async () => {
+    (prisma.session.findUnique as any).mockResolvedValue(makeSession({
+      status: "IN_PROGRESS",
+      quiz: { questions: [{ id: "q1", text: "Q", type: "MULTIPLE_CHOICE", options: { choices: [{ text: "a", isCorrect: true }] }, timeLimit: 10, points: 100, mediaUrl: null, order: 0 }] },
+    }));
+
+    await joinAs(hostSocket, "__host__");
+    await joinAs(playerSocket, "Alice");
+
+    (prisma.session.update as any).mockResolvedValue({});
+    hostSocket.emit("startGame");
+    await new Promise((r) => setImmediate(r));
+
+    hostSocket.emit("kickPlayer", { playerName: "Alice" });
+    await new Promise((r) => setImmediate(r));
+
+    const err = hostSocket.emitted.find(
+      (e) => e.event === "sessionError" && e.payload.message === "kickDuringQuestion"
+    );
+    expect(err).toBeDefined();
+
+    expect(playerSocket.emitted.find((e) => e.event === "kicked")).toBeUndefined();
+  });
+
+  it("cancels a pending disconnect timer when kicking a disconnected player", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await joinAs(hostSocket, "__host__");
+      await joinAs(playerSocket, "Alice");
+
+      playerSocket.emit("disconnect");
+      await new Promise((r) => setImmediate(r));
+
+      hostSocket.emit("kickPlayer", { playerName: "Alice" });
+      await new Promise((r) => setImmediate(r));
+
+      vi.advanceTimersByTime(15 * 60 * 1000);
+
+      const playerLeftEmits = io.getRoomEmits().filter(
+        (e) => e.event === "playerLeft" && e.payload.playerName === "Alice"
+      );
+      expect(playerLeftEmits.length).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
