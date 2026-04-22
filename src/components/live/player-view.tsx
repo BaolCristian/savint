@@ -7,6 +7,7 @@ import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } fr
 import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { playCorrect, playWrong, playTick, playTimeUp, setMuted } from "@/lib/sounds";
+import { UserX } from "lucide-react";
 import type {
   AnswerValue,
   MatchingOptions,
@@ -25,7 +26,7 @@ import type { QuestionType } from "@prisma/client";
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Phase = "join" | "waiting" | "countdown" | "question" | "feedback" | "podium";
+type Phase = "join" | "waiting" | "countdown" | "question" | "feedback" | "podium" | "kicked";
 
 interface QuestionData {
   questionIndex: number;
@@ -242,7 +243,16 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     const onSessionError = (data: { message: string }) => {
       // If rejoin failed, clear saved session and stay on join screen
       sessionStorage.removeItem("savint-session");
-      setError(data.message);
+      if (data.message === "nicknameKicked") {
+        setError(t("nicknameKicked"));
+      } else {
+        setError(data.message);
+      }
+    };
+
+    const onKicked = () => {
+      sessionStorage.removeItem("savint-session");
+      setPhase("kicked");
     };
 
     const onPlayerJoined = (data: { playerName: string }) => {
@@ -309,6 +319,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     };
 
     socket.on("sessionError", onSessionError);
+    socket.on("kicked", onKicked);
     socket.on("playerJoined", onPlayerJoined);
     socket.on("gameState", onGameState);
     socket.on("rejoinSuccess", onRejoinSuccess);
@@ -320,6 +331,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
     return () => {
       socket.off("sessionError", onSessionError);
+      socket.off("kicked", onKicked);
       socket.off("playerJoined", onPlayerJoined);
       socket.off("gameState", onGameState);
       socket.off("rejoinSuccess", onRejoinSuccess);
@@ -566,6 +578,32 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           {!connected && (
             <p className="text-center text-sm text-slate-400 animate-pulse pb-2">Connessione in corso...</p>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "kicked") {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center bg-slate-800/60 border border-slate-700 rounded-2xl p-8">
+          <div className="flex justify-center mb-5">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <UserX className="w-9 h-9 text-amber-400" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">{t("kickedTitle")}</h1>
+          <p className="text-slate-300 mb-6">{t("kickedSubtitle")}</p>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.removeItem("savint-session");
+              window.location.href = withBasePath("/");
+            }}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            {t("kickedBackHome")}
+          </button>
         </div>
       </div>
     );
