@@ -464,7 +464,7 @@ export function HostView({ session }: Props) {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400 text-center mb-2 font-semibold">
                 {t("gamePin")}
               </p>
-              <p className="text-7xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.2em] text-center tabular-nums leading-none">
+              <p data-testid="session-pin" className="text-7xl lg:text-8xl xl:text-9xl font-black text-slate-900 tracking-[0.2em] text-center tabular-nums leading-none">
                 {formattedPin}
               </p>
             </div>
