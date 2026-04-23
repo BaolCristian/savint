@@ -275,6 +275,14 @@ export function HostView({ session }: Props) {
       setPlayerCount(data.playerCount);
     };
 
+    const handlePlayerRenamed = (data: { oldName: string; newName: string; playerAvatar?: string }) => {
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.name === data.oldName ? { ...p, name: data.newName, avatar: data.playerAvatar ?? p.avatar } : p,
+        ),
+      );
+    };
+
     const handleQuestionStart = (data: QuestionData) => {
       setCurrentQuestion(data);
       setTimeLeft(data.question.timeLimit);
@@ -317,6 +325,7 @@ export function HostView({ session }: Props) {
     socket.on("gameState", handleGameState);
     socket.on("playerLeft", handlePlayerLeft);
     socket.on("playerReconnected", handlePlayerReconnected);
+    socket.on("playerRenamed", handlePlayerRenamed);
     socket.on("questionStart", handleQuestionStart);
     socket.on("answerCount", handleAnswerCount);
     socket.on("confidenceCount", handleConfidenceCount);
@@ -329,6 +338,7 @@ export function HostView({ session }: Props) {
       socket.off("gameState", handleGameState);
       socket.off("playerLeft", handlePlayerLeft);
       socket.off("playerReconnected", handlePlayerReconnected);
+      socket.off("playerRenamed", handlePlayerRenamed);
       socket.off("questionStart", handleQuestionStart);
       socket.off("answerCount", handleAnswerCount);
       socket.off("confidenceCount", handleConfidenceCount);

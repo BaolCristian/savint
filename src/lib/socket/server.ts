@@ -899,6 +899,68 @@ export function setupSocketHandlers(io: TypedIO) {
     });
 
     // ------------------------------------------------------------------
+    // renamePlayer — player changes nickname while in lobby
+    // ------------------------------------------------------------------
+    socket.on("renamePlayer", ({ newName }) => {
+      if (!currentSessionId || !currentPlayerName) return;
+      if (currentPlayerName === "__host__") return;
+
+      const game = games.get(currentSessionId);
+      if (!game) return;
+
+      if (game.phase !== "lobby") {
+        socket.emit("sessionError", { message: "renameAfterStart" });
+        return;
+      }
+
+      const trimmed = newName.trim();
+      if (trimmed.length < 2 || trimmed.length > 24) {
+        socket.emit("sessionError", { message: "invalidName" });
+        return;
+      }
+
+      if (trimmed === currentPlayerName) return;
+
+      if (trimmed === "__host__" || game.kickedNames.has(trimmed)) {
+        socket.emit("sessionError", { message: "nicknameKicked" });
+        return;
+      }
+
+      const existing = game.players.get(trimmed);
+      if (existing && existing.socketId) {
+        const existingSocket = io.sockets.sockets.get(existing.socketId);
+        if (existingSocket?.connected) {
+          socket.emit("sessionError", { message: "nameAlreadyTaken" });
+          return;
+        }
+      }
+
+      const player = game.players.get(currentPlayerName);
+      if (!player) return;
+
+      const oldName = currentPlayerName;
+      game.players.delete(oldName);
+      player.name = trimmed;
+      game.players.set(trimmed, player);
+
+      const dKey = disconnectKey(currentSessionId, oldName);
+      const dEntry = disconnectedPlayers.get(dKey);
+      if (dEntry) {
+        clearTimeout(dEntry.timeout);
+        disconnectedPlayers.delete(dKey);
+      }
+
+      currentPlayerName = trimmed;
+
+      socket.emit("renameSuccess", { newName: trimmed });
+      io.to(room(currentSessionId)).emit("playerRenamed", {
+        oldName,
+        newName: trimmed,
+        playerAvatar: player.avatar,
+      });
+    });
+
+    // ------------------------------------------------------------------
     // leaveSession — player voluntarily leaves the game
     // ------------------------------------------------------------------
     socket.on("leaveSession", () => {

@@ -7,7 +7,7 @@ import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } fr
 import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { playCorrect, playWrong, playTick, playTimeUp, setMuted } from "@/lib/sounds";
-import { UserX } from "lucide-react";
+import { UserX, Pencil } from "lucide-react";
 import type {
   AnswerValue,
   MatchingOptions,
@@ -188,6 +188,10 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
   const [confidenceRevealing, setConfidenceRevealing] = useState(false);
 
+  const [renaming, setRenaming] = useState(false);
+  const [renameInput, setRenameInput] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+
   const [avatar, setAvatar] = useState("");
   const [avatarCategory, setAvatarCategory] = useState(0);
   const [emojiCategories, setEmojiCategories] = useState(buildCategories([]));
@@ -241,12 +245,35 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     if (!socket) return;
 
     const onSessionError = (data: { message: string }) => {
+      // Rename-specific errors: show inline in the rename UI, keep session
+      if (data.message === "nameAlreadyTaken" || data.message === "renameAfterStart" || data.message === "invalidName") {
+        setRenameError(t(data.message));
+        return;
+      }
       // If rejoin failed, clear saved session and stay on join screen
       sessionStorage.removeItem("savint-session");
       if (data.message === "nicknameKicked") {
         setError(t("nicknameKicked"));
       } else {
         setError(data.message);
+      }
+    };
+
+    const onRenameSuccess = (data: { newName: string }) => {
+      setName(data.newName);
+      setRenaming(false);
+      setRenameInput("");
+      setRenameError(null);
+      // Update saved session to use the new name for reconnection
+      try {
+        const saved = sessionStorage.getItem("savint-session");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          parsed.playerName = data.newName;
+          sessionStorage.setItem("savint-session", JSON.stringify(parsed));
+        }
+      } catch {
+        // ignore
       }
     };
 
@@ -319,6 +346,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     };
 
     socket.on("sessionError", onSessionError);
+    socket.on("renameSuccess", onRenameSuccess);
     socket.on("kicked", onKicked);
     socket.on("playerJoined", onPlayerJoined);
     socket.on("gameState", onGameState);
@@ -331,6 +359,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
     return () => {
       socket.off("sessionError", onSessionError);
+      socket.off("renameSuccess", onRenameSuccess);
       socket.off("kicked", onKicked);
       socket.off("playerJoined", onPlayerJoined);
       socket.off("gameState", onGameState);
@@ -578,6 +607,14 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           {!connected && (
             <p className="text-center text-sm text-slate-400 animate-pulse pb-2">Connessione in corso...</p>
           )}
+
+          {/* Explore public quizzes */}
+          <a
+            href={withBasePath("/explore")}
+            className="text-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 py-2"
+          >
+            {t("exploreLink")}
+          </a>
         </div>
       </div>
     );
@@ -644,6 +681,22 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   }
 
   if (phase === "waiting") {
+    const submitRename = () => {
+      const trimmed = renameInput.trim();
+      if (trimmed.length < 2 || trimmed.length > 24) {
+        setRenameError(t("invalidName"));
+        return;
+      }
+      if (trimmed === name) {
+        setRenaming(false);
+        setRenameInput("");
+        setRenameError(null);
+        return;
+      }
+      setRenameError(null);
+      socket?.emit("renamePlayer", { newName: trimmed });
+    };
+
     return (
       <div className="relative flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
         {reconnectionBanner}
@@ -652,7 +705,47 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         <div className="mb-4 sm:mb-6 animate-float-bounce">
           <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40" : "text-6xl sm:text-8xl lg:text-9xl"} />
         </div>
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800 mb-2">{name}</h2>
+        {renaming ? (
+          <div className="w-full max-w-xs flex flex-col items-center gap-2 mb-2">
+            <input
+              type="text"
+              autoFocus
+              maxLength={24}
+              value={renameInput}
+              onChange={(e) => { setRenameInput(e.target.value); setRenameError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") submitRename(); }}
+              className="h-11 w-full bg-white border-2 border-emerald-300 text-slate-900 rounded-xl text-center text-lg font-semibold px-3 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+            {renameError && (
+              <p className="text-xs font-medium text-red-600">{renameError}</p>
+            )}
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={() => { setRenaming(false); setRenameInput(""); setRenameError(null); }}
+                className="flex-1 h-10 rounded-xl bg-white text-emerald-700 border border-emerald-300 font-semibold hover:bg-emerald-50 transition-colors"
+              >
+                {tc("cancel")}
+              </button>
+              <button
+                onClick={submitRename}
+                disabled={renameInput.trim().length < 2}
+                className="flex-1 h-10 rounded-xl bg-emerald-600 text-white font-semibold shadow-sm hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 transition-colors"
+              >
+                {tc("save")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setRenameInput(name); setRenaming(true); setRenameError(null); }}
+            className="group inline-flex items-center gap-2 mb-2 px-3 py-1 rounded-lg hover:bg-emerald-200/60 transition-colors"
+            title={t("changeName")}
+            aria-label={t("changeName")}
+          >
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800">{name}</h2>
+            <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </button>
+        )}
         <p className="text-base sm:text-lg lg:text-xl text-emerald-600">
           {t("waitingForStart")}
         </p>
@@ -987,7 +1080,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 /*  Answer Input components                                            */
 /* ================================================================== */
 
-function AnswerInput({
+export function AnswerInput({
   type,
   options,
   onSubmit,

@@ -352,6 +352,10 @@
     "kickedSubtitle": "The teacher removed you from this quiz.",
     "kickedBackHome": "Back to home",
     "nicknameKicked": "This name is no longer available for this session. Choose another nickname.",
+    "nameAlreadyTaken": "This name is already taken. Choose another one.",
+    "renameAfterStart": "You can't change your name after the quiz has started.",
+    "changeName": "Change name",
+    "exploreLink": "Explore public quizzes →",
     "questionHeader": "Question {index} / {total}",
     "enterNumericValue": "Enter a numeric value",
     "answeredPercent": "{value}% answered",
@@ -639,5 +643,30 @@
   "localeSwitcher": {
     "it": "Italiano",
     "en": "English"
+  },
+  "practice": {
+    "mode": "Practice mode",
+    "exploreTitle": "Explore public quizzes",
+    "exploreSubtitle": "Pick a quiz and challenge yourself solo",
+    "searchPlaceholder": "Search by title, description or tag…",
+    "noPublicQuizzes": "No public quizzes available right now.",
+    "noSearchResults": "No results for your search.",
+    "questionCount": "{count, plural, one {# question} other {# questions}}",
+    "practiceAction": "Practice",
+    "home": "Home",
+    "author": "by {name}",
+    "questions": "Questions",
+    "maxPoints": "Max points",
+    "introNote": "This is a self-assessment mode: nothing will be saved. You'll see the correct answers at the end.",
+    "start": "Start practice",
+    "next": "Next →",
+    "seeResults": "See results →",
+    "finalResult": "Final result",
+    "correctQuestions": "Correct",
+    "successRate": "Success",
+    "yourAnswer": "Your answer",
+    "noAnswer": "No answer (time's up)",
+    "retry": "Try again",
+    "backToExplore": "Back to public quizzes"
   }
 }

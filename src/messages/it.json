@@ -352,6 +352,10 @@
     "kickedSubtitle": "Il docente ti ha rimosso da questo quiz.",
     "kickedBackHome": "Torna alla home",
     "nicknameKicked": "Questo nome non è più disponibile per questa sessione. Scegli un altro nickname.",
+    "nameAlreadyTaken": "Questo nome è già in uso. Scegline un altro.",
+    "renameAfterStart": "Non puoi cambiare nome dopo l'avvio del quiz.",
+    "changeName": "Cambia nome",
+    "exploreLink": "Esplora quiz pubblici →",
     "questionHeader": "Domanda {index} / {total}",
     "enterNumericValue": "Inserisci un valore numerico",
     "answeredPercent": "{value}% ha risposto",
@@ -639,5 +643,30 @@
   "localeSwitcher": {
     "it": "Italiano",
     "en": "English"
+  },
+  "practice": {
+    "mode": "Modalità esercitazione",
+    "exploreTitle": "Esplora quiz pubblici",
+    "exploreSubtitle": "Scegli un quiz e mettiti alla prova in autonomia",
+    "searchPlaceholder": "Cerca per titolo, descrizione o tag…",
+    "noPublicQuizzes": "Nessun quiz pubblico disponibile al momento.",
+    "noSearchResults": "Nessun risultato per la tua ricerca.",
+    "questionCount": "{count, plural, one {# domanda} other {# domande}}",
+    "practiceAction": "Esercitati",
+    "home": "Home",
+    "author": "di {name}",
+    "questions": "Domande",
+    "maxPoints": "Punti max",
+    "introNote": "Questa è una modalità di autovalutazione: nessun risultato verrà salvato. Alla fine vedrai le risposte corrette.",
+    "start": "Inizia esercitazione",
+    "next": "Avanti →",
+    "seeResults": "Vedi risultati →",
+    "finalResult": "Risultato finale",
+    "correctQuestions": "Corrette",
+    "successRate": "Successo",
+    "yourAnswer": "La tua risposta",
+    "noAnswer": "Nessuna risposta (tempo scaduto)",
+    "retry": "Riprova",
+    "backToExplore": "Torna ai quiz pubblici"
   }
 }
