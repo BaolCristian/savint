@@ -60,6 +60,21 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum HubAccountRole {
+  HUB_USER
+  HUB_ADMIN
+}
+
+enum HubAuthMethod {
+  GOOGLE
+  PASSWORD
+}
+
+enum VerificationPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
 enum SchoolLevel {
   PRIMARIA
   SECONDARIA_I
@@ -257,4 +272,39 @@ model Answer {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId, playerName])
+}
+
+model HubAccount {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  name            String?
+  image           String?
+  authMethod      HubAuthMethod
+  passwordHash    String?
+  emailVerified   DateTime?
+  affiliation     String?
+  role            HubAccountRole  @default(HUB_USER)
+  linkedProviders String[]        @default([])
+  bannedAt        DateTime?
+  createdAt       DateTime        @default(now())
+
+  verificationTokens EmailVerificationToken[]
+
+  @@index([role])
+  @@map("hub_account")
+}
+
+model EmailVerificationToken {
+  id           String              @id @default(cuid())
+  hubAccountId String
+  tokenHash    String              @unique
+  purpose      VerificationPurpose
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime            @default(now())
+
+  hubAccount HubAccount @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
+
+  @@index([hubAccountId, purpose])
+  @@map("email_verification_token")
 }
