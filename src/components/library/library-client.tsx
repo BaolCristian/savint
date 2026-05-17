@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
   const router = useRouter();
   const t = useTranslations("library");
   const tc = useTranslations("common");
+  const locale = useLocale() === "en" ? "en" : "it";
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [pendingDuplicate, setPendingDuplicate] = useState<string | null>(null);
@@ -131,7 +132,7 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                 <div className="flex flex-wrap gap-1">
                   {quiz.subject && (
                     <Badge variant="default" className="text-xs">
-                      {getSubjectLabel(quiz.subject, "it") ?? quiz.subject}
+                      {getSubjectLabel(quiz.subject, locale) ?? quiz.subject}
                     </Badge>
                   )}
                   {quiz.schoolLevel && (
