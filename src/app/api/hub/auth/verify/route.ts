@@ -1,0 +1,21 @@
+import { NextResponse } from "next/server";
+import { consumeVerificationToken } from "@/lib/auth/verification-token";
+import { prisma } from "@/lib/db/client";
+
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+  const base = url.origin;
+  if (!token) {
+    return NextResponse.redirect(`${base}/savint/hub-login?verified=0`);
+  }
+  const result = await consumeVerificationToken(token, "VERIFY_EMAIL");
+  if (!result) {
+    return NextResponse.redirect(`${base}/savint/hub-login?verified=0`);
+  }
+  await prisma.hubAccount.update({
+    where: { id: result.hubAccountId },
+    data: { emailVerified: new Date() },
+  });
+  return NextResponse.redirect(`${base}/savint/hub-login?verified=1`);
+}
