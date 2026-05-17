@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Quiz, SchoolLevel } from "@prisma/client";
+import { SchoolLevel, type Quiz } from "@prisma/client";
 
 describe("Quiz model types", () => {
   it("has the new hub-meta + pedagogy fields with nullable types", () => {
@@ -22,14 +22,13 @@ describe("Quiz model types", () => {
     expect(shape).toBeDefined();
   });
 
-  it("SchoolLevel enum includes the five expected values", () => {
-    const expected: SchoolLevel[] = [
+  it("SchoolLevel enum contains exactly the five expected values", () => {
+    expect(Object.values(SchoolLevel).sort()).toEqual([
+      "ALTRO",
       "PRIMARIA",
       "SECONDARIA_I",
       "SECONDARIA_II",
       "UNIVERSITA",
-      "ALTRO",
-    ];
-    expect(expected).toHaveLength(5);
+    ]);
   });
 });

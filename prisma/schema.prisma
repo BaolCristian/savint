@@ -180,7 +180,7 @@ model Quiz {
   // Hub publish/clone bookkeeping (filled by Plans 3 and 4; nullable here).
   hubPublishedId       String?
   hubLastPublishedAt   DateTime?
-  hubAccountId         String?
+  hubAccountId         String?    // remote HubAccount.id on savint.it (cached for UI)
   clonedFromHubId      String?
   clonedFromHubVersion Int?
   clonedFromHubAuthor  String?
