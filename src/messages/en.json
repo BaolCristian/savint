@@ -667,6 +667,24 @@
     "it": "Italiano",
     "en": "English"
   },
+  "hubAuth": {
+    "loginWithGoogle": "Sign in with Google",
+    "or": "or",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "loginSubmit": "Sign in",
+    "submitting": "Signing in...",
+    "forgotPasswordLink": "Forgot password?",
+    "registerLink": "Create an account",
+    "invalidCredentials": "Invalid email or password",
+    "registerTitle": "Create your account",
+    "nameLabel": "Name",
+    "registerSubmit": "Create account",
+    "hasAccountLogin": "Already have an account? Sign in",
+    "checkInboxTitle": "Check your inbox",
+    "checkInboxBody": "We sent you a confirmation email. Click the link inside to activate your account.",
+    "backToLogin": "Back to sign in"
+  },
   "practice": {
     "mode": "Practice mode",
     "exploreTitle": "Explore public quizzes",

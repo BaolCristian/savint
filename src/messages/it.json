@@ -667,6 +667,24 @@
     "it": "Italiano",
     "en": "English"
   },
+  "hubAuth": {
+    "loginWithGoogle": "Accedi con Google",
+    "or": "oppure",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "loginSubmit": "Accedi",
+    "submitting": "Accesso in corso...",
+    "forgotPasswordLink": "Password dimenticata?",
+    "registerLink": "Crea un account",
+    "invalidCredentials": "Email o password non valida",
+    "registerTitle": "Crea il tuo account",
+    "nameLabel": "Nome",
+    "registerSubmit": "Crea account",
+    "hasAccountLogin": "Hai già un account? Accedi",
+    "checkInboxTitle": "Controlla la tua casella email",
+    "checkInboxBody": "Ti abbiamo inviato un'email di conferma. Clicca il link per attivare il tuo account.",
+    "backToLogin": "Torna all'accesso"
+  },
   "practice": {
     "mode": "Modalità esercitazione",
     "exploreTitle": "Esplora quiz pubblici",
