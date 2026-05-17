@@ -126,6 +126,95 @@ describe("quizSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts a quiz with all optional metadata fields", () => {
+    const result = quizSchema.safeParse({
+      title: "Quiz with metadata",
+      schoolLevel: "SECONDARIA_II",
+      subject: "matematica",
+      language: "it",
+      ageMin: 14,
+      ageMax: 18,
+      questions: [{
+        type: "TRUE_FALSE", text: "1+1=2", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a quiz with no metadata (all fields optional)", () => {
+    const result = quizSchema.safeParse({
+      title: "No metadata",
+      questions: [{
+        type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an unknown subject slug", () => {
+    const result = quizSchema.safeParse({
+      title: "Bad subject",
+      subject: "underwater-basket-weaving",
+      questions: [{
+        type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an invalid language code (not ISO 639-1)", () => {
+    const result = quizSchema.safeParse({
+      title: "Bad lang",
+      language: "italian",
+      questions: [{
+        type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an invalid SchoolLevel", () => {
+    const result = quizSchema.safeParse({
+      title: "Bad level",
+      schoolLevel: "ELEMENTARY",
+      questions: [{
+        type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects ageMin > ageMax", () => {
+    const result = quizSchema.safeParse({
+      title: "Bad age range",
+      ageMin: 18,
+      ageMax: 10,
+      questions: [{
+        type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        options: { correct: true },
+      }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects ageMin below 3 or above 99", () => {
+    const tooLow = quizSchema.safeParse({
+      title: "x", ageMin: 1,
+      questions: [{ type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0, options: { correct: true } }],
+    });
+    const tooHigh = quizSchema.safeParse({
+      title: "x", ageMax: 120,
+      questions: [{ type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0, options: { correct: true } }],
+    });
+    expect(tooLow.success).toBe(false);
+    expect(tooHigh.success).toBe(false);
+  });
 });
 
 describe("joinSessionSchema", () => {

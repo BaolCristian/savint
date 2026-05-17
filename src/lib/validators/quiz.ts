@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidSubject } from "@/lib/quiz-subjects";
 
 const multipleChoiceOptionsSchema = z.object({
   choices: z.array(z.object({
@@ -88,7 +89,16 @@ export const questionSchema = z.object({
   ]),
 });
 
-export const quizSchema = z.object({
+export const schoolLevelSchema = z.enum([
+  "PRIMARIA",
+  "SECONDARIA_I",
+  "SECONDARIA_II",
+  "UNIVERSITA",
+  "ALTRO",
+]);
+
+// Base schema without cross-field validation; used for both quizSchema and updateQuizSchema.
+const quizSchemaBase = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   isPublic: z.boolean().default(false),
@@ -96,9 +106,31 @@ export const quizSchema = z.object({
   questions: z.array(questionSchema).min(1),
   consentAccepted: z.boolean().optional(),
   license: z.enum(["CC_BY", "CC_BY_SA"]).optional(),
+
+  // Pedagogical metadata (all optional).
+  schoolLevel: schoolLevelSchema.nullable().optional(),
+  subject: z
+    .string()
+    .refine(isValidSubject, { message: "Unknown subject slug" })
+    .nullable()
+    .optional(),
+  language: z
+    .string()
+    .regex(/^[a-z]{2}$/, "Language must be a lowercase ISO 639-1 code")
+    .nullable()
+    .optional(),
+  ageMin: z.number().int().min(3).max(99).nullable().optional(),
+  ageMax: z.number().int().min(3).max(99).nullable().optional(),
 });
 
-export const updateQuizSchema = quizSchema.partial();
+// Apply cross-field constraint: ageMin must be <= ageMax (only when both are present).
+// Separated from base so .partial() can be applied without triggering the constraint on partial updates.
+export const quizSchema = quizSchemaBase.refine(
+  (q) => q.ageMin == null || q.ageMax == null || q.ageMin <= q.ageMax,
+  { message: "ageMin must be <= ageMax", path: ["ageMin"] },
+);
+
+export const updateQuizSchema = quizSchemaBase.partial();
 
 export type QuizInput = z.infer<typeof quizSchema>;
 export type QuestionInput = z.infer<typeof questionSchema>;
