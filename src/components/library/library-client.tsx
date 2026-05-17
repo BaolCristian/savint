@@ -10,6 +10,7 @@ import { withBasePath } from "@/lib/base-path";
 import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 import { ReportModal } from "@/components/legal/report-modal";
 import { LICENSE_SHORT_LABELS, LICENSE_URLS } from "@/lib/config/legal";
+import { getSubjectLabel } from "@/lib/quiz-subjects";
 
 interface QuizItem {
   id: string;
@@ -20,6 +21,8 @@ interface QuizItem {
   authorName: string;
   questionCount: number;
   createdAt: string;
+  schoolLevel: string | null;
+  subject: string | null;
 }
 
 export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
@@ -126,6 +129,16 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                   </p>
                 )}
                 <div className="flex flex-wrap gap-1">
+                  {quiz.subject && (
+                    <Badge variant="default" className="text-xs">
+                      {getSubjectLabel(quiz.subject, "it") ?? quiz.subject}
+                    </Badge>
+                  )}
+                  {quiz.schoolLevel && (
+                    <Badge variant="default" className="text-xs">
+                      {t(`level_${quiz.schoolLevel}`)}
+                    </Badge>
+                  )}
                   {quiz.tags.map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       {tag}

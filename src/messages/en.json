@@ -486,7 +486,12 @@
     "duplicate": "Duplicate",
     "reportContent": "Report content",
     "playError": "Error starting session",
-    "duplicateError": "Duplication error"
+    "duplicateError": "Duplication error",
+    "level_PRIMARIA": "Primary",
+    "level_SECONDARIA_I": "Lower secondary",
+    "level_SECONDARIA_II": "Upper secondary",
+    "level_UNIVERSITA": "University",
+    "level_ALTRO": "Other"
   },
   "share": {
     "title": "Shares",

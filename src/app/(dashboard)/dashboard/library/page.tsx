@@ -31,6 +31,8 @@ export default async function LibraryPage() {
     authorName: q.author.name ?? "Anonimo",
     questionCount: q._count.questions,
     createdAt: q.createdAt.toISOString(),
+    schoolLevel: q.schoolLevel,
+    subject: q.subject,
   }));
 
   return (

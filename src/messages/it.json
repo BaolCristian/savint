@@ -486,7 +486,12 @@
     "duplicate": "Duplica",
     "reportContent": "Segnala contenuto",
     "playError": "Errore nell'avvio della sessione",
-    "duplicateError": "Errore nella duplicazione"
+    "duplicateError": "Errore nella duplicazione",
+    "level_PRIMARIA": "Primaria",
+    "level_SECONDARIA_I": "Secondaria di I grado",
+    "level_SECONDARIA_II": "Secondaria di II grado",
+    "level_UNIVERSITA": "Università",
+    "level_ALTRO": "Altro"
   },
   "share": {
     "title": "Condivisioni",
