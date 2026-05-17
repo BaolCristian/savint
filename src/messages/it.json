@@ -628,8 +628,26 @@
     "scoringSection": "Valutazione",
     "exampleSection": "Esempio"
   },
+  "locale": "it",
   "metadata": {
-    "description": "Quiz interattivi per la scuola"
+    "description": "Quiz interattivi per la scuola",
+    "schoolLevelLabel": "Grado scolastico",
+    "subjectLabel": "Materia",
+    "languageLabel": "Lingua",
+    "ageMinLabel": "Età min",
+    "ageMaxLabel": "Età max",
+    "notSpecified": "— Non specificato —",
+    "level_PRIMARIA": "Primaria",
+    "level_SECONDARIA_I": "Secondaria di I grado",
+    "level_SECONDARIA_II": "Secondaria di II grado",
+    "level_UNIVERSITA": "Università",
+    "level_ALTRO": "Altro",
+    "langIt": "Italiano",
+    "langEn": "Inglese",
+    "langFr": "Francese",
+    "langEs": "Spagnolo",
+    "langDe": "Tedesco",
+    "langLa": "Latino"
   },
   "moodle": {
     "importMoodle": "Importa da Moodle",

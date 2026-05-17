@@ -628,8 +628,26 @@
     "scoringSection": "Scoring",
     "exampleSection": "Example"
   },
+  "locale": "en",
   "metadata": {
-    "description": "Interactive quizzes for schools"
+    "description": "Interactive quizzes for schools",
+    "schoolLevelLabel": "School level",
+    "subjectLabel": "Subject",
+    "languageLabel": "Language",
+    "ageMinLabel": "Age min",
+    "ageMaxLabel": "Age max",
+    "notSpecified": "— Not specified —",
+    "level_PRIMARIA": "Primary",
+    "level_SECONDARIA_I": "Lower secondary",
+    "level_SECONDARIA_II": "Upper secondary",
+    "level_UNIVERSITA": "University",
+    "level_ALTRO": "Other",
+    "langIt": "Italian",
+    "langEn": "English",
+    "langFr": "French",
+    "langEs": "Spanish",
+    "langDe": "German",
+    "langLa": "Latin"
   },
   "moodle": {
     "importMoodle": "Import from Moodle",
