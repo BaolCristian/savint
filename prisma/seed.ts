@@ -31,13 +31,18 @@ async function main() {
 
   console.log("Created admin:", admin.email);
 
-  // Create demo quiz 1: Geografia
+  // Create demo quiz 1: Geografia (full metadata)
   const quiz1 = await prisma.quiz.create({
     data: {
       title: "Quiz di Geografia - Capitali Europee",
       description: "Testa le tue conoscenze sulle capitali d'Europa!",
       authorId: teacher.id,
       tags: ["geografia", "europa", "capitali"],
+      schoolLevel: "SECONDARIA_I",
+      subject: "geografia",
+      language: "it",
+      ageMin: 11,
+      ageMax: 14,
       questions: {
         create: [
           {
@@ -103,13 +108,16 @@ async function main() {
 
   console.log("Created quiz:", quiz1.title);
 
-  // Create demo quiz 2: Scienze
+  // Create demo quiz 2: Scienze (partial metadata — subject + level only)
   const quiz2 = await prisma.quiz.create({
     data: {
       title: "Quiz di Scienze - Il Sistema Solare",
       description: "Quanto conosci il nostro sistema solare?",
       authorId: teacher.id,
       tags: ["scienze", "astronomia", "sistema solare"],
+      schoolLevel: "SECONDARIA_II",
+      subject: "scienze",
+      // language, ageMin, ageMax intentionally left null
       questions: {
         create: [
           {
@@ -152,6 +160,31 @@ async function main() {
   });
 
   console.log("Created quiz:", quiz2.title);
+
+  // Create demo quiz 3: Senza metadati pedagogici
+  const quiz3 = await prisma.quiz.create({
+    data: {
+      title: "Quiz di Cultura Generale",
+      description: "Domande varie senza categoria specifica.",
+      authorId: teacher.id,
+      tags: ["cultura"],
+      // All metadata fields intentionally null
+      questions: {
+        create: [
+          {
+            type: QuestionType.TRUE_FALSE,
+            text: "Il numero zero e pari",
+            timeLimit: 15,
+            points: 1000,
+            order: 0,
+            options: { correct: true },
+          },
+        ],
+      },
+    },
+  });
+
+  console.log("Created quiz:", quiz3.title);
   console.log("Seed completed!");
 }
 
