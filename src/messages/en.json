@@ -630,7 +630,6 @@
   },
   "locale": "en",
   "metadata": {
-    "description": "Interactive quizzes for schools",
     "schoolLevelLabel": "School level",
     "subjectLabel": "Subject",
     "languageLabel": "Language",
