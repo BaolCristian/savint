@@ -19,6 +19,57 @@ describe("checkAnswer – existing types", () => {
   });
 });
 
+// ── checkAnswer: OPEN_ANSWER ────────────────────────────────────────
+
+describe("checkAnswer – OPEN_ANSWER", () => {
+  const opts = { acceptedAnswers: ["Roma", "rome"] };
+
+  it("exact match → true", () => {
+    expect(checkAnswer("OPEN_ANSWER", opts, { text: "Roma" })).toBe(true);
+  });
+
+  it("case-insensitive → true", () => {
+    expect(checkAnswer("OPEN_ANSWER", opts, { text: "roma" })).toBe(true);
+  });
+
+  it("trims surrounding whitespace → true", () => {
+    expect(checkAnswer("OPEN_ANSWER", opts, { text: "  Roma  " })).toBe(true);
+  });
+
+  it("matches any accepted answer → true", () => {
+    expect(checkAnswer("OPEN_ANSWER", opts, { text: "rome" })).toBe(true);
+  });
+
+  it("wrong text → false", () => {
+    expect(checkAnswer("OPEN_ANSWER", opts, { text: "Milano" })).toBe(false);
+  });
+});
+
+// ── checkAnswer: ORDERING ───────────────────────────────────────────
+
+describe("checkAnswer – ORDERING", () => {
+  // Server stores items + correctOrder (indices into items); player sends orderedTexts
+  // (the texts in the order they chose), so the comparison survives client-side shuffling.
+  const opts = { items: ["A", "B", "C"], correctOrder: [2, 0, 1] };
+  // Expected correctTexts = ["C", "A", "B"]
+
+  it("correct order → true", () => {
+    expect(checkAnswer("ORDERING", opts, { orderedTexts: ["C", "A", "B"] })).toBe(true);
+  });
+
+  it("wrong order → false", () => {
+    expect(checkAnswer("ORDERING", opts, { orderedTexts: ["A", "B", "C"] })).toBe(false);
+  });
+
+  it("missing element → false", () => {
+    expect(checkAnswer("ORDERING", opts, { orderedTexts: ["C", "A"] })).toBe(false);
+  });
+
+  it("undefined orderedTexts → false", () => {
+    expect(checkAnswer("ORDERING", opts, {})).toBe(false);
+  });
+});
+
 // ── checkAnswer: SPOT_ERROR ─────────────────────────────────────────
 
 describe("checkAnswer – SPOT_ERROR", () => {
