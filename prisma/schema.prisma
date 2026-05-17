@@ -60,6 +60,14 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum SchoolLevel {
+  PRIMARIA
+  SECONDARIA_I
+  SECONDARIA_II
+  UNIVERSITA
+  ALTRO
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -160,13 +168,31 @@ model Quiz {
   license     QuizLicense @default(CC_BY)
   suspended   Boolean     @default(false)
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime    @updatedAt
+
+  // Pedagogical metadata (all optional; enforced at publish time, not here).
+  schoolLevel SchoolLevel?
+  subject     String?      // slug from src/lib/quiz-subjects.ts
+  language    String?      // ISO 639-1, e.g. "it", "en"
+  ageMin      Int?
+  ageMax      Int?
+
+  // Hub publish/clone bookkeeping (filled by Plans 3 and 4; nullable here).
+  hubPublishedId       String?
+  hubLastPublishedAt   DateTime?
+  hubAccountId         String?
+  clonedFromHubId      String?
+  clonedFromHubVersion Int?
+  clonedFromHubAuthor  String?
 
   author    User        @relation(fields: [authorId], references: [id])
   questions Question[]
   sessions  Session[]
   shares    QuizShare[]
   reports   Report[]
+
+  @@index([hubPublishedId])
+  @@index([clonedFromHubId])
 }
 
 model Question {
