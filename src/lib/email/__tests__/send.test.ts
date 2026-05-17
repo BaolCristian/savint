@@ -77,7 +77,12 @@ describe("email/send", () => {
     const { sendVerificationEmail } = await import("../send");
     await sendVerificationEmail({ to: "u@e.com", link: "x", locale: "it" });
     expect(createTransport).toHaveBeenCalledTimes(1);
-    const cfg = createTransport.mock.calls[0][0];
+    const cfg = (createTransport.mock.calls as unknown as Array<[{
+      host: string;
+      port: number;
+      secure: boolean;
+      auth: { user: string; pass: string };
+    }]>)[0][0];
     expect(cfg.host).toBe("mailhog");
     expect(cfg.port).toBe(1025);
     expect(cfg.secure).toBe(false);
