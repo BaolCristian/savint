@@ -29,9 +29,10 @@ describe("QuizEditor metadata integration", () => {
     renderEditor({
       title: "Test", questions: [{
         type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        confidenceEnabled: false,
         options: { correct: true },
       }],
-    });
+    } as Parameters<typeof QuizEditor>[0]["initialData"]);
     fireEvent.click(screen.getByText(/impostazioni quiz/i));
     expect(screen.getByLabelText(/grado scolastico/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/materia/i)).toBeInTheDocument();
@@ -60,9 +61,10 @@ describe("QuizEditor metadata integration", () => {
     renderEditor({
       title: "Save", questions: [{
         type: "TRUE_FALSE", text: "x", timeLimit: 10, points: 1000, order: 0,
+        confidenceEnabled: false,
         options: { correct: true },
       }],
-    });
+    } as Parameters<typeof QuizEditor>[0]["initialData"]);
     fireEvent.click(screen.getByText(/impostazioni quiz/i));
     fireEvent.change(screen.getByLabelText(/grado scolastico/i), { target: { value: "SECONDARIA_II" } });
     fireEvent.change(screen.getByLabelText(/materia/i), { target: { value: "fisica" } });
