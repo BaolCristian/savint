@@ -10,6 +10,7 @@ import { ShareDialog } from "@/components/quiz/share-dialog";
 import { TestQuizButton } from "@/components/quiz/test-quiz-button";
 import { ExcelImportButton } from "@/components/quiz/excel-import-button";
 import { MoodleImportButton } from "@/components/quiz/moodle-import-button";
+import { QuizMetadataSection, type QuizMetadataPatch } from "@/components/quiz/quiz-metadata-section";
 import { withBasePath } from "@/lib/base-path";
 import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 import {
@@ -120,6 +121,29 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
   const [tagsText, setTagsText] = useState(
     initialData?.tags?.join(", ") ?? "",
   );
+  const [schoolLevel, setSchoolLevel] = useState<
+    "PRIMARIA" | "SECONDARIA_I" | "SECONDARIA_II" | "UNIVERSITA" | "ALTRO" | null
+  >((initialData as any)?.schoolLevel ?? null);
+  const [subject, setSubject] = useState<string | null>(
+    (initialData as any)?.subject ?? null,
+  );
+  const [language, setLanguage] = useState<string | null>(
+    (initialData as any)?.language ?? null,
+  );
+  const [ageMin, setAgeMin] = useState<number | null>(
+    (initialData as any)?.ageMin ?? null,
+  );
+  const [ageMax, setAgeMax] = useState<number | null>(
+    (initialData as any)?.ageMax ?? null,
+  );
+
+  const handleMetadataChange = (patch: QuizMetadataPatch) => {
+    if ("schoolLevel" in patch) setSchoolLevel(patch.schoolLevel ?? null);
+    if ("subject" in patch) setSubject(patch.subject ?? null);
+    if ("language" in patch) setLanguage(patch.language ?? null);
+    if ("ageMin" in patch) setAgeMin(patch.ageMin ?? null);
+    if ("ageMax" in patch) setAgeMax(patch.ageMax ?? null);
+  };
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? false);
   const [questions, setQuestions] = useState<QuestionInput[]>(
     initialData?.questions?.length
@@ -155,6 +179,11 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
       description: description || undefined,
       isPublic,
       tags,
+      schoolLevel,
+      subject,
+      language,
+      ageMin,
+      ageMax,
       questions: questions.map((q, i) => ({ ...q, order: i })),
       consentAccepted: true,
       license,
@@ -201,7 +230,7 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
     } finally {
       setSaving(false);
     }
-  }, [saving, title, description, tagsText, isPublic, questions, initialData, isEdit, router]);
+  }, [saving, title, description, tagsText, isPublic, schoolLevel, subject, language, ageMin, ageMax, questions, initialData, isEdit, router]);
 
   const requestSave = useCallback(() => {
     if (saving) return;
@@ -499,6 +528,19 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
                     onChange={(e) => setTagsText(e.target.value)}
                     placeholder={t("tagsPlaceholder")}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+                <div className="pt-2 border-t border-indigo-100 dark:border-indigo-900">
+                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider mb-3">
+                    {t("metadataSectionTitle")}
+                  </p>
+                  <QuizMetadataSection
+                    schoolLevel={schoolLevel}
+                    subject={subject}
+                    language={language}
+                    ageMin={ageMin}
+                    ageMax={ageMax}
+                    onChange={handleMetadataChange}
                   />
                 </div>
               </div>

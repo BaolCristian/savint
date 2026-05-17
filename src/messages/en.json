@@ -138,6 +138,7 @@
     "descriptionPlaceholder": "Optional quiz description...",
     "tagsLabel": "Tags (comma separated)",
     "tagsPlaceholder": "math, geometry, ...",
+    "metadataSectionTitle": "Pedagogical metadata",
     "fixBeforeSave": "Fix before saving",
     "questionsPanel": "Questions",
     "typeChoice": "Choice",

@@ -138,6 +138,7 @@
     "descriptionPlaceholder": "Descrizione opzionale del quiz...",
     "tagsLabel": "Tag (separati da virgola)",
     "tagsPlaceholder": "matematica, geometria, ...",
+    "metadataSectionTitle": "Metadati pedagogici",
     "fixBeforeSave": "Correggi prima di salvare",
     "questionsPanel": "Domande",
     "typeChoice": "Scelta",
