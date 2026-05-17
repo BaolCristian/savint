@@ -59,8 +59,16 @@ export async function PUT(
       const result = await tx.quiz.update({
         where: { id },
         data: {
-          ...quizData,
+          title: quizData.title,
+          description: quizData.description ?? null,
+          isPublic: quizData.isPublic,
+          tags: quizData.tags,
           license: license ?? "CC_BY",
+          schoolLevel: quizData.schoolLevel ?? null,
+          subject: quizData.subject ?? null,
+          language: quizData.language ?? null,
+          ageMin: quizData.ageMin ?? null,
+          ageMax: quizData.ageMax ?? null,
           questions: {
             create: questions.map((q, i) => {
               const { order: _order, ...rest } = q;

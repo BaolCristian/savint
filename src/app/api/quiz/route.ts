@@ -42,8 +42,16 @@ export async function POST(req: NextRequest) {
     const result = await prisma.$transaction(async (tx) => {
       const quiz = await tx.quiz.create({
         data: {
-          ...quizData,
+          title: quizData.title,
+          description: quizData.description ?? null,
+          isPublic: quizData.isPublic,
+          tags: quizData.tags,
           license: license ?? "CC_BY",
+          schoolLevel: quizData.schoolLevel ?? null,
+          subject: quizData.subject ?? null,
+          language: quizData.language ?? null,
+          ageMin: quizData.ageMin ?? null,
+          ageMax: quizData.ageMax ?? null,
           authorId: session.user!.id!,
           questions: {
             create: questions.map((q, i) => {
