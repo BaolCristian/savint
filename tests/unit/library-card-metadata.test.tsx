@@ -36,7 +36,7 @@ describe("LibraryClient card metadata", () => {
             ...baseQuiz,
             schoolLevel: "PRIMARIA",
             subject: "matematica",
-          } as any,
+          },
         ]}
       />,
     );
@@ -48,7 +48,7 @@ describe("LibraryClient card metadata", () => {
     wrap(
       <LibraryClient
         quizzes={[
-          { ...baseQuiz, schoolLevel: null, subject: null } as any,
+          { ...baseQuiz, schoolLevel: null, subject: null },
         ]}
       />,
     );
