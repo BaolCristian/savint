@@ -33,6 +33,7 @@
     "shares": "Condivisioni",
     "library": "Libreria",
     "createWithAI": "Crea con AI",
+    "browseRepository": "Sfoglia repository savint.it",
     "lightMode": "Modalita chiara",
     "darkMode": "Modalita scura",
     "logout": "Esci",
@@ -48,6 +49,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "browseRepository": "Sfoglia repository savint.it",
     "welcome": "Benvenuto, {name}!",
     "quizzesCreated": "Quiz creati",
     "sessionsPlayed": "Sessioni giocate",

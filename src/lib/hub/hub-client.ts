@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { decryptToken, encryptToken } from "@/lib/hub/token-crypto";
 import { getHubOAuthConfig } from "@/lib/hub/oauth-config";
+import type { SearchResultItem } from "@/lib/hub/search";
 
 const REFRESH_SKEW_MS = 30_000;
 
@@ -112,4 +113,77 @@ export async function fetchWithTokenRefresh(
     res = await fetch(`${cfg.hubUrl}${path}`, { ...init, headers });
   }
   return res;
+}
+
+export interface HubSearchFilters {
+  q?: string;
+  schoolLevel?: string;
+  subject?: string;
+  language?: string;
+  ageMin?: number;
+  ageMax?: number;
+  sort?: "relevant" | "recent" | "popular";
+  page?: number;
+  perPage?: number;
+}
+
+export interface HubSearchResult {
+  items: SearchResultItem[];
+  total: number;
+  page: number;
+  perPage: number;
+}
+
+/**
+ * Calls the hub's public GET /api/hub/quizzes endpoint (no auth needed).
+ * Returns null if SAVINT_HUB_URL is not configured.
+ * Throws on network/HTTP errors.
+ */
+export async function searchHubQuizzesRemote(
+  filters: HubSearchFilters = {},
+): Promise<HubSearchResult> {
+  const hubUrl = process.env.SAVINT_HUB_URL;
+  if (!hubUrl) throw new Error("hub_not_configured");
+
+  const params = new URLSearchParams();
+  if (filters.q) params.set("q", filters.q);
+  if (filters.schoolLevel) params.set("schoolLevel", filters.schoolLevel);
+  if (filters.subject) params.set("subject", filters.subject);
+  if (filters.language) params.set("language", filters.language);
+  if (filters.ageMin !== undefined) params.set("ageMin", String(filters.ageMin));
+  if (filters.ageMax !== undefined) params.set("ageMax", String(filters.ageMax));
+  if (filters.sort) params.set("sort", filters.sort);
+  if (filters.page !== undefined) params.set("page", String(filters.page));
+  if (filters.perPage !== undefined) params.set("perPage", String(filters.perPage));
+
+  const res = await fetch(`${hubUrl}/api/hub/quizzes?${params.toString()}`);
+  if (!res.ok) throw new Error(`hub_http_${res.status}`);
+  return res.json() as Promise<HubSearchResult>;
+}
+
+/**
+ * Fetches a single quiz detail from the hub (no auth needed).
+ */
+export async function fetchHubQuizDetail(hubQuizId: string): Promise<Record<string, unknown>> {
+  const hubUrl = process.env.SAVINT_HUB_URL;
+  if (!hubUrl) throw new Error("hub_not_configured");
+
+  const res = await fetch(`${hubUrl}/api/hub/quizzes/${hubQuizId}`);
+  if (!res.ok) throw new Error(`hub_http_${res.status}`);
+  return res.json() as Promise<Record<string, unknown>>;
+}
+
+/**
+ * Downloads a quiz payload from the hub using the user's clone-scoped access token.
+ */
+export async function fetchHubQuizDownload(
+  userId: string,
+  hubQuizId: string,
+): Promise<{ qlzBase64: string; hubAuthor: string; version: number; hubQuizId: string }> {
+  const res = await fetchWithTokenRefresh(
+    userId,
+    `/api/hub/quizzes/${hubQuizId}/download`,
+  );
+  if (!res.ok) throw new Error(`hub_download_${res.status}`);
+  return res.json();
 }
