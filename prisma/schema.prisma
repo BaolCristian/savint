@@ -436,8 +436,9 @@ model HubQuiz {
   downloadsCount       Int         @default(0)
   playsCount           Int         @default(0)
 
-  hubAccount HubAccount       @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
-  versions   HubQuizVersion[]
+  hubAccount   HubAccount       @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
+  versions     HubQuizVersion[]
+  practiceRuns PracticeRun[]
 
   @@index([hubAccountId])
   @@index([subject])
@@ -456,4 +457,18 @@ model HubQuizVersion {
   hubQuiz HubQuiz @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
 
   @@unique([hubQuizId, version])
+}
+
+model PracticeRun {
+  id          String    @id @default(cuid())
+  hubQuizId   String
+  hubQuiz     HubQuiz   @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
+  ipHash      String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  answers     Json      @default("[]")
+  expiresAt   DateTime  @default(dbgenerated("now() + interval '1 hour'"))
+
+  @@index([hubQuizId, startedAt])
+  @@index([expiresAt])
 }
