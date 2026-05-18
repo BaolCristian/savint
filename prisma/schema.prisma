@@ -70,6 +70,20 @@ enum HubAuthMethod {
   PASSWORD
 }
 
+enum HubReportReason {
+  COPYRIGHT
+  PERSONAL_DATA
+  OFFENSIVE
+  OTHER
+}
+
+enum HubReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
 enum VerificationPurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
@@ -292,6 +306,8 @@ model HubAccount {
   verificationTokens EmailVerificationToken[]
   quizzes            HubQuiz[]
   accessTokens       HubAccessToken[]
+  hubReportsMade     HubReport[]            @relation("hubReportsMade")
+  hubReportsResolved HubReport[]            @relation("hubReportsResolved")
 
   @@index([role])
   @@map("hub_account")
@@ -439,6 +455,7 @@ model HubQuiz {
   hubAccount   HubAccount       @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
   versions     HubQuizVersion[]
   practiceRuns PracticeRun[]
+  reports      HubReport[]
 
   @@index([hubAccountId])
   @@index([subject])
@@ -471,4 +488,33 @@ model PracticeRun {
 
   @@index([hubQuizId, startedAt])
   @@index([expiresAt])
+}
+
+model HubReport {
+  id                  String          @id @default(cuid())
+  hubQuizId           String
+  hubQuiz             HubQuiz         @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
+  reporterAccountId   String?
+  reporterAccount     HubAccount?     @relation("hubReportsMade", fields: [reporterAccountId], references: [id], onDelete: SetNull)
+  reporterIpHash      String
+  reason              HubReportReason
+  description         String?
+  status              HubReportStatus @default(PENDING)
+  resolvedAt          DateTime?
+  resolvedBy          String?
+  resolver            HubAccount?     @relation("hubReportsResolved", fields: [resolvedBy], references: [id], onDelete: SetNull)
+  createdAt           DateTime        @default(now())
+
+  @@index([hubQuizId, reporterIpHash, createdAt])
+  @@index([status])
+}
+
+model HubRateLimit {
+  id          String   @id @default(cuid())
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@unique([key, windowStart])
+  @@index([windowStart])
 }
