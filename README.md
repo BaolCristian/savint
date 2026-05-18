@@ -16,6 +16,7 @@
 - [Question Types](#question-types)
 - [Main Commands](#main-commands)
 - [Production Deploy](#production-deploy)
+- [Publishing to savint.it](#publishing-to-savintit)
 - [Admin User](#admin-user)
 - [Google OAuth Setup](#google-oauth-setup)
 - [License](#license)
@@ -191,6 +192,15 @@ pm2 start npm --name savint -- run start:custom
 ```
 
 Configure Nginx with a `location /savint` block that proxies to the Node.js server. The `Upgrade` and `Connection "upgrade"` headers are required for Socket.io.
+
+### Publishing to savint.it
+
+When `SAVINT_HUB_URL`, `HUB_OAUTH_CLIENT_ID`, and `HUB_OAUTH_CLIENT_SECRET`
+are configured, teachers see a "Publish to savint.it" button in the quiz
+editor. The first click triggers an OAuth consent flow on the hub; once the
+account is linked, subsequent publishes are one-click. Republishing the same
+quiz increments the version on the hub. Linked accounts and revocation are
+managed at `/account/hub-link`.
 
 ---
 
