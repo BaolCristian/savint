@@ -100,8 +100,9 @@ model User {
   accounts        Account[]
   sessions        AuthSession[]
   consents        Consent[]
-  reportsMade     Report[]  @relation("reportsMade")
-  reportsResolved Report[]  @relation("reportsResolved")
+  reportsMade     Report[]      @relation("reportsMade")
+  reportsResolved Report[]      @relation("reportsResolved")
+  hubLink         HubLink?
 }
 
 model Account {
@@ -174,7 +175,7 @@ model VerificationToken {
 }
 
 model Quiz {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   description String?
   authorId    String
@@ -187,15 +188,15 @@ model Quiz {
 
   // Pedagogical metadata (all optional; enforced at publish time, not here).
   schoolLevel SchoolLevel?
-  subject     String?      // slug from src/lib/quiz-subjects.ts
-  language    String?      // ISO 639-1, e.g. "it", "en"
+  subject     String? // slug from src/lib/quiz-subjects.ts
+  language    String? // ISO 639-1, e.g. "it", "en"
   ageMin      Int?
   ageMax      Int?
 
   // Hub publish/clone bookkeeping (filled by Plans 3 and 4; nullable here).
   hubPublishedId       String?
   hubLastPublishedAt   DateTime?
-  hubAccountId         String?    // remote HubAccount.id on savint.it (cached for UI)
+  hubAccountId         String? // remote HubAccount.id on savint.it (cached for UI)
   clonedFromHubId      String?
   clonedFromHubVersion Int?
   clonedFromHubAuthor  String?
@@ -211,16 +212,16 @@ model Quiz {
 }
 
 model Question {
-  id        String       @id @default(cuid())
-  quizId    String
-  type      QuestionType
-  text      String
-  mediaUrl  String?
-  timeLimit Int          @default(20)
-  points    Int          @default(1000)
-  order     Int
-  options   Json
-  confidenceEnabled Boolean @default(false)
+  id                String       @id @default(cuid())
+  quizId            String
+  type              QuestionType
+  text              String
+  mediaUrl          String?
+  timeLimit         Int          @default(20)
+  points            Int          @default(1000)
+  order             Int
+  options           Json
+  confidenceEnabled Boolean      @default(false)
 
   quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers Answer[]
@@ -256,17 +257,17 @@ model Session {
 }
 
 model Answer {
-  id             String   @id @default(cuid())
-  sessionId      String
-  questionId     String
-  playerName     String
-  playerEmail    String?
-  value          Json
-  isCorrect      Boolean
-  responseTimeMs Int
-  score          Int
+  id              String   @id @default(cuid())
+  sessionId       String
+  questionId      String
+  playerName      String
+  playerEmail     String?
+  value           Json
+  isCorrect       Boolean
+  responseTimeMs  Int
+  score           Int
   confidenceLevel Int?
-  createdAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
 
   session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -275,20 +276,22 @@ model Answer {
 }
 
 model HubAccount {
-  id              String          @id @default(cuid())
-  email           String          @unique
+  id              String         @id @default(cuid())
+  email           String         @unique
   name            String?
   image           String?
   authMethod      HubAuthMethod
   passwordHash    String?
   emailVerified   DateTime?
   affiliation     String?
-  role            HubAccountRole  @default(HUB_USER)
-  linkedProviders String[]        @default([])
+  role            HubAccountRole @default(HUB_USER)
+  linkedProviders String[]       @default([])
   bannedAt        DateTime?
-  createdAt       DateTime        @default(now())
+  createdAt       DateTime       @default(now())
 
   verificationTokens EmailVerificationToken[]
+  quizzes            HubQuiz[]
+  accessTokens       HubAccessToken[]
 
   @@index([role])
   @@map("hub_account")
@@ -307,4 +310,150 @@ model EmailVerificationToken {
 
   @@index([hubAccountId, purpose])
   @@map("email_verification_token")
+}
+
+enum HubInstallationStatus {
+  ACTIVE
+  DISABLED
+}
+
+// INSTALLATION SIDE -------------------------------------------------------
+
+model HubLink {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  hubAccountId           String
+  hubAccountEmail        String
+  accessTokenCiphertext  String
+  refreshTokenCiphertext String
+  accessTokenExpiresAt   DateTime
+  scopes                 String[]
+  createdAt              DateTime  @default(now())
+  lastUsedAt             DateTime  @default(now())
+  revokedAt              DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([hubAccountId])
+}
+
+model OAuthFlowState {
+  id           String   @id @default(cuid())
+  userId       String
+  codeVerifier String
+  state        String   @unique
+  quizId       String?
+  scopes       String[]
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// HUB SIDE ----------------------------------------------------------------
+
+model Installation {
+  id               String                @id @default(cuid())
+  name             String
+  contactEmail     String
+  clientId         String                @unique
+  clientSecretHash String
+  status           HubInstallationStatus @default(ACTIVE)
+  createdAt        DateTime              @default(now())
+  lastSeenAt       DateTime              @default(now())
+
+  accessTokens       HubAccessToken[]
+  authorizationCodes OAuthAuthorizationCode[]
+}
+
+model OAuthAuthorizationCode {
+  id                  String    @id @default(cuid())
+  codeHash            String    @unique
+  installationId      String
+  hubAccountId        String
+  redirectUri         String
+  scopes              String[]
+  codeChallenge       String
+  codeChallengeMethod String
+  state               String
+  expiresAt           DateTime
+  usedAt              DateTime?
+  createdAt           DateTime  @default(now())
+
+  installation Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  @@index([hubAccountId])
+  @@index([expiresAt])
+}
+
+model HubAccessToken {
+  id                    String    @id @default(cuid())
+  hubAccountId          String
+  installationId        String
+  accessTokenHash       String    @unique
+  refreshTokenHash      String    @unique
+  accessTokenExpiresAt  DateTime
+  refreshTokenExpiresAt DateTime
+  scopes                String[]
+  rotationCount         Int       @default(0)
+  parentTokenId         String?
+  revokedAt             DateTime?
+  revokedReason         String?
+  createdAt             DateTime  @default(now())
+  lastUsedAt            DateTime  @default(now())
+
+  installation Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  hubAccount   HubAccount   @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
+
+  @@index([hubAccountId, installationId])
+  @@index([refreshTokenHash])
+}
+
+model HubQuiz {
+  id                   String      @id @default(cuid())
+  hubAccountId         String
+  title                String
+  description          String?
+  license              QuizLicense @default(CC_BY)
+  tags                 String[]    @default([])
+  schoolLevel          SchoolLevel
+  subject              String
+  language             String
+  ageMin               Int?
+  ageMax               Int?
+  questionCount        Int
+  estimatedDurationSec Int
+  payloadBlob          Bytes
+  payloadHash          String
+  payloadSize          Int
+  version              Int         @default(1)
+  publishedAt          DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  unpublishedAt        DateTime?
+  suspended            Boolean     @default(false)
+  suspendedReason      String?
+  downloadsCount       Int         @default(0)
+  playsCount           Int         @default(0)
+
+  hubAccount HubAccount       @relation(fields: [hubAccountId], references: [id], onDelete: Cascade)
+  versions   HubQuizVersion[]
+
+  @@index([hubAccountId])
+  @@index([subject])
+  @@index([schoolLevel])
+}
+
+model HubQuizVersion {
+  id          String   @id @default(cuid())
+  hubQuizId   String
+  version     Int
+  payloadBlob Bytes
+  payloadHash String
+  payloadSize Int
+  publishedAt DateTime @default(now())
+
+  hubQuiz HubQuiz @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
+
+  @@unique([hubQuizId, version])
 }
