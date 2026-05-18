@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { _resetForTests } from "@/lib/rate-limit/hub-rate-limit";
 
 const hub = {
   findUnique: vi.fn(),
@@ -13,8 +14,12 @@ const issueVerificationToken = vi.fn().mockResolvedValue({
 vi.mock("@/lib/db/client", () => ({ prisma: { hubAccount: hub } }));
 vi.mock("@/lib/email/send", () => ({ sendVerificationEmail }));
 vi.mock("@/lib/auth/verification-token", () => ({ issueVerificationToken }));
+vi.mock("next/headers", () => ({
+  headers: async () => new Map([["x-real-ip", "127.0.0.1"]]) as unknown as Headers,
+}));
 
 beforeEach(() => {
+  _resetForTests();
   hub.findUnique.mockReset();
   hub.create.mockReset();
   sendVerificationEmail.mockClear();

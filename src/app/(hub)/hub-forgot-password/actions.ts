@@ -1,10 +1,12 @@
 "use server";
 
 import { z } from "zod";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db/client";
 import { issueVerificationToken } from "@/lib/auth/verification-token";
 import { sendPasswordResetEmail } from "@/lib/email/send";
 import { getHubBaseUrl } from "@/lib/config/savint-mode";
+import { hubRateLimit, HUB_LIMITS } from "@/lib/rate-limit/hub-rate-limit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -12,6 +14,10 @@ const schema = z.object({
 });
 
 export async function requestPasswordReset(input: z.input<typeof schema>) {
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown";
+  const rl = await hubRateLimit({ key: `forgot:${ip}`, ...HUB_LIMITS.FORGOT_PASSWORD });
+  if (!rl.allowed) return { ok: true } as const; // silently swallow to avoid enumeration
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { ok: true } as const;
   const email = parsed.data.email.toLowerCase();
