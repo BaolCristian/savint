@@ -1,18 +1,13 @@
 /**
- * In-memory sliding-window rate limiter (Plan 2).
- *
- * Plan 5 swaps the implementation to a Postgres-backed `HubRateLimit` table
- * (spec Section 9) while KEEPING this exact function signature and module path.
+ * Hub rate limiter — thin wrapper around the DB-backed `checkRateLimit`.
  *
  * Signature pinned by docs/superpowers/plans/2026-05-17-savint-hub-00-integration-contract.md §3.
+ * Plan 5 replaces the in-memory implementation (Plan 2) with a Postgres-backed
+ * `HubRateLimit` table while KEEPING this exact function signature and module path.
  */
 
-interface Bucket {
-  count: number;
-  windowStart: number;
-}
-
-const buckets = new Map<string, Bucket>();
+import { checkRateLimit, resetRateLimits } from "./db-rate-limit";
+import type { RateLimitArgs, RateLimitResult } from "./db-rate-limit";
 
 export interface HubRateLimitArgs {
   key: string;
@@ -26,27 +21,11 @@ export interface HubRateLimitResult {
 }
 
 export async function hubRateLimit(args: HubRateLimitArgs): Promise<HubRateLimitResult> {
-  const { key, windowSeconds, max } = args;
-  const windowMs = windowSeconds * 1000;
-  const now = Date.now();
-  const bucket = buckets.get(key);
-  if (!bucket || now - bucket.windowStart >= windowMs) {
-    buckets.set(key, { count: 1, windowStart: now });
-    return { allowed: true };
-  }
-  if (bucket.count >= max) {
-    const retryAfterMs = windowMs - (now - bucket.windowStart);
-    return {
-      allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil(retryAfterMs / 1000)),
-    };
-  }
-  bucket.count += 1;
-  return { allowed: true };
+  return checkRateLimit(args as RateLimitArgs) as Promise<RateLimitResult>;
 }
 
-export function _resetForTests() {
-  buckets.clear();
+export async function _resetForTests(): Promise<void> {
+  await resetRateLimits();
 }
 
 // Limits from spec Section 9 (converted to windowSeconds + max).
