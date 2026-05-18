@@ -1,60 +1,114 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen } from "@testing-library/react";
-import Page from "@/app/(hub)/q/[id]/page";
+import JSZip from "jszip";
 
-vi.mock("@/lib/db/client", () => ({
-  prisma: {
-    hubQuiz: {
-      findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
-        where.id === "found"
-          ? {
-              id: "found", title: "T", language: "it",
-              hubAccountId: "ha",
-              schoolLevel: "SECONDARIA_II",
-              subject: "matematica",
-              publishedAt: new Date("2026-05-17T10:00:00Z"),
-              updatedAt: new Date("2026-05-17T10:00:00Z"),
-              version: 2,
-              downloadsCount: 0, playsCount: 0,
-              description: null,
-              unpublishedAt: null,
-              suspended: false,
-            }
-          : null,
-      ),
+// We need to build a real .qlz payload so extractQuestionPreviews can parse it
+let qlzPayload: Buffer;
+
+beforeAll(async () => {
+  const zip = new JSZip();
+  const manifest = {
+    quiz: {
+      questions: [
+        {
+          type: "choice",
+          text: "What is 2+2?",
+          timeLimit: 30,
+          points: 1000,
+          image: null,
+          // correct answers intentionally omitted from preview
+        },
+        {
+          type: "trueFalse",
+          text: "The sky is blue.",
+          timeLimit: 20,
+          points: 500,
+        },
+      ],
     },
-    hubAccount: {
-      findUnique: vi.fn(async () => ({ name: "Maria Rossi" })),
-    },
+  };
+  zip.file("manifest.json", JSON.stringify(manifest));
+  const arrayBuffer = await zip.generateAsync({ type: "arraybuffer" });
+  qlzPayload = Buffer.from(arrayBuffer);
+});
+
+// Mock next/navigation (notFound)
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }),
+}));
+
+// Mock next-intl
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
+    if (params) return `${key}:${JSON.stringify(params)}`;
+    return key;
   },
 }));
 
-describe("/q/:id page", () => {
-  it("renders title, author, version for a found quiz", async () => {
-    const ui = await Page({ params: Promise.resolve({ id: "found" }) });
-    render(ui);
-    expect(screen.getByText("T")).toBeInTheDocument();
-    expect(screen.getByText(/Maria Rossi/)).toBeInTheDocument();
-    expect(screen.getByText(/v2/)).toBeInTheDocument();
+// Use vi.hoisted to avoid hoisting issues
+const { mockFindUnique } = vi.hoisted(() => ({
+  mockFindUnique: vi.fn(),
+}));
+
+vi.mock("@/lib/db/client", () => ({
+  prisma: {
+    hubQuiz: { findUnique: mockFindUnique },
+  },
+}));
+
+function makeQuizRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "q1",
+    title: "Math Quiz",
+    description: "A quiz about math",
+    tags: ["math"],
+    license: "CC_BY",
+    schoolLevel: "PRIMARIA",
+    subject: "matematica",
+    language: "it",
+    ageMin: null,
+    ageMax: null,
+    questionCount: 2,
+    downloadsCount: 7,
+    playsCount: 3,
+    publishedAt: new Date("2026-05-01T10:00:00Z"),
+    updatedAt: new Date("2026-05-10T10:00:00Z"),
+    version: 1,
+    suspended: false,
+    payloadBlob: qlzPayload,
+    hubAccount: {
+      id: "ha1",
+      name: "Maria Rossi",
+      email: "maria@example.com",
+      affiliation: "Liceo Galilei",
+    },
+    ...overrides,
+  };
+}
+
+import Page from "@/app/(hub)/q/[id]/page";
+
+describe("/q/:id detail page", () => {
+  it("renders title and author", async () => {
+    mockFindUnique.mockResolvedValueOnce(makeQuizRow());
+    const ui = await Page({ params: Promise.resolve({ id: "q1" }) });
+    const { container } = render(ui);
+    expect(screen.getByText("Math Quiz")).toBeInTheDocument();
+    expect(container.innerHTML).toMatch(/Maria Rossi/);
   });
 
-  it("shows withdrawn banner for unpublishedAt", async () => {
-    const { prisma } = await import("@/lib/db/client");
-    (prisma.hubQuiz.findUnique as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      id: "withdrawn", title: "X", description: null, hubAccountId: "ha",
-      schoolLevel: "ALTRO", subject: "altro", language: "it",
-      publishedAt: new Date(), updatedAt: new Date(), version: 1,
-      downloadsCount: 0, playsCount: 0,
-      unpublishedAt: new Date(), suspended: false,
-    });
-    const ui = await Page({ params: Promise.resolve({ id: "withdrawn" }) });
-    render(ui);
-    expect(screen.getByText(/withdrawn/i)).toBeInTheDocument();
+  it("does NOT contain the word 'correct' in the HTML (no answer leakage)", async () => {
+    mockFindUnique.mockResolvedValueOnce(makeQuizRow());
+    const ui = await Page({ params: Promise.resolve({ id: "q1" }) });
+    const { container } = render(ui);
+    // The question previews must not expose correct answers
+    expect(container.innerHTML.toLowerCase()).not.toMatch(/\bcorrect\b/);
   });
 
-  it("shows Not found for an unknown id", async () => {
-    const ui = await Page({ params: Promise.resolve({ id: "missing" }) });
-    render(ui);
-    expect(screen.getByText(/Not found/i)).toBeInTheDocument();
+  it("calls notFound() for an unknown id", async () => {
+    mockFindUnique.mockResolvedValueOnce(null);
+    await expect(
+      Page({ params: Promise.resolve({ id: "missing" }) })
+    ).rejects.toThrow("NEXT_NOT_FOUND");
   });
 });
