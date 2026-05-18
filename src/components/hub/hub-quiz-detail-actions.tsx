@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 type Props = {
   quizId: string;
@@ -14,21 +14,29 @@ export function HubQuizDetailActions({ quizId, qlzAvailable = true }: Props) {
 
   return (
     <div className="flex flex-wrap gap-3 mt-4">
-      <Button asChild>
-        <Link href={`/practice/${quizId}?from=hub`}>{t("tryNow")}</Link>
-      </Button>
+      <Link
+        href={`/practice/${quizId}?from=hub`}
+        className={buttonVariants()}
+      >
+        {t("tryNow")}
+      </Link>
 
       {qlzAvailable && (
-        <Button variant="outline" asChild>
-          <a href={`/api/hub/quizzes/${quizId}/download`} download>
-            {t("downloadQlz")}
-          </a>
-        </Button>
+        <a
+          href={`/api/hub/quizzes/${quizId}/download`}
+          download
+          className={buttonVariants({ variant: "outline" })}
+        >
+          {t("downloadQlz")}
+        </a>
       )}
 
-      <Button variant="ghost" size="sm" asChild>
-        <Link href={`/report?quizId=${quizId}`}>{t("report")}</Link>
-      </Button>
+      <Link
+        href={`/report?quizId=${quizId}`}
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        {t("report")}
+      </Link>
     </div>
   );
 }

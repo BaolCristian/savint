@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export type HubQuizCardItem = {
   id: string;
@@ -50,9 +50,12 @@ export function HubQuizCard({ item }: { item: HubQuizCardItem }) {
       </div>
 
       <div className="flex gap-2 mt-2">
-        <Button asChild size="sm" variant="default">
-          <Link href={`/q/${item.id}`}>{t("tryNow")}</Link>
-        </Button>
+        <Link
+          href={`/q/${item.id}`}
+          className={buttonVariants({ size: "sm" })}
+        >
+          {t("tryNow")}
+        </Link>
       </div>
     </div>
   );
