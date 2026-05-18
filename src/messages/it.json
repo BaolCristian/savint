@@ -694,6 +694,19 @@
     "newPasswordLabel": "Nuova password",
     "resetSubmit": "Aggiorna password"
   },
+  "hubAccount": {
+    "title": "Il mio account",
+    "profileSection": "Profilo",
+    "nameLabel": "Nome",
+    "affiliationLabel": "Affiliazione",
+    "affiliationPlaceholder": "es. Liceo Galilei, Padova",
+    "saveProfile": "Salva",
+    "providersSection": "Provider di accesso collegati",
+    "passwordSection": "Cambia password",
+    "currentPasswordLabel": "Password attuale",
+    "newPasswordLabel": "Nuova password",
+    "changePasswordSubmit": "Cambia password"
+  },
   "practice": {
     "mode": "Modalità esercitazione",
     "exploreTitle": "Esplora quiz pubblici",

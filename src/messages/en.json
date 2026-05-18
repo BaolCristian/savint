@@ -694,6 +694,19 @@
     "newPasswordLabel": "New password",
     "resetSubmit": "Update password"
   },
+  "hubAccount": {
+    "title": "My account",
+    "profileSection": "Profile",
+    "nameLabel": "Name",
+    "affiliationLabel": "Affiliation",
+    "affiliationPlaceholder": "e.g. Liceo Galilei, Padova",
+    "saveProfile": "Save",
+    "providersSection": "Linked login providers",
+    "passwordSection": "Change password",
+    "currentPasswordLabel": "Current password",
+    "newPasswordLabel": "New password",
+    "changePasswordSubmit": "Change password"
+  },
   "practice": {
     "mode": "Practice mode",
     "exploreTitle": "Explore public quizzes",
