@@ -33,6 +33,8 @@ export default async function LibraryPage() {
     createdAt: q.createdAt.toISOString(),
     schoolLevel: q.schoolLevel,
     subject: q.subject,
+    clonedFromHubId: q.clonedFromHubId,
+    clonedFromHubAuthor: q.clonedFromHubAuthor,
   }));
 
   return (

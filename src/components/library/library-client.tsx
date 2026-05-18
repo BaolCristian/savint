@@ -11,6 +11,7 @@ import { PublishDeclarationModal } from "@/components/legal/publish-declaration-
 import { ReportModal } from "@/components/legal/report-modal";
 import { LICENSE_SHORT_LABELS, LICENSE_URLS } from "@/lib/config/legal";
 import { getSubjectLabel } from "@/lib/quiz-subjects";
+import { FromHubBadge } from "@/components/hub/from-hub-badge";
 
 interface QuizItem {
   id: string;
@@ -23,6 +24,8 @@ interface QuizItem {
   createdAt: string;
   schoolLevel: string | null;
   subject: string | null;
+  clonedFromHubId: string | null;
+  clonedFromHubAuthor: string | null;
 }
 
 export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
@@ -149,6 +152,9 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                     {tc("questions", { count: quiz.questionCount })}
                   </Badge>
                 </div>
+                {quiz.clonedFromHubId && quiz.clonedFromHubAuthor && (
+                  <FromHubBadge hubId={quiz.clonedFromHubId} author={quiz.clonedFromHubAuthor} />
+                )}
                 <a
                   href={LICENSE_URLS[quiz.license] ?? LICENSE_URLS.CC_BY}
                   target="_blank"
