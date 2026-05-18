@@ -29,7 +29,14 @@ export function HubReportsClient({
 
   async function dismiss(id: string) {
     setBusy(id);
-    await fetch(`/api/hub/admin/reports/${id}/dismiss`, { method: "POST" });
+    const res = await fetch(`/api/hub/admin/reports/${id}/dismiss`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      alert(t("operationFailed"));
+      setBusy(null);
+      return;
+    }
     setReports((rs) => rs.filter((r) => r.id !== id));
     setBusy(null);
   }
@@ -38,11 +45,16 @@ export function HubReportsClient({
     const reason = prompt(t("suspendReasonPrompt"));
     if (!reason) return;
     setBusy(id);
-    await fetch(`/api/hub/admin/reports/${id}/suspend`, {
+    const res = await fetch(`/api/hub/admin/reports/${id}/suspend`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason }),
     });
+    if (!res.ok) {
+      alert(t("operationFailed"));
+      setBusy(null);
+      return;
+    }
     setReports((rs) => rs.filter((r) => r.id !== id));
     setBusy(null);
   }
@@ -51,11 +63,16 @@ export function HubReportsClient({
     const reason = prompt(t("banReasonPrompt"));
     if (!reason) return;
     setBusy(accountId);
-    await fetch(`/api/hub/admin/accounts/${accountId}/ban`, {
+    const res = await fetch(`/api/hub/admin/accounts/${accountId}/ban`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason }),
     });
+    if (!res.ok) {
+      alert(t("operationFailed"));
+      setBusy(null);
+      return;
+    }
     setReports((rs) => rs.filter((r) => r.hubQuiz.hubAccount.id !== accountId));
     setBusy(null);
   }

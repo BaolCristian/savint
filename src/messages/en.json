@@ -836,7 +836,8 @@
       "suspendQuiz": "Suspend quiz",
       "banAuthor": "Ban author",
       "suspendReasonPrompt": "Suspension reason",
-      "banReasonPrompt": "Ban reason"
+      "banReasonPrompt": "Ban reason",
+      "operationFailed": "Operation failed"
     },
     "suspended": {
       "banner": "This quiz has been suspended by the savint.it moderation team.",

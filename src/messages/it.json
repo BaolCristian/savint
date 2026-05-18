@@ -836,7 +836,8 @@
       "suspendQuiz": "Sospendi quiz",
       "banAuthor": "Banna autore",
       "suspendReasonPrompt": "Motivo della sospensione",
-      "banReasonPrompt": "Motivo del ban"
+      "banReasonPrompt": "Motivo del ban",
+      "operationFailed": "Operazione non riuscita"
     },
     "suspended": {
       "banner": "Questo quiz è stato sospeso dal team di moderazione di savint.it.",
