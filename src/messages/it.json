@@ -713,6 +713,35 @@
     "resetSubject": "Reimposta la tua password su savint.it"
   },
   "hub": {
+    "exploreTitle": "Repository pubblico dei quiz",
+    "exploreSubtitle": "Cerca migliaia di quiz creati dai docenti",
+    "filters": {
+      "schoolLevel": "Grado scolastico",
+      "subject": "Materia",
+      "language": "Lingua",
+      "ageMin": "Età minima",
+      "ageMax": "Età massima",
+      "all": "Tutti"
+    },
+    "sort": {
+      "relevant": "Rilevanti",
+      "recent": "Recenti",
+      "popular": "Popolari"
+    },
+    "search": "Cerca",
+    "noResults": "Nessun quiz corrisponde ai filtri",
+    "downloads": "{count, plural, one {# clone} other {# cloni}}",
+    "plays": "{count, plural, one {# partita} other {# partite}}",
+    "tryNow": "Prova ora",
+    "clone": "Clona nella mia libreria",
+    "downloadQlz": "Scarica .qlz",
+    "report": "Segnala",
+    "license": "Licenza: {license}",
+    "by": "di {author}",
+    "fromHub": "Da savint.it · {author}",
+    "version": "v{n}",
+    "updateAvailable": "Aggiornamento disponibile",
+    "alreadyCloned": "Già nella tua libreria",
     "oauth": {
       "title": "Autorizza {installation}",
       "subtitle": "{installation} vuole pubblicare quiz a tuo nome su savint.it.",

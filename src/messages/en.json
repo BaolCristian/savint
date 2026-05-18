@@ -713,6 +713,35 @@
     "resetSubject": "Reset your password on savint.it"
   },
   "hub": {
+    "exploreTitle": "Public quiz repository",
+    "exploreSubtitle": "Search thousands of quizzes created by teachers",
+    "filters": {
+      "schoolLevel": "School level",
+      "subject": "Subject",
+      "language": "Language",
+      "ageMin": "Min age",
+      "ageMax": "Max age",
+      "all": "All"
+    },
+    "sort": {
+      "relevant": "Relevant",
+      "recent": "Recent",
+      "popular": "Popular"
+    },
+    "search": "Search",
+    "noResults": "No quizzes match your filters",
+    "downloads": "{count, plural, one {# clone} other {# clones}}",
+    "plays": "{count, plural, one {# play} other {# plays}}",
+    "tryNow": "Try now",
+    "clone": "Clone to my library",
+    "downloadQlz": "Download .qlz",
+    "report": "Report",
+    "license": "License: {license}",
+    "by": "by {author}",
+    "fromHub": "From savint.it · {author}",
+    "version": "v{n}",
+    "updateAvailable": "Update available",
+    "alreadyCloned": "Already in your library",
     "oauth": {
       "title": "Authorize {installation}",
       "subtitle": "{installation} wants to publish quizzes on your behalf on savint.it.",
