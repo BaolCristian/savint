@@ -822,6 +822,21 @@
         "appeal": "Se ritieni che si tratti di un errore, scrivi a {email}.",
         "signature": "— Il team di savint.it"
       }
+    },
+    "admin": {
+      "title": "Segnalazioni in attesa",
+      "noReports": "Nessuna segnalazione pendente.",
+      "reason": "Motivo",
+      "reporterType": "Segnalante",
+      "anonymous": "Anonimo",
+      "account": "Account",
+      "otherReports": "Altre segnalazioni sullo stesso quiz: {count}",
+      "viewQuiz": "Apri quiz",
+      "dismiss": "Archivia",
+      "suspendQuiz": "Sospendi quiz",
+      "banAuthor": "Banna autore",
+      "suspendReasonPrompt": "Motivo della sospensione",
+      "banReasonPrompt": "Motivo del ban"
     }
   },
   "practice": {

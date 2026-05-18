@@ -822,6 +822,21 @@
         "appeal": "If you believe this is a mistake, please write to {email}.",
         "signature": "— The savint.it team"
       }
+    },
+    "admin": {
+      "title": "Pending reports",
+      "noReports": "No pending reports.",
+      "reason": "Reason",
+      "reporterType": "Reporter",
+      "anonymous": "Anonymous",
+      "account": "Account",
+      "otherReports": "Other reports on the same quiz: {count}",
+      "viewQuiz": "Open quiz",
+      "dismiss": "Dismiss",
+      "suspendQuiz": "Suspend quiz",
+      "banAuthor": "Ban author",
+      "suspendReasonPrompt": "Suspension reason",
+      "banReasonPrompt": "Ban reason"
     }
   },
   "practice": {
