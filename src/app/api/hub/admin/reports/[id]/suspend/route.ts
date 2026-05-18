@@ -24,6 +24,9 @@ export async function POST(
     include: { hubQuiz: { include: { hubAccount: true } } },
   });
   if (!report) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (report.status !== "PENDING") {
+    return NextResponse.json({ ok: true, alreadyResolved: true });
+  }
 
   await prisma.$transaction([
     prisma.hubQuiz.update({
@@ -38,18 +41,22 @@ export async function POST(
 
   const author = report.hubQuiz.hubAccount;
   const locale = "it"; // future: store per-account locale
-  await sendEmail({
-    to: author.email,
-    subject: quizSuspendedTemplate.subject(locale),
-    text: quizSuspendedTemplate.body(
-      {
-        quizTitle: report.hubQuiz.title,
-        reason: body.data.reason,
-        appealEmail: "support@savint.it",
-      },
-      locale,
-    ),
-  });
+  try {
+    await sendEmail({
+      to: author.email,
+      subject: quizSuspendedTemplate.subject(locale),
+      text: quizSuspendedTemplate.body(
+        {
+          quizTitle: report.hubQuiz.title,
+          reason: body.data.reason,
+          appealEmail: "support@savint.it",
+        },
+        locale,
+      ),
+    });
+  } catch (err) {
+    console.error("[hub.admin.suspend] email send failed", err);
+  }
 
   return NextResponse.json({ ok: true });
 }

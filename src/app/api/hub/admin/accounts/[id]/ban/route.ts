@@ -21,6 +21,9 @@ export async function POST(
 
   const target = await prisma.hubAccount.findUnique({ where: { id } });
   if (!target) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (target.bannedAt != null) {
+    return NextResponse.json({ ok: true, alreadyBanned: true });
+  }
 
   await prisma.$transaction([
     prisma.hubAccount.update({ where: { id }, data: { bannedAt: new Date() } }),
@@ -30,14 +33,18 @@ export async function POST(
     }),
   ]);
 
-  await sendEmail({
-    to: target.email,
-    subject: accountBannedTemplate.subject("it"),
-    text: accountBannedTemplate.body(
-      { reason: body.data.reason, appealEmail: "support@savint.it" },
-      "it",
-    ),
-  });
+  try {
+    await sendEmail({
+      to: target.email,
+      subject: accountBannedTemplate.subject("it"),
+      text: accountBannedTemplate.body(
+        { reason: body.data.reason, appealEmail: "support@savint.it" },
+        "it",
+      ),
+    });
+  } catch (err) {
+    console.error("[hub.admin.ban] email send failed", err);
+  }
 
   return NextResponse.json({ ok: true });
 }
