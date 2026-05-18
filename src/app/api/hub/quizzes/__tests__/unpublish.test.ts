@@ -128,7 +128,7 @@ describe("DELETE /api/hub/quizzes/:id", () => {
         language: "it",
         questionCount: 2,
         estimatedDurationSec: 60,
-        payloadBlob: buf,
+        payloadBlob: buf as unknown as Uint8Array<ArrayBuffer>,
         payloadHash: createHash("sha256").update(buf).digest("hex"),
         payloadSize: buf.length,
       },

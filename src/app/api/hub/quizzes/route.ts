@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let payload: Buffer;
+  let payload: Uint8Array<ArrayBuffer>;
   try {
-    payload = Buffer.from(body.qlzBase64, "base64");
+    payload = Buffer.from(body.qlzBase64, "base64") as unknown as Uint8Array<ArrayBuffer>;
   } catch {
     return NextResponse.json({ error: "invalid_payload_b64" }, { status: 400 });
   }
