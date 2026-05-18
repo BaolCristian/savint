@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { _resetForTests } from "@/lib/rate-limit/hub-rate-limit";
+import { resetRateLimitsByPrefix } from "@/lib/rate-limit/hub-rate-limit";
+const _resetForTests = () => resetRateLimitsByPrefix("practice-start:");
 import { POST } from "@/app/api/hub/practice/start/route";
 import { NextRequest } from "next/server";
 import JSZip from "jszip";

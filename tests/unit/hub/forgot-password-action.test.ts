@@ -1,14 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { _resetForTests } from "@/lib/rate-limit/hub-rate-limit";
 
-const hub = { findUnique: vi.fn() };
+const hub = vi.hoisted(() => ({ findUnique: vi.fn() }));
 const issueVerificationToken = vi.fn().mockResolvedValue({
   plainToken: "tok-reset",
   expiresAt: new Date(Date.now() + 1000),
 });
 const sendPasswordResetEmail = vi.fn().mockResolvedValue(undefined);
 
-vi.mock("@/lib/db/client", () => ({ prisma: { hubAccount: hub } }));
+vi.mock("@/lib/db/client", () => ({
+  prisma: {
+    hubAccount: hub,
+    hubRateLimit: {
+      upsert: vi.fn().mockResolvedValue({ count: 1 }),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+  },
+}));
 vi.mock("@/lib/auth/verification-token", () => ({ issueVerificationToken }));
 vi.mock("@/lib/email/send", () => ({ sendPasswordResetEmail }));
 vi.mock("next/headers", () => ({

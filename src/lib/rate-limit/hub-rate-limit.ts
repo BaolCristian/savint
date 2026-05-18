@@ -6,8 +6,10 @@
  * `HubRateLimit` table while KEEPING this exact function signature and module path.
  */
 
-import { checkRateLimit, resetRateLimits } from "./db-rate-limit";
+import { checkRateLimit, resetRateLimits, resetRateLimitsByPrefix } from "./db-rate-limit";
 import type { RateLimitArgs, RateLimitResult } from "./db-rate-limit";
+
+export { resetRateLimitsByPrefix };
 
 export interface HubRateLimitArgs {
   key: string;

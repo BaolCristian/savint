@@ -80,3 +80,13 @@ export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitResu
 export async function resetRateLimits(): Promise<void> {
   await prisma.hubRateLimit.deleteMany();
 }
+
+/**
+ * Delete HubRateLimit rows whose key starts with the given prefix.
+ * Useful in parallel test suites to avoid cross-file interference.
+ */
+export async function resetRateLimitsByPrefix(prefix: string): Promise<void> {
+  await prisma.hubRateLimit.deleteMany({
+    where: { key: { startsWith: prefix } },
+  });
+}

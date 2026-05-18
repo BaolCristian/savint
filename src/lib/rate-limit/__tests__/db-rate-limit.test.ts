@@ -1,29 +1,34 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { checkRateLimit, resetRateLimits } from "../db-rate-limit";
+import { checkRateLimit, resetRateLimitsByPrefix } from "../db-rate-limit";
+
+// All keys in this test file are prefixed to avoid collision with
+// other test files running in parallel in the same DB.
+const PREFIX = "dbrl-";
 
 beforeEach(async () => {
-  await resetRateLimits();
+  await resetRateLimitsByPrefix(PREFIX);
 });
 
 afterEach(async () => {
-  await resetRateLimits();
+  await resetRateLimitsByPrefix(PREFIX);
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe("checkRateLimit", () => {
   it("allows requests under the limit", async () => {
     for (let i = 0; i < 3; i++) {
-      const r = await checkRateLimit({ key: "test-allow", windowSeconds: 60, max: 3 });
+      const r = await checkRateLimit({ key: `${PREFIX}allow`, windowSeconds: 60, max: 3 });
       expect(r.allowed).toBe(true);
     }
   });
 
   it("blocks the request at max+1", async () => {
     for (let i = 0; i < 3; i++) {
-      await checkRateLimit({ key: "test-block", windowSeconds: 60, max: 3 });
+      await checkRateLimit({ key: `${PREFIX}block`, windowSeconds: 60, max: 3 });
     }
-    const r = await checkRateLimit({ key: "test-block", windowSeconds: 60, max: 3 });
+    const r = await checkRateLimit({ key: `${PREFIX}block`, windowSeconds: 60, max: 3 });
     expect(r.allowed).toBe(false);
     expect(r.retryAfterSeconds).toBeGreaterThan(0);
   });
@@ -33,21 +38,24 @@ describe("checkRateLimit", () => {
     vi.setSystemTime(new Date("2000-01-01T00:00:00.000Z"));
 
     for (let i = 0; i < 3; i++) {
-      await checkRateLimit({ key: "test-reset", windowSeconds: 60, max: 3 });
+      await checkRateLimit({ key: `${PREFIX}reset`, windowSeconds: 60, max: 3 });
     }
-    const blocked = await checkRateLimit({ key: "test-reset", windowSeconds: 60, max: 3 });
+    const blocked = await checkRateLimit({ key: `${PREFIX}reset`, windowSeconds: 60, max: 3 });
     expect(blocked.allowed).toBe(false);
 
     // Advance to next window
     vi.setSystemTime(new Date("2000-01-01T00:01:00.000Z"));
 
-    const allowed = await checkRateLimit({ key: "test-reset", windowSeconds: 60, max: 3 });
+    const allowed = await checkRateLimit({ key: `${PREFIX}reset`, windowSeconds: 60, max: 3 });
     expect(allowed.allowed).toBe(true);
   });
 
   it("handles concurrent increments atomically", async () => {
+    // Disable probabilistic cleanup during this test to avoid interference
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
     const promises = Array.from({ length: 5 }, () =>
-      checkRateLimit({ key: "test-concurrent", windowSeconds: 60, max: 3 }),
+      checkRateLimit({ key: `${PREFIX}concurrent`, windowSeconds: 60, max: 3 }),
     );
     const results = await Promise.all(promises);
     const allowed = results.filter((r) => r.allowed).length;
@@ -62,50 +70,40 @@ describe("checkRateLimit", () => {
     // Create an old record directly
     const oldStart = new Date(Date.now() - 2 * 60 * 1000); // 2 minutes ago
     await prisma.hubRateLimit.create({
-      data: { key: "old-key", windowStart: oldStart, count: 1 },
+      data: { key: `${PREFIX}old-key`, windowStart: oldStart, count: 1 },
     });
 
     // Trigger a call that will fire cleanup
-    await checkRateLimit({ key: "test-cleanup", windowSeconds: 60, max: 10 });
+    await checkRateLimit({ key: `${PREFIX}cleanup`, windowSeconds: 60, max: 10 });
 
     const oldRecord = await prisma.hubRateLimit.findFirst({
-      where: { key: "old-key" },
+      where: { key: `${PREFIX}old-key` },
     });
     expect(oldRecord).toBeNull();
-
-    vi.restoreAllMocks();
   });
 
   it("cleanup fires probabilistically: skips when random >= 0.1, runs when < 0.1", async () => {
-    // When random returns 0.5, no cleanup should be triggered
-    const noCleanupSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
-    let deleteManyCalled = false;
-    const origDeleteMany = prisma.hubRateLimit.deleteMany.bind(prisma.hubRateLimit);
-
     // Create an old record that should be cleaned up
     const oldStart = new Date(Date.now() - 2 * 60 * 1000);
-    await origDeleteMany(); // reset
     await prisma.hubRateLimit.create({
-      data: { key: "old-prob", windowStart: oldStart, count: 1 },
+      data: { key: `${PREFIX}old-prob`, windowStart: oldStart, count: 1 },
     });
 
-    await checkRateLimit({ key: "prob-no-cleanup", windowSeconds: 60, max: 10 });
+    // When random returns 0.5, no cleanup should be triggered
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    await checkRateLimit({ key: `${PREFIX}prob-no-cleanup`, windowSeconds: 60, max: 10 });
 
     // Old record should still exist because cleanup didn't fire
-    const stillThere = await prisma.hubRateLimit.findFirst({ where: { key: "old-prob" } });
+    const stillThere = await prisma.hubRateLimit.findFirst({
+      where: { key: `${PREFIX}old-prob` },
+    });
     expect(stillThere).not.toBeNull();
-
-    noCleanupSpy.mockRestore();
 
     // When random returns 0.05, cleanup should fire
     vi.spyOn(Math, "random").mockReturnValue(0.05);
-    await checkRateLimit({ key: "prob-cleanup", windowSeconds: 60, max: 10 });
-    deleteManyCalled = true;
+    await checkRateLimit({ key: `${PREFIX}prob-cleanup`, windowSeconds: 60, max: 10 });
 
-    const gone = await prisma.hubRateLimit.findFirst({ where: { key: "old-prob" } });
+    const gone = await prisma.hubRateLimit.findFirst({ where: { key: `${PREFIX}old-prob` } });
     expect(gone).toBeNull();
-    expect(deleteManyCalled).toBe(true);
-
-    vi.restoreAllMocks();
   });
 });

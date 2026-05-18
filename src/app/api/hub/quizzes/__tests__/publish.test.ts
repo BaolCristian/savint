@@ -4,7 +4,11 @@ import { createHash } from "crypto";
 import { prisma } from "@/lib/db/client";
 import { hashToken, generateOpaqueToken } from "@/lib/hub/token-hash";
 import { POST } from "@/app/api/hub/quizzes/route";
-import { _resetForTests } from "@/lib/rate-limit/hub-rate-limit";
+import { resetRateLimitsByPrefix } from "@/lib/rate-limit/hub-rate-limit";
+const _resetForTests = () => Promise.all([
+  resetRateLimitsByPrefix("publish:"),
+  resetRateLimitsByPrefix("search:"),
+]);
 
 async function makeQlz(questions = 2): Promise<{ b64: string; hash: string }> {
   const z = new JSZip();
