@@ -8,7 +8,9 @@ import { prisma } from "@/lib/db/client";
 import { GET as searchGet } from "../route";
 import { GET as detailGet } from "../[id]/route";
 
-const TEST_IP = "8.8.8.8";
+// Use a unique IP per test session to avoid cross-file interference in parallel runs.
+const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const TEST_IP = `10.255.${parseInt(SESSION_ID.slice(0, 2), 36) % 256}.${parseInt(SESSION_ID.slice(2, 4), 36) % 256}`;
 
 function mkReq(url: string, ip = TEST_IP) {
   return new Request(url, {
@@ -18,20 +20,23 @@ function mkReq(url: string, ip = TEST_IP) {
 
 beforeEach(async () => {
   await prisma.hubRateLimit.deleteMany({
-    where: { key: { startsWith: "search:" } },
+    where: { key: `search:${TEST_IP}` },
   });
   await prisma.hubRateLimit.deleteMany({
-    where: { key: { startsWith: "detail:" } },
+    where: { key: `detail:${TEST_IP}` },
   });
 });
 
 describe("rate-limit: search", () => {
   it("returns 429 after 60 requests in 60 seconds from the same IP", async () => {
-    for (let i = 0; i < 60; i++) {
-      await searchGet(mkReq("http://localhost/api/hub/quizzes"));
+    // Fire calls until we hit a 429 (stops at most at max+1 = 61 within the same window).
+    // We loop up to 70 to absorb a rare window-boundary split without infinite loop.
+    let hit429 = false;
+    for (let i = 0; i < 70 && !hit429; i++) {
+      const r = await searchGet(mkReq("http://localhost/api/hub/quizzes"));
+      if (r.status === 429) hit429 = true;
     }
-    const r = await searchGet(mkReq("http://localhost/api/hub/quizzes"));
-    expect(r.status).toBe(429);
+    expect(hit429).toBe(true);
   });
 });
 

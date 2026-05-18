@@ -54,11 +54,13 @@ export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitResu
     },
   });
 
-  // Probabilistic cleanup: 10% chance
+  // Probabilistic cleanup: 10% chance — only cleans up expired windows for
+  // THIS key to avoid accidentally deleting active windows from other rate-limit
+  // contexts that use longer window durations (e.g. 24h vs 60s).
   if (Math.random() < 0.1) {
     const cutoff = new Date(now.getTime() - windowSeconds * 1000);
     await prisma.hubRateLimit.deleteMany({
-      where: { windowStart: { lt: cutoff } },
+      where: { key, windowStart: { lt: cutoff } },
     });
   }
 

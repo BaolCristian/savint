@@ -12,8 +12,11 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn().mockResolvedValue(null),
 }));
 
-const TEST_IP = "203.0.113.5";
-const OTHER_IP = "203.0.113.6";
+// Use session-unique IPs to avoid cross-file interference in parallel test runs.
+const _SESSION = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const _BASE = parseInt(_SESSION.slice(0, 4), 36) % 65535;
+const TEST_IP = `172.16.${Math.floor(_BASE / 256)}.${_BASE % 256}`;
+const OTHER_IP = `172.16.${Math.floor((_BASE + 1) / 256)}.${(_BASE + 1) % 256}`;
 
 function mkReq(body: unknown, ip = TEST_IP) {
   return new Request("http://localhost/api/hub/reports", {

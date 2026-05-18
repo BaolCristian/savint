@@ -738,6 +738,22 @@
     "clone": "Clone to my library",
     "downloadQlz": "Download .qlz",
     "report": "Report",
+    "reportModal": {
+      "title": "Report this quiz",
+      "reason": "Reason",
+      "description": "Details (optional)",
+      "submit": "Submit report",
+      "cancel": "Cancel",
+      "success": "Report submitted. Thanks.",
+      "alreadyReported": "You've already reported this quiz.",
+      "error": "Could not submit the report.",
+      "reasons": {
+        "COPYRIGHT": "Copyright violation",
+        "PERSONAL_DATA": "Contains personal data",
+        "OFFENSIVE": "Offensive content",
+        "OTHER": "Other"
+      }
+    },
     "license": "License: {license}",
     "by": "by {author}",
     "fromHub": "From savint.it · {author}",

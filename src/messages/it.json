@@ -738,6 +738,22 @@
     "clone": "Clona nella mia libreria",
     "downloadQlz": "Scarica .qlz",
     "report": "Segnala",
+    "reportModal": {
+      "title": "Segnala questo quiz",
+      "reason": "Motivo",
+      "description": "Dettagli (opzionale)",
+      "submit": "Invia segnalazione",
+      "cancel": "Annulla",
+      "success": "Segnalazione inviata. Grazie.",
+      "alreadyReported": "Hai già segnalato questo quiz.",
+      "error": "Impossibile inviare la segnalazione.",
+      "reasons": {
+        "COPYRIGHT": "Violazione copyright",
+        "PERSONAL_DATA": "Contiene dati personali",
+        "OFFENSIVE": "Contenuto offensivo",
+        "OTHER": "Altro"
+      }
+    },
     "license": "Licenza: {license}",
     "by": "di {author}",
     "fromHub": "Da savint.it · {author}",

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
+import { ReportQuizButton } from "./report-quiz-button";
 
 type Props = {
   quizId: string;
@@ -31,12 +32,7 @@ export function HubQuizDetailActions({ quizId, qlzAvailable = true }: Props) {
         </a>
       )}
 
-      <Link
-        href={`/report?quizId=${quizId}`}
-        className={buttonVariants({ variant: "ghost", size: "sm" })}
-      >
-        {t("report")}
-      </Link>
+      <ReportQuizButton hubQuizId={quizId} />
     </div>
   );
 }

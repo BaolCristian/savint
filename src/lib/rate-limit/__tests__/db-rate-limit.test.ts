@@ -64,46 +64,50 @@ describe("checkRateLimit", () => {
     expect(blocked).toBe(2);
   });
 
-  it("cleanup deletes windows older than the current window", async () => {
+  it("cleanup deletes expired windows for the SAME key", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.05); // force cleanup
 
-    // Create an old record directly
-    const oldStart = new Date(Date.now() - 2 * 60 * 1000); // 2 minutes ago
+    // Create an old record for the same key that will be triggered
+    const cleanupKey = `${PREFIX}cleanup`;
+    const oldStart = new Date(Date.now() - 2 * 60 * 1000); // 2 minutes ago (expired)
     await prisma.hubRateLimit.create({
-      data: { key: `${PREFIX}old-key`, windowStart: oldStart, count: 1 },
+      data: { key: cleanupKey, windowStart: oldStart, count: 1 },
     });
 
-    // Trigger a call that will fire cleanup
-    await checkRateLimit({ key: `${PREFIX}cleanup`, windowSeconds: 60, max: 10 });
+    // Trigger a call with the SAME key — cleanup is scoped to that key
+    await checkRateLimit({ key: cleanupKey, windowSeconds: 60, max: 10 });
 
     const oldRecord = await prisma.hubRateLimit.findFirst({
-      where: { key: `${PREFIX}old-key` },
+      where: { key: cleanupKey, windowStart: oldStart },
     });
     expect(oldRecord).toBeNull();
   });
 
   it("cleanup fires probabilistically: skips when random >= 0.1, runs when < 0.1", async () => {
-    // Create an old record that should be cleaned up
+    const cleanupKey = `${PREFIX}old-prob`;
+    // Create an old record for the same key
     const oldStart = new Date(Date.now() - 2 * 60 * 1000);
     await prisma.hubRateLimit.create({
-      data: { key: `${PREFIX}old-prob`, windowStart: oldStart, count: 1 },
+      data: { key: cleanupKey, windowStart: oldStart, count: 1 },
     });
 
     // When random returns 0.5, no cleanup should be triggered
     vi.spyOn(Math, "random").mockReturnValue(0.5);
-    await checkRateLimit({ key: `${PREFIX}prob-no-cleanup`, windowSeconds: 60, max: 10 });
+    await checkRateLimit({ key: cleanupKey, windowSeconds: 60, max: 10 });
 
     // Old record should still exist because cleanup didn't fire
     const stillThere = await prisma.hubRateLimit.findFirst({
-      where: { key: `${PREFIX}old-prob` },
+      where: { key: cleanupKey, windowStart: oldStart },
     });
     expect(stillThere).not.toBeNull();
 
-    // When random returns 0.05, cleanup should fire
+    // When random returns 0.05, cleanup should fire and remove the expired window
     vi.spyOn(Math, "random").mockReturnValue(0.05);
-    await checkRateLimit({ key: `${PREFIX}prob-cleanup`, windowSeconds: 60, max: 10 });
+    await checkRateLimit({ key: cleanupKey, windowSeconds: 60, max: 10 });
 
-    const gone = await prisma.hubRateLimit.findFirst({ where: { key: `${PREFIX}old-prob` } });
+    const gone = await prisma.hubRateLimit.findFirst({
+      where: { key: cleanupKey, windowStart: oldStart },
+    });
     expect(gone).toBeNull();
   });
 });

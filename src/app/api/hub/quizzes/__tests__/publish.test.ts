@@ -7,7 +7,6 @@ import { POST } from "@/app/api/hub/quizzes/route";
 import { resetRateLimitsByPrefix } from "@/lib/rate-limit/hub-rate-limit";
 const _resetForTests = () => Promise.all([
   resetRateLimitsByPrefix("publish:"),
-  resetRateLimitsByPrefix("search:"),
 ]);
 
 async function makeQlz(questions = 2): Promise<{ b64: string; hash: string }> {
