@@ -8,6 +8,7 @@ import type { QuizInput, QuestionInput } from "@/lib/validators/quiz";
 import { QuestionEditor } from "@/components/quiz/question-editor";
 import { ShareDialog } from "@/components/quiz/share-dialog";
 import { TestQuizButton } from "@/components/quiz/test-quiz-button";
+import { PublishButton } from "@/components/hub/publish-button";
 import { ExcelImportButton } from "@/components/quiz/excel-import-button";
 import { MoodleImportButton } from "@/components/quiz/moodle-import-button";
 import { QuizMetadataSection, type QuizMetadataPatch } from "@/components/quiz/quiz-metadata-section";
@@ -35,6 +36,8 @@ import {
 interface Props {
   initialData?: QuizInput & { id?: string };
   hasConsent?: boolean;
+  hubEnabled?: boolean;
+  hubLink?: { hubAccountEmail: string } | null;
 }
 
 interface ValidationError {
@@ -109,7 +112,7 @@ function createDefaultQuestion(order: number): QuestionInput {
   };
 }
 
-export function QuizEditor({ initialData, hasConsent = false }: Props) {
+export function QuizEditor({ initialData, hasConsent = false, hubEnabled, hubLink }: Props) {
   const router = useRouter();
   const t = useTranslations("editor");
   const tc = useTranslations("common");
@@ -399,6 +402,26 @@ export function QuizEditor({ initialData, hasConsent = false }: Props) {
           {initialData?.id && <ShareDialog quizId={initialData.id} />}
 
           {initialData?.id && <TestQuizButton quizId={initialData.id} />}
+
+          {initialData?.id && (
+            <PublishButton
+              hubEnabled={Boolean(hubEnabled)}
+              quiz={{
+                id: initialData!.id,
+                title,
+                description: description || null,
+                schoolLevel: schoolLevel,
+                subject: subject,
+                language: language,
+                ageMin: ageMin,
+                ageMax: ageMax,
+                license: "CC_BY",
+                tags: tagsText.split(",").map((s) => s.trim()).filter(Boolean),
+                hubPublishedId: ((initialData as any)?.hubPublishedId ?? null),
+              }}
+              link={hubLink ?? null}
+            />
+          )}
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
