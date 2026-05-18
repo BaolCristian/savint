@@ -806,6 +806,22 @@
       "connect": "Connect savint.it account",
       "revoking": "Revoking…",
       "revoked": "Link revoked."
+    },
+    "email": {
+      "suspended": {
+        "subject": "Your quiz has been suspended",
+        "intro": "Hello,",
+        "body": "Your quiz \"{title}\" has been suspended on savint.it for the following reason: {reason}.",
+        "appeal": "If you believe this is a mistake, please write to {email}.",
+        "signature": "— The savint.it team"
+      },
+      "banned": {
+        "subject": "Your savint.it account has been suspended",
+        "intro": "Hello,",
+        "body": "Your savint.it account has been suspended for the following reason: {reason}. All of your published quizzes have been hidden.",
+        "appeal": "If you believe this is a mistake, please write to {email}.",
+        "signature": "— The savint.it team"
+      }
     }
   },
   "practice": {
