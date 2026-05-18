@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { hashToken } from "@/lib/hub/token-hash";
 import { hubRateLimit } from "@/lib/rate-limit/hub-rate-limit";
 import { publishMetadataSchema } from "@/lib/hub/quiz-metadata";
+import { searchHubQuizzes, searchInputSchema } from "@/lib/hub/search";
 
 const MAX_MB = Number(process.env.HUB_MAX_QUIZ_SIZE_MB ?? "50");
 const MAX_PER_ACCOUNT = Number(process.env.HUB_PUBLIC_QUIZZES_PER_ACCOUNT_MAX ?? "200");
@@ -206,4 +207,19 @@ export async function POST(req: NextRequest) {
     },
     { status: 201 },
   );
+}
+
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+  const rl = await hubRateLimit({ key: `search:${ip}`, windowSeconds: 60, max: 60 });
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
+  const url = new URL(req.url);
+  const raw = Object.fromEntries(url.searchParams.entries());
+  const parsed = searchInputSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid query", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const result = await searchHubQuizzes(parsed.data);
+  return NextResponse.json(result);
 }
