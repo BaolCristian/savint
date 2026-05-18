@@ -837,6 +837,10 @@
       "banAuthor": "Ban author",
       "suspendReasonPrompt": "Suspension reason",
       "banReasonPrompt": "Ban reason"
+    },
+    "suspended": {
+      "banner": "This quiz has been suspended by the savint.it moderation team.",
+      "reasonLabel": "Reason"
     }
   },
   "practice": {

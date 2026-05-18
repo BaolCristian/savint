@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/client";
 import { extractQuestionPreviews } from "@/lib/hub/qlz-preview";
 import { HubQuizDetail } from "@/components/hub/hub-quiz-detail";
+import { SuspendedBanner } from "@/components/hub/suspended-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,15 @@ export default async function HubQuizPage({
 
   if (!quiz) {
     notFound();
+  }
+
+  if (quiz.suspended) {
+    return (
+      <main className="max-w-3xl mx-auto p-6 space-y-4">
+        <h1 className="text-2xl font-bold">{quiz.title}</h1>
+        <SuspendedBanner reason={quiz.suspendedReason} />
+      </main>
+    );
   }
 
   const questions = await extractQuestionPreviews(Buffer.from(quiz.payloadBlob));
