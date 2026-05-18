@@ -725,6 +725,31 @@
       "needLogin": "Accedi per autorizzare questa app.",
       "invalidClient": "Installazione sconosciuta.",
       "invalidRedirect": "URI di redirect non valido per questa installazione."
+    },
+    "publish": {
+      "title": "Pubblica su savint.it",
+      "titleUpdate": "Aggiorna su savint.it",
+      "connectAccountIntro": "Per pubblicare su savint.it devi collegare un account hub.",
+      "connectAccountCta": "Collega account savint.it",
+      "schoolLevel": "Grado scolastico",
+      "subject": "Materia",
+      "language": "Lingua",
+      "ageMin": "Età min",
+      "ageMax": "Età max",
+      "license": "Licenza",
+      "estimatedDuration": "Durata stimata (secondi)",
+      "consentReconfirm": "Confermo che la dichiarazione di pubblicazione si applica a questo contenuto.",
+      "submit": "Pubblica",
+      "submitUpdate": "Aggiorna",
+      "submitting": "Pubblicazione in corso…",
+      "success": "Pubblicato. Apri su savint.it",
+      "successUpdate": "Aggiornato. Apri su savint.it",
+      "errorGeneric": "Impossibile pubblicare. {error}",
+      "errorTooLarge": "Quiz troppo grande: {sizeMb} MB (max {maxMb} MB).",
+      "errorQuota": "Quota account hub raggiunta.",
+      "errorReauth": "Autorizza nuovamente l'accesso a savint.it.",
+      "cancel": "Annulla",
+      "unpublish": "Rimuovi"
     }
   },
   "practice": {
