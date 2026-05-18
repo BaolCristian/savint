@@ -683,7 +683,16 @@
     "hasAccountLogin": "Hai già un account? Accedi",
     "checkInboxTitle": "Controlla la tua casella email",
     "checkInboxBody": "Ti abbiamo inviato un'email di conferma. Clicca il link per attivare il tuo account.",
-    "backToLogin": "Torna all'accesso"
+    "backToLogin": "Torna all'accesso",
+    "forgotTitle": "Password dimenticata?",
+    "forgotIntro": "Inserisci la tua email e ti invieremo un link per reimpostarla.",
+    "forgotSent": "Se l'account esiste, riceverai un'email a breve.",
+    "forgotSubmit": "Invia link",
+    "resetTitle": "Reimposta password",
+    "resetInvalidToken": "Link non valido o scaduto.",
+    "weakPassword": "La password deve avere almeno 8 caratteri.",
+    "newPasswordLabel": "Nuova password",
+    "resetSubmit": "Aggiorna password"
   },
   "practice": {
     "mode": "Modalità esercitazione",

@@ -683,7 +683,16 @@
     "hasAccountLogin": "Already have an account? Sign in",
     "checkInboxTitle": "Check your inbox",
     "checkInboxBody": "We sent you a confirmation email. Click the link inside to activate your account.",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to sign in",
+    "forgotTitle": "Forgot password?",
+    "forgotIntro": "Enter your email and we'll send you a reset link.",
+    "forgotSent": "If an account exists, you'll receive an email shortly.",
+    "forgotSubmit": "Send reset link",
+    "resetTitle": "Reset password",
+    "resetInvalidToken": "Invalid or expired reset link.",
+    "weakPassword": "Password must be at least 8 characters.",
+    "newPasswordLabel": "New password",
+    "resetSubmit": "Update password"
   },
   "practice": {
     "mode": "Practice mode",
