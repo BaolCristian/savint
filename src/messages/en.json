@@ -750,6 +750,15 @@
       "errorReauth": "Please reauthorize savint.it access.",
       "cancel": "Cancel",
       "unpublish": "Unpublish"
+    },
+    "link": {
+      "title": "savint.it account link",
+      "linkedAs": "Linked as {email}",
+      "notLinked": "No hub account linked yet.",
+      "revoke": "Revoke",
+      "connect": "Connect savint.it account",
+      "revoking": "Revoking…",
+      "revoked": "Link revoked."
     }
   },
   "practice": {

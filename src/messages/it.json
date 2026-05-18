@@ -750,6 +750,15 @@
       "errorReauth": "Autorizza nuovamente l'accesso a savint.it.",
       "cancel": "Annulla",
       "unpublish": "Rimuovi"
+    },
+    "link": {
+      "title": "Account savint.it collegato",
+      "linkedAs": "Collegato come {email}",
+      "notLinked": "Nessun account hub collegato.",
+      "revoke": "Revoca",
+      "connect": "Collega account savint.it",
+      "revoking": "Revoca in corso…",
+      "revoked": "Collegamento revocato."
     }
   },
   "practice": {
