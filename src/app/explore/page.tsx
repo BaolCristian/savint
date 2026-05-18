@@ -1,10 +1,58 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/db/client";
 import { ExploreClient } from "@/components/practice/explore-client";
+import { getSavintMode } from "@/lib/config/savint-mode";
+import { searchHubQuizzes } from "@/lib/hub/search";
+import { HubExploreClient } from "@/components/hub/hub-explore-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function ExplorePage() {
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const mode = getSavintMode();
+
+  if (mode === "hub") {
+    const sp = searchParams ? await searchParams : {};
+    const get = (k: string) => {
+      const v = sp[k];
+      return Array.isArray(v) ? v[0] : v;
+    };
+    const result = await searchHubQuizzes({
+      q: get("q"),
+      schoolLevel: get("schoolLevel") as Parameters<typeof searchHubQuizzes>[0]["schoolLevel"],
+      subject: get("subject"),
+      language: get("language"),
+      ageMin: get("ageMin") ? Number(get("ageMin")) : undefined,
+      ageMax: get("ageMax") ? Number(get("ageMax")) : undefined,
+      sort: (get("sort") ?? "relevant") as "recent" | "popular" | "relevant",
+      page: get("page") ? Number(get("page")) : 1,
+      perPage: 20,
+    });
+    const initialFilters: Record<string, unknown> = {
+      q: get("q") ?? "",
+      schoolLevel: get("schoolLevel") ?? "",
+      subject: get("subject") ?? "",
+      language: get("language") ?? "",
+      ageMin: get("ageMin") ?? "",
+      ageMax: get("ageMax") ?? "",
+      sort: get("sort") ?? "relevant",
+    };
+    return (
+      <HubExploreClient
+        items={result.items}
+        total={result.total}
+        page={result.page}
+        perPage={result.perPage}
+        initialFilters={initialFilters}
+        basePath="/explore"
+      />
+    );
+  }
+
+  // installation mode — original behaviour
   const t = await getTranslations("practice");
 
   const quizzes = await prisma.quiz.findMany({
