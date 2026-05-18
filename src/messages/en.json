@@ -712,6 +712,21 @@
     "verifySubject": "Confirm your email address on savint.it",
     "resetSubject": "Reset your password on savint.it"
   },
+  "hub": {
+    "oauth": {
+      "title": "Authorize {installation}",
+      "subtitle": "{installation} wants to publish quizzes on your behalf on savint.it.",
+      "scopes": {
+        "publish": "Publish and update your quizzes on savint.it",
+        "clone": "Browse the catalog and clone quizzes into your installation"
+      },
+      "accept": "Allow",
+      "deny": "Cancel",
+      "needLogin": "Please log in to authorize this app.",
+      "invalidClient": "Unknown installation.",
+      "invalidRedirect": "Invalid redirect URI for this installation."
+    }
+  },
   "practice": {
     "mode": "Practice mode",
     "exploreTitle": "Explore public quizzes",

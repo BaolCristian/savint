@@ -712,6 +712,21 @@
     "verifySubject": "Conferma il tuo indirizzo email su savint.it",
     "resetSubject": "Reimposta la tua password su savint.it"
   },
+  "hub": {
+    "oauth": {
+      "title": "Autorizza {installation}",
+      "subtitle": "{installation} vuole pubblicare quiz a tuo nome su savint.it.",
+      "scopes": {
+        "publish": "Pubblicare e aggiornare i tuoi quiz su savint.it",
+        "clone": "Sfogliare il catalogo e clonare quiz nella tua installazione"
+      },
+      "accept": "Consenti",
+      "deny": "Annulla",
+      "needLogin": "Accedi per autorizzare questa app.",
+      "invalidClient": "Installazione sconosciuta.",
+      "invalidRedirect": "URI di redirect non valido per questa installazione."
+    }
+  },
   "practice": {
     "mode": "Modalità esercitazione",
     "exploreTitle": "Esplora quiz pubblici",
