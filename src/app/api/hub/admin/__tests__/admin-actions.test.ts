@@ -131,6 +131,43 @@ describe("POST /api/hub/admin/reports/:id/suspend", () => {
       expect.objectContaining({ to: author.email }),
     );
   });
+
+  it("returns 401/403 when not admin", async () => {
+    (getHubSession as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    const { report } = await seed();
+    const ctx = { params: Promise.resolve({ id: report.id }) };
+    const res = await suspend(
+      new Request("http://localhost/x", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Plagio" }),
+      }) as never,
+      ctx as never,
+    );
+    expect([401, 403]).toContain(res.status);
+  });
+
+  it("is idempotent when the report is already resolved", async () => {
+    await asAdmin();
+    const { report } = await seed();
+    await prisma.hubReport.update({
+      where: { id: report.id },
+      data: { status: "RESOLVED", resolvedAt: new Date() },
+    });
+    const ctx = { params: Promise.resolve({ id: report.id }) };
+    const res = await suspend(
+      new Request("http://localhost/x", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Plagio" }),
+      }) as never,
+      ctx as never,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { alreadyResolved?: boolean };
+    expect(body.alreadyResolved).toBe(true);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/hub/admin/accounts/:id/ban", () => {
@@ -154,5 +191,67 @@ describe("POST /api/hub/admin/accounts/:id/ban", () => {
     expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({ to: author.email }),
     );
+  });
+
+  it("returns 401/403 when not admin", async () => {
+    (getHubSession as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    const { author } = await seed();
+    const ctx = { params: Promise.resolve({ id: author.id }) };
+    const res = await ban(
+      new Request("http://localhost/x", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Abuso ripetuto" }),
+      }) as never,
+      ctx as never,
+    );
+    expect([401, 403]).toContain(res.status);
+  });
+
+  it("is idempotent when the account is already banned", async () => {
+    await asAdmin();
+    const { author } = await seed();
+    const previousBannedAt = new Date(Date.now() - 60_000);
+    await prisma.hubAccount.update({
+      where: { id: author.id },
+      data: { bannedAt: previousBannedAt },
+    });
+    const ctx = { params: Promise.resolve({ id: author.id }) };
+    const res = await ban(
+      new Request("http://localhost/x", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Abuso ripetuto" }),
+      }) as never,
+      ctx as never,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { alreadyBanned?: boolean };
+    expect(body.alreadyBanned).toBe(true);
+    expect(sendEmail).not.toHaveBeenCalled();
+    const a = await prisma.hubAccount.findUnique({ where: { id: author.id } });
+    expect(a?.bannedAt?.getTime()).toBe(previousBannedAt.getTime());
+  });
+
+  it("succeeds even if email sending fails", async () => {
+    await asAdmin();
+    const { author, quiz } = await seed();
+    (sendEmail as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("smtp down"),
+    );
+    const ctx = { params: Promise.resolve({ id: author.id }) };
+    const res = await ban(
+      new Request("http://localhost/x", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Abuso ripetuto" }),
+      }) as never,
+      ctx as never,
+    );
+    expect(res.status).toBe(200);
+    const a = await prisma.hubAccount.findUnique({ where: { id: author.id } });
+    expect(a?.bannedAt).not.toBeNull();
+    const q = await prisma.hubQuiz.findUnique({ where: { id: quiz.id } });
+    expect(q?.suspended).toBe(true);
   });
 });
