@@ -17,6 +17,8 @@ const baseQuiz = {
   authorName: "Maria",
   questionCount: 5,
   createdAt: new Date().toISOString(),
+  clonedFromHubId: null,
+  clonedFromHubAuthor: null,
 };
 
 function wrap(ui: React.ReactNode) {
