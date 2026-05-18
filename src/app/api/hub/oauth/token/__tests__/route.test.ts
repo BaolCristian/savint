@@ -77,6 +77,8 @@ describe("POST /api/hub/oauth/token", () => {
     expect(body.refresh_token).toBeTruthy();
     expect(body.token_type).toBe("Bearer");
     expect(body.expires_in).toBeGreaterThan(0);
+    expect(body.hub_account_id).toBeTruthy();
+    expect(body.hub_account_email).toBeDefined();
   });
 
   it("rejects a reused code", async () => {

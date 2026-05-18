@@ -72,12 +72,18 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
+    const acct = await prisma.hubAccount.findUnique({
+      where: { id: row.hubAccountId },
+      select: { email: true },
+    });
     return NextResponse.json({
       access_token: accessToken,
       refresh_token: refreshToken,
       token_type: "Bearer",
       expires_in: ACCESS_TTL_S,
       scope: row.scopes.join(" "),
+      hub_account_id: row.hubAccountId,
+      hub_account_email: acct?.email ?? "",
     });
   }
 
@@ -130,12 +136,18 @@ export async function POST(req: NextRequest) {
       return rotated;
     });
 
+    const acct = await prisma.hubAccount.findUnique({
+      where: { id: created.hubAccountId },
+      select: { email: true },
+    });
     return NextResponse.json({
       access_token: newAccess,
       refresh_token: newRefresh,
       token_type: "Bearer",
       expires_in: ACCESS_TTL_S,
       scope: created.scopes.join(" "),
+      hub_account_id: created.hubAccountId,
+      hub_account_email: acct?.email ?? "",
     });
   }
 
