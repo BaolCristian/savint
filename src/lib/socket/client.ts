@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import type { ServerToClientEvents, ClientToServerEvents } from "@/types";
+import { BASE_PATH } from "@/lib/base-path";
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -13,7 +14,7 @@ export function useSocket() {
 
   useEffect(() => {
     const socket: TypedSocket = io({
-      path: "/savint/api/socketio",
+      path: `${BASE_PATH}/api/socketio`,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: Infinity,

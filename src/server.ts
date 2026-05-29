@@ -6,6 +6,7 @@ import { setupSocketHandlers } from "./lib/socket/server";
 import type { ServerToClientEvents, ClientToServerEvents } from "./types";
 
 const dev = process.env.NODE_ENV !== "production";
+const basePath = process.env.BASE_PATH || "";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
@@ -19,7 +20,7 @@ app.prepare().then(() => {
     httpServer,
     {
       cors: { origin: "*" },
-      path: "/savint/api/socketio",
+      path: `${basePath}/api/socketio`,
     }
   );
 
