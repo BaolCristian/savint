@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db/client";
 import { isHubMode } from "@/lib/config/savint-mode";
 import { verifyHubCredentials } from "@/lib/auth/hub-credentials";
 import { hubAccountAdapter } from "@/lib/auth/hub-adapter";
+import { BASE_PATH } from "@/lib/base-path";
 
 const hub = isHubMode();
 
@@ -113,7 +114,7 @@ const sessionStrategy: "jwt" | "database" =
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
   providers,
-  basePath: "/savint/api/auth",
+  basePath: `${BASE_PATH}/api/auth`,
   trustHost: true,
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   session: { strategy: sessionStrategy },

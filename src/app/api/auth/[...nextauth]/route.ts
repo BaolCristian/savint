@@ -1,7 +1,7 @@
 import { handlers } from "@/lib/auth/config";
 import { NextRequest } from "next/server";
 
-const basePath = "/savint";
+const basePath = process.env.BASE_PATH || "";
 
 // Next.js strips basePath from request URL, but NextAuth v5 needs it to parse actions.
 // Re-inject basePath into the URL before passing to NextAuth handlers.
