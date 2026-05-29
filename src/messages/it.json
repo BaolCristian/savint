@@ -868,5 +868,18 @@
     "noAnswer": "Nessuna risposta (tempo scaduto)",
     "retry": "Riprova",
     "backToExplore": "Torna ai quiz pubblici"
+  },
+  "hubHome": {
+    "heroTitle": "Quiz pronti per la tua classe",
+    "heroSubtitle": "SAVINT è il repository libero di quiz interattivi per la scuola. Cerca, prova e scarica quiz creati dai docenti.",
+    "searchPlaceholder": "Cerca un quiz per materia, argomento…",
+    "searchButton": "Cerca",
+    "browseAll": "Sfoglia tutti i quiz",
+    "signUp": "Registrati",
+    "featuredTitle": "Quiz in evidenza",
+    "schoolTitle": "Porta SAVINT nella tua scuola",
+    "schoolBody": "Installa SAVINT sui tuoi server e collegalo a savint.it per cercare, scaricare e pubblicare quiz. Oppure provalo subito senza installare niente.",
+    "tryItButton": "Prova il sistema",
+    "footer": "SAVINT — software libero per la scuola (AGPL-3.0)."
   }
 }

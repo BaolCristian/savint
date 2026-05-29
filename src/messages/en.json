@@ -868,5 +868,18 @@
     "noAnswer": "No answer (time's up)",
     "retry": "Try again",
     "backToExplore": "Back to public quizzes"
+  },
+  "hubHome": {
+    "heroTitle": "Ready-made quizzes for your classroom",
+    "heroSubtitle": "SAVINT is the free repository of interactive school quizzes. Search, try and download quizzes made by teachers.",
+    "searchPlaceholder": "Search a quiz by subject, topic…",
+    "searchButton": "Search",
+    "browseAll": "Browse all quizzes",
+    "signUp": "Sign up",
+    "featuredTitle": "Featured quizzes",
+    "schoolTitle": "Bring SAVINT to your school",
+    "schoolBody": "Install SAVINT on your own servers and connect it to savint.it to search, download and publish quizzes. Or try it right now without installing anything.",
+    "tryItButton": "Try the system",
+    "footer": "SAVINT — free software for schools (AGPL-3.0)."
   }
 }
