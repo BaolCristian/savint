@@ -121,6 +121,11 @@ coerente con il resto (next-intl).
   seed solo dove serve (admin sull'hub; docente demo sulla demo).
 - **Docs**: aggiornare `DEPLOY-GUIDA.md` (cita ancora friulware.it) e
   `update-server.sh` (oggi un solo processo) per i due processi.
+- **Dismissione `friulware.it/savint`**: non serve più. Rimuovere la `location
+  /savint` dal blocco `friulware.it` in nginx, fermare/eliminare il vecchio
+  processo PM2 condiviso (`pm2 delete savint`), e ricrearlo come i due nuovi
+  processi `savint-hub` / `savint-demo`. Eventuali dati nel vecchio DB demo non
+  vanno migrati (la demo riparte pulita su `savint_demo`).
 
 ### 4. Onboarding scuole (MVP)
 
@@ -133,8 +138,6 @@ e si documenta come la scuola li mette nel proprio `.env`
 - Auto-registrazione delle installazioni (self-service OAuth client).
 - Storage immagini dedicato (oggi base64 inline).
 - Analytics avanzate per quiz dell'hub.
-- Sorte di `friulware.it/savint` (l'attuale processo condiviso): da chiarire a
-  parte; questo spec non lo tocca se non per smettere di usarlo come demo.
 
 ## Criteri di successo (MVP online)
 
