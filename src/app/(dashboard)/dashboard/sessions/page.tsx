@@ -13,6 +13,7 @@ import { Play } from "lucide-react";
 import { TerminateButton } from "@/components/session/terminate-button";
 import { DeleteSessionButton } from "@/components/session/delete-session-button";
 import { getTranslations } from "next-intl/server";
+import { withBasePath } from "@/lib/base-path";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   LOBBY: "outline",
@@ -77,7 +78,7 @@ export default async function SessionsListPage() {
                     {(s.status === "LOBBY" || s.status === "IN_PROGRESS") && (
                       <>
                         <a
-                          href={`/savint/live/host/${s.id}`}
+                          href={withBasePath(`/live/host/${s.id}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"

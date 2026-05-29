@@ -20,7 +20,7 @@ export default function HubLoginPage() {
       email,
       password,
       redirect: false,
-      callbackUrl: "/savint/hub-account",
+      callbackUrl: withBasePath("/hub-account"),
     });
     setSubmitting(false);
     if (res?.error) {
@@ -35,7 +35,7 @@ export default function HubLoginPage() {
       <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
         <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="mx-auto h-16 w-16 object-contain" />
         <button
-          onClick={() => signIn("google", { callbackUrl: "/savint/hub-account" })}
+          onClick={() => signIn("google", { callbackUrl: withBasePath("/hub-account") })}
           className="w-full rounded bg-white px-4 py-2 font-semibold text-blue-800 ring-1 ring-blue-300 hover:bg-blue-50"
           type="button"
         >

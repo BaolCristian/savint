@@ -8,6 +8,7 @@ import { issueVerificationToken } from "@/lib/auth/verification-token";
 import { sendVerificationEmail } from "@/lib/email/send";
 import { getHubBaseUrl } from "@/lib/config/savint-mode";
 import { hubRateLimit, HUB_LIMITS } from "@/lib/rate-limit/hub-rate-limit";
+import { withBasePath } from "@/lib/base-path";
 
 const schema = z.object({
   email: z.string().email(),
@@ -52,7 +53,7 @@ export async function registerHubAccount(input: RegisterInput): Promise<Register
   });
   const { plainToken } = await issueVerificationToken(created.id, "VERIFY_EMAIL");
   const base = getHubBaseUrl().replace(/\/$/, "");
-  const link = `${base}/savint/api/hub/auth/verify?token=${plainToken}`;
+  const link = `${base}${withBasePath("/api/hub/auth/verify")}?token=${plainToken}`;
   await sendVerificationEmail({ to: email, link, locale: parsed.data.locale });
   return { ok: true };
 }

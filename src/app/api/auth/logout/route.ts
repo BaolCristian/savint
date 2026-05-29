@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { withBasePath } from "@/lib/base-path";
 
 export async function GET() {
-  const baseUrl = process.env.AUTH_URL || "https://www.savint.it/savint/api/auth";
+  const baseUrl = process.env.AUTH_URL || process.env.HUB_BASE_URL || "https://savint.it";
   const origin = new URL(baseUrl).origin;
-  const response = NextResponse.redirect(new URL("/savint/login", origin));
+  const response = NextResponse.redirect(new URL(withBasePath("/login"), origin));
 
   // Clear session token (and possible chunks .0, .1, .2)
   for (const suffix of ["", ".0", ".1", ".2", ".3"]) {

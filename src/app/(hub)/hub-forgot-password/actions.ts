@@ -7,6 +7,7 @@ import { issueVerificationToken } from "@/lib/auth/verification-token";
 import { sendPasswordResetEmail } from "@/lib/email/send";
 import { getHubBaseUrl } from "@/lib/config/savint-mode";
 import { hubRateLimit, HUB_LIMITS } from "@/lib/rate-limit/hub-rate-limit";
+import { withBasePath } from "@/lib/base-path";
 
 const schema = z.object({
   email: z.string().email(),
@@ -27,7 +28,7 @@ export async function requestPasswordReset(input: z.input<typeof schema>) {
   }
   const { plainToken } = await issueVerificationToken(acct.id, "RESET_PASSWORD");
   const base = getHubBaseUrl().replace(/\/$/, "");
-  const link = `${base}/savint/hub-reset-password?token=${plainToken}`;
+  const link = `${base}${withBasePath("/hub-reset-password")}?token=${plainToken}`;
   await sendPasswordResetEmail({ to: email, link, locale: parsed.data.locale });
   return { ok: true } as const;
 }
