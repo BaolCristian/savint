@@ -75,7 +75,7 @@ describe("registerHubAccount", () => {
     expect(issueVerificationToken).toHaveBeenCalledWith("new-id", "VERIFY_EMAIL");
     expect(sendVerificationEmail).toHaveBeenCalledWith({
       to: "u@x.com",
-      link: expect.stringContaining("https://savint.it/savint/api/hub/auth/verify?token=tok-plain"),
+      link: expect.stringContaining("https://savint.it/api/hub/auth/verify?token=tok-plain"),
       locale: "it",
     });
   });

@@ -40,7 +40,7 @@ describe("requestPasswordReset", () => {
     expect(issueVerificationToken).toHaveBeenCalledWith("acct-1", "RESET_PASSWORD");
     expect(sendPasswordResetEmail).toHaveBeenCalledWith({
       to: "u@x.com",
-      link: expect.stringContaining("https://savint.it/savint/hub-reset-password?token=tok-reset"),
+      link: expect.stringContaining("https://savint.it/hub-reset-password?token=tok-reset"),
       locale: "it",
     });
   });
