@@ -1,8 +1,15 @@
-/** Base path prefix for all static assets and API calls. Reads from next.config.ts basePath. */
-export const BASE_PATH = process.env.__NEXT_ROUTER_BASEPATH || "/savint";
+/**
+ * Base path prefix per asset statici e chiamate API.
+ * Fonte unica: Next inietta __NEXT_ROUTER_BASEPATH (client + server runtime)
+ * a partire da next.config.basePath; BASE_PATH copre il custom server (server.ts).
+ * Default vuoto = montato sulla radice del dominio.
+ */
+export const BASE_PATH =
+  process.env.__NEXT_ROUTER_BASEPATH || process.env.BASE_PATH || "";
 
-/** Prepend basePath to an absolute path (e.g. "/logo.png" → "/savint/logo.png") */
+/** Prepend del basePath a un path assoluto (es. "/logo.png" → "/demo/logo.png"). */
 export function withBasePath(path: string): string {
-  if (path.startsWith(BASE_PATH)) return path;
+  if (!BASE_PATH) return path;
+  if (path === BASE_PATH || path.startsWith(BASE_PATH + "/")) return path;
   return `${BASE_PATH}${path}`;
 }
