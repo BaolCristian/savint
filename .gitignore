@@ -55,10 +55,11 @@ DEPLOY-GUIDA.md
 # scripts e file di deploy
 avvio.sh
 
-# docker (non necessario per deploy)
-Dockerfile
-docker-compose*.yml
-.dockerignore
+# docker-compose overrides locali (non committed)
+docker-compose.override.yml
+
+# certificati locali installazioni Docker
+docker/certs/
 
 # docs interni / piani di sviluppo
 docs/plans/
