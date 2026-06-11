@@ -58,6 +58,9 @@ avvio.sh
 # docker-compose overrides locali (non committed)
 docker-compose.override.yml
 
+# certificati locali installazioni Docker
+docker/certs/
+
 # docs interni / piani di sviluppo
 docs/plans/
 
