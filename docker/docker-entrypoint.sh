@@ -15,7 +15,7 @@ until npx prisma migrate deploy; do
   sleep 2
 done
 
-USER_COUNT=$(node -e 'const { PrismaClient } = require("@prisma/client"); const p = new PrismaClient(); p.user.count().then((c) => { console.log(c); process.exit(0); }).catch((e) => { console.error(e.message); process.exit(1); });')
+USER_COUNT=$(node -e 'const { PrismaClient } = require("@prisma/client"); const p = new PrismaClient({ log: [] }); p.user.count().then((c) => { process.stdout.write(String(c)); process.exit(0); }).catch((e) => { process.stderr.write(e.message); process.exit(1); });')
 if [ "$USER_COUNT" = "0" ]; then
   echo "[savint] Database vuoto: eseguo il seed demo..."
   npx tsx prisma/seed.ts
