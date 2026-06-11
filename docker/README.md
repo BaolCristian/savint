@@ -19,7 +19,11 @@ preconfigurato: app Node.js, database PostgreSQL e reverse proxy nginx.
    ```
 
    (oppure copia `.env.example` in `.env` e imposta a mano `POSTGRES_PASSWORD`
-   e `NEXTAUTH_SECRET`, quest'ultimo con `openssl rand -base64 32`).
+   e `NEXTAUTH_SECRET`, quest'ultimo con `openssl rand -base64 32`; per
+   `POSTGRES_PASSWORD` usa solo lettere e numeri, perché finisce dentro un URL
+   di connessione).
+   Se lo script non risulta eseguibile (es. dopo il download come zip), lancialo
+   con `sh setup.sh`.
 
 3. Avvia lo stack:
 
@@ -85,3 +89,7 @@ cat backup-YYYY-MM-DD.sql | docker compose exec -T db psql -U savint savint
   `docker compose ps` (lo stato deve diventare `healthy`).
 - **Porta 80 occupata**: imposta `HTTP_PORT=8080` nel `.env` e rilancia
   `docker compose up -d`.
+- **"Accesso bloccato" / errore Google al login**: il pulsante "Accedi con
+  Google" funziona solo dopo aver configurato `GOOGLE_CLIENT_ID` e
+  `GOOGLE_CLIENT_SECRET` nel `.env`. Nell'installazione di prova usa il
+  login demo.
