@@ -7,12 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npx prisma generate
-# Variabili fittizie: next build non deve raggiungere un DB reale
+# Variabili fittizie: prisma generate e next build non devono raggiungere un DB reale
 ENV DATABASE_URL=postgresql://build:build@localhost:5432/build \
     NEXTAUTH_SECRET=build-only-secret \
     AUTH_TRUST_HOST=true \
     NEXT_PUBLIC_DEMO_MODE=true
+RUN npx prisma generate
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runtime
