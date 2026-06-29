@@ -415,6 +415,11 @@ export function HostView({ session }: Props) {
   const [origin, setOrigin] = useState("");
   useEffect(() => { setOrigin(window.location.origin); }, []);
 
+  // Domain shown in the join instructions, derived from the actual origin so a
+  // self-hosted instance displays its own domain (e.g. quiz.scuola.edu.it)
+  // instead of a hardcoded value. Mirrors the QR code, which already uses origin.
+  const joinHost = origin ? new URL(origin).host : "";
+
   // Format PIN with spacing for readability (e.g. "982 025")
   const formattedPin = session.pin.length === 6
     ? `${session.pin.slice(0, 3)} ${session.pin.slice(3)}`
@@ -459,7 +464,7 @@ export function HostView({ session }: Props) {
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">1</span>
                   <span className="text-lg lg:text-xl text-indigo-100 font-medium">
-                    {t("goTo")} <span className="font-bold text-white underline underline-offset-4 decoration-2">savint.it</span>
+                    {t("goTo")} <span className="font-bold text-white underline underline-offset-4 decoration-2">{joinHost}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
