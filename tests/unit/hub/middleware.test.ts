@@ -77,4 +77,18 @@ describe("hub middleware", () => {
     const res = await middleware(req);
     expect(res?.status).not.toBe(404);
   });
+
+  it("passes through installation-side /api/hub endpoints in installation mode", async () => {
+    const middleware = await importMiddleware();
+    for (const path of [
+      "/api/hub/oauth/start",
+      "/api/hub/oauth/callback?code=x&state=y",
+      "/api/hub/oauth/link",
+      "/api/hub/quiz/abc123/publish",
+    ]) {
+      const req = new NextRequest(`http://localhost${path}`);
+      const res = await middleware(req);
+      expect(res?.status, path).not.toBe(404);
+    }
+  });
 });
