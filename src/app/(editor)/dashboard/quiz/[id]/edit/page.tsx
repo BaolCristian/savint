@@ -30,6 +30,7 @@ export default async function EditQuizPage({
     description: quiz.description ?? undefined,
     isPublic: quiz.isPublic,
     tags: quiz.tags,
+    hubPublishedId: quiz.hubPublishedId,
     questions: quiz.questions.map((q) => ({
       type: q.type,
       text: q.text,
