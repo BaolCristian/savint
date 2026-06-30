@@ -5,6 +5,7 @@ import { hashToken } from "@/lib/hub/token-hash";
 import { hubRateLimit } from "@/lib/rate-limit/hub-rate-limit";
 import { publishMetadataSchema } from "@/lib/hub/quiz-metadata";
 import { searchHubQuizzes, searchInputSchema } from "@/lib/hub/search";
+import { publicOrigin } from "@/lib/request-origin";
 
 const MAX_MB = Number(process.env.HUB_MAX_QUIZ_SIZE_MB ?? "50");
 const MAX_PER_ACCOUNT = Number(process.env.HUB_PUBLIC_QUIZZES_PER_ACCOUNT_MAX ?? "200");
@@ -159,7 +160,7 @@ export async function POST(req: NextRequest) {
       hubQuizId: updated.id,
       version: updated.version,
       publishedAt: updated.updatedAt,
-      url: `${new URL(req.url).origin}/q/${updated.id}`,
+      url: `${publicOrigin(req)}/q/${updated.id}`,
     });
   }
 
@@ -203,7 +204,7 @@ export async function POST(req: NextRequest) {
       hubQuizId: created.id,
       version: 1,
       publishedAt: created.publishedAt,
-      url: `${new URL(req.url).origin}/q/${created.id}`,
+      url: `${publicOrigin(req)}/q/${created.id}`,
     },
     { status: 201 },
   );

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { encryptToken } from "@/lib/hub/token-crypto";
 import { getHubOAuthConfig } from "@/lib/hub/oauth-config";
+import { publicOrigin } from "@/lib/request-origin";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
       code,
       client_id: cfg.clientId,
       client_secret: cfg.clientSecret,
-      redirect_uri: `${url.origin}/api/hub/oauth/callback`,
+      redirect_uri: `${publicOrigin(req)}/api/hub/oauth/callback`,
       code_verifier: flow.codeVerifier,
     }).toString(),
   });
@@ -77,5 +78,5 @@ export async function GET(req: NextRequest) {
   const dest = flow.quizId
     ? `/quiz/${flow.quizId}?hubLinked=1`
     : `/account/hub-link?linked=1`;
-  return NextResponse.redirect(`${url.origin}${dest}`, 307);
+  return NextResponse.redirect(`${publicOrigin(req)}${dest}`, 307);
 }
