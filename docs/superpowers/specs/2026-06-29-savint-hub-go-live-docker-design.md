@@ -49,15 +49,14 @@ self-hosted si collegano via OAuth per **cercare, scaricare e pubblicare** quiz.
 
 ### Chunk A — Codice (repo → CI → immagini)  *[primo piano di implementazione]*
 
-- **A1. `basePath` configurabile da env** (§1 originale). Oggi `/savint` è cablato
-  in ~6 punti (`next.config.ts`, `src/lib/auth/config.ts`, route nextauth, socket
-  client/server, redirect hub-auth, link email). Tutti devono leggere un'unica
-  fonte `BASE_PATH`. Criterio: con `BASE_PATH=""` l'app gira sulla radice; con
-  `BASE_PATH=/demo` gira sotto `/demo` (auth, socket, email inclusi).
-- **A2. Home page hub** (§2 originale). `src/app/page.tsx` ramifica per modalità:
-  in `hub` mode rende una nuova `HubLandingPage` (hero, ricerca → `/explore`, quiz
-  in evidenza, CTA, sezione "porta SAVINT nella tua scuola"); in `installation`
-  mode resta `PlayerView`. i18n IT+EN.
+- **A1. `basePath` configurabile da env** (§1 originale) — ✅ **GIÀ IMPLEMENTATO**
+  (verificato 2026-06-30). `src/lib/base-path.ts` è la fonte unica; `next.config.ts`,
+  `src/lib/auth/config.ts:117`, `src/lib/socket/client.ts:17`, `src/server.ts` e la
+  route nextauth leggono già `BASE_PATH`; nessun `/savint` cablato. Nessun lavoro.
+- **A2. Home page hub** (§2 originale) — ✅ **GIÀ IMPLEMENTATO** (verificato
+  2026-06-30). `src/app/page.tsx` ramifica per modalità e rende `HubLanding`
+  (`src/components/hub/hub-landing.tsx`, ~96 righe: hero, ricerca, quiz in evidenza,
+  i18n `hubHome`). Nessun lavoro.
 - **A3. Cablare il pulsante "Pubblica"** nell'editor: `quiz/new` e `quiz/[id]/edit`
   passano `hubEnabled = hasHubOAuthConfig()` e l'eventuale `hubLink` a `QuizEditor`
   (la logica `PublishButton`/`PublishModal` esiste già). ~1 riga per pagina.
