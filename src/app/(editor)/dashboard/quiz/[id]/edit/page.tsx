@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { QuizEditor } from "@/components/quiz/quiz-editor";
+import { hasHubOAuthConfig } from "@/lib/hub/oauth-config";
 import type { QuestionInput } from "@/lib/validators/quiz";
 
 export default async function EditQuizPage({
@@ -29,6 +30,7 @@ export default async function EditQuizPage({
     description: quiz.description ?? undefined,
     isPublic: quiz.isPublic,
     tags: quiz.tags,
+    hubPublishedId: quiz.hubPublishedId,
     questions: quiz.questions.map((q) => ({
       type: q.type,
       text: q.text,
@@ -45,5 +47,17 @@ export default async function EditQuizPage({
     where: { userId: session.user.id, type: "QUIZ_PUBLISH_DECLARATION" },
   }));
 
-  return <QuizEditor initialData={initialData} hasConsent={hasConsent} />;
+  const hubLink = await prisma.hubLink.findUnique({
+    where: { userId: session.user.id },
+    select: { hubAccountEmail: true },
+  });
+
+  return (
+    <QuizEditor
+      initialData={initialData}
+      hasConsent={hasConsent}
+      hubEnabled={hasHubOAuthConfig()}
+      hubLink={hubLink}
+    />
+  );
 }

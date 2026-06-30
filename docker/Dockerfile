@@ -8,10 +8,16 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 # Variabili fittizie: prisma generate e next build non devono raggiungere un DB reale
+# Build-arg per le varianti: hub (BASE_PATH=""), demo (BASE_PATH=/demo), scuola (default)
+ARG BASE_PATH=""
+ARG NEXT_PUBLIC_DEMO_MODE=true
+ARG NEXT_PUBLIC_SAVINT_HUB_URL=""
 ENV DATABASE_URL=postgresql://build:build@localhost:5432/build \
     NEXTAUTH_SECRET=build-only-secret \
     AUTH_TRUST_HOST=true \
-    NEXT_PUBLIC_DEMO_MODE=true
+    BASE_PATH=$BASE_PATH \
+    NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE \
+    NEXT_PUBLIC_SAVINT_HUB_URL=$NEXT_PUBLIC_SAVINT_HUB_URL
 RUN npx prisma generate
 RUN npm run build
 
