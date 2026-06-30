@@ -103,7 +103,7 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
           <div className="space-y-4">
             <p className="text-sm text-slate-600 dark:text-slate-400">{t("connectAccountIntro")}</p>
             <a
-              href={withBasePath("/hub/account")}
+              href={withBasePath("/account/hub-link")}
               className="inline-block rounded bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700"
             >
               {t("connectAccountCta")}
