@@ -40,20 +40,20 @@ export function HubQuizCard({ item }: { item: HubQuizCardItem }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {/* Subject accent */}
-      <div className={`h-1.5 w-full ${visual.accent}`} />
+      <div className={`h-2 w-full ${visual.solid}`} />
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         {/* Subject icon + meta */}
         <div className="flex items-center gap-2">
           <span
-            className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${visual.chip}`}
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white shadow-sm ${visual.solid}`}
           >
             <Icon className="h-5 w-5" />
           </span>
           <div className="flex flex-wrap gap-1.5">
             {subjectLabel && (
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${visual.chip}`}
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${visual.pill}`}
               >
                 {subjectLabel}
               </span>
