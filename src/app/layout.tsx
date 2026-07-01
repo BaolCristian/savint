@@ -3,6 +3,8 @@ import { Atkinson_Hyperlegible, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
+import { HubHeader } from "@/components/hub/hub-header";
+import { isHubMode } from "@/lib/config/savint-mode";
 import "./globals.css";
 
 const atkinson = Atkinson_Hyperlegible({
@@ -41,6 +43,7 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const hub = isHubMode();
 
   return (
     <html lang={locale}>
@@ -49,7 +52,10 @@ export default async function RootLayout({
         style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
       >
         <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
+          <Providers>
+            {hub && <HubHeader />}
+            {children}
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>
