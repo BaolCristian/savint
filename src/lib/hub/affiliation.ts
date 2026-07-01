@@ -59,15 +59,22 @@ export async function reject(requestId: string, adminId: string, reason?: string
 }
 
 export async function redeem(setupCode: string) {
-  const req = await prisma.affiliationRequest.findFirst({ where: { setupCodeHash: sha256(setupCode), status: "APPROVED" } });
+  const req = await prisma.affiliationRequest.findFirst({
+    where: { setupCodeHash: sha256(setupCode), status: "APPROVED" },
+  });
   if (!req) return { ok: false as const, error: "invalid_code" };
   if (!req.setupCodeExpiresAt || req.setupCodeExpiresAt < new Date()) return { ok: false as const, error: "expired" };
   if (!req.pendingClientId || !req.pendingClientSecret) return { ok: false as const, error: "no_credentials" };
 
-  const clientId = req.pendingClientId; const clientSecret = req.pendingClientSecret;
-  await prisma.affiliationRequest.update({
-    where: { id: req.id },
+  const clientId = req.pendingClientId;
+  const clientSecret = req.pendingClientSecret;
+
+  // Atomic single-use claim: only one concurrent caller flips APPROVED -> REDEEMED.
+  const claimed = await prisma.affiliationRequest.updateMany({
+    where: { id: req.id, status: "APPROVED" },
     data: { status: "REDEEMED", redeemedAt: new Date(), setupCodeHash: null, pendingClientSecret: null },
   });
+  if (claimed.count === 0) return { ok: false as const, error: "invalid_code" };
+
   return { ok: true as const, clientId, clientSecret };
 }
