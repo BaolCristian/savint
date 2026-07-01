@@ -31,7 +31,7 @@
     "sessions": "Sessioni",
     "statistics": "Statistiche",
     "shares": "Condivisioni",
-    "library": "Libreria",
+    "library": "Libreria scuola",
     "createWithAI": "Crea con AI",
     "browseRepository": "Sfoglia repository savint.it",
     "lightMode": "Modalita chiara",
@@ -478,8 +478,8 @@
     "correctLabel": "Corrette"
   },
   "library": {
-    "title": "Libreria Quiz",
-    "description": "Esplora i quiz condivisi da altri docenti. Puoi giocarli direttamente o duplicarli nel tuo account.",
+    "title": "Libreria della scuola",
+    "description": "Quiz pubblici condivisi dai docenti del tuo istituto — restano nella scuola, non su savint.it. Puoi giocarli, esercitarti o duplicarli.",
     "searchPlaceholder": "Cerca per titolo o descrizione...",
     "noQuizFound": "Nessun quiz trovato.",
     "noPublicQuizzes": "Nessun quiz pubblico disponibile al momento.",
@@ -717,6 +717,7 @@
   "hub": {
     "exploreTitle": "Repository pubblico dei quiz",
     "exploreSubtitle": "Cerca migliaia di quiz creati dai docenti",
+    "hubUnreachable": "savint.it non raggiungibile. Riprova più tardi.",
     "filters": {
       "schoolLevel": "Grado scolastico",
       "subject": "Materia",

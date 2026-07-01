@@ -31,7 +31,7 @@
     "sessions": "Sessions",
     "statistics": "Statistics",
     "shares": "Shares",
-    "library": "Library",
+    "library": "School library",
     "createWithAI": "Create with AI",
     "browseRepository": "Browse savint.it repository",
     "lightMode": "Light mode",
@@ -478,8 +478,8 @@
     "correctLabel": "Correct"
   },
   "library": {
-    "title": "Quiz Library",
-    "description": "Explore quizzes shared by other teachers. You can play them directly or duplicate them to your account.",
+    "title": "School library",
+    "description": "Public quizzes shared by teachers at your school — they stay within your school, not on savint.it. Play, practice, or duplicate them.",
     "searchPlaceholder": "Search by title or description...",
     "noQuizFound": "No quiz found.",
     "noPublicQuizzes": "No public quizzes available at the moment.",
@@ -717,6 +717,7 @@
   "hub": {
     "exploreTitle": "Public quiz repository",
     "exploreSubtitle": "Search thousands of quizzes created by teachers",
+    "hubUnreachable": "savint.it is unreachable. Please try again later.",
     "filters": {
       "schoolLevel": "School level",
       "subject": "Subject",
