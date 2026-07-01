@@ -13,7 +13,7 @@ export async function DELETE() {
   if (!link) return NextResponse.json({ ok: true });
 
   try {
-    const cfg = getHubOAuthConfig();
+    const cfg = await getHubOAuthConfig();
     const token = decryptToken(link.accessTokenCiphertext, process.env.NEXTAUTH_SECRET ?? "");
     await fetch(`${cfg.hubUrl}/api/hub/oauth/revoke`, {
       method: "POST",

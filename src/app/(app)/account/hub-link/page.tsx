@@ -20,8 +20,8 @@ export default async function HubLinkPage() {
   const isLinked = link && !link.revokedAt;
 
   let connectUrl: string | null = null;
-  if (!isLinked && hasHubOAuthConfig()) {
-    const cfg = getHubOAuthConfig();
+  if (!isLinked && (await hasHubOAuthConfig())) {
+    const cfg = await getHubOAuthConfig();
     connectUrl = `${cfg.hubUrl}/api/hub/oauth/start`;
   }
 

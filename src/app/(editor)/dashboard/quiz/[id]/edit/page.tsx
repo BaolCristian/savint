@@ -56,7 +56,7 @@ export default async function EditQuizPage({
     <QuizEditor
       initialData={initialData}
       hasConsent={hasConsent}
-      hubEnabled={hasHubOAuthConfig()}
+      hubEnabled={await hasHubOAuthConfig()}
       hubLink={hubLink}
     />
   );

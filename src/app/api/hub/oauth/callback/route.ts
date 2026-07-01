@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "invalid_state" }, { status: 400 });
   }
 
-  const cfg = getHubOAuthConfig();
+  const cfg = await getHubOAuthConfig();
   const tokenRes = await fetch(`${cfg.hubUrl}/api/hub/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
