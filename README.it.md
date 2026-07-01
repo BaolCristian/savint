@@ -73,7 +73,7 @@ Il docente crea quiz, li proietta sulla LIM e gli studenti rispondono in tempo r
 
 ### Prerequisiti
 
-- **Node.js 20+**
+- **Node.js 22+** (LTS)
 - **PostgreSQL 16** (locale o via Docker)
 - **Account Google Cloud** per OAuth
 
