@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
-import { hasHubOAuthConfig, getHubOAuthConfig } from "@/lib/hub/oauth-config";
+import { getHubOAuthConfig } from "@/lib/hub/oauth-config";
 import Link from "next/link";
 import { RevokeButton } from "./revoke-button";
 
@@ -20,9 +20,9 @@ export default async function HubLinkPage() {
   const isLinked = link && !link.revokedAt;
 
   let connectUrl: string | null = null;
-  if (!isLinked && (await hasHubOAuthConfig())) {
-    const cfg = await getHubOAuthConfig();
-    connectUrl = `${cfg.hubUrl}/api/hub/oauth/start`;
+  if (!isLinked) {
+    const cfg = await getHubOAuthConfig().catch(() => null);
+    if (cfg) connectUrl = `${cfg.hubUrl}/api/hub/oauth/start`;
   }
 
   return (

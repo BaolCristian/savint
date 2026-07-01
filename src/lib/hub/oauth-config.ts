@@ -15,5 +15,11 @@ export async function hasHubOAuthConfig(): Promise<boolean> { return Boolean((aw
 export async function getHubOAuthConfig(): Promise<HubOAuthConfig> {
   const cfg = (await fromDb()) ?? fromEnv();
   if (!cfg) throw new Error("Hub non configurato (né DB né env)");
+  try {
+    const u = new URL(cfg.hubUrl);
+    if (!u.protocol.startsWith("http")) throw new Error("bad protocol");
+  } catch {
+    throw new Error(`SAVINT_HUB_URL malformato: ${cfg.hubUrl}`);
+  }
   return cfg;
 }

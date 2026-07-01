@@ -66,6 +66,18 @@ describe("oauth-config", () => {
     expect(cfg.hubUrl).toBe("https://savint.it");
   });
 
+  it("malformed hubUrl in DB row → getHubOAuthConfig rejects with /malformato/", async () => {
+    mockFindUnique.mockResolvedValue({
+      id: "singleton",
+      clientId: "db-cid",
+      clientSecret: "db-sec",
+      hubUrl: "not-a-url",
+      connectedAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await expect(getHubOAuthConfig()).rejects.toThrow(/malformato/);
+  });
+
   it("DB row has incomplete fields → falls back to env", async () => {
     mockFindUnique.mockResolvedValue({
       id: "singleton",
