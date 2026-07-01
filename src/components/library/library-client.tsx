@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Play, Copy, Flag } from "lucide-react";
+import { Search, Play, Copy, Flag, FlaskConical } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import { PublishDeclarationModal } from "@/components/legal/publish-declaration-modal";
 import { ReportModal } from "@/components/legal/report-modal";
@@ -164,11 +164,19 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                   <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.41 15.06c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99zm6.24 0c-2.37 0-3.95-1.73-3.95-4.07s1.62-4.05 3.95-4.05c1.22 0 2.12.47 2.77 1.2l-1.13 1.06c-.37-.42-.84-.67-1.64-.67-1.34 0-2.31 1.1-2.31 2.46 0 1.38.97 2.48 2.31 2.48.81 0 1.32-.33 1.63-.66V13.5h-1.75V12h3.2v3.07c-.63.73-1.62 1.99-3.08 1.99z"/></svg>
                   {LICENSE_SHORT_LABELS[quiz.license] ?? "CC BY 4.0"}
                 </a>
-                <div className="flex gap-2 mt-auto pt-2">
+                <div className="flex flex-wrap gap-2 mt-auto pt-2">
+                  <a
+                    href={withBasePath(`/practice/${quiz.id}`)}
+                    className="flex-1 min-w-[7rem] inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    {locale === "en" ? "Practice" : "Esercitati"}
+                  </a>
                   <button
                     onClick={() => handlePlay(quiz.id)}
                     disabled={loading === quiz.id}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                    className="flex-1 min-w-[6rem] inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                    title={locale === "en" ? "Host a live game" : "Avvia una partita dal vivo"}
                   >
                     <Play className="h-3.5 w-3.5" />
                     {t("play")}
@@ -176,10 +184,10 @@ export function LibraryClient({ quizzes }: { quizzes: QuizItem[] }) {
                   <button
                     onClick={() => handleDuplicate(quiz.id)}
                     disabled={loading === quiz.id}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                    title={t("duplicate")}
                   >
                     <Copy className="h-3.5 w-3.5" />
-                    {t("duplicate")}
                   </button>
                   <button
                     onClick={() => setReportingQuiz(quiz.id)}
