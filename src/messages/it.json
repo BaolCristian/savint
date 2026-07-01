@@ -916,5 +916,32 @@
     "step4Body": "Dal pannello dell'istanza collegala a savint.it per pubblicare e scaricare quiz dalla community.",
     "finalTitle": "Inizia oggi, è gratis",
     "finalBody": "SAVINT è software libero (AGPL-3.0): scarica, installa e porta i quiz interattivi nella tua scuola."
+  },
+  "affiliation": {
+    "pageTitle": "Porta SAVINT nella tua scuola",
+    "pageSubtitle": "Compila il modulo per richiedere un'installazione dedicata per la tua scuola.",
+    "schoolNameLabel": "Nome della scuola",
+    "provinceLabel": "Provincia",
+    "installationUrlLabel": "URL installazione (es. https://quiz.scuola.it)",
+    "contactEmailLabel": "Email di contatto",
+    "submitButton": "Invia richiesta",
+    "submitting": "Invio in corso...",
+    "successTitle": "Richiesta inviata!",
+    "successBody": "Controlla la tua email e clicca il link di verifica per completare la richiesta.",
+    "verifiedNotice": "Email confermata. La tua richiesta è in attesa di approvazione da parte del team SAVINT.",
+    "errorGeneric": "Errore durante l'invio. Riprova.",
+    "adminTitle": "Richieste di affiliazione in attesa",
+    "adminNoRequests": "Nessuna richiesta pendente.",
+    "adminSchoolName": "Scuola",
+    "adminProvince": "Provincia",
+    "adminUrl": "URL",
+    "adminEmail": "Email",
+    "adminDate": "Data",
+    "adminActions": "Azioni",
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "rejectReasonPrompt": "Motivo del rifiuto (opzionale)",
+    "approveError": "Errore durante l'approvazione.",
+    "rejectError": "Errore durante il rifiuto."
   }
 }
