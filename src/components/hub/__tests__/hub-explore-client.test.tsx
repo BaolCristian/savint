@@ -8,6 +8,7 @@ vi.mock("next-intl", () => ({
     if (params) return `${key}:${JSON.stringify(params)}`;
     return key;
   },
+  useLocale: () => "it",
 }));
 
 // Mock next/navigation

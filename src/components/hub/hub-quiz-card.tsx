@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
+import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
+import { getSubjectVisual } from "@/lib/subject-visuals";
+import { getSubjectLabel } from "@/lib/quiz-subjects";
 
 export type HubQuizCardItem = {
   id: string;
@@ -15,47 +16,85 @@ export type HubQuizCardItem = {
   playsCount: number;
 };
 
+const LEVEL_LABELS: Record<string, { it: string; en: string }> = {
+  PRIMARIA: { it: "Primaria", en: "Primary" },
+  SECONDARIA_I: { it: "Sec. I grado", en: "Lower sec." },
+  SECONDARIA_II: { it: "Sec. II grado", en: "Upper sec." },
+  UNIVERSITA: { it: "Università", en: "University" },
+  ALTRO: { it: "Altro", en: "Other" },
+};
+
 export function HubQuizCard({ item }: { item: HubQuizCardItem }) {
   const t = useTranslations("hub");
+  const locale = useLocale() === "en" ? "en" : "it";
+
+  const visual = getSubjectVisual(item.subject);
+  const Icon = visual.icon;
+  const subjectLabel = item.subject
+    ? getSubjectLabel(item.subject, locale) ?? item.subject
+    : null;
+  const levelLabel = item.schoolLevel
+    ? LEVEL_LABELS[item.schoolLevel]?.[locale] ?? item.schoolLevel
+    : null;
 
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-2">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {/* Subject accent */}
+      <div className={`h-1.5 w-full ${visual.accent}`} />
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        {/* Subject icon + meta */}
+        <div className="flex items-center gap-2">
+          <span
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${visual.chip}`}
+          >
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {subjectLabel && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${visual.chip}`}
+              >
+                {subjectLabel}
+              </span>
+            )}
+            {levelLabel && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                {levelLabel}
+              </span>
+            )}
+            {item.language && (
+              <span className="rounded-full border border-slate-200 px-2 py-0.5 text-xs font-medium uppercase text-slate-500">
+                {item.language}
+              </span>
+            )}
+          </div>
+        </div>
+
         <Link
           href={`/q/${item.id}`}
-          className="text-base font-semibold text-slate-900 hover:underline line-clamp-2"
+          className="font-bold leading-snug text-slate-900 line-clamp-2 transition-colors hover:text-indigo-600"
         >
           {item.title}
         </Link>
-        {item.language && (
-          <Badge variant="outline" className="shrink-0 text-xs uppercase">
-            {item.language}
-          </Badge>
+
+        {item.description && (
+          <p className="flex-1 text-sm text-slate-500 line-clamp-2">
+            {item.description}
+          </p>
         )}
-      </div>
 
-      {item.description && (
-        <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>
-      )}
+        <p className="text-xs text-slate-400">{t("by", { author: item.author })}</p>
 
-      <div className="flex flex-wrap gap-1 text-xs text-slate-500">
-        <span>{t("by", { author: item.author })}</span>
-        {item.schoolLevel && <span>· {item.schoolLevel}</span>}
-        {item.subject && <span>· {item.subject}</span>}
-      </div>
-
-      <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-        <span>{t("downloads", { count: item.downloadsCount })}</span>
-        <span>{t("plays", { count: item.playsCount })}</span>
-      </div>
-
-      <div className="flex gap-2 mt-2">
-        <Link
-          href={`/q/${item.id}`}
-          className={buttonVariants({ size: "sm" })}
-        >
-          {t("tryNow")}
-        </Link>
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <span>{t("downloads", { count: item.downloadsCount })}</span>
+            <span>{t("plays", { count: item.playsCount })}</span>
+          </div>
+          <Link href={`/q/${item.id}`} className={buttonVariants({ size: "sm" })}>
+            {t("tryNow")}
+          </Link>
+        </div>
       </div>
     </div>
   );
