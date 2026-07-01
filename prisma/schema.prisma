@@ -518,3 +518,45 @@ model HubRateLimit {
   @@unique([key, windowStart])
   @@index([windowStart])
 }
+
+enum AffiliationStatus {
+  PENDING_EMAIL
+  PENDING_REVIEW
+  APPROVED
+  REDEEMED
+  REJECTED
+}
+
+model AffiliationRequest {
+  id                     String            @id @default(cuid())
+  schoolName             String
+  province               String
+  installationUrl        String
+  contactEmail           String
+  status                 AffiliationStatus @default(PENDING_EMAIL)
+  emailVerifyTokenHash   String?
+  emailVerifiedAt        DateTime?
+  reviewedByHubAccountId String?
+  reviewedAt             DateTime?
+  rejectionReason        String?
+  installationId         String?           @unique
+  setupCodeHash          String?
+  setupCodeExpiresAt     DateTime?
+  redeemedAt             DateTime?
+  pendingClientId        String?
+  pendingClientSecret    String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@index([status])
+  @@index([contactEmail])
+}
+
+model HubConfig {
+  id           String   @id @default("singleton")
+  clientId     String
+  clientSecret String
+  hubUrl       String
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
