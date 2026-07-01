@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { AnswerInput } from "@/components/live/player-view";
 import { CorrectAnswerView } from "@/components/practice/correct-answer-view";
@@ -145,6 +145,20 @@ function buildFeedbackOptions(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Shared frame                                                      */
+/* ------------------------------------------------------------------ */
+
+function Frame({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-indigo-50 via-white to-violet-50 p-4">
+      <div className="w-full max-w-2xl rounded-3xl border border-indigo-100 bg-white p-6 shadow-xl shadow-indigo-100/40 sm:p-10">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -251,71 +265,87 @@ export function PracticeRunner({
 
   if (error) {
     return (
-      <div className="text-center py-10">
-        <p className="text-red-600 font-medium">{error}</p>
-        <button
-          onClick={() => setError(null)}
-          className="mt-4 px-4 py-2 bg-slate-200 rounded hover:bg-slate-300"
-        >
-          Retry
-        </button>
-      </div>
+      <Frame>
+        <div className="text-center">
+          <p className="font-medium text-rose-600">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="mt-4 rounded-xl bg-slate-100 px-4 py-2 font-medium text-slate-700 hover:bg-slate-200"
+          >
+            Riprova
+          </button>
+        </div>
+      </Frame>
     );
   }
 
   if (phase === "intro") {
     return (
-      <div className="max-w-xl mx-auto py-12 px-4 text-center space-y-4">
-        <h1
-          data-testid="practice-title"
-          className="text-2xl font-bold text-slate-900"
-        >
-          {title}
-        </h1>
-        <p className="text-slate-500 text-sm">
-          {tp("author", { name: authorName })}
-        </p>
-        <p className="text-slate-600 text-sm">
-          {tp("questionCount", { count: questionCount })}
-        </p>
-        <p className="text-slate-500 text-sm italic">{tp("introNote")}</p>
-        <button
-          data-testid="start-button"
-          onClick={handleStart}
-          className="mt-4 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-colors"
-        >
-          {tp("start")}
-        </button>
-      </div>
+      <Frame>
+        <div className="text-center">
+          <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-black text-white shadow-lg shadow-indigo-200">
+            Q
+          </div>
+          <h1 data-testid="practice-title" className="text-2xl font-black text-slate-900">
+            {title}
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">{tp("author", { name: authorName })}</p>
+          <p className="mt-1 text-sm font-medium text-indigo-600">
+            {tp("questionCount", { count: questionCount })}
+          </p>
+          <p className="mt-3 text-sm italic text-slate-400">{tp("introNote")}</p>
+          <button
+            data-testid="start-button"
+            onClick={handleStart}
+            className="mt-6 rounded-xl bg-indigo-600 px-8 py-3 font-semibold text-white shadow-lg shadow-indigo-200 transition-colors hover:bg-indigo-700"
+          >
+            {tp("start")}
+          </button>
+        </div>
+      </Frame>
     );
   }
 
   if (phase === "loading") {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <Frame>
+        <div className="flex items-center justify-center py-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
+        </div>
+      </Frame>
     );
   }
 
   if (phase === "question" && questionData) {
     return (
-      <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
-        <div className="flex justify-between text-xs text-slate-400 font-medium uppercase tracking-wide">
-          <span>
-            {questionData.order + 1} / {questionData.total}
-          </span>
-          <span>{questionData.question.points} pts</span>
+      <Frame>
+        <div className="space-y-6">
+          <div>
+            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-400">
+              <span>
+                Domanda {questionData.order + 1} di {questionData.total}
+              </span>
+              <span>{questionData.question.points} pt</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+                style={{
+                  width: `${((questionData.order + 1) / questionData.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold leading-snug text-slate-800">
+            {questionData.question.text}
+          </h2>
+          <AnswerInput
+            type={questionData.question.type as QuestionType}
+            options={questionData.question.options as QuestionOptions}
+            onSubmit={handleAnswer}
+          />
         </div>
-        <h2 className="text-xl font-semibold text-slate-800">
-          {questionData.question.text}
-        </h2>
-        <AnswerInput
-          type={questionData.question.type as QuestionType}
-          options={questionData.question.options as QuestionOptions}
-          onSubmit={handleAnswer}
-        />
-      </div>
+      </Frame>
     );
   }
 
@@ -326,52 +356,61 @@ export function PracticeRunner({
       lastResult.correctOptions,
     );
     return (
-      <div className="max-w-2xl mx-auto py-8 px-4 space-y-4 text-center">
-        <div
-          className={`text-5xl font-bold ${lastResult.isCorrect ? "text-emerald-500" : "text-rose-500"}`}
-        >
-          {lastResult.isCorrect ? "✓" : "✗"}
+      <Frame>
+        <div className="space-y-5 text-center">
+          <div
+            className={`mx-auto grid h-20 w-20 place-items-center rounded-full text-4xl font-black ${
+              lastResult.isCorrect
+                ? "bg-emerald-100 text-emerald-600"
+                : "bg-rose-100 text-rose-600"
+            }`}
+          >
+            {lastResult.isCorrect ? "✓" : "✗"}
+          </div>
+          <p className="text-lg font-semibold text-slate-700">{tp("yourAnswer")}</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
+            <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
+              {tl("correctAnswer")}
+            </p>
+            <CorrectAnswerView
+              type={questionData.question.type as QuestionType}
+              options={feedbackOptions}
+            />
+          </div>
+          <button
+            data-testid="next-button"
+            onClick={handleNext}
+            className="rounded-xl bg-indigo-600 px-6 py-2.5 font-semibold text-white shadow-lg shadow-indigo-200 transition-colors hover:bg-indigo-700"
+          >
+            {lastResult.isLast ? tp("seeResults") : tp("next")}
+          </button>
         </div>
-        <p className="text-lg text-slate-700">
-          {tp("yourAnswer")}
-        </p>
-        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-left">
-          <p className="text-xs uppercase text-slate-500 font-semibold mb-2">
-            {tl("correctAnswer")}
-          </p>
-          <CorrectAnswerView
-            type={questionData.question.type as QuestionType}
-            options={feedbackOptions}
-          />
-        </div>
-        <button
-          data-testid="next-button"
-          onClick={handleNext}
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-colors"
-        >
-          {lastResult.isLast ? tp("seeResults") : tp("next")}
-        </button>
-      </div>
+      </Frame>
     );
   }
 
   if (phase === "results") {
     return (
-      <div className="max-w-xl mx-auto py-12 px-4 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">
-          {tp("finalResult")}
-        </h2>
-        <div className="text-4xl font-bold text-indigo-600">{successRate}%</div>
-        <p className="text-slate-600">
-          {tp("correctQuestions")} {correctCount}/{answers.length}
-        </p>
-        <a
-          href="/explore"
-          className="inline-block mt-4 px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl transition-colors"
-        >
-          {tp("backToExplore")}
-        </a>
-      </div>
+      <Frame>
+        <div className="space-y-5 text-center">
+          <h2 className="text-2xl font-black text-slate-900">{tp("finalResult")}</h2>
+          <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
+            <span className="text-4xl font-black tabular-nums">{successRate}%</span>
+          </div>
+          <p className="text-slate-600">
+            {tp("correctQuestions")}{" "}
+            <span className="font-bold text-slate-900">
+              {correctCount}/{answers.length}
+            </span>
+          </p>
+          <a
+            href="/explore"
+            className="inline-block rounded-xl bg-slate-100 px-6 py-2.5 font-medium text-slate-700 transition-colors hover:bg-slate-200"
+          >
+            {tp("backToExplore")}
+          </a>
+        </div>
+      </Frame>
     );
   }
 
