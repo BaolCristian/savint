@@ -8,7 +8,7 @@ import { resetRateLimitsByPrefix } from "@/lib/rate-limit/hub-rate-limit";
 import { sendAffiliationVerifyEmail } from "@/lib/email/affiliation-emails";
 
 afterAll(async () => {
-  await prisma.affiliationRequest.deleteMany({ where: { contactEmail: { endsWith: "@test.edu.it" } } });
+  await prisma.affiliationRequest.deleteMany({ where: { contactEmail: { endsWith: "@reqvfy-test.local" } } });
   await resetRateLimitsByPrefix("affiliation-request:");
 });
 
@@ -16,7 +16,7 @@ const validBody = {
   schoolName: "IIS Req",
   province: "UD",
   installationUrl: "https://quiz.req.edu.it",
-  contactEmail: "req@test.edu.it",
+  contactEmail: "req@reqvfy-test.local",
 };
 
 function makePostReq(body: unknown, ip = "1.2.3.4") {
@@ -31,7 +31,7 @@ it("crea una richiesta (201)", async () => {
   const req = makePostReq(validBody);
   const res = await POST(req);
   expect(res.status).toBe(201);
-  const saved = await prisma.affiliationRequest.findFirst({ where: { contactEmail: "req@test.edu.it" } });
+  const saved = await prisma.affiliationRequest.findFirst({ where: { contactEmail: "req@reqvfy-test.local" } });
   expect(saved?.status).toBe("PENDING_EMAIL");
   expect(sendAffiliationVerifyEmail).toHaveBeenCalledOnce();
 });
@@ -58,7 +58,7 @@ it("rate-limita dopo 5 richieste dallo stesso IP", async () => {
   const ip = "9.9.9.9";
   // First 5 may succeed or fail on validation — we just need to exhaust the window
   for (let i = 0; i < 5; i++) {
-    await POST(makePostReq({ ...validBody, contactEmail: `req+${i}@test.edu.it` }, ip));
+    await POST(makePostReq({ ...validBody, contactEmail: `req+${i}@reqvfy-test.local` }, ip));
   }
   const res = await POST(makePostReq(validBody, ip));
   expect(res.status).toBe(429);
@@ -81,7 +81,7 @@ describe("verify route", () => {
       schoolName: "IIS Verify",
       province: "UD",
       installationUrl: "https://quiz.verify.edu.it",
-      contactEmail: "req@test.edu.it",
+      contactEmail: "req@reqvfy-test.local",
     });
     const req = new NextRequest(`http://localhost/api/hub/affiliation/verify?token=${emailToken}`);
     const res = await GET(req);

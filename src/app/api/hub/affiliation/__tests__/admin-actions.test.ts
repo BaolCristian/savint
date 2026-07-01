@@ -15,8 +15,8 @@ import { prisma } from "@/lib/db/client";
 const mockSession = getHubSession as ReturnType<typeof vi.fn>;
 
 afterAll(async () => {
-  await prisma.affiliationRequest.deleteMany({ where: { schoolName: { in: ["IIS Adm", "IIS Rej"] } } });
-  await prisma.installation.deleteMany({ where: { name: { in: ["IIS Adm", "IIS Rej"] } } });
+  await prisma.affiliationRequest.deleteMany({ where: { contactEmail: { endsWith: "@admact-test.local" } } });
+  await prisma.installation.deleteMany({ where: { contactEmail: { endsWith: "@admact-test.local" } } });
 });
 
 describe("approve", () => {
@@ -29,14 +29,14 @@ describe("approve", () => {
   it("admin approva → crea Installation + invia email", async () => {
     mockSession.mockResolvedValue({ id: "admin", role: "HUB_ADMIN" });
     const reqRow = await prisma.affiliationRequest.create({
-      data: { schoolName: "IIS Adm", province: "UD", installationUrl: "https://q.adm.edu.it", contactEmail: "adm@test.edu.it", status: "PENDING_REVIEW", emailVerifiedAt: new Date() },
+      data: { schoolName: "IIS Adm", province: "UD", installationUrl: "https://q.adm.edu.it", contactEmail: "adm@admact-test.local", status: "PENDING_REVIEW", emailVerifiedAt: new Date() },
     });
     const res = await approveRoute(new NextRequest("http://localhost/x", { method: "POST" }), { params: Promise.resolve({ id: reqRow.id }) });
     expect(res.status).toBe(200);
     const updated = await prisma.affiliationRequest.findUnique({ where: { id: reqRow.id } });
     expect(updated?.status).toBe("APPROVED");
     expect(updated?.installationId).toBeTruthy();
-    expect(sendAffiliationCodeEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "adm@test.edu.it" }));
+    expect(sendAffiliationCodeEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "adm@admact-test.local" }));
   });
 });
 
@@ -50,7 +50,7 @@ describe("reject", () => {
   it("admin rifiuta PENDING_REVIEW → status REJECTED + email inviata", async () => {
     mockSession.mockResolvedValue({ id: "admin", role: "HUB_ADMIN" });
     const reqRow = await prisma.affiliationRequest.create({
-      data: { schoolName: "IIS Rej", province: "UD", installationUrl: "https://q.rej.edu.it", contactEmail: "rej@test.edu.it", status: "PENDING_REVIEW", emailVerifiedAt: new Date() },
+      data: { schoolName: "IIS Rej", province: "UD", installationUrl: "https://q.rej.edu.it", contactEmail: "rej@admact-test.local", status: "PENDING_REVIEW", emailVerifiedAt: new Date() },
     });
     const res = await rejectRoute(
       new NextRequest("http://localhost/x", { method: "POST", body: JSON.stringify({ reason: "Dati incompleti" }), headers: { "content-type": "application/json" } }),
@@ -59,7 +59,7 @@ describe("reject", () => {
     expect(res.status).toBe(200);
     const updated = await prisma.affiliationRequest.findUnique({ where: { id: reqRow.id } });
     expect(updated?.status).toBe("REJECTED");
-    expect(sendAffiliationRejectEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "rej@test.edu.it" }));
+    expect(sendAffiliationRejectEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "rej@admact-test.local" }));
   });
 
   it("409 se stato non valido (già REJECTED o id inesistente)", async () => {
