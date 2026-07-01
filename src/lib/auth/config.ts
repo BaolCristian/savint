@@ -12,20 +12,28 @@ import { BASE_PATH } from "@/lib/base-path";
 
 const hub = isHubMode();
 
-const providers: Provider[] = [
-  Google({
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    authorization: { params: { prompt: "select_account" } },
-    // All OAuth checks (pkce, state, nonce) rely on cookies which fail
-    // behind the reverse proxy with basePath. Disabled until nginx cookie
-    // forwarding is fixed. TODO: re-enable once proxy is configured.
-    checks: [],
-    // Allow linking Google account to existing user with same email.
-    // Safe because Google is the only OAuth provider.
-    allowDangerousEmailAccountLinking: true,
-  }),
-];
+const providers: Provider[] = [];
+
+// Only register Google when it's actually configured. Otherwise the provider
+// would carry an empty client_id and the "Sign in with Google" button breaks
+// (Google returns "Missing required parameter: client_id"). The hub, for
+// example, uses email+password and has no Google credentials.
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: { params: { prompt: "select_account" } },
+      // All OAuth checks (pkce, state, nonce) rely on cookies which fail
+      // behind the reverse proxy with basePath. Disabled until nginx cookie
+      // forwarding is fixed. TODO: re-enable once proxy is configured.
+      checks: [],
+      // Allow linking Google account to existing user with same email.
+      // Safe because Google is the only OAuth provider.
+      allowDangerousEmailAccountLinking: true,
+    }),
+  );
+}
 
 if (hub) {
   providers.push(
