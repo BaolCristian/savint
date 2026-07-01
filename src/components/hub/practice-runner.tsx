@@ -2,43 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-
-/* ------------------------------------------------------------------ */
-/*  Minimal AnswerInput for TRUE_FALSE (inline, no external dep needed) */
-/* ------------------------------------------------------------------ */
-
-function AnswerInput({
-  type,
-  onSubmit,
-}: {
-  type: string;
-  options: unknown;
-  onSubmit: (v: { selected: boolean }) => void;
-}) {
-  if (type === "TRUE_FALSE") {
-    return (
-      <div className="flex gap-3 justify-center">
-        <button
-          onClick={() => onSubmit({ selected: true })}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-        >
-          True
-        </button>
-        <button
-          onClick={() => onSubmit({ selected: false })}
-          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-        >
-          False
-        </button>
-      </div>
-    );
-  }
-  return (
-    <p className="text-slate-500 italic text-sm">
-      Question type {type} not supported in practice mode yet
-    </p>
-  );
-}
+import { AnswerInput } from "@/components/live/player-view";
+import { CorrectAnswerView } from "@/components/practice/correct-answer-view";
+import type {
+  AnswerValue,
+  QuestionOptions,
+  MultipleChoiceOptions,
+  OrderingOptions,
+  SpotErrorOptions,
+  NumericEstimationOptions,
+  ImageHotspotOptions,
+  CodeCompletionOptions,
+} from "@/types";
+import type { QuestionType } from "@prisma/client";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -79,6 +55,96 @@ interface PracticeRunnerProps {
 type Phase = "intro" | "loading" | "question" | "feedback" | "results";
 
 /* ------------------------------------------------------------------ */
+/*  Helper: reconstruct a full QuestionOptions from                    */
+/*  the stripped question options (no correct-answer keys) plus        */
+/*  the correctOptions payload returned by the answer API.            */
+/*  The result is compatible with CorrectAnswerView.                   */
+/* ------------------------------------------------------------------ */
+
+function buildFeedbackOptions(
+  type: string,
+  strippedOptions: unknown,
+  correctOptions: unknown,
+): QuestionOptions {
+  const stripped = (strippedOptions ?? {}) as Record<string, unknown>;
+  const correct = (correctOptions ?? {}) as Record<string, unknown>;
+
+  switch (type) {
+    case "TRUE_FALSE":
+      // correctOptions: { correct: boolean }
+      return correct as unknown as QuestionOptions;
+
+    case "MULTIPLE_CHOICE": {
+      // stripped: { choices: { text: string }[] }   (isCorrect stripped out)
+      // correct:  { correctIndices: number[] }
+      const choices = (stripped.choices ?? []) as { text: string }[];
+      const correctIndices = (correct.correctIndices ?? []) as number[];
+      return {
+        choices: choices.map((c, i) => ({
+          text: c.text,
+          isCorrect: correctIndices.includes(i),
+        })),
+      } as MultipleChoiceOptions;
+    }
+
+    case "OPEN_ANSWER":
+      // correctOptions: { acceptedAnswers: string[] }
+      return correct as unknown as QuestionOptions;
+
+    case "ORDERING":
+      // stripped: { items: string[] }   (correctOrder stripped)
+      // correct:  { correctOrder: number[] }
+      return {
+        items: (stripped.items ?? []) as string[],
+        correctOrder: (correct.correctOrder ?? []) as number[],
+      } as OrderingOptions;
+
+    case "MATCHING":
+      // correctOptions: { pairs: { left: string; right: string }[] }
+      return correct as unknown as QuestionOptions;
+
+    case "SPOT_ERROR":
+      // stripped: { lines: string[]; explanation?: string }
+      // correct:  { errorIndices: number[] }
+      return {
+        lines: (stripped.lines ?? []) as string[],
+        errorIndices: (correct.errorIndices ?? []) as number[],
+        explanation: stripped.explanation as string | undefined,
+      } as SpotErrorOptions;
+
+    case "NUMERIC_ESTIMATION":
+      // stripped: { maxRange?: number; unit?: string }
+      // correct:  { correctValue: number; tolerance: number }
+      return {
+        correctValue: correct.correctValue as number,
+        tolerance: correct.tolerance as number,
+        maxRange: (stripped.maxRange ?? 0) as number,
+        unit: stripped.unit as string | undefined,
+      } as NumericEstimationOptions;
+
+    case "IMAGE_HOTSPOT":
+      // stripped: { imageUrl: string; tolerance?: number }
+      // correct:  { hotspot: { x: number; y: number; radius: number } }
+      return {
+        imageUrl: (stripped.imageUrl ?? "") as string,
+        hotspot: correct.hotspot as { x: number; y: number; radius: number },
+        tolerance: (stripped.tolerance ?? 0) as number,
+      } as ImageHotspotOptions;
+
+    case "CODE_COMPLETION":
+      // stripped: { codeLines, blankLineIndex, mode, choices? }
+      // correct:  { correctAnswer: string }
+      return {
+        ...stripped,
+        correctAnswer: correct.correctAnswer as string,
+      } as CodeCompletionOptions;
+
+    default:
+      return stripped as unknown as QuestionOptions;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -90,6 +156,7 @@ export function PracticeRunner({
   questionCount,
 }: PracticeRunnerProps) {
   const tp = useTranslations("practice");
+  const tl = useTranslations("live");
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentOrder, setCurrentOrder] = useState(0);
@@ -125,7 +192,7 @@ export function PracticeRunner({
   };
 
   const handleAnswer = useCallback(
-    async (value: unknown) => {
+    async (value: AnswerValue) => {
       if (!questionData) return;
       setPhase("loading");
       try {
@@ -244,8 +311,8 @@ export function PracticeRunner({
           {questionData.question.text}
         </h2>
         <AnswerInput
-          type={questionData.question.type}
-          options={questionData.question.options}
+          type={questionData.question.type as QuestionType}
+          options={questionData.question.options as QuestionOptions}
           onSubmit={handleAnswer}
         />
       </div>
@@ -253,6 +320,11 @@ export function PracticeRunner({
   }
 
   if (phase === "feedback" && questionData && lastResult) {
+    const feedbackOptions = buildFeedbackOptions(
+      questionData.question.type,
+      questionData.question.options,
+      lastResult.correctOptions,
+    );
     return (
       <div className="max-w-2xl mx-auto py-8 px-4 space-y-4 text-center">
         <div
@@ -263,6 +335,15 @@ export function PracticeRunner({
         <p className="text-lg text-slate-700">
           {tp("yourAnswer")}
         </p>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-left">
+          <p className="text-xs uppercase text-slate-500 font-semibold mb-2">
+            {tl("correctAnswer")}
+          </p>
+          <CorrectAnswerView
+            type={questionData.question.type as QuestionType}
+            options={feedbackOptions}
+          />
+        </div>
         <button
           data-testid="next-button"
           onClick={handleNext}
