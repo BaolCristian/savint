@@ -889,6 +889,32 @@
     "schoolTitle": "Bring SAVINT to your school",
     "schoolBody": "Install SAVINT on your own servers and connect it to savint.it to search, download and publish quizzes. Or try it right now without installing anything.",
     "tryItButton": "Try the system",
+    "installCta": "Learn how to install it",
     "footer": "SAVINT — free software for schools (AGPL-3.0)."
+  },
+  "install": {
+    "eyebrow": "Free and open source",
+    "title": "Install SAVINT at your school",
+    "subtitle": "SAVINT is a self-hostable interactive quiz platform: install it on your own servers, keep student data at your school, and connect to savint.it to share quizzes with other teachers.",
+    "ctaGithub": "Code on GitHub",
+    "ctaGuide": "Installation guide",
+    "ctaDemo": "Try the demo",
+    "prop1Title": "Always free",
+    "prop1Body": "SAVINT is and always will be free for all schools, with no license fees or subscriptions.",
+    "prop2Title": "Open source",
+    "prop2Body": "The code is public on GitHub: you can study it, modify it, and contribute to the project.",
+    "prop3Title": "Your data stays at school",
+    "prop3Body": "Self-hosted means quiz and student data live on your server, not on external clouds.",
+    "howTitle": "How to install",
+    "step1Title": "A server with Docker",
+    "step1Body": "All you need is a server (VPS or on-premise) with Docker and Docker Compose installed.",
+    "step2Title": "Start with Docker Compose",
+    "step2Body": "Use the official compose file: the image is pre-configured and ready to use.",
+    "step3Title": "Domain and HTTPS",
+    "step3Body": "Point a domain to the server and configure HTTPS with a reverse proxy (e.g. Nginx + Certbot).",
+    "step4Title": "Link to savint.it",
+    "step4Body": "From the instance panel, connect it to savint.it to publish and download quizzes from the community.",
+    "finalTitle": "Start today, it is free",
+    "finalBody": "SAVINT is free software (AGPL-3.0): download, install and bring interactive quizzes to your school."
   }
 }

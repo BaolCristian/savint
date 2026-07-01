@@ -889,6 +889,32 @@
     "schoolTitle": "Porta SAVINT nella tua scuola",
     "schoolBody": "Installa SAVINT sui tuoi server e collegalo a savint.it per cercare, scaricare e pubblicare quiz. Oppure provalo subito senza installare niente.",
     "tryItButton": "Prova il sistema",
+    "installCta": "Scopri come installarlo",
     "footer": "SAVINT — software libero per la scuola (AGPL-3.0)."
+  },
+  "install": {
+    "eyebrow": "Gratuito e open source",
+    "title": "Installa SAVINT nella tua scuola",
+    "subtitle": "SAVINT è una piattaforma di quiz interattivi self-hostable: la installi sui tuoi server, i dati degli studenti rimangono nella tua scuola e la connetti a savint.it per condividere quiz con altri docenti.",
+    "ctaGithub": "Codice su GitHub",
+    "ctaGuide": "Guida all'installazione",
+    "ctaDemo": "Prova la demo",
+    "prop1Title": "Sempre gratuito",
+    "prop1Body": "SAVINT è e sarà sempre gratuito per tutte le scuole, senza costi di licenza o abbonamento.",
+    "prop2Title": "Open source",
+    "prop2Body": "Il codice è pubblico su GitHub: puoi studiarlo, modificarlo e contribuire al progetto.",
+    "prop3Title": "I tuoi dati restano a scuola",
+    "prop3Body": "Self-hosted significa che quiz e dati degli studenti vivono sul tuo server, non su cloud esterni.",
+    "howTitle": "Come si installa",
+    "step1Title": "Un server con Docker",
+    "step1Body": "Ti basta un server (VPS o on-premise) con Docker e Docker Compose installati.",
+    "step2Title": "Avvia con Docker Compose",
+    "step2Body": "Usa il file compose ufficiale: l'immagine è già configurata e pronta all'uso.",
+    "step3Title": "Dominio e HTTPS",
+    "step3Body": "Punta un dominio al server e configura HTTPS con un reverse proxy (es. Nginx + Certbot).",
+    "step4Title": "Collega a savint.it",
+    "step4Body": "Dal pannello dell'istanza collegala a savint.it per pubblicare e scaricare quiz dalla community.",
+    "finalTitle": "Inizia oggi, è gratis",
+    "finalBody": "SAVINT è software libero (AGPL-3.0): scarica, installa e porta i quiz interattivi nella tua scuola."
   }
 }

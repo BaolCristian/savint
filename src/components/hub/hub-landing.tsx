@@ -44,11 +44,17 @@ export async function HubLanding() {
             {t("searchButton")}
           </button>
         </form>
-        <div className="mt-6 flex justify-center gap-4 text-sm">
-          <Link href={withBasePath("/explore")} className="text-indigo-700 underline">
+        <div className="mt-6 flex justify-center gap-3 text-sm">
+          <Link
+            href={withBasePath("/explore")}
+            className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 transition-colors"
+          >
             {t("browseAll")}
           </Link>
-          <Link href={withBasePath("/hub-register")} className="text-indigo-700 underline">
+          <Link
+            href={withBasePath("/hub-register")}
+            className="rounded-lg border border-indigo-200 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors"
+          >
             {t("signUp")}
           </Link>
         </div>
@@ -80,12 +86,18 @@ export async function HubLanding() {
         <div className="rounded-2xl bg-slate-900 text-white p-8 sm:p-10">
           <h2 className="text-2xl font-bold mb-2">{t("schoolTitle")}</h2>
           <p className="text-slate-300 mb-4 max-w-2xl">{t("schoolBody")}</p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-3">
             <Link
               href={withBasePath("/demo")}
-              className="rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 hover:bg-slate-100"
+              className="rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
               {t("tryItButton")}
+            </Link>
+            <Link
+              href={withBasePath("/install")}
+              className="rounded-lg border border-white/40 px-5 py-2.5 font-semibold text-white hover:bg-white/10 transition-colors"
+            >
+              {t("installCta")}
             </Link>
           </div>
         </div>
