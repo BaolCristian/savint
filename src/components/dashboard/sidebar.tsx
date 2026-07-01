@@ -15,7 +15,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => void }) {
+function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigate?: () => void; hubEnabled?: boolean }) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const t = useTranslations("sidebar");
@@ -28,7 +28,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
     { href: "/dashboard/share", label: t("shares"), icon: Share2 },
     { href: "/dashboard/library", label: t("library"), icon: Library },
     { href: "/dashboard/ai-prompts", label: t("createWithAI"), icon: Sparkles },
-    ...(process.env.NEXT_PUBLIC_SAVINT_HUB_URL
+    ...(hubEnabled
       ? [{ href: "/dashboard/hub", label: t("browseRepository"), icon: Globe }]
       : []),
   ];
@@ -99,7 +99,7 @@ function SidebarContent({ user, onNavigate }: { user: any; onNavigate?: () => vo
   );
 }
 
-export function DashboardSidebar({ user }: { user: any }) {
+export function DashboardSidebar({ user, hubEnabled }: { user: any; hubEnabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const t = useTranslations("sidebar");
 
@@ -107,7 +107,7 @@ export function DashboardSidebar({ user }: { user: any }) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex-col shadow-sm">
-        <SidebarContent user={user} />
+        <SidebarContent user={user} hubEnabled={hubEnabled} />
       </aside>
 
       {/* Mobile header with hamburger */}
@@ -121,7 +121,7 @@ export function DashboardSidebar({ user }: { user: any }) {
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-4 flex flex-col">
             <SheetTitle className="sr-only">{t("navigationMenu")}</SheetTitle>
-            <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+            <SidebarContent user={user} onNavigate={() => setOpen(false)} hubEnabled={hubEnabled} />
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2">
