@@ -539,7 +539,7 @@ function QuizCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-1.5 px-4 py-3 border-t border-slate-100 dark:border-slate-800 overflow-visible">
+      <div className="flex flex-wrap items-center gap-1.5 gap-y-2 px-4 py-3 border-t border-slate-100 dark:border-slate-800 overflow-visible">
         {/* Play — primary */}
         {quiz.suspended ? (
           <span className="flex items-center gap-1.5 text-sm font-medium text-slate-400 p-2" title={t("suspended")}>
