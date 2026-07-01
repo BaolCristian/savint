@@ -3,7 +3,7 @@ import { verifyEmail } from "@/lib/hub/affiliation";
 import { publicOrigin } from "@/lib/request-origin";
 
 export async function GET(req: NextRequest) {
-  const token = new URL(req.url).searchParams.get("token") ?? "";
+  const token = req.nextUrl.searchParams.get("token") ?? "";
   const res = await verifyEmail(token);
   const dest = res.ok ? "/affiliazione?verified=1" : "/affiliazione?error=invalid";
   return NextResponse.redirect(`${publicOrigin(req)}${dest}`);

@@ -8,7 +8,7 @@ import { resetRateLimitsByPrefix } from "@/lib/rate-limit/hub-rate-limit";
 import { sendAffiliationVerifyEmail } from "@/lib/email/affiliation-emails";
 
 afterAll(async () => {
-  await prisma.affiliationRequest.deleteMany({ where: { contactEmail: "req@test.edu.it" } });
+  await prisma.affiliationRequest.deleteMany({ where: { contactEmail: { endsWith: "@test.edu.it" } } });
   await resetRateLimitsByPrefix("affiliation-request:");
 });
 
@@ -58,7 +58,7 @@ it("rate-limita dopo 5 richieste dallo stesso IP", async () => {
   const ip = "9.9.9.9";
   // First 5 may succeed or fail on validation — we just need to exhaust the window
   for (let i = 0; i < 5; i++) {
-    await POST(makePostReq(validBody, ip));
+    await POST(makePostReq({ ...validBody, contactEmail: `req+${i}@test.edu.it` }, ip));
   }
   const res = await POST(makePostReq(validBody, ip));
   expect(res.status).toBe(429);
