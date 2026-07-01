@@ -42,6 +42,7 @@ describe("PublishModal", () => {
         onSuccess={onSuccess}
       />,
     );
+    fireEvent.change(screen.getByPlaceholderText("600"), { target: { value: "600" } });
     fireEvent.click(screen.getByLabelText(/I confirm the publication declaration/i));
     fireEvent.click(screen.getByRole("button", { name: /^Publish$/i }));
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());

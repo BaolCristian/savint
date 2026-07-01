@@ -1,9 +1,27 @@
 "use client";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { withBasePath } from "@/lib/base-path";
+import { QUIZ_SUBJECTS } from "@/lib/quiz-subjects";
 
 type SchoolLevel = "PRIMARIA" | "SECONDARIA_I" | "SECONDARIA_II" | "UNIVERSITA" | "ALTRO";
+
+const SCHOOL_LEVELS = [
+  { value: "PRIMARIA", it: "Scuola primaria", en: "Primary school" },
+  { value: "SECONDARIA_I", it: "Secondaria di I grado", en: "Lower secondary" },
+  { value: "SECONDARIA_II", it: "Secondaria di II grado", en: "Upper secondary" },
+  { value: "UNIVERSITA", it: "Università", en: "University" },
+  { value: "ALTRO", it: "Altro", en: "Other" },
+] as const;
+
+const LANGUAGES = [
+  { value: "it", it: "Italiano", en: "Italian" },
+  { value: "en", it: "Inglese", en: "English" },
+  { value: "fr", it: "Francese", en: "French" },
+  { value: "es", it: "Spagnolo", en: "Spanish" },
+  { value: "de", it: "Tedesco", en: "German" },
+  { value: "la", it: "Latino", en: "Latin" },
+] as const;
 
 export type PublishQuiz = {
   id: string;
@@ -29,6 +47,7 @@ type Props = {
 
 export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
   const t = useTranslations("hub.publish");
+  const locale = useLocale();
 
   const [schoolLevel, setSchoolLevel] = useState(quiz.schoolLevel ?? "");
   const [subject, setSubject] = useState(quiz.subject ?? "");
@@ -147,41 +166,59 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("schoolLevel")}
+                {t("schoolLevel")} <span className="text-red-500">*</span>
               </label>
-              <input
+              <select
                 value={schoolLevel}
                 onChange={(e) => setSchoolLevel(e.target.value)}
+                required
                 className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
+              >
+                <option value="">—</option>
+                {SCHOOL_LEVELS.map((l) => (
+                  <option key={l.value} value={l.value}>{locale === "en" ? l.en : l.it}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("subject")}
+                {t("subject")} <span className="text-red-500">*</span>
               </label>
-              <input
+              <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                required
                 className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
+              >
+                <option value="">—</option>
+                {QUIZ_SUBJECTS.map((s) => (
+                  <option key={s.slug} value={s.slug}>{locale === "en" ? s.label_en : s.label_it}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("language")}
+                {t("language")} <span className="text-red-500">*</span>
               </label>
-              <input
+              <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
+                required
                 className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
+              >
+                <option value="">—</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>{locale === "en" ? l.en : l.it}</option>
+                ))}
+              </select>
             </div>
 
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t("ageMin")}
+                  {t("ageMin")} <span className="text-slate-400 font-normal">({locale === "en" ? "optional" : "facoltativo"})</span>
                 </label>
                 <input
                   type="number"
@@ -192,7 +229,7 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t("ageMax")}
+                  {t("ageMax")} <span className="text-slate-400 font-normal">({locale === "en" ? "optional" : "facoltativo"})</span>
                 </label>
                 <input
                   type="number"
@@ -205,10 +242,13 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("estimatedDuration")}
+                {t("estimatedDuration")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
+                required
+                min={10}
+                placeholder="600"
                 value={estimatedDuration}
                 onChange={(e) => setEstimatedDuration(e.target.value)}
                 className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
