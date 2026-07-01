@@ -718,6 +718,7 @@
     "exploreTitle": "Repository pubblico dei quiz",
     "exploreSubtitle": "Cerca migliaia di quiz creati dai docenti",
     "hubUnreachable": "savint.it non raggiungibile. Riprova più tardi.",
+    "searchPlaceholder": "Cerca su savint.it…",
     "filters": {
       "schoolLevel": "Grado scolastico",
       "subject": "Materia",

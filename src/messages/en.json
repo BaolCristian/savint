@@ -718,6 +718,7 @@
     "exploreTitle": "Public quiz repository",
     "exploreSubtitle": "Search thousands of quizzes created by teachers",
     "hubUnreachable": "savint.it is unreachable. Please try again later.",
+    "searchPlaceholder": "Search savint.it…",
     "filters": {
       "schoolLevel": "School level",
       "subject": "Subject",

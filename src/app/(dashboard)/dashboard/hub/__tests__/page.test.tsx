@@ -22,6 +22,8 @@ vi.mock("next-intl/server", () => ({
         exploreSubtitle: "Search thousands of quizzes",
         by: "by {author}",
         noResults: "No quizzes match your filters",
+        hubUnreachable: "Hub not reachable. Please try again later.",
+        searchPlaceholder: "Search savint.it…",
       },
     };
     const ns = translations[namespace] ?? {};
@@ -73,7 +75,7 @@ describe("/dashboard/hub browse page", () => {
       perPage: 20,
     });
 
-    const ui = await HubBrowsePage();
+    const ui = await HubBrowsePage({ searchParams: Promise.resolve({}) });
     render(ui);
 
     expect(screen.getByText("Algebra for Beginners")).toBeInTheDocument();
@@ -83,7 +85,7 @@ describe("/dashboard/hub browse page", () => {
   it("shows not-configured message when SAVINT_HUB_URL is unset", async () => {
     delete process.env.SAVINT_HUB_URL;
 
-    const ui = await HubBrowsePage();
+    const ui = await HubBrowsePage({ searchParams: Promise.resolve({}) });
     render(ui);
 
     expect(screen.getByText(/Hub not configured/i)).toBeInTheDocument();
@@ -92,7 +94,7 @@ describe("/dashboard/hub browse page", () => {
   it("shows error message when hub is not reachable", async () => {
     mockSearchHubQuizzesRemote.mockRejectedValueOnce(new Error("fetch failed"));
 
-    const ui = await HubBrowsePage();
+    const ui = await HubBrowsePage({ searchParams: Promise.resolve({}) });
     render(ui);
 
     expect(screen.getByText(/Hub not reachable/i)).toBeInTheDocument();
