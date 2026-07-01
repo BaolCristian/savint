@@ -811,7 +811,9 @@
       "revoke": "Revoke",
       "connect": "Connect savint.it account",
       "revoking": "Revoking…",
-      "revoked": "Link revoked."
+      "revoked": "Link revoked.",
+      "backToDashboard": "Back to dashboard",
+      "revokeHint": "Revoking unlinks your savint.it account from this installation: you won't be able to publish until you reconnect. Quizzes you already published stay on savint.it (to remove one: open the quiz → Publish to savint.it → Unpublish)."
     },
     "email": {
       "suspended": {

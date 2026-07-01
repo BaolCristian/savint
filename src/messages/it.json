@@ -811,7 +811,9 @@
       "revoke": "Revoca",
       "connect": "Collega account savint.it",
       "revoking": "Revoca in corso…",
-      "revoked": "Collegamento revocato."
+      "revoked": "Collegamento revocato.",
+      "backToDashboard": "Torna alla dashboard",
+      "revokeHint": "Revoca scollega il tuo account savint.it da questa installazione: non potrai più pubblicare finché non ricolleghi. I quiz già pubblicati restano su savint.it (per rimuoverne uno: apri il quiz → Pubblica su savint.it → Rimuovi)."
     },
     "email": {
       "suspended": {

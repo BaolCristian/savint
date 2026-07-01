@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { hasHubOAuthConfig, getHubOAuthConfig } from "@/lib/hub/oauth-config";
+import Link from "next/link";
 import { RevokeButton } from "./revoke-button";
 
 export default async function HubLinkPage() {
@@ -30,15 +31,24 @@ export default async function HubLinkPage() {
 
       <div className="rounded-xl bg-white p-6 shadow">
         {isLinked ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <p className="text-sm text-gray-700">
               {t("linkedAs", { email: link.hubAccountEmail })}
             </p>
-            <RevokeButton
-              revoke={t("revoke")}
-              revoking={t("revoking")}
-              revoked={t("revoked")}
-            />
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              {t("backToDashboard")}
+            </Link>
+            <div className="border-t border-slate-100 pt-4">
+              <p className="mb-2 text-xs text-slate-500">{t("revokeHint")}</p>
+              <RevokeButton
+                revoke={t("revoke")}
+                revoking={t("revoking")}
+                revoked={t("revoked")}
+              />
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
