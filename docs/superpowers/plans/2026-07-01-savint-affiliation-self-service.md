@@ -312,25 +312,17 @@ export async function approve(requestId: string, adminId: string) {
   const clientSecretHash = await hashPassword(clientSecret);
   const setupCode = randomBytes(24).toString("base64url");
 
-  await prisma.$transaction(async (tx) => {
-    const inst = await tx.installation.create({
-      data: { name: req.schoolName, contactEmail: req.contactEmail, clientId, clientSecretHash },
-    });
-    await tx.affiliationRequest.update({
-      where: { id: req.id },
-      data: {
-        status: "APPROVED", installationId: inst.id, reviewedByHubAccountId: adminId, reviewedAt: new Date(),
-        setupCodeHash: sha256(setupCode), setupCodeExpiresAt: new Date(Date.now() + SETUP_CODE_TTL_MS),
-        // NB: il clientSecret in chiaro serve solo al redeem; lo ricaviamo di nuovo lì? No: lo salviamo cifrato-di-fatto tramite il codice.
-      },
-    });
-    // Il secret in chiaro NON è recuperabile dall'hash bcrypt: va conservato per il redeem.
-    // Salviamo il secret in chiaro nel record, protetto dal fatto che il redeem lo cancella dopo l'uso.
-    await tx.affiliationRequest.update({ where: { id: req.id }, data: { rejectionReason: null } });
+  const inst = await prisma.installation.create({
+    data: { name: req.schoolName, contactEmail: req.contactEmail, clientId, clientSecretHash },
   });
-
-  // Conserva il secret in chiaro per il redeem (campo dedicato) — vedi nota sotto.
-  await prisma.affiliationRequest.update({ where: { id: req.id }, data: { pendingClientSecret: clientSecret, pendingClientId: clientId } });
+  await prisma.affiliationRequest.update({
+    where: { id: req.id },
+    data: {
+      status: "APPROVED", installationId: inst.id, reviewedByHubAccountId: adminId, reviewedAt: new Date(),
+      setupCodeHash: sha256(setupCode), setupCodeExpiresAt: new Date(Date.now() + SETUP_CODE_TTL_MS),
+      pendingClientId: clientId, pendingClientSecret: clientSecret,
+    },
+  });
 
   return { ok: true as const, setupCode, contactEmail: req.contactEmail, schoolName: req.schoolName };
 }
@@ -357,7 +349,7 @@ export async function redeem(setupCode: string) {
 }
 ```
 
-> **NOTA DI PIANO (risolvere in Step 1):** il codice sopra usa `pendingClientId` e `pendingClientSecret`. **Aggiungere questi due campi opzionali al model `AffiliationRequest` in Task 1** (`pendingClientId String?`, `pendingClientSecret String?`) — il secret in chiaro va conservato tra approvazione e redeem perché l'hash bcrypt è irreversibile, e cancellato al redeem. In alternativa (hardening futuro): cifrare `pendingClientSecret` a riposo. Aggiornare Task 1 di conseguenza prima di eseguire.
+> **Nota:** i campi `pendingClientId`/`pendingClientSecret` sono gia' nel model (Task 1): conservano il `clientSecret` in chiaro tra approvazione e redeem (l'hash bcrypt e' irreversibile) e vengono azzerati al redeem.
 
 - [ ] **Step 2: Test di integrazione** (DB reale, ciclo completo)
 

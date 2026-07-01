@@ -32,9 +32,10 @@ beforeAll(async () => {
   qlzPayload = Buffer.from(arrayBuffer);
 });
 
-// Mock next/navigation (notFound)
+// Mock next/navigation (notFound + useRouter)
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }),
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
 // Mock next-intl

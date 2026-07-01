@@ -24,7 +24,7 @@ export function getAuthorizeUrl(quizId?: string): string {
 }
 
 async function refreshLink(userId: string, secret: string) {
-  const cfg = getHubOAuthConfig();
+  const cfg = await getHubOAuthConfig();
   const link = await prisma.hubLink.findUnique({ where: { userId } });
   if (!link || link.revokedAt) throw new HubLinkMissingError();
   const currentRefresh = decryptToken(link.refreshTokenCiphertext, secret);
@@ -77,7 +77,7 @@ export async function fetchWithTokenRefresh(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  const cfg = getHubOAuthConfig();
+  const cfg = await getHubOAuthConfig();
   const secret = process.env.NEXTAUTH_SECRET ?? "";
   const link = await prisma.hubLink.findUnique({ where: { userId } });
   if (!link || link.revokedAt) throw new HubLinkMissingError();

@@ -916,5 +916,32 @@
     "step4Body": "From the instance panel, connect it to savint.it to publish and download quizzes from the community.",
     "finalTitle": "Start today, it is free",
     "finalBody": "SAVINT is free software (AGPL-3.0): download, install and bring interactive quizzes to your school."
+  },
+  "affiliation": {
+    "pageTitle": "Bring SAVINT to your school",
+    "pageSubtitle": "Fill in the form to request a dedicated installation for your school.",
+    "schoolNameLabel": "School name",
+    "provinceLabel": "Province",
+    "installationUrlLabel": "Installation URL (e.g. https://quiz.school.it)",
+    "contactEmailLabel": "Contact email",
+    "submitButton": "Send request",
+    "submitting": "Sending...",
+    "successTitle": "Request sent!",
+    "successBody": "Check your email and click the verification link to complete the request.",
+    "verifiedNotice": "Email confirmed. Your request is pending approval by the SAVINT team.",
+    "errorGeneric": "Error while sending. Please try again.",
+    "adminTitle": "Pending affiliation requests",
+    "adminNoRequests": "No pending requests.",
+    "adminSchoolName": "School",
+    "adminProvince": "Province",
+    "adminUrl": "URL",
+    "adminEmail": "Email",
+    "adminDate": "Date",
+    "adminActions": "Actions",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectReasonPrompt": "Rejection reason (optional)",
+    "approveError": "Error during approval.",
+    "rejectError": "Error during rejection."
   }
 }

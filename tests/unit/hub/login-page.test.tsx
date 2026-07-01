@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import HubLoginPage from "@/app/(hub)/hub-login/page";
 import messages from "@/messages/en.json";
 
 vi.mock("next-auth/react", () => ({
   signIn: vi.fn(),
+  getProviders: vi.fn(async () => ({ google: { id: "google" } })),
 }));
 
 beforeEach(() => {
@@ -13,13 +14,13 @@ beforeEach(() => {
 });
 
 describe("HubLoginPage", () => {
-  it("renders both Google and email/password fields", () => {
-    const { getByText, getByLabelText } = render(
+  it("renders both Google and email/password fields", async () => {
+    const { getByLabelText } = render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <HubLoginPage />
       </NextIntlClientProvider>,
     );
-    expect(getByText(/sign in with google/i)).toBeTruthy();
+    expect(await screen.findByText(/sign in with google/i)).toBeTruthy();
     expect(getByLabelText(/email/i)).toBeTruthy();
     expect(getByLabelText(/password/i)).toBeTruthy();
   });

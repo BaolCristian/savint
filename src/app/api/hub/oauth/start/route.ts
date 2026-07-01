@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const quizId = url.searchParams.get("quizId") ?? undefined;
   const scopes = (url.searchParams.get("scopes") ?? "publish").split(/[\s,]+/).filter(Boolean);
 
-  const cfg = getHubOAuthConfig();
+  const cfg = await getHubOAuthConfig();
   const pkce = generatePkcePair();
   const state = generateOpaqueToken();
 
