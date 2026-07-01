@@ -127,7 +127,7 @@ function buildFeedbackOptions(
       // correct:  { hotspot: { x: number; y: number; radius: number } }
       return {
         imageUrl: (stripped.imageUrl ?? "") as string,
-        hotspot: correct.hotspot as { x: number; y: number; radius: number },
+        hotspot: (correct.hotspot ?? { x: 0, y: 0, radius: 0 }) as { x: number; y: number; radius: number },
         tolerance: (stripped.tolerance ?? 0) as number,
       } as ImageHotspotOptions;
 
