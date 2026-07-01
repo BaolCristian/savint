@@ -53,9 +53,12 @@ export async function approve(requestId: string, adminId: string) {
 
 export async function reject(requestId: string, adminId: string, reason?: string) {
   const req = await prisma.affiliationRequest.findUnique({ where: { id: requestId } });
-  if (!req || (req.status !== "PENDING_REVIEW" && req.status !== "PENDING_EMAIL")) return { ok: false };
-  await prisma.affiliationRequest.update({ where: { id: req.id }, data: { status: "REJECTED", reviewedByHubAccountId: adminId, reviewedAt: new Date(), rejectionReason: reason ?? null } });
-  return { ok: true };
+  if (!req || (req.status !== "PENDING_REVIEW" && req.status !== "PENDING_EMAIL")) return { ok: false as const };
+  await prisma.affiliationRequest.update({
+    where: { id: req.id },
+    data: { status: "REJECTED", reviewedByHubAccountId: adminId, reviewedAt: new Date(), rejectionReason: reason ?? null },
+  });
+  return { ok: true as const, contactEmail: req.contactEmail, schoolName: req.schoolName };
 }
 
 export async function redeem(setupCode: string) {
