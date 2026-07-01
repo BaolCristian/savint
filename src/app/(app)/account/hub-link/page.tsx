@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/client";
 import { getHubOAuthConfig } from "@/lib/hub/oauth-config";
 import Link from "next/link";
 import { RevokeButton } from "./revoke-button";
+import { SetupCodeForm } from "./setup-code-form";
 
 export default async function HubLinkPage() {
   const session = await auth();
@@ -12,12 +13,16 @@ export default async function HubLinkPage() {
 
   const t = await getTranslations("hub.link");
 
-  const link = await prisma.hubLink.findUnique({
-    where: { userId: session.user.id },
-    select: { hubAccountEmail: true, revokedAt: true },
-  });
+  const [link, me] = await Promise.all([
+    prisma.hubLink.findUnique({
+      where: { userId: session.user.id },
+      select: { hubAccountEmail: true, revokedAt: true },
+    }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } }),
+  ]);
 
   const isLinked = link && !link.revokedAt;
+  const isAdmin = me?.role === "ADMIN";
 
   let connectUrl: string | null = null;
   if (!isLinked) {
@@ -60,6 +65,12 @@ export default async function HubLinkPage() {
               >
                 {t("connect")}
               </a>
+            )}
+            {isAdmin && (
+              <div className="border-t border-slate-100 pt-4">
+                <p className="mb-2 text-xs text-slate-500">Oppure incolla il codice di setup ricevuto da savint.it:</p>
+                <SetupCodeForm />
+              </div>
             )}
           </div>
         )}
