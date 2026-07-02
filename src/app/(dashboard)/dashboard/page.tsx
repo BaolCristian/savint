@@ -76,10 +76,10 @@ export default async function DashboardHome() {
   };
 
   const stats = [
-    { label: t("quizzesCreated"), value: quizCount, icon: "\u{1F4DD}", color: "from-indigo-500 to-purple-600", bg: "bg-indigo-50 border-indigo-100 dark:bg-indigo-950 dark:border-indigo-800" },
-    { label: t("sessionsPlayed"), value: sessionCount, icon: "\u{1F3AE}", color: "from-emerald-500 to-teal-600", bg: "bg-emerald-50 border-emerald-100 dark:bg-emerald-950 dark:border-emerald-800" },
-    { label: t("totalStudents"), value: studentCount, icon: "\u{1F465}", color: "from-amber-500 to-orange-600", bg: "bg-amber-50 border-amber-100 dark:bg-amber-950 dark:border-amber-800" },
-    { label: t("avgCorrectness"), value: `${correctnessRate}%`, icon: "\u{1F3AF}", color: "from-rose-500 to-pink-600", bg: "bg-rose-50 border-rose-100 dark:bg-rose-950 dark:border-rose-800" },
+    { label: t("quizzesCreated"), value: quizCount, icon: "\u{1F4DD}", accent: "text-brand-blue", bg: "bg-brand-blue-50 border-brand-blue/15 dark:bg-brand-blue/10 dark:border-brand-blue/20" },
+    { label: t("sessionsPlayed"), value: sessionCount, icon: "\u{1F3AE}", accent: "text-brand-orange", bg: "bg-brand-orange-50 border-brand-orange/15 dark:bg-brand-orange/10 dark:border-brand-orange/20" },
+    { label: t("totalStudents"), value: studentCount, icon: "\u{1F465}", accent: "text-brand-magenta", bg: "bg-brand-magenta-50 border-brand-magenta/15 dark:bg-brand-magenta/10 dark:border-brand-magenta/20" },
+    { label: t("avgCorrectness"), value: `${correctnessRate}%`, icon: "\u{1F3AF}", accent: "text-brand-green", bg: "bg-brand-green-50 border-brand-green/15 dark:bg-brand-green/10 dark:border-brand-green/20" },
   ];
 
   return (
@@ -101,7 +101,7 @@ export default async function DashboardHome() {
               <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{stat.label}</span>
               <span className="text-2xl">{stat.icon}</span>
             </div>
-            <p className="text-4xl font-black text-slate-900 dark:text-white">{stat.value}</p>
+            <p className={`text-4xl font-black ${stat.accent}`}>{stat.value}</p>
           </div>
         ))}
       </section>
@@ -114,7 +114,7 @@ export default async function DashboardHome() {
               <span className="text-xl">{"\u{1F3AE}"}</span>
               <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t("recentSessions")}</h2>
             </div>
-            <Link href="/dashboard/sessions" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+            <Link href="/dashboard/sessions" className="text-sm font-semibold text-brand-blue hover:text-blue-500 transition-colors">
               {t("viewAll")}
             </Link>
           </div>
@@ -156,7 +156,7 @@ export default async function DashboardHome() {
               <span className="text-xl">{"\u{1F4DD}"}</span>
               <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t("recentQuizzes")}</h2>
             </div>
-            <Link href="/dashboard/quiz" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+            <Link href="/dashboard/quiz" className="text-sm font-semibold text-brand-blue hover:text-blue-500 transition-colors">
               {t("viewAllQuizzes")}
             </Link>
           </div>
@@ -165,7 +165,7 @@ export default async function DashboardHome() {
               <div className="px-6 py-10 text-center">
                 <span className="text-4xl block mb-2">{"\u{1F4DA}"}</span>
                 <p className="text-slate-500">{t("noQuizzesYet")}</p>
-                <Link href="/dashboard/quiz/new" className="text-sm text-indigo-600 font-semibold hover:underline mt-1 block">
+                <Link href="/dashboard/quiz/new" className="text-sm text-brand-blue font-semibold hover:underline mt-1 block">
                   {t("createFirstQuiz")}
                 </Link>
               </div>

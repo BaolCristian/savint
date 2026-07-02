@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { ANSWER_TILES, CONFETTI_COLORS, GAME } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
 import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
@@ -22,15 +23,10 @@ import {
 import { Button } from "@/components/ui/button";
 
 function HostConfetti() {
-  const colors = [
-    "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF",
-    "#FF8C00", "#E040FB", "#00E5FF", "#FF4081",
-    "#FFEB3B", "#76FF03", "#536DFE", "#FF1744",
-  ];
   const pieces = Array.from({ length: 80 }, (_, i) => ({
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 2}s`,
-    color: colors[i % colors.length],
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
     size: 8 + Math.random() * 12,
     duration: `${2.5 + Math.random() * 2}s`,
     isCircle: Math.random() > 0.5,
@@ -161,14 +157,6 @@ interface GameOverData {
   fullResults: { playerName: string; playerAvatar?: string; score: number }[];
 }
 
-const MC_COLORS = [
-  "from-red-500 to-red-600",
-  "from-blue-500 to-blue-600",
-  "from-amber-500 to-yellow-500",
-  "from-emerald-500 to-green-600",
-];
-
-const MC_ICONS = ["\u25B2", "\u25C6", "\u25CF", "\u25A0"];
 
 function CountdownScreen({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations("live");
@@ -435,9 +423,7 @@ export function HostView({ session }: Props) {
         {/* Top bar */}
         <header className="bg-slate-800/80 backdrop-blur border-b border-slate-700 px-6 lg:px-10 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow shrink-0">
-              Q
-            </div>
+            <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-9 h-9 object-contain shrink-0" />
             <h1 className="text-lg lg:text-xl font-bold truncate text-slate-200">{session.quiz.title}</h1>
           </div>
           <div className="flex items-center gap-4 shrink-0">
@@ -453,23 +439,23 @@ export function HostView({ session }: Props) {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* ── Left: JOIN instructions + PIN ── */}
-          <section className="lg:w-5/12 flex flex-col items-center justify-center p-8 lg:p-12 xl:p-16 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 relative overflow-hidden">
+          <section className="lg:w-5/12 flex flex-col items-center justify-center p-8 lg:p-12 xl:p-16 bg-gradient-to-br from-brand-blue via-blue-700 to-brand-magenta relative overflow-hidden">
             {/* Subtle decorative circles */}
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-            <div className="absolute -bottom-32 -right-16 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-32 -right-16 w-80 h-80 bg-brand-magenta/10 rounded-full blur-3xl" />
 
             {/* Step instructions */}
             <div className="relative z-10 text-center mb-8">
               <div className="inline-flex flex-col gap-3 text-left">
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">1</span>
-                  <span className="text-lg lg:text-xl text-indigo-100 font-medium">
+                  <span className="text-lg lg:text-xl text-blue-100 font-medium">
                     {t("goTo")} <span className="font-bold text-white underline underline-offset-4 decoration-2">{joinHost}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">2</span>
-                  <span className="text-lg lg:text-xl text-indigo-100 font-medium">{t("enterThisPin")}</span>
+                  <span className="text-lg lg:text-xl text-blue-100 font-medium">{t("enterThisPin")}</span>
                 </div>
               </div>
             </div>
@@ -487,7 +473,7 @@ export function HostView({ session }: Props) {
             {/* QR code */}
             {origin && (
               <div className="relative z-10 mt-6 flex flex-col items-center gap-2">
-                <p className="text-xs uppercase tracking-[0.2em] text-indigo-200/70 font-semibold">
+                <p className="text-xs uppercase tracking-[0.2em] text-blue-200/70 font-semibold">
                   {t("orScanQr")}
                 </p>
                 <div className="bg-white rounded-2xl p-3 shadow-lg shadow-black/20">
@@ -502,7 +488,7 @@ export function HostView({ session }: Props) {
             )}
 
             {/* Quiz info */}
-            <div className="relative z-10 mt-6 flex items-center gap-4 text-indigo-200 text-sm lg:text-base">
+            <div className="relative z-10 mt-6 flex items-center gap-4 text-blue-200 text-sm lg:text-base">
               <span>{tc("questions", { count: session.quiz.questions.length })}</span>
             </div>
           </section>
@@ -517,7 +503,7 @@ export function HostView({ session }: Props) {
                 </h2>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-lg lg:text-xl font-bold px-4 py-1.5 rounded-full tabular-nums">
+                <span className="bg-brand-blue/20 text-blue-300 border border-brand-blue/30 text-lg lg:text-xl font-bold px-4 py-1.5 rounded-full tabular-nums">
                   {playerCount}
                 </span>
               </div>
@@ -655,7 +641,7 @@ export function HostView({ session }: Props) {
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-32 lg:w-48 bg-slate-700 rounded-full h-2.5">
                 <div
-                  className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                  className="bg-brand-blue h-full rounded-full transition-all duration-300"
                   style={{ width: `${((q.questionIndex + 1) / q.totalQuestions) * 100}%` }}
                 />
               </div>
@@ -664,8 +650,8 @@ export function HostView({ session }: Props) {
 
           <div className="flex items-center gap-4 lg:gap-6">
             {/* PIN badge */}
-            <div className="hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
-              <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+            <div className="hidden sm:flex items-center gap-1.5 bg-brand-blue/30 border border-brand-blue/40 rounded-xl px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold">PIN</span>
               <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
             </div>
 
@@ -709,7 +695,7 @@ export function HostView({ session }: Props) {
             {/* Skip to results */}
             <button
               onClick={handleShowResults}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 lg:px-6 py-2.5 rounded-full transition-all text-sm lg:text-base shadow-md hover:shadow-lg active:scale-95"
+              className="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 lg:px-6 py-2.5 rounded-full transition-all text-sm lg:text-base shadow-md hover:shadow-lg active:scale-95"
             >
               {t("skipToResults")} →
             </button>
@@ -747,10 +733,10 @@ export function HostView({ session }: Props) {
               (choice, i) => (
                 <div
                   key={i}
-                  className={`bg-gradient-to-br ${MC_COLORS[i % MC_COLORS.length]} rounded-2xl p-4 lg:p-6 flex items-center gap-3 lg:gap-4 shadow-lg`}
+                  className={`bg-gradient-to-br ${ANSWER_TILES[i % ANSWER_TILES.length].gradient} rounded-2xl p-4 lg:p-6 flex items-center gap-3 lg:gap-4 shadow-lg`}
                 >
                   <span className="text-2xl lg:text-3xl font-bold opacity-50">
-                    {MC_ICONS[i % MC_ICONS.length]}
+                    {ANSWER_TILES[i % ANSWER_TILES.length].shape}
                   </span>
                   <span className="text-lg lg:text-2xl font-bold">{choice.text}</span>
                 </div>
@@ -863,8 +849,8 @@ export function HostView({ session }: Props) {
             {t("resultsHeader", { index: q ? q.questionIndex + 1 : "" })}
           </h2>
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
-              <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+            <div className="hidden sm:flex items-center gap-1.5 bg-brand-blue/30 border border-brand-blue/40 rounded-xl px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold">PIN</span>
               <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
             </div>
             <span className="text-sm lg:text-base text-slate-400">
@@ -952,7 +938,6 @@ export function HostView({ session }: Props) {
                       const widthPercent = (value / maxVal) * 100;
                       const isCorrect = correctTexts.has(key);
                       const label = q?.question.type === "TRUE_FALSE" ? (key === "true" ? tc("true") : tc("false")) : key;
-                      const barColor = MC_COLORS[i % MC_COLORS.length].replace("from-", "").replace(/ to-.*/, "");
                       return (
                         <div
                           key={key}
@@ -970,7 +955,7 @@ export function HostView({ session }: Props) {
                           <div className="flex-1 flex items-center gap-2">
                             <div className="flex-1 bg-slate-700/50 rounded-lg h-8 lg:h-10 overflow-hidden">
                               <div
-                                className={`h-full bg-gradient-to-r ${MC_COLORS[i % MC_COLORS.length]} rounded-lg transition-all duration-1000 flex items-center justify-end pr-2`}
+                                className={`h-full bg-gradient-to-r ${ANSWER_TILES[i % ANSWER_TILES.length].gradient} rounded-lg transition-all duration-1000 flex items-center justify-end pr-2`}
                                 style={{ width: `${Math.max(widthPercent, 4)}%`, transitionDelay: `${i * 150}ms` }}
                               >
                                 {widthPercent > 15 && (
@@ -1070,8 +1055,8 @@ export function HostView({ session }: Props) {
         <HostConfetti />
         {/* Header */}
         <header className="text-center pt-8 lg:pt-12 pb-4 relative">
-          <div className="absolute top-4 right-6 lg:right-10 hidden sm:flex items-center gap-1.5 bg-indigo-600/30 border border-indigo-500/40 rounded-xl px-3 py-2">
-            <span className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">PIN</span>
+          <div className="absolute top-4 right-6 lg:right-10 hidden sm:flex items-center gap-1.5 bg-brand-blue/30 border border-brand-blue/40 rounded-xl px-3 py-2">
+            <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold">PIN</span>
             <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-black animate-zoom-in-bounce">{t("podiumTitle")}</h2>
@@ -1137,7 +1122,7 @@ export function HostView({ session }: Props) {
         <footer className="bg-slate-900 border-t border-slate-700 px-6 lg:px-16 py-5 flex flex-col items-center gap-3">
           <Link
             href="/dashboard"
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-lg lg:text-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            className="bg-gradient-to-r from-brand-blue to-brand-magenta hover:opacity-90 text-white font-extrabold px-10 lg:px-14 py-4 lg:py-5 rounded-2xl text-lg lg:text-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
           >
             {t("backToDashboard")}
           </Link>

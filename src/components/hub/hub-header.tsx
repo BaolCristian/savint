@@ -35,14 +35,14 @@ export function HubHeader() {
             alt="SAVINT"
             className="h-7 w-7 object-contain"
           />
-          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-lg font-extrabold text-transparent">
+          <span className="bg-gradient-to-r from-brand-blue to-brand-magenta bg-clip-text text-lg font-extrabold text-transparent">
             SAVINT
           </span>
         </Link>
         <nav className="flex items-center gap-4 text-sm font-medium">
           <Link
             href={withBasePath("/explore")}
-            className="text-slate-600 transition-colors hover:text-indigo-700"
+            className="text-slate-600 transition-colors hover:text-brand-blue"
           >
             {t("exploreNav")}
           </Link>

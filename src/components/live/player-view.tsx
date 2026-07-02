@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ANSWER_TILES, CONFETTI_COLORS, GAME } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
 import { useSearchParams } from "next/navigation";
@@ -67,16 +68,11 @@ interface PodiumData {
 /* ------------------------------------------------------------------ */
 
 function Confetti() {
-  const colors = [
-    "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF",
-    "#FF8C00", "#E040FB", "#00E5FF", "#FF4081",
-    "#FFEB3B", "#76FF03", "#536DFE", "#FF1744",
-  ];
   const shapes = ["circle", "rect", "star"] as const;
   const pieces = Array.from({ length: 60 }, (_, i) => ({
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 1}s`,
-    color: colors[i % colors.length],
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
     size: 6 + Math.random() * 10,
     shape: shapes[i % shapes.length],
     duration: `${2 + Math.random() * 1.5}s`,
@@ -469,7 +465,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     const isFormValid = pin.length >= 5 && name.trim().length >= 2;
 
     return (
-      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-5 sm:px-8 py-3 sm:py-10 overflow-y-auto">
+      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-brand-blue-50 via-background to-brand-magenta-50 px-5 sm:px-8 py-3 sm:py-10 overflow-y-auto">
         <div className="w-full max-w-md mx-auto flex flex-col gap-3 sm:gap-8 flex-1">
           {/* Header */}
           <div className="flex items-center gap-3 sm:flex-col sm:text-center">
@@ -494,7 +490,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               placeholder={t("pinPlaceholder")}
               value={pin}
               onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 8)); setError(null); }}
-              className="h-11 sm:h-16 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-xl sm:text-3xl font-bold tracking-[0.25em] px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="h-11 sm:h-16 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-xl sm:text-3xl font-bold tracking-[0.25em] px-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20 transition-all"
             />
           </div>
 
@@ -510,7 +506,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               placeholder={t("namePlaceholder")}
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
-              className="h-10 sm:h-14 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-base sm:text-xl font-semibold px-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="h-10 sm:h-14 w-full bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-center text-base sm:text-xl font-semibold px-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20 transition-all"
             />
           </div>
 
@@ -523,7 +519,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               <button
                 type="button"
                 onClick={() => setAvatar(randomEmoji(emojiCategories.flatMap((c) => c.emojis)))}
-                className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-brand-blue hover:text-blue-700 bg-brand-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors"
                 title="Avatar casuale"
               >
                 <span className="text-sm">🎲</span> {t("random")}
@@ -532,7 +528,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
             {/* Selected avatar preview */}
             <div className="flex justify-center mb-2 sm:mb-3">
-              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-3xl sm:text-5xl overflow-hidden">
+              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-brand-blue-50 border-2 border-brand-blue/20 flex items-center justify-center text-3xl sm:text-5xl overflow-hidden">
                 <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-10 h-10 sm:w-18 sm:h-18" : ""} />
               </div>
             </div>
@@ -545,7 +541,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
                   onClick={() => setAvatarCategory(i)}
                   className={`flex-1 px-1 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                     avatarCategory === i
-                      ? "bg-emerald-600 text-white shadow-sm"
+                      ? "bg-brand-blue text-white shadow-sm"
                       : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                   }`}
                 >
@@ -565,7 +561,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
                     isCustomAvatar(emoji) ? "w-full aspect-square" : "text-2xl sm:text-3xl"
                   } ${
                     avatar === emoji
-                      ? "bg-emerald-100 ring-2 ring-emerald-500 scale-110 shadow-sm"
+                      ? "bg-brand-blue-50 ring-2 ring-brand-blue scale-110 shadow-sm"
                       : "hover:bg-slate-50 hover:shadow-sm"
                   }`}
                 >
@@ -597,7 +593,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             className={`w-full font-bold text-base sm:text-xl rounded-xl py-3 sm:py-5 transition-all ${
               !connected || !isFormValid
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-xl active:scale-[0.98]"
+                : "bg-brand-blue text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]"
             }`}
           >
             Entra nel quiz
@@ -611,7 +607,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           {/* Explore public quizzes */}
           <a
             href={withBasePath("/explore")}
-            className="text-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 py-2"
+            className="text-center text-sm font-semibold text-brand-blue hover:text-blue-800 py-2"
           >
             {t("exploreLink")}
           </a>
@@ -637,7 +633,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               sessionStorage.removeItem("savint-session");
               window.location.href = withBasePath("/");
             }}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-colors"
+            className="w-full bg-brand-blue hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors"
           >
             {t("kickedBackHome")}
           </button>
@@ -653,7 +649,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       className={`absolute top-3 right-3 z-10 rounded-full backdrop-blur-sm px-3 py-1.5 text-xs font-bold transition-colors ${
         dark
           ? "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-          : "bg-black/5 text-emerald-700/60 hover:bg-black/10 hover:text-emerald-800"
+          : "bg-black/5 text-brand-blue/60 hover:bg-black/10 hover:text-brand-blue"
       }`}
     >
       {t("leave")}
@@ -670,7 +666,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   /* ---------- PIN badge (shown on all in-game screens) ---------- */
   const pinBadge = (dark = true) => pin ? (
     <div className={`absolute top-3 left-3 z-10 rounded-full backdrop-blur-sm px-3 py-1 text-xs font-bold select-none ${
-      dark ? "bg-black/20 text-white/80" : "bg-black/10 text-emerald-800/70"
+      dark ? "bg-black/20 text-white/80" : "bg-black/10 text-brand-blue/70"
     }`}>
       PIN: {pin}
     </div>
@@ -698,7 +694,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     };
 
     return (
-      <div className="relative flex min-h-dvh flex-col items-center justify-center bg-emerald-100 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
+      <div className="relative flex min-h-dvh flex-col items-center justify-center bg-brand-blue-50 p-6 text-center" style={{ backgroundImage: "url('/pattern-school.svg')", backgroundSize: "200px 200px" }}>
         {reconnectionBanner}
         {pinBadge(false)}
         {leaveButton(false)}
@@ -714,7 +710,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               value={renameInput}
               onChange={(e) => { setRenameInput(e.target.value); setRenameError(null); }}
               onKeyDown={(e) => { if (e.key === "Enter") submitRename(); }}
-              className="h-11 w-full bg-white border-2 border-emerald-300 text-slate-900 rounded-xl text-center text-lg font-semibold px-3 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="h-11 w-full bg-white border-2 border-brand-blue/30 text-slate-900 rounded-xl text-center text-lg font-semibold px-3 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20 transition-all"
             />
             {renameError && (
               <p className="text-xs font-medium text-red-600">{renameError}</p>
@@ -722,14 +718,14 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             <div className="flex gap-2 w-full">
               <button
                 onClick={() => { setRenaming(false); setRenameInput(""); setRenameError(null); }}
-                className="flex-1 h-10 rounded-xl bg-white text-emerald-700 border border-emerald-300 font-semibold hover:bg-emerald-50 transition-colors"
+                className="flex-1 h-10 rounded-xl bg-white text-brand-blue border border-brand-blue/30 font-semibold hover:bg-brand-blue-50 transition-colors"
               >
                 {tc("cancel")}
               </button>
               <button
                 onClick={submitRename}
                 disabled={renameInput.trim().length < 2}
-                className="flex-1 h-10 rounded-xl bg-emerald-600 text-white font-semibold shadow-sm hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 transition-colors"
+                className="flex-1 h-10 rounded-xl bg-brand-blue text-white font-semibold shadow-sm hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500 transition-colors"
               >
                 {tc("save")}
               </button>
@@ -738,15 +734,15 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         ) : (
           <button
             onClick={() => { setRenameInput(name); setRenaming(true); setRenameError(null); }}
-            className="group inline-flex items-center gap-2 mb-2 px-3 py-1 rounded-lg hover:bg-emerald-200/60 transition-colors"
+            className="group inline-flex items-center gap-2 mb-2 px-3 py-1 rounded-lg hover:bg-brand-blue/10 transition-colors"
             title={t("changeName")}
             aria-label={t("changeName")}
           >
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800">{name}</h2>
-            <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-brand-ink">{name}</h2>
+            <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-brand-blue opacity-60 group-hover:opacity-100 transition-opacity" />
           </button>
         )}
-        <p className="text-base sm:text-lg lg:text-xl text-emerald-600">
+        <p className="text-base sm:text-lg lg:text-xl text-brand-blue">
           {t("waitingForStart")}
         </p>
       </div>
@@ -831,7 +827,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   if (phase === "feedback" && feedback) {
     if (awaitingConfidence) {
       return (
-        <div className="relative flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-indigo-500 to-purple-700 p-6 text-center">
+        <div className={`relative flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b ${GAME.brandGradient} p-6 text-center`}>
           {reconnectionBanner}
           {pinBadge()}
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
@@ -989,7 +985,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     };
 
     return (
-      <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-4 sm:p-6 lg:p-8 pt-8 sm:pt-12">
+      <div className="flex min-h-dvh flex-col items-center bg-gradient-to-br from-brand-orange via-brand-magenta to-brand-blue p-4 sm:p-6 lg:p-8 pt-8 sm:pt-12">
         {myPodiumEntry && <Confetti />}
         <h2 className="mb-4 sm:mb-6 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">{t("podium")}</h2>
 
@@ -1130,12 +1126,6 @@ export function AnswerInput({
 
 /* ---------- MULTIPLE_CHOICE ---------- */
 
-const MC_GRADIENTS = [
-  "bg-gradient-to-br from-red-500 to-red-600",
-  "bg-gradient-to-br from-blue-500 to-blue-600",
-  "bg-gradient-to-br from-yellow-500 to-yellow-600",
-  "bg-gradient-to-br from-green-500 to-green-600",
-];
 
 function MultipleChoiceInput({
   options,
@@ -1167,12 +1157,11 @@ function MultipleChoiceInput({
             <button
               key={i}
               onClick={() => isMulti ? toggle(i) : onSubmit({ selected: [i] })}
-              className={`flex items-center justify-center rounded-2xl min-h-16 sm:min-h-20 lg:min-h-24 p-2 sm:p-3 lg:p-4 text-white font-bold text-base sm:text-lg lg:text-xl shadow-lg transition-all ${
-                MC_GRADIENTS[i % MC_GRADIENTS.length]
-              } ${isMulti && isSelected ? "ring-4 ring-white scale-105" : ""} ${isMulti && !isSelected ? "opacity-80 hover:opacity-100" : "hover:scale-105 active:scale-95"}`}
+              className={`flex items-center justify-center gap-2 rounded-2xl min-h-16 sm:min-h-20 lg:min-h-24 p-2 sm:p-3 lg:p-4 text-white font-bold text-base sm:text-lg lg:text-xl shadow-lg transition-all bg-gradient-to-br ${ANSWER_TILES[i % 4].gradient} ${isMulti && isSelected ? "ring-4 ring-white scale-105" : ""} ${isMulti && !isSelected ? "opacity-80 hover:opacity-100" : "hover:scale-105 active:scale-95"}`}
             >
-              {isMulti && isSelected && <span className="mr-2">✓</span>}
-              {c.text}
+              <span className="text-xl sm:text-2xl opacity-70 shrink-0">{ANSWER_TILES[i % 4].shape}</span>
+              {isMulti && isSelected && <span>✓</span>}
+              <span>{c.text}</span>
             </button>
           );
         })}
@@ -1309,7 +1298,7 @@ function OrderingInput({
               onClick={() => handleTap(pos)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all select-none cursor-pointer ${
                 isActive
-                  ? "bg-indigo-500/40 ring-2 ring-indigo-400 scale-[1.03] shadow-lg shadow-indigo-500/20"
+                  ? "bg-brand-blue/40 ring-2 ring-brand-blue scale-[1.03] shadow-lg shadow-brand-blue/20"
                   : activeIdx !== null
                     ? "bg-white/10 hover:bg-white/20 ring-1 ring-dashed ring-white/20"
                     : "bg-white/10 hover:bg-white/15 active:scale-[0.98]"
@@ -1318,7 +1307,7 @@ function OrderingInput({
               {/* Position number */}
               <span className={`w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0 transition-colors ${
                 isActive
-                  ? "bg-indigo-500 text-white"
+                  ? "bg-brand-blue text-white"
                   : "bg-white/20 text-white/80"
               }`}>
                 {pos + 1}
