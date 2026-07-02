@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { signIn, getProviders } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslations } from "next-intl";
 
@@ -10,17 +10,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("docente@scuola.it");
   const showDevLogin = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.NODE_ENV === "development";
 
+  // Only offer Google when the provider is actually configured on this
+  // installation. On the demo (no GOOGLE_CLIENT_ID) the provider is absent,
+  // so we hide the button instead of showing one that errors when clicked.
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+  useEffect(() => {
+    getProviders()
+      .then((providers) => setGoogleEnabled(Boolean(providers?.google)))
+      .catch(() => setGoogleEnabled(false));
+  }, []);
+
   return (
     <div className="flex h-dvh items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4">
       <div className="text-center space-y-3 sm:space-y-6 w-full max-w-sm">
         <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-20 h-20 sm:w-32 sm:h-32 mx-auto object-contain" />
-        <p className="text-blue-200 text-sm sm:text-base">{t("loginWithSchoolAccount")}</p>
-        <button
-          onClick={() => signIn("google", { callbackUrl: withBasePath("/dashboard") })}
-          className="bg-white text-blue-800 px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-50 transition font-semibold text-sm sm:text-base w-full"
-        >
-          {t("loginWithGoogle")}
-        </button>
+        {googleEnabled && (
+          <>
+            <p className="text-blue-200 text-sm sm:text-base">{t("loginWithSchoolAccount")}</p>
+            <button
+              onClick={() => signIn("google", { callbackUrl: withBasePath("/dashboard") })}
+              className="bg-white text-blue-800 px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-50 transition font-semibold text-sm sm:text-base w-full"
+            >
+              {t("loginWithGoogle")}
+            </button>
+          </>
+        )}
 
         {showDevLogin && (
           <div className="border-t border-blue-400 pt-3 space-y-2 sm:space-y-3">
