@@ -38,7 +38,7 @@ export function HubQuizCard({ item }: { item: HubQuizCardItem }) {
     : null;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md">
       {/* Subject accent */}
       <div className={`h-2 w-full ${visual.solid}`} />
 
@@ -73,7 +73,7 @@ export function HubQuizCard({ item }: { item: HubQuizCardItem }) {
 
         <Link
           href={`/q/${item.id}`}
-          className="font-bold leading-snug text-slate-900 line-clamp-2 transition-colors hover:text-indigo-600"
+          className="font-bold leading-snug text-slate-900 line-clamp-2 transition-colors hover:text-brand-blue"
         >
           {item.title}
         </Link>

@@ -35,14 +35,14 @@ export default function HubLoginPage() {
   }
 
   return (
-    <div className="flex h-dvh items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4">
+    <div className="flex h-dvh items-center justify-center bg-gradient-to-br from-brand-blue to-brand-magenta p-4">
       <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
-        <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="mx-auto h-16 w-16 object-contain" />
+        <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="mx-auto h-20 w-20 object-contain" />
         {googleEnabled && (
           <>
             <button
               onClick={() => signIn("google", { callbackUrl: withBasePath("/hub-account") })}
-              className="w-full rounded bg-white px-4 py-2 font-semibold text-blue-800 ring-1 ring-blue-300 hover:bg-blue-50"
+              className="w-full rounded bg-white px-4 py-2 font-semibold text-brand-blue ring-1 ring-brand-blue/30 hover:bg-brand-blue-50"
               type="button"
             >
               {t("loginWithGoogle")}
@@ -81,14 +81,14 @@ export default function HubLoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+            className="w-full rounded bg-brand-blue px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {submitting ? t("submitting") : t("loginSubmit")}
           </button>
         </form>
         <div className="flex justify-between text-sm">
-          <a href="/hub-forgot-password" className="text-blue-700 underline">{t("forgotPasswordLink")}</a>
-          <a href="/hub-register" className="text-blue-700 underline">{t("registerLink")}</a>
+          <a href="/hub-forgot-password" className="text-brand-blue underline">{t("forgotPasswordLink")}</a>
+          <a href="/hub-register" className="text-brand-blue underline">{t("registerLink")}</a>
         </div>
       </div>
     </div>
