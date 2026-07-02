@@ -38,7 +38,7 @@ function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigat
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-2">
         <img src={withBasePath("/logo_savint.png")} alt="SAVINT" className="w-10 h-10 object-contain" />
-        <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+        <span className="text-xl font-extrabold bg-gradient-to-r from-brand-blue to-brand-magenta bg-clip-text text-transparent">
           SAVINT
         </span>
       </div>
@@ -55,11 +55,11 @@ function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigat
               onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 shadow-sm border border-indigo-100 dark:border-indigo-800"
+                  ? "bg-brand-blue-50 dark:bg-brand-blue/10 text-brand-blue dark:text-blue-300 shadow-sm border border-brand-blue/15 dark:border-brand-blue/20"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
-              <Icon className={`h-5 w-5 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"}`} />
+              <Icon className={`h-5 w-5 ${isActive ? "text-brand-blue dark:text-blue-400" : "text-slate-400 dark:text-slate-500"}`} />
               {item.label}
             </Link>
           );
