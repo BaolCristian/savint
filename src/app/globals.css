@@ -38,6 +38,17 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-green: var(--brand-green);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-blue-50: var(--brand-blue-50);
+  --color-brand-orange-50: var(--brand-orange-50);
+  --color-brand-green-50: var(--brand-green-50);
+  --color-brand-magenta-50: var(--brand-magenta-50);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,13 +59,13 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.994 0.004 95);      /* bianco caldo, non clinico */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: var(--brand-blue);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -65,13 +76,27 @@
   --destructive: oklch(0.58 0.22 27);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--brand-blue);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
+  /* ── SAVINT brand palette (dal logo: gufo + wordmark) ── */
+  --brand-blue: #2C7BE5;
+  --brand-orange: #F5921E;
+  --brand-green: #5DB82C;
+  --brand-magenta: #E01B6A;
+  --brand-ink: #1E293B;
+  /* tinte tenui per sfondi/badge */
+  --brand-blue-50: color-mix(in srgb, var(--brand-blue) 10%, white);
+  --brand-orange-50: color-mix(in srgb, var(--brand-orange) 12%, white);
+  --brand-green-50: color-mix(in srgb, var(--brand-green) 12%, white);
+  --brand-magenta-50: color-mix(in srgb, var(--brand-magenta) 10%, white);
+  /* stato successo (prima inesistente) */
+  --success: var(--brand-green);
+  --success-foreground: oklch(0.985 0 0);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
