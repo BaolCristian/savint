@@ -879,8 +879,8 @@
     "backToExplore": "Torna ai quiz pubblici"
   },
   "hubHome": {
-    "heroTitle": "Quiz pronti per la tua classe",
-    "heroSubtitle": "SAVINT è il repository libero di quiz interattivi per la scuola. Cerca, prova e scarica quiz creati dai docenti.",
+    "heroTitle": "Crea, gioca, condividi",
+    "heroSubtitle": "SAVINT è la piattaforma open source di quiz interattivi per la scuola: gratuita, libera e costruita sulla condivisione. I docenti creano quiz, li giocano in classe e li mettono a disposizione di tutti.",
     "searchPlaceholder": "Cerca un quiz per materia, argomento…",
     "searchButton": "Cerca",
     "browseAll": "Sfoglia tutti i quiz",
@@ -890,7 +890,24 @@
     "schoolBody": "Installa SAVINT sui tuoi server e collegalo a savint.it per cercare, scaricare e pubblicare quiz. Oppure provalo subito senza installare niente.",
     "tryItButton": "Prova il sistema",
     "installCta": "Scopri come installarlo",
-    "footer": "SAVINT — software libero per la scuola (AGPL-3.0)."
+    "whyTitle": "Perché SAVINT",
+    "whyOpenTitle": "Open source",
+    "whyOpenBody": "Codice libero (AGPL-3.0), pubblico su GitHub. Chiunque può verificarlo, migliorarlo e adattarlo alla propria scuola.",
+    "whyFreeTitle": "Gratuito, per sempre",
+    "whyFreeBody": "Niente abbonamenti, pubblicità o dati rivenduti. Nato per la scuola, resta gratuito per tutti.",
+    "whySchoolTitle": "Fatto per la scuola",
+    "whySchoolBody": "Pensato per la classe: tanti tipi di domande, modalità pratica per lo studio individuale e statistiche per il docente.",
+    "whyShareTitle": "La condivisione al centro",
+    "whyShareBody": "Ogni quiz pubblicato è un'esperienza che altri docenti possono riusare, clonare e migliorare. Il sapere cresce quando circola.",
+    "howTitle": "Come funziona",
+    "howStep1Title": "Cerca e prova",
+    "howStep1Body": "Sfoglia i quiz dei docenti e provali subito dal browser, senza registrarti.",
+    "howStep2Title": "Gioca in classe",
+    "howStep2Body": "Avvia una partita dal vivo: gli studenti entrano con un PIN dal telefono, come un game show.",
+    "howStep3Title": "Pubblica e condividi",
+    "howStep3Body": "Crea i tuoi quiz e pubblicali sull'hub: la tua esperienza diventa un punto di partenza per altre classi.",
+    "footer": "SAVINT è software libero (AGPL-3.0), scritto da Cristian Virgili con l'ausilio di Claude.",
+    "githubLabel": "Codice sorgente su GitHub"
   },
   "install": {
     "eyebrow": "Gratuito e open source",

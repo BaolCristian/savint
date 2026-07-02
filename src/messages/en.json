@@ -879,8 +879,8 @@
     "backToExplore": "Back to public quizzes"
   },
   "hubHome": {
-    "heroTitle": "Ready-made quizzes for your classroom",
-    "heroSubtitle": "SAVINT is the free repository of interactive school quizzes. Search, try and download quizzes made by teachers.",
+    "heroTitle": "Create, play, share",
+    "heroSubtitle": "SAVINT is the open-source interactive quiz platform for schools: free, libre and built on sharing. Teachers create quizzes, play them in class and make them available to everyone.",
     "searchPlaceholder": "Search a quiz by subject, topic…",
     "searchButton": "Search",
     "browseAll": "Browse all quizzes",
@@ -890,7 +890,24 @@
     "schoolBody": "Install SAVINT on your own servers and connect it to savint.it to search, download and publish quizzes. Or try it right now without installing anything.",
     "tryItButton": "Try the system",
     "installCta": "Learn how to install it",
-    "footer": "SAVINT — free software for schools (AGPL-3.0)."
+    "whyTitle": "Why SAVINT",
+    "whyOpenTitle": "Open source",
+    "whyOpenBody": "Free code (AGPL-3.0), public on GitHub. Anyone can inspect it, improve it and adapt it to their school.",
+    "whyFreeTitle": "Free, forever",
+    "whyFreeBody": "No subscriptions, ads or data selling. Born for schools, it stays free for everyone.",
+    "whySchoolTitle": "Made for school",
+    "whySchoolBody": "Designed for the classroom: many question types, practice mode for individual study and statistics for the teacher.",
+    "whyShareTitle": "Sharing at the core",
+    "whyShareBody": "Every published quiz is an experience other teachers can reuse, clone and improve. Knowledge grows when it circulates.",
+    "howTitle": "How it works",
+    "howStep1Title": "Search and try",
+    "howStep1Body": "Browse quizzes made by teachers and try them right in your browser, no sign-up needed.",
+    "howStep2Title": "Play in class",
+    "howStep2Body": "Start a live game: students join with a PIN from their phones, game-show style.",
+    "howStep3Title": "Publish and share",
+    "howStep3Body": "Create your own quizzes and publish them on the hub: your experience becomes a starting point for other classes.",
+    "footer": "SAVINT is free software (AGPL-3.0), written by Cristian Virgili with the help of Claude.",
+    "githubLabel": "Source code on GitHub"
   },
   "install": {
     "eyebrow": "Free and open source",
