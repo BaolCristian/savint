@@ -16,6 +16,12 @@ const HOW_STEPS = [
   { n: 3, titleKey: "howStep3Title", bodyKey: "howStep3Body", circle: "bg-brand-green" },
 ] as const;
 
+const REGISTER_PERKS = [
+  { titleKey: "registerPublishTitle", bodyKey: "registerPublishBody" },
+  { titleKey: "registerProfileTitle", bodyKey: "registerProfileBody" },
+  { titleKey: "registerSchoolTitle", bodyKey: "registerSchoolBody" },
+] as const;
+
 export async function HubLanding() {
   const t = await getTranslations("hubHome");
 
@@ -104,6 +110,30 @@ export async function HubLanding() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Perché registrarsi */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
+        <div className="rounded-2xl bg-brand-blue-50 p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("registerTitle")}</h2>
+          <p className="text-slate-700 mb-4">{t("registerIntro")}</p>
+          <ul className="space-y-2 mb-6">
+            {REGISTER_PERKS.map((perk) => (
+              <li key={perk.titleKey} className="flex items-start gap-2">
+                <span className="text-brand-green font-bold shrink-0" aria-hidden>✓</span>
+                <p className="text-slate-700">
+                  <strong className="text-slate-900">{t(perk.titleKey)}</strong> — {t(perk.bodyKey)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href={withBasePath("/hub-register")}
+            className="inline-block rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            {t("registerCta")}
+          </Link>
         </div>
       </section>
 
