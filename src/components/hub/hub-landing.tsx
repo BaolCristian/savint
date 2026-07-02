@@ -3,6 +3,19 @@ import { getTranslations } from "next-intl/server";
 import { withBasePath } from "@/lib/base-path";
 import { searchHubQuizzes, type SearchResultItem } from "@/lib/hub/search";
 
+const WHY_CARDS = [
+  { emoji: "🔓", titleKey: "whyOpenTitle", bodyKey: "whyOpenBody", tint: "bg-brand-blue-50", accent: "text-brand-blue" },
+  { emoji: "🆓", titleKey: "whyFreeTitle", bodyKey: "whyFreeBody", tint: "bg-brand-green-50", accent: "text-brand-green" },
+  { emoji: "🏫", titleKey: "whySchoolTitle", bodyKey: "whySchoolBody", tint: "bg-brand-orange-50", accent: "text-brand-orange" },
+  { emoji: "🤝", titleKey: "whyShareTitle", bodyKey: "whyShareBody", tint: "bg-brand-magenta-50", accent: "text-brand-magenta" },
+] as const;
+
+const HOW_STEPS = [
+  { n: 1, titleKey: "howStep1Title", bodyKey: "howStep1Body", circle: "bg-brand-blue" },
+  { n: 2, titleKey: "howStep2Title", bodyKey: "howStep2Body", circle: "bg-brand-orange" },
+  { n: 3, titleKey: "howStep3Title", bodyKey: "howStep3Body", circle: "bg-brand-green" },
+] as const;
+
 export async function HubLanding() {
   const t = await getTranslations("hubHome");
 
@@ -60,6 +73,40 @@ export async function HubLanding() {
         </div>
       </section>
 
+      {/* Perché SAVINT */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">{t("whyTitle")}</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {WHY_CARDS.map((card) => (
+            <div key={card.titleKey} className={`rounded-2xl ${card.tint} p-6`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl" aria-hidden>{card.emoji}</span>
+                <h3 className={`text-lg font-bold ${card.accent}`}>{t(card.titleKey)}</h3>
+              </div>
+              <p className="text-slate-700 leading-relaxed">{t(card.bodyKey)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Come funziona */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">{t("howTitle")}</h2>
+        <div className="grid gap-6 sm:grid-cols-3">
+          {HOW_STEPS.map((step) => (
+            <div key={step.n} className="flex sm:flex-col items-start gap-4 sm:gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${step.circle} text-lg font-black text-white`} aria-hidden>
+                {step.n}
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">{t(step.titleKey)}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{t(step.bodyKey)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Quiz in evidenza */}
       {featured.length > 0 && (
         <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
@@ -101,7 +148,19 @@ export async function HubLanding() {
             </Link>
           </div>
         </div>
-        <p className="mt-8 text-center text-xs text-slate-400">{t("footer")}</p>
+        <footer className="mt-8 text-center text-xs text-slate-400 space-y-1">
+          <p>{t("footer")}</p>
+          <p>
+            <a
+              href="https://github.com/BaolCristian/savint"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-brand-blue hover:underline"
+            >
+              {t("githubLabel")} →
+            </a>
+          </p>
+        </footer>
       </section>
     </main>
   );
