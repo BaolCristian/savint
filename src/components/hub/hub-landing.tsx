@@ -15,13 +15,13 @@ export async function HubLanding() {
   }
 
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-indigo-50 via-white to-violet-50">
+    <main className="min-h-dvh bg-gradient-to-br from-brand-blue-50 via-background to-brand-magenta-50">
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-10 text-center">
         <img
           src={withBasePath("/logo_savint.png")}
           alt="SAVINT"
-          className="mx-auto mb-6 h-20 w-20 object-contain"
+          className="mx-auto mb-6 h-28 w-28 sm:h-36 sm:w-36 object-contain drop-shadow-sm"
         />
         <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-4">
           {t("heroTitle")}
@@ -35,11 +35,11 @@ export async function HubLanding() {
             name="q"
             aria-label={t("searchPlaceholder")}
             placeholder={t("searchPlaceholder")}
-            className="flex-1 rounded-lg border border-slate-300 px-4 py-3 text-slate-900"
+            className="flex-1 rounded-lg border border-slate-300 px-4 py-3 text-slate-900 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20"
           />
           <button
             type="submit"
-            className="rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-blue px-6 py-3 font-semibold text-white hover:bg-blue-700 transition-colors"
           >
             {t("searchButton")}
           </button>
@@ -47,13 +47,13 @@ export async function HubLanding() {
         <div className="mt-6 flex justify-center gap-3 text-sm">
           <Link
             href={withBasePath("/explore")}
-            className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 transition-colors"
+            className="rounded-lg bg-brand-blue px-4 py-2 font-semibold text-white hover:bg-blue-700 transition-colors"
           >
             {t("browseAll")}
           </Link>
           <Link
             href={withBasePath("/hub-register")}
-            className="rounded-lg border border-indigo-200 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors"
+            className="rounded-lg border border-brand-orange/40 px-4 py-2 font-semibold text-brand-orange hover:bg-brand-orange-50 transition-colors"
           >
             {t("signUp")}
           </Link>
@@ -69,7 +69,7 @@ export async function HubLanding() {
               <Link
                 key={q.id}
                 href={withBasePath(`/q/${q.id}`)}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition"
+                className="rounded-xl border border-slate-200 bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md"
               >
                 <h3 className="font-semibold text-slate-900 line-clamp-2">{q.title}</h3>
                 {q.description && (
@@ -83,19 +83,19 @@ export async function HubLanding() {
 
       {/* Porta SAVINT a scuola */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="rounded-2xl bg-slate-900 text-white p-8 sm:p-10">
+        <div className="rounded-2xl bg-gradient-to-br from-brand-blue to-brand-magenta text-white p-8 sm:p-10 shadow-lg">
           <h2 className="text-2xl font-bold mb-2">{t("schoolTitle")}</h2>
-          <p className="text-slate-300 mb-4 max-w-2xl">{t("schoolBody")}</p>
+          <p className="text-white/80 mb-4 max-w-2xl">{t("schoolBody")}</p>
           <div className="flex flex-wrap gap-3">
             <Link
               href={withBasePath("/demo")}
-              className="rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+              className="rounded-lg bg-white px-5 py-2.5 font-semibold text-brand-blue hover:bg-slate-100 transition-colors"
             >
               {t("tryItButton")}
             </Link>
             <Link
               href={withBasePath("/install")}
-              className="rounded-lg border border-white/40 px-5 py-2.5 font-semibold text-white hover:bg-white/10 transition-colors"
+              className="rounded-lg border border-white/50 px-5 py-2.5 font-semibold text-white hover:bg-white/10 transition-colors"
             >
               {t("installCta")}
             </Link>
