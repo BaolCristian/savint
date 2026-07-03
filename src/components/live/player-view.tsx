@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { playCorrect, playWrong, playTick, playTimeUp, setMuted } from "@/lib/sounds";
 import { UserX, Pencil } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
 import type {
   AnswerValue,
   MatchingOptions,
@@ -613,7 +614,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           </a>
 
           {/* Teacher login */}
-          <p className="text-center text-sm text-slate-500 pb-3">
+          <p className="text-center text-sm text-slate-500">
             {t("teacherLoginPrompt")}{" "}
             <a
               href={withBasePath("/login")}
@@ -622,6 +623,11 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               {t("teacherLoginAction")}
             </a>
           </p>
+
+          {/* Version / creator / savint.it */}
+          <div className="pb-3">
+            <SiteFooter />
+          </div>
         </div>
       </div>
     );

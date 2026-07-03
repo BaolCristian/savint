@@ -1127,7 +1127,12 @@ export function HostView({ session }: Props) {
             {t("backToDashboard")}
           </Link>
           <p className="text-xs text-slate-500">
-            SAVINT v1.0.0 — {t("madeBy")} Cristian Virgili · {t("updated")} 16/03/2026 · AGPL-3.0 ·{" "}
+            SAVINT v{process.env.NEXT_PUBLIC_APP_VERSION} — {t("madeBy")} Cristian Virgili · {t("updated")}{" "}
+            {(process.env.NEXT_PUBLIC_APP_BUILD_DATE ?? "").split("-").reverse().join("/")} · AGPL-3.0 ·{" "}
+            <a href="https://www.savint.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-300">
+              savint.it
+            </a>{" "}
+            ·{" "}
             <Link href="/help" className="underline hover:text-slate-300">Help</Link>
           </p>
         </footer>
