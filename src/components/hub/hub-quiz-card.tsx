@@ -1,3 +1,8 @@
+"use client";
+
+// Client component: buttonVariants() vive in un modulo client e non è
+// invocabile da un server component — con la direttiva la card è
+// renderizzabile ovunque (explore, landing) con sole props serializzabili.
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
