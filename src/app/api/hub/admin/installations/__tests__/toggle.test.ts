@@ -68,3 +68,42 @@ describe("installations disable/enable", () => {
     expect((await disable(req(), p("x"))).status).toBe(403);
   });
 });
+
+// --- DELETE installation (scuola collegata senza AffiliationRequest) ---
+import { DELETE as deleteInst } from "../[id]/route";
+
+describe("DELETE installation", () => {
+  it("elimina installazione + token in cascata + eventuale richiesta collegata", async () => {
+    const acc = await admin();
+    const inst = await prisma.installation.create({
+      data: { name: "S", contactEmail: "s@x.it", clientId: `inst_${rid()}`, clientSecretHash: "h" },
+    });
+    ids.installations.push(inst.id);
+    await prisma.hubAccessToken.create({
+      data: { hubAccountId: acc.id, installationId: inst.id, accessTokenHash: `at-${rid()}`, refreshTokenHash: `rt-${rid()}`,
+        accessTokenExpiresAt: new Date(Date.now() + 3600e3), refreshTokenExpiresAt: new Date(Date.now() + 7200e3), scopes: [] },
+    });
+    const r = await prisma.affiliationRequest.create({
+      data: { schoolName: "S", province: "UD", installationUrl: "https://s.it", contactEmail: "s@x.it", status: "REDEEMED", installationId: inst.id },
+    });
+    const res = await deleteInst(req(), p(inst.id));
+    expect(res.status).toBe(200);
+    expect(await prisma.installation.findUnique({ where: { id: inst.id } })).toBeNull();
+    expect(await prisma.hubAccessToken.count({ where: { installationId: inst.id } })).toBe(0);
+    expect(await prisma.affiliationRequest.findUnique({ where: { id: r.id } })).toBeNull();
+  });
+  it("elimina installazione 'nuda' (nessuna richiesta collegata)", async () => {
+    await admin();
+    const inst = await prisma.installation.create({
+      data: { name: "Bare", contactEmail: "b@x.it", clientId: `inst_${rid()}`, clientSecretHash: "h" },
+    });
+    ids.installations.push(inst.id);
+    expect((await deleteInst(req(), p(inst.id))).status).toBe(200);
+    expect(await prisma.installation.findUnique({ where: { id: inst.id } })).toBeNull();
+  });
+  it("404 se assente", async () => { await admin(); expect((await deleteInst(req(), p("nope"))).status).toBe(404); });
+  it("401 senza sessione", async () => {
+    (getHubSession as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    expect((await deleteInst(req(), p("x"))).status).toBe(401);
+  });
+});

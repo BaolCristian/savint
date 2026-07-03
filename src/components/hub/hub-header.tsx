@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { withBasePath } from "@/lib/base-path";
 
@@ -15,7 +16,7 @@ const HIDE_PREFIXES = [
   "/oauth/authorize",
 ];
 
-export function HubHeader({ isAdmin = false }: { isAdmin?: boolean }) {
+export function HubHeader({ isAdmin = false, isLoggedIn = false }: { isAdmin?: boolean; isLoggedIn?: boolean }) {
   const pathname = usePathname();
   const t = useTranslations("hub");
 
@@ -49,6 +50,27 @@ export function HubHeader({ isAdmin = false }: { isAdmin?: boolean }) {
           {isAdmin && (
             <Link href={withBasePath("/admin/hub/affiliations")} className="text-slate-600 transition-colors hover:text-brand-blue">
               {t("headerAdmin")}
+            </Link>
+          )}
+          {isLoggedIn ? (
+            <>
+              <Link href={withBasePath("/hub-account")} className="text-slate-600 transition-colors hover:text-brand-blue">
+                {t("accountNav")}
+              </Link>
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: withBasePath("/") })}
+                className="text-slate-600 transition-colors hover:text-brand-blue"
+              >
+                {t("logoutNav")}
+              </button>
+            </>
+          ) : (
+            <Link
+              href={withBasePath("/hub-login")}
+              className="rounded-lg bg-brand-blue px-3 py-1.5 font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              {t("loginNav")}
             </Link>
           )}
         </nav>

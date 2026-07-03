@@ -6,8 +6,8 @@ import { useTranslations } from "next-intl";
 import { ConfirmDelete } from "./confirm-delete";
 
 export function InstallationActions({
-  affiliationId, installationId, active,
-}: { affiliationId: string; installationId: string; active: boolean }) {
+  installationId, active,
+}: { installationId: string; active: boolean }) {
   const t = useTranslations("adminAffiliations");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function InstallationActions({
       >
         {active ? t("disable") : t("enable")}
       </button>
-      <ConfirmDelete affiliationId={affiliationId} />
+      <ConfirmDelete deleteUrl={`/api/hub/admin/installations/${installationId}`} />
     </div>
   );
 }

@@ -859,7 +859,10 @@
       "reports": "Reports",
       "admins": "Admins"
     },
-    "headerAdmin": "Admin"
+    "headerAdmin": "Admin",
+    "accountNav": "Account",
+    "logoutNav": "Sign out",
+    "loginNav": "Sign in"
   },
   "practice": {
     "mode": "Practice mode",

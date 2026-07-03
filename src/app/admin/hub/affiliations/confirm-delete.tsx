@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-/** Bottone "Elimina" che apre un dialog di conferma e fa DELETE su affiliationId. */
-export function ConfirmDelete({ affiliationId }: { affiliationId: string }) {
+/** Bottone "Elimina" che apre un dialog di conferma e fa DELETE su `deleteUrl`
+ *  (una richiesta di affiliazione o direttamente un'installazione). */
+export function ConfirmDelete({ deleteUrl }: { deleteUrl: string }) {
   const t = useTranslations("adminAffiliations");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -19,7 +20,7 @@ export function ConfirmDelete({ affiliationId }: { affiliationId: string }) {
   async function onConfirm() {
     setBusy(true);
     setError(null);
-    const res = await fetch(`/api/hub/admin/affiliations/${affiliationId}`, { method: "DELETE" });
+    const res = await fetch(deleteUrl, { method: "DELETE" });
     setBusy(false);
     if (!res.ok) { setError(t("actionError")); return; }
     setOpen(false);
