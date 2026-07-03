@@ -20,14 +20,18 @@ export default async function Page() {
   const t = await getTranslations("adminAffiliations");
   const fmt = (d: Date | null) => (d ? d.toLocaleDateString("it-IT") : t("never"));
 
-  const [redeemed, pending, history] = await Promise.all([
-    prisma.affiliationRequest.findMany({ where: { status: "REDEEMED" }, orderBy: { redeemedAt: "desc" } }),
+  // "Scuole collegate" = le installazioni reali. Alcune scuole sono collegate via
+  // script (senza AffiliationRequest), quindi la lista è guidata da Installation;
+  // la richiesta collegata, quando c'è, fornisce la provincia.
+  const [installations, pending, history] = await Promise.all([
+    prisma.installation.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.affiliationRequest.findMany({ where: { status: "PENDING_REVIEW" }, orderBy: { createdAt: "asc" } }),
     prisma.affiliationRequest.findMany({ where: { status: { in: ["APPROVED", "REJECTED"] } }, orderBy: { updatedAt: "desc" } }),
   ]);
-  const instIds = redeemed.map((r) => r.installationId).filter((x): x is string => Boolean(x));
-  const installations = await prisma.installation.findMany({ where: { id: { in: instIds } } });
-  const instById = new Map(installations.map((i) => [i.id, i]));
+  const linkedReqs = await prisma.affiliationRequest.findMany({
+    where: { installationId: { in: installations.map((i) => i.id) } },
+  });
+  const reqByInst = new Map(linkedReqs.filter((r) => r.installationId).map((r) => [r.installationId as string, r]));
 
   return (
     <div className="space-y-8">
@@ -35,8 +39,8 @@ export default async function Page() {
 
       {/* Scuole collegate */}
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-900">{t("connectedTitle")} ({redeemed.length})</h2>
-        {redeemed.length === 0 ? <p className="text-slate-500">{t("none")}</p> : (
+        <h2 className="text-lg font-bold text-slate-900">{t("connectedTitle")} ({installations.length})</h2>
+        {installations.length === 0 ? <p className="text-slate-500">{t("none")}</p> : (
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table className="min-w-full divide-y divide-slate-100 text-sm">
               <thead className="bg-slate-50"><tr>
@@ -45,19 +49,17 @@ export default async function Page() {
                 ))}
               </tr></thead>
               <tbody className="divide-y divide-slate-100">
-                {redeemed.map((r) => {
-                  const inst = r.installationId ? instById.get(r.installationId) : undefined;
-                  const active = inst?.status === "ACTIVE";
+                {installations.map((inst) => {
+                  const active = inst.status === "ACTIVE";
+                  const rq = reqByInst.get(inst.id);
                   return (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-800">{r.schoolName}<div className="text-xs text-slate-400">{r.contactEmail}</div></td>
-                      <td className="px-4 py-3 text-slate-600">{r.province}</td>
+                    <tr key={inst.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-800">{inst.name}<div className="text-xs text-slate-400">{inst.contactEmail}</div></td>
+                      <td className="px-4 py-3 text-slate-600">{rq?.province ?? "—"}</td>
                       <td className="px-4 py-3">{active ? <Badge tone="green">{t("statusActive")}</Badge> : <Badge tone="slate">{t("statusDisabled")}</Badge>}</td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(inst?.lastSeenAt ?? null)}</td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(r.redeemedAt)}</td>
-                      <td className="px-4 py-3">
-                        {inst ? <InstallationActions affiliationId={r.id} installationId={inst.id} active={active} /> : <ConfirmDelete affiliationId={r.id} />}
-                      </td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(inst.lastSeenAt)}</td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(inst.createdAt)}</td>
+                      <td className="px-4 py-3"><InstallationActions installationId={inst.id} active={active} /></td>
                     </tr>
                   );
                 })}
@@ -115,7 +117,7 @@ export default async function Page() {
                       {r.status === "APPROVED" && r.setupCodeExpiresAt ? t("codeExpires", { date: fmt(r.setupCodeExpiresAt) })
                         : r.status === "REJECTED" && r.rejectionReason ? t("rejectedReason", { reason: r.rejectionReason }) : "—"}
                     </td>
-                    <td className="px-4 py-3"><ConfirmDelete affiliationId={r.id} /></td>
+                    <td className="px-4 py-3"><ConfirmDelete deleteUrl={`/api/hub/admin/affiliations/${r.id}`} /></td>
                   </tr>
                 ))}
               </tbody>
