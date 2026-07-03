@@ -392,7 +392,9 @@
     "confirmAnswer": "Conferma",
     "reconnecting": "Riconnessione in corso...",
     "youFinished": "Sei arrivato {position}°!",
-    "playAgain": "Gioca ancora"
+    "playAgain": "Gioca ancora",
+    "teacherLoginPrompt": "Sei un docente?",
+    "teacherLoginAction": "Accedi"
   },
   "legal": {
     "termsTitle": "Accettazione delle condizioni di utilizzo",

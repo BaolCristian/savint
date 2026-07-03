@@ -611,6 +611,17 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           >
             {t("exploreLink")}
           </a>
+
+          {/* Teacher login */}
+          <p className="text-center text-sm text-slate-500 pb-3">
+            {t("teacherLoginPrompt")}{" "}
+            <a
+              href={withBasePath("/login")}
+              className="font-semibold text-brand-blue hover:text-blue-800"
+            >
+              {t("teacherLoginAction")}
+            </a>
+          </p>
         </div>
       </div>
     );
