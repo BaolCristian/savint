@@ -856,7 +856,8 @@
     },
     "adminNav": {
       "affiliations": "Affiliazioni",
-      "reports": "Segnalazioni"
+      "reports": "Segnalazioni",
+      "admins": "Amministratori"
     },
     "headerAdmin": "Admin",
     "accountNav": "Account",
@@ -1027,6 +1028,23 @@
     "confirmDeleteBody": "Questa azione elimina la richiesta e, se presente, l'installazione collegata con le sue credenziali. Non è reversibile.",
     "confirmDeleteAction": "Elimina",
     "cancel": "Annulla",
+    "actionError": "Operazione non riuscita."
+  },
+  "adminAccounts": {
+    "title": "Console admin — Amministratori",
+    "promoteTitle": "Promuovi un utente ad amministratore",
+    "promoteHelp": "Inserisci l'email di un utente già registrato sull'hub. Riceverà i permessi di amministratore.",
+    "emailPlaceholder": "email@esempio.it",
+    "promoteAction": "Rendi admin",
+    "promoteSuccess": "Fatto: l'utente è ora amministratore.",
+    "promoteNotFound": "Nessun utente registrato con questa email.",
+    "currentAdminsTitle": "Amministratori attuali",
+    "colName": "Nome",
+    "colEmail": "Email",
+    "colActions": "Azioni",
+    "you": "(tu)",
+    "demoteAction": "Rimuovi admin",
+    "none": "Nessuno.",
     "actionError": "Operazione non riuscita."
   }
 }
