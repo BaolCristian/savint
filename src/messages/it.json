@@ -876,7 +876,13 @@
     "yourAnswer": "La tua risposta",
     "noAnswer": "Nessuna risposta (tempo scaduto)",
     "retry": "Riprova",
-    "backToExplore": "Torna ai quiz pubblici"
+    "backToExplore": "Torna ai quiz pubblici",
+    "verdictExcellent": "Eccezionale! Padroneggi l'argomento.",
+    "verdictGreat": "Ottimo lavoro, ci sei quasi!",
+    "verdictGood": "Buon inizio: rivedi gli errori e riprova.",
+    "verdictRetry": "Non mollare: rileggi le soluzioni e riprova subito.",
+    "avgTime": "Tempo medio",
+    "backToQuiz": "Torna al quiz"
   },
   "hubHome": {
     "heroTitle": "Crea, gioca, condividi",
