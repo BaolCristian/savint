@@ -45,7 +45,9 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const hub = isHubMode();
-  const isAdmin = hub ? (await getHubSessionFromCookies())?.role === "HUB_ADMIN" : false;
+  const account = hub ? await getHubSessionFromCookies() : null;
+  const isAdmin = account?.role === "HUB_ADMIN";
+  const isLoggedIn = Boolean(account);
 
   return (
     <html lang={locale}>
@@ -55,7 +57,7 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            {hub && <HubHeader isAdmin={isAdmin} />}
+            {hub && <HubHeader isAdmin={isAdmin} isLoggedIn={isLoggedIn} />}
             {children}
           </Providers>
         </NextIntlClientProvider>

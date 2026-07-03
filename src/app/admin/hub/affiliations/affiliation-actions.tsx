@@ -35,7 +35,7 @@ export default function AffiliationActions({ id }: { id: string }) {
       <button onClick={handleReject} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
         {t("reject")}
       </button>
-      <ConfirmDelete affiliationId={id} />
+      <ConfirmDelete deleteUrl={`/api/hub/admin/affiliations/${id}`} />
     </div>
   );
 }
