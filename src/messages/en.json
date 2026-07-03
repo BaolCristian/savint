@@ -922,7 +922,18 @@
     "registerSchoolBody": "Publish and download quizzes right from your installation's dashboard.",
     "registerCta": "Create a free account",
     "footer": "SAVINT is free software (AGPL-3.0), written by Cristian Virgili with the help of Claude.",
-    "githubLabel": "Source code on GitHub"
+    "githubLabel": "Source code on GitHub",
+    "chipQuizCount": "{count} public quizzes",
+    "chipLicense": "Open source · AGPL-3.0",
+    "chipFree": "Free for schools",
+    "eyebrowWhy": "Our values",
+    "eyebrowHow": "In three steps",
+    "eyebrowRegister": "Free account",
+    "eyebrowFeatured": "From the community",
+    "eyebrowSchool": "For your school",
+    "footerPrivacy": "Privacy",
+    "footerTerms": "Terms",
+    "footerHelp": "Help"
   },
   "install": {
     "eyebrow": "Free and open source",
