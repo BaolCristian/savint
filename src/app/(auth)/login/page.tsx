@@ -8,16 +8,25 @@ import { useTranslations } from "next-intl";
 export default function LoginPage() {
   const t = useTranslations("login");
   const [email, setEmail] = useState("docente@scuola.it");
-  const showDevLogin = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.NODE_ENV === "development";
 
-  // Only offer Google when the provider is actually configured on this
-  // installation. On the demo (no GOOGLE_CLIENT_ID) the provider is absent,
-  // so we hide the button instead of showing one that errors when clicked.
+  // Show only the providers actually registered on this installation, read at
+  // RUNTIME from the server. The old NEXT_PUBLIC_DEMO_MODE check was inlined
+  // at build time (the Docker image bakes it to true), so disabling the demo
+  // teacher in .env hid the provider server-side but not the button.
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [devLoginEnabled, setDevLoginEnabled] = useState(false);
   useEffect(() => {
     getProviders()
-      .then((providers) => setGoogleEnabled(Boolean(providers?.google)))
-      .catch(() => setGoogleEnabled(false));
+      .then((providers) => {
+        setGoogleEnabled(Boolean(providers?.google));
+        // "credentials" = provider Dev Login (installation); registrato solo
+        // con DEMO_MODE=true o in sviluppo (vedi src/lib/auth/config.ts).
+        setDevLoginEnabled(Boolean(providers?.credentials));
+      })
+      .catch(() => {
+        setGoogleEnabled(false);
+        setDevLoginEnabled(false);
+      });
   }, []);
 
   return (
@@ -36,7 +45,7 @@ export default function LoginPage() {
           </>
         )}
 
-        {showDevLogin && (
+        {devLoginEnabled && (
           <div className="border-t border-blue-400 pt-3 space-y-2 sm:space-y-3">
             <p className="text-blue-300 text-xs sm:text-sm">{t("demoLogin")}</p>
             <input
