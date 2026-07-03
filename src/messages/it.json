@@ -853,7 +853,9 @@
     "suspended": {
       "banner": "Questo quiz è stato sospeso dal team di moderazione di savint.it.",
       "reasonLabel": "Motivo"
-    }
+    },
+    "adminNav": { "affiliations": "Affiliazioni", "reports": "Segnalazioni" },
+    "headerAdmin": "Admin"
   },
   "practice": {
     "mode": "Modalità esercitazione",
@@ -988,5 +990,37 @@
     "rejectReasonPrompt": "Motivo del rifiuto (opzionale)",
     "approveError": "Errore durante l'approvazione.",
     "rejectError": "Errore durante il rifiuto."
+  },
+  "adminAffiliations": {
+    "title": "Console admin — Affiliazioni",
+    "connectedTitle": "Scuole collegate",
+    "pendingTitle": "Richieste in attesa",
+    "historyTitle": "Storico",
+    "none": "Nessuna voce.",
+    "colSchool": "Scuola",
+    "colProvince": "Provincia",
+    "colUrl": "URL",
+    "colEmail": "Email",
+    "colStatus": "Stato",
+    "colLastSeen": "Ultimo accesso",
+    "colConnectedAt": "Collegata il",
+    "colDate": "Data",
+    "colDetail": "Dettaglio",
+    "colActions": "Azioni",
+    "statusActive": "Attiva",
+    "statusDisabled": "Disattivata",
+    "statusApproved": "Codice inviato, in attesa di riscatto",
+    "statusRejected": "Rifiutata",
+    "codeExpires": "Scade il {date}",
+    "rejectedReason": "Motivo: {reason}",
+    "never": "Mai",
+    "disable": "Disattiva",
+    "enable": "Riattiva",
+    "delete": "Elimina",
+    "confirmDeleteTitle": "Eliminare definitivamente?",
+    "confirmDeleteBody": "Questa azione elimina la richiesta e, se presente, l'installazione collegata con le sue credenziali. Non è reversibile.",
+    "confirmDeleteAction": "Elimina",
+    "cancel": "Annulla",
+    "actionError": "Operazione non riuscita."
   }
 }
