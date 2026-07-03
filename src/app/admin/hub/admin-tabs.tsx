@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 const TABS = [
   { href: "/admin/hub/affiliations", key: "affiliations" },
   { href: "/admin/hub/reports", key: "reports" },
+  { href: "/admin/hub/admins", key: "admins" },
 ] as const;
 
 export function AdminTabs() {

@@ -854,7 +854,11 @@
       "banner": "This quiz has been suspended by the savint.it moderation team.",
       "reasonLabel": "Reason"
     },
-    "adminNav": { "affiliations": "Affiliations", "reports": "Reports" },
+    "adminNav": {
+      "affiliations": "Affiliations",
+      "reports": "Reports",
+      "admins": "Admins"
+    },
     "headerAdmin": "Admin"
   },
   "practice": {
@@ -1021,6 +1025,23 @@
     "confirmDeleteBody": "This deletes the request and, if present, the linked installation with its credentials. It cannot be undone.",
     "confirmDeleteAction": "Delete",
     "cancel": "Cancel",
+    "actionError": "Operation failed."
+  },
+  "adminAccounts": {
+    "title": "Admin console — Administrators",
+    "promoteTitle": "Promote a user to administrator",
+    "promoteHelp": "Enter the email of a user already registered on the hub. They'll get administrator permissions.",
+    "emailPlaceholder": "email@example.com",
+    "promoteAction": "Make admin",
+    "promoteSuccess": "Done: the user is now an administrator.",
+    "promoteNotFound": "No user registered with this email.",
+    "currentAdminsTitle": "Current administrators",
+    "colName": "Name",
+    "colEmail": "Email",
+    "colActions": "Actions",
+    "you": "(you)",
+    "demoteAction": "Remove admin",
+    "none": "None.",
     "actionError": "Operation failed."
   }
 }
