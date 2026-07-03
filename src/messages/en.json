@@ -392,7 +392,9 @@
     "confirmAnswer": "Confirm",
     "reconnecting": "Reconnecting...",
     "youFinished": "You finished {position}!",
-    "playAgain": "Play again"
+    "playAgain": "Play again",
+    "teacherLoginPrompt": "Are you a teacher?",
+    "teacherLoginAction": "Sign in"
   },
   "legal": {
     "termsTitle": "Terms of use acceptance",
