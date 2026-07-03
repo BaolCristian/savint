@@ -854,8 +854,14 @@
       "banner": "This quiz has been suspended by the savint.it moderation team.",
       "reasonLabel": "Reason"
     },
-    "adminNav": { "affiliations": "Affiliations", "reports": "Reports" },
-    "headerAdmin": "Admin"
+    "adminNav": {
+      "affiliations": "Affiliations",
+      "reports": "Reports"
+    },
+    "headerAdmin": "Admin",
+    "accountNav": "Account",
+    "logoutNav": "Sign out",
+    "loginNav": "Sign in"
   },
   "practice": {
     "mode": "Practice mode",

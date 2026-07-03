@@ -854,8 +854,14 @@
       "banner": "Questo quiz è stato sospeso dal team di moderazione di savint.it.",
       "reasonLabel": "Motivo"
     },
-    "adminNav": { "affiliations": "Affiliazioni", "reports": "Segnalazioni" },
-    "headerAdmin": "Admin"
+    "adminNav": {
+      "affiliations": "Affiliazioni",
+      "reports": "Segnalazioni"
+    },
+    "headerAdmin": "Admin",
+    "accountNav": "Account",
+    "logoutNav": "Esci",
+    "loginNav": "Accedi"
   },
   "practice": {
     "mode": "Modalità esercitazione",
