@@ -5,6 +5,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
 import { HubHeader } from "@/components/hub/hub-header";
 import { isHubMode } from "@/lib/config/savint-mode";
+import { getHubSessionFromCookies } from "@/lib/auth/hub-session";
 import "./globals.css";
 
 const atkinson = Atkinson_Hyperlegible({
@@ -44,6 +45,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const hub = isHubMode();
+  const isAdmin = hub ? (await getHubSessionFromCookies())?.role === "HUB_ADMIN" : false;
 
   return (
     <html lang={locale}>
@@ -53,7 +55,7 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            {hub && <HubHeader />}
+            {hub && <HubHeader isAdmin={isAdmin} />}
             {children}
           </Providers>
         </NextIntlClientProvider>
