@@ -876,7 +876,13 @@
     "yourAnswer": "Your answer",
     "noAnswer": "No answer (time's up)",
     "retry": "Try again",
-    "backToExplore": "Back to public quizzes"
+    "backToExplore": "Back to public quizzes",
+    "verdictExcellent": "Outstanding! You've mastered this.",
+    "verdictGreat": "Great work, almost there!",
+    "verdictGood": "Good start: review your mistakes and try again.",
+    "verdictRetry": "Don't give up: read the solutions and try again.",
+    "avgTime": "Avg time",
+    "backToQuiz": "Back to quiz"
   },
   "hubHome": {
     "heroTitle": "Create, play, share",

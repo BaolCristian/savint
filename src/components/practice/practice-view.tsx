@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
 import { withBasePath } from "@/lib/base-path";
 import { checkAnswer, calculateScore, calculatePartialScore } from "@/lib/scoring";
@@ -48,8 +48,20 @@ const PARTIAL_TYPES: QuestionType[] = [
   "IMAGE_HOTSPOT",
 ];
 
-export function PracticeView({ quiz }: { quiz: Quiz }) {
+interface PracticeViewProps {
+  quiz: Quiz;
+  /** Where the "back" links point to. Defaults to the public explore page. */
+  backHref?: string;
+  /** Label for the back links. Defaults to t("backToExplore"). */
+  backLabel?: string;
+  /** Optional endpoint POSTed (fire-and-forget) when the review screen is reached.
+   *  Used by the hub to mark the PracticeRun completed. */
+  completeUrl?: string;
+}
+
+export function PracticeView({ quiz, backHref = "/explore", backLabel, completeUrl }: PracticeViewProps) {
   const t = useTranslations("practice");
+  const fmt = useFormatter();
   const tc = useTranslations("common");
   const tl = useTranslations("live");
 
@@ -58,6 +70,16 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [answers, setAnswers] = useState<PracticeAnswer[]>([]);
   const questionStart = useRef<number>(0);
+  const completedRef = useRef(false);
+
+  const backText = backLabel ?? t("backToExplore");
+
+  /* Notify the server once when the run is finished (hub playsCount). */
+  useEffect(() => {
+    if (phase !== "review" || !completeUrl || completedRef.current) return;
+    completedRef.current = true;
+    fetch(completeUrl, { method: "POST" }).catch(() => {});
+  }, [phase, completeUrl]);
 
   const totalQuestions = quiz.questions.length;
   const currentQuestion = quiz.questions[idx];
@@ -161,9 +183,14 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
   /* ---------- INTRO ---------- */
   if (phase === "intro") {
     return (
-      <div className="min-h-dvh bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+      <div className="min-h-dvh bg-gradient-to-br from-brand-blue-50 via-background to-brand-magenta-50 flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 text-center animate-slide-up-fade">
+          <img
+            src={withBasePath("/logo_savint.png")}
+            alt="SAVINT"
+            className="w-16 h-16 mx-auto mb-3 object-contain"
+          />
+          <div className="inline-flex items-center gap-2 bg-brand-blue-50 text-brand-blue text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
             {t("mode")}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">{quiz.title}</h1>
@@ -173,13 +200,13 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
           <p className="text-sm text-slate-500 mb-5">{t("author", { name: quiz.authorName })}</p>
 
           <div className="grid grid-cols-2 gap-3 mb-6 text-left">
-            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-              <p className="text-[11px] uppercase font-semibold text-slate-500">{t("questions")}</p>
-              <p className="text-lg font-bold text-slate-900">{totalQuestions}</p>
+            <div className="bg-brand-blue-50 rounded-xl px-3 py-2.5">
+              <p className="text-[11px] uppercase font-semibold text-brand-blue">{t("questions")}</p>
+              <p className="text-lg font-bold text-slate-900 tabular-nums">{totalQuestions}</p>
             </div>
-            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-              <p className="text-[11px] uppercase font-semibold text-slate-500">{t("maxPoints")}</p>
-              <p className="text-lg font-bold text-slate-900">{maxScore.toLocaleString()}</p>
+            <div className="bg-brand-orange-50 rounded-xl px-3 py-2.5">
+              <p className="text-[11px] uppercase font-semibold text-brand-orange">{t("maxPoints")}</p>
+              <p className="text-lg font-bold text-slate-900 tabular-nums">{fmt.number(maxScore)}</p>
             </div>
           </div>
 
@@ -190,16 +217,16 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
           <button
             onClick={handleStart}
             disabled={totalQuestions === 0}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] disabled:bg-slate-300"
+            className="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold text-lg py-3 rounded-xl shadow-lg shadow-brand-blue/25 transition-all active:scale-[0.98] disabled:bg-slate-300"
           >
             {t("start")}
           </button>
 
           <Link
-            href="/explore"
-            className="inline-block mt-4 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            href={backHref}
+            className="inline-block mt-4 text-sm text-brand-blue hover:text-blue-800 font-medium"
           >
-            ← {t("backToExplore")}
+            ← {backText}
           </Link>
         </div>
       </div>
@@ -300,31 +327,52 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
   /* ---------- REVIEW ---------- */
   if (phase === "review") {
     const percent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+    const avgSeconds =
+      answers.length > 0
+        ? answers.reduce((s, a) => s + a.responseTimeMs, 0) / answers.length / 1000
+        : 0;
+    const verdictKey =
+      percent >= 90 ? "verdictExcellent" : percent >= 70 ? "verdictGreat" : percent >= 50 ? "verdictGood" : "verdictRetry";
     return (
-      <div className="min-h-dvh bg-slate-50">
+      <div className="min-h-dvh bg-gradient-to-br from-brand-blue-50 via-background to-brand-magenta-50">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
           {/* Summary */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 mb-5">
-            <div className="text-center mb-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 mb-5 animate-slide-up-fade">
+            <div className="text-center mb-4">
               <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">
                 {t("finalResult")}
               </p>
-              <h1 className="text-3xl sm:text-4xl font-black text-slate-900">{quiz.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900">{quiz.title}</h1>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-indigo-50 rounded-xl p-3">
-                <p className="text-2xl font-black text-indigo-700">{totalScore.toLocaleString()}</p>
-                <p className="text-xs text-indigo-600 font-semibold mt-1">{tl("totalScoreLabel")}</p>
+
+            {/* Score ring + owl verdict */}
+            <div className="flex flex-col items-center gap-3 mb-6">
+              <ScoreRing percent={percent} />
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={withBasePath("/logo_savint.png")}
+                  alt=""
+                  aria-hidden
+                  className="w-9 h-9 object-contain shrink-0"
+                />
+                <p className="font-semibold text-slate-800">{t(verdictKey)}</p>
               </div>
-              <div className="bg-emerald-50 rounded-xl p-3">
-                <p className="text-2xl font-black text-emerald-700">
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-brand-blue-50 rounded-xl p-3">
+                <p className="text-2xl font-black text-brand-blue tabular-nums">{fmt.number(totalScore)}</p>
+                <p className="text-xs text-slate-600 font-semibold mt-1">{tl("totalScoreLabel")}</p>
+              </div>
+              <div className="bg-brand-green-50 rounded-xl p-3">
+                <p className="text-2xl font-black text-brand-green tabular-nums">
                   {correctCount}/{totalQuestions}
                 </p>
-                <p className="text-xs text-emerald-600 font-semibold mt-1">{t("correctQuestions")}</p>
+                <p className="text-xs text-slate-600 font-semibold mt-1">{t("correctQuestions")}</p>
               </div>
-              <div className="bg-amber-50 rounded-xl p-3">
-                <p className="text-2xl font-black text-amber-700">{percent}%</p>
-                <p className="text-xs text-amber-600 font-semibold mt-1">{t("successRate")}</p>
+              <div className="bg-brand-orange-50 rounded-xl p-3">
+                <p className="text-2xl font-black text-brand-orange tabular-nums">{avgSeconds.toFixed(1)}s</p>
+                <p className="text-xs text-slate-600 font-semibold mt-1">{t("avgTime")}</p>
               </div>
             </div>
           </div>
@@ -337,18 +385,18 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
               const status = a.value === null ? "timeout" : a.isCorrect ? "correct" : "wrong";
               const accent =
                 status === "correct"
-                  ? "border-emerald-400 bg-emerald-50"
+                  ? "border-l-brand-green"
                   : status === "timeout"
-                    ? "border-amber-400 bg-amber-50"
-                    : "border-red-400 bg-red-50";
+                    ? "border-l-amber-500"
+                    : "border-l-red-500";
               const dot =
                 status === "correct"
-                  ? "bg-emerald-500"
+                  ? "bg-brand-green"
                   : status === "timeout"
                     ? "bg-amber-500"
                     : "bg-red-500";
               return (
-                <div key={q.id} className={`rounded-2xl border-2 ${accent} p-4 sm:p-5`}>
+                <div key={q.id} className={`rounded-2xl bg-white border border-slate-200 border-l-4 ${accent} shadow-sm p-4 sm:p-5`}>
                   <div className="flex items-start gap-3 mb-3">
                     <span
                       className={`flex items-center justify-center ${dot} text-white rounded-full w-7 h-7 text-sm font-black shrink-0`}
@@ -404,15 +452,15 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
           <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <button
               onClick={handleRestart}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors"
+              className="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors"
             >
               {t("retry")}
             </button>
             <Link
-              href="/explore"
+              href={backHref}
               className="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold py-3 rounded-xl transition-colors"
             >
-              {t("backToExplore")}
+              {backText}
             </Link>
           </div>
         </div>
@@ -421,6 +469,43 @@ export function PracticeView({ quiz }: { quiz: Quiz }) {
   }
 
   return null;
+}
+
+/* ================================================================== */
+/*  Score ring — SVG circular progress with the percentage inside      */
+/* ================================================================== */
+
+function ScoreRing({ percent }: { percent: number }) {
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  return (
+    <svg viewBox="0 0 120 120" className="w-32 h-32 sm:w-36 sm:h-36" role="img" aria-label={`${percent}%`}>
+      <circle cx="60" cy="60" r={R} fill="none" strokeWidth="10" className="stroke-slate-200" />
+      <circle
+        cx="60"
+        cy="60"
+        r={R}
+        fill="none"
+        strokeWidth="10"
+        strokeLinecap="round"
+        className="stroke-brand-blue"
+        strokeDasharray={C}
+        strokeDashoffset={C * (1 - percent / 100)}
+        transform="rotate(-90 60 60)"
+      />
+      <text
+        x="60"
+        y="60"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="26"
+        fontWeight="900"
+        className="fill-slate-900 tabular-nums"
+      >
+        {percent}%
+      </text>
+    </svg>
+  );
 }
 
 /* ================================================================== */
