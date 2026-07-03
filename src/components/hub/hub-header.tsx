@@ -15,7 +15,7 @@ const HIDE_PREFIXES = [
   "/oauth/authorize",
 ];
 
-export function HubHeader() {
+export function HubHeader({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const t = useTranslations("hub");
 
@@ -46,6 +46,11 @@ export function HubHeader() {
           >
             {t("exploreNav")}
           </Link>
+          {isAdmin && (
+            <Link href={withBasePath("/admin/hub/affiliations")} className="text-slate-600 transition-colors hover:text-brand-blue">
+              {t("headerAdmin")}
+            </Link>
+          )}
         </nav>
       </div>
     </header>

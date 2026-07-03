@@ -853,7 +853,9 @@
     "suspended": {
       "banner": "This quiz has been suspended by the savint.it moderation team.",
       "reasonLabel": "Reason"
-    }
+    },
+    "adminNav": { "affiliations": "Affiliations", "reports": "Reports" },
+    "headerAdmin": "Admin"
   },
   "practice": {
     "mode": "Practice mode",
@@ -988,5 +990,37 @@
     "rejectReasonPrompt": "Rejection reason (optional)",
     "approveError": "Error during approval.",
     "rejectError": "Error during rejection."
+  },
+  "adminAffiliations": {
+    "title": "Admin console — Affiliations",
+    "connectedTitle": "Connected schools",
+    "pendingTitle": "Pending requests",
+    "historyTitle": "History",
+    "none": "No entries.",
+    "colSchool": "School",
+    "colProvince": "Province",
+    "colUrl": "URL",
+    "colEmail": "Email",
+    "colStatus": "Status",
+    "colLastSeen": "Last seen",
+    "colConnectedAt": "Connected on",
+    "colDate": "Date",
+    "colDetail": "Detail",
+    "colActions": "Actions",
+    "statusActive": "Active",
+    "statusDisabled": "Disabled",
+    "statusApproved": "Code sent, awaiting redemption",
+    "statusRejected": "Rejected",
+    "codeExpires": "Expires on {date}",
+    "rejectedReason": "Reason: {reason}",
+    "never": "Never",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "confirmDeleteTitle": "Delete permanently?",
+    "confirmDeleteBody": "This deletes the request and, if present, the linked installation with its credentials. It cannot be undone.",
+    "confirmDeleteAction": "Delete",
+    "cancel": "Cancel",
+    "actionError": "Operation failed."
   }
 }
