@@ -117,6 +117,7 @@ model User {
   reportsMade     Report[]      @relation("reportsMade")
   reportsResolved Report[]      @relation("reportsResolved")
   hubLink         HubLink?
+  publishDefaults PublishDefaults?
 }
 
 model Account {
@@ -351,6 +352,18 @@ model HubLink {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([hubAccountId])
+}
+
+model PublishDefaults {
+  userId      String   @id
+  schoolLevel String?
+  subject     String?
+  language    String?
+  ageMin      Int?
+  ageMax      Int?
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model OAuthFlowState {
