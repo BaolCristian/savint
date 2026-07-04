@@ -59,7 +59,7 @@ export default async function Page() {
                       <td className="px-4 py-3">{active ? <Badge tone="green">{t("statusActive")}</Badge> : <Badge tone="slate">{t("statusDisabled")}</Badge>}</td>
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(inst.lastSeenAt)}</td>
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(inst.createdAt)}</td>
-                      <td className="px-4 py-3"><InstallationActions installationId={inst.id} active={active} /></td>
+                      <td className="px-4 py-3"><InstallationActions installationId={inst.id} active={active} schoolName={inst.name} /></td>
                     </tr>
                   );
                 })}
@@ -87,7 +87,7 @@ export default async function Page() {
                     <td className="px-4 py-3 text-slate-600">{r.province}</td>
                     <td className="px-4 py-3"><a href={r.installationUrl} target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline break-all">{r.installationUrl}</a></td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmt(r.createdAt)}</td>
-                    <td className="px-4 py-3"><AffiliationActions id={r.id} /></td>
+                    <td className="px-4 py-3"><AffiliationActions id={r.id} schoolName={r.schoolName} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -117,7 +117,7 @@ export default async function Page() {
                       {r.status === "APPROVED" && r.setupCodeExpiresAt ? t("codeExpires", { date: fmt(r.setupCodeExpiresAt) })
                         : r.status === "REJECTED" && r.rejectionReason ? t("rejectedReason", { reason: r.rejectionReason }) : "—"}
                     </td>
-                    <td className="px-4 py-3"><ConfirmDelete deleteUrl={`/api/hub/admin/affiliations/${r.id}`} /></td>
+                    <td className="px-4 py-3"><ConfirmDelete deleteUrl={`/api/hub/admin/affiliations/${r.id}`} label={r.schoolName} /></td>
                   </tr>
                 ))}
               </tbody>
