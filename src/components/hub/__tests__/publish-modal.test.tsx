@@ -19,12 +19,17 @@ function wrap(ui: React.ReactNode) {
 
 describe("PublishModal", () => {
   it("shows 'connect' CTA when not linked", () => {
-    wrap(<PublishModal open quiz={baseQuiz} link={null} onClose={() => {}} />);
+    wrap(<PublishModal open quiz={baseQuiz} link={null} estimatedDurationSec={600} onClose={() => {}} />);
     expect(screen.getByRole("link", { name: /Connect savint.it account/i })).toBeInTheDocument();
   });
 
+  it("shows 'reconnect' CTA when link is revoked", () => {
+    wrap(<PublishModal open quiz={baseQuiz} link={{ hubAccountEmail: "h@x" }} revoked estimatedDurationSec={600} onClose={() => {}} />);
+    expect(screen.getByRole("link", { name: /Reconnect to savint.it/i })).toBeInTheDocument();
+  });
+
   it("shows publish form when linked", () => {
-    wrap(<PublishModal open quiz={baseQuiz} link={{ hubAccountEmail: "h@x" }} onClose={() => {}} />);
+    wrap(<PublishModal open quiz={baseQuiz} link={{ hubAccountEmail: "h@x" }} estimatedDurationSec={600} onClose={() => {}} />);
     expect(screen.getByRole("button", { name: /^Publish$/i })).toBeInTheDocument();
   });
 
@@ -38,11 +43,11 @@ describe("PublishModal", () => {
         open
         quiz={baseQuiz}
         link={{ hubAccountEmail: "h@x" }}
+        estimatedDurationSec={600}
         onClose={() => {}}
         onSuccess={onSuccess}
       />,
     );
-    fireEvent.change(screen.getByPlaceholderText("600"), { target: { value: "600" } });
     fireEvent.click(screen.getByLabelText(/I confirm the publication declaration/i));
     fireEvent.click(screen.getByRole("button", { name: /^Publish$/i }));
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
@@ -54,9 +59,23 @@ describe("PublishModal", () => {
         open
         quiz={{ ...baseQuiz, hubPublishedId: "H" }}
         link={{ hubAccountEmail: "h@x" }}
+        estimatedDurationSec={600}
         onClose={() => {}}
       />,
     );
     expect(screen.getByText(/Update on savint.it/i)).toBeInTheDocument();
+  });
+
+  it("shows computed duration line in form", () => {
+    wrap(
+      <PublishModal
+        open
+        quiz={baseQuiz}
+        link={{ hubAccountEmail: "h@x" }}
+        estimatedDurationSec={600}
+        onClose={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Estimated duration/i)).toBeInTheDocument();
   });
 });

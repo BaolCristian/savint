@@ -805,7 +805,10 @@
       "errorQuota": "Quota account hub raggiunta.",
       "errorReauth": "Autorizza nuovamente l'accesso a savint.it.",
       "cancel": "Annulla",
-      "unpublish": "Rimuovi"
+      "unpublish": "Rimuovi",
+      "reauthCta": "Riconnetti a savint.it",
+      "reauthIntro": "L'autorizzazione a savint.it è scaduta o è stata revocata. Riconnettiti per pubblicare.",
+      "durationComputed": "Durata stimata: ~{min} min (calcolata dalle domande)"
     },
     "link": {
       "title": "Account savint.it collegato",

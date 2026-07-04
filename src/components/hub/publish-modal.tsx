@@ -41,20 +41,29 @@ type Props = {
   open: boolean;
   quiz: PublishQuiz;
   link: { hubAccountEmail: string } | null;
+  revoked?: boolean;
+  defaults?: {
+    schoolLevel: string | null;
+    subject: string | null;
+    language: string | null;
+    ageMin: number | null;
+    ageMax: number | null;
+  } | null;
+  estimatedDurationSec: number;
   onClose: () => void;
   onSuccess?: (result: { hubQuizId: string; version: number; url: string }) => void;
 };
 
-export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
+export function PublishModal({ open, quiz, link, revoked, defaults, estimatedDurationSec, onClose, onSuccess }: Props) {
   const t = useTranslations("hub.publish");
   const locale = useLocale();
 
-  const [schoolLevel, setSchoolLevel] = useState(quiz.schoolLevel ?? "");
-  const [subject, setSubject] = useState(quiz.subject ?? "");
-  const [language, setLanguage] = useState(quiz.language ?? "");
-  const [ageMin, setAgeMin] = useState(quiz.ageMin ?? "");
-  const [ageMax, setAgeMax] = useState(quiz.ageMax ?? "");
-  const [estimatedDuration, setEstimatedDuration] = useState("");
+  const [schoolLevel, setSchoolLevel] = useState(quiz.schoolLevel ?? defaults?.schoolLevel ?? "");
+  const [subject, setSubject] = useState(quiz.subject ?? defaults?.subject ?? "");
+  const [language, setLanguage] = useState(quiz.language ?? defaults?.language ?? "");
+  const [ageMin, setAgeMin] = useState<number | "">(quiz.ageMin ?? defaults?.ageMin ?? "");
+  const [ageMax, setAgeMax] = useState<number | "">(quiz.ageMax ?? defaults?.ageMax ?? "");
+  const [reauthUrl, setReauthUrl] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +87,6 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
       if (language) body.language = language;
       if (ageMin !== "") body.ageMin = Number(ageMin);
       if (ageMax !== "") body.ageMax = Number(ageMax);
-      if (estimatedDuration !== "") body.estimatedDurationSec = Number(estimatedDuration);
-
       const res = await fetch(withBasePath(`/api/hub/quiz/${quiz.id}/publish`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,7 +96,7 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data?.error === "reauth_required") {
-          setError(t("errorReauth"));
+          setReauthUrl(withBasePath(data?.reauthUrl ?? "/account/hub-link"));
         } else if (data?.error === "quota_exceeded") {
           setError(t("errorQuota"));
         } else {
@@ -117,15 +124,16 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl dark:bg-slate-900 p-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{title}</h2>
 
-        {!link ? (
-          /* ── Not linked: show connect CTA ── */
+        {(!link || revoked || reauthUrl) ? (
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400">{t("connectAccountIntro")}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {(revoked || reauthUrl) ? t("reauthIntro") : t("connectAccountIntro")}
+            </p>
             <a
-              href={withBasePath("/account/hub-link")}
+              href={reauthUrl ?? withBasePath("/account/hub-link")}
               className="inline-block rounded bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700"
             >
-              {t("connectAccountCta")}
+              {(revoked || reauthUrl) ? t("reauthCta") : t("connectAccountCta")}
             </a>
             <div className="flex justify-end">
               <button
@@ -242,20 +250,9 @@ export function PublishModal({ open, quiz, link, onClose, onSuccess }: Props) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("estimatedDuration")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                required
-                min={10}
-                placeholder="600"
-                value={estimatedDuration}
-                onChange={(e) => setEstimatedDuration(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
-            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t("durationComputed", { min: Math.max(1, Math.round(estimatedDurationSec / 60)) })}
+            </p>
 
             <label className="flex items-start gap-2 cursor-pointer text-sm text-slate-700 dark:text-slate-300">
               <input

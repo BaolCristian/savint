@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
       ageMin: meta.data.ageMin,
       ageMax: meta.data.ageMax,
       questionCount,
-      estimatedDurationSec: meta.data.estimatedDurationSec,
+      estimatedDurationSec: meta.data.estimatedDurationSec ?? 0,
       payloadBlob: payload,
       payloadHash: recomputed,
       payloadSize: payload.length,
