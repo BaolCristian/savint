@@ -38,6 +38,15 @@ interface Props {
   hasConsent?: boolean;
   hubEnabled?: boolean;
   hubLink?: { hubAccountEmail: string } | null;
+  hubLinkRevoked?: boolean;
+  publishDefaults?: {
+    schoolLevel: string | null;
+    subject: string | null;
+    language: string | null;
+    ageMin: number | null;
+    ageMax: number | null;
+  } | null;
+  estimatedDurationSec?: number;
 }
 
 interface ValidationError {
@@ -112,7 +121,7 @@ function createDefaultQuestion(order: number): QuestionInput {
   };
 }
 
-export function QuizEditor({ initialData, hasConsent = false, hubEnabled, hubLink }: Props) {
+export function QuizEditor({ initialData, hasConsent = false, hubEnabled, hubLink, hubLinkRevoked, publishDefaults, estimatedDurationSec }: Props) {
   const router = useRouter();
   const t = useTranslations("editor");
   const tc = useTranslations("common");
@@ -420,6 +429,9 @@ export function QuizEditor({ initialData, hasConsent = false, hubEnabled, hubLin
                 hubPublishedId: ((initialData as any)?.hubPublishedId ?? null),
               }}
               link={hubLink ?? null}
+              revoked={hubLinkRevoked}
+              defaults={publishDefaults}
+              estimatedDurationSec={estimatedDurationSec ?? 0}
             />
           )}
 
