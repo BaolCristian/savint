@@ -14,7 +14,7 @@ export const publishMetadataSchema = z
     language: z.string().regex(ISO_639_1, "invalid language"),
     ageMin: z.number().int().min(3).max(120).optional(),
     ageMax: z.number().int().min(3).max(120).optional(),
-    estimatedDurationSec: z.number().int().min(10).max(86400),
+    estimatedDurationSec: z.number().int().min(10).max(86400).optional(),
   })
   .refine(
     (m) => m.ageMin === undefined || m.ageMax === undefined || m.ageMin <= m.ageMax,

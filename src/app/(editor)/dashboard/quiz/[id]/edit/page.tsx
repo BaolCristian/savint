@@ -49,15 +49,22 @@ export default async function EditQuizPage({
 
   const hubLink = await prisma.hubLink.findUnique({
     where: { userId: session.user.id },
-    select: { hubAccountEmail: true },
+    select: { hubAccountEmail: true, revokedAt: true },
   });
+  const publishDefaults = await prisma.publishDefaults.findUnique({
+    where: { userId: session.user.id },
+  });
+  const estimatedDurationSec = quiz.questions.reduce((s, q) => s + q.timeLimit, 0);
 
   return (
     <QuizEditor
       initialData={initialData}
       hasConsent={hasConsent}
       hubEnabled={await hasHubOAuthConfig()}
-      hubLink={hubLink}
+      hubLink={hubLink ? { hubAccountEmail: hubLink.hubAccountEmail } : null}
+      hubLinkRevoked={Boolean(hubLink?.revokedAt)}
+      publishDefaults={publishDefaults}
+      estimatedDurationSec={estimatedDurationSec}
     />
   );
 }

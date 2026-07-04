@@ -7,9 +7,12 @@ type Props = {
   hubEnabled: boolean;
   quiz: Parameters<typeof PublishModal>[0]["quiz"];
   link: { hubAccountEmail: string } | null;
+  revoked?: boolean;
+  defaults?: Parameters<typeof PublishModal>[0]["defaults"];
+  estimatedDurationSec?: number;
 };
 
-export function PublishButton({ hubEnabled, quiz, link }: Props) {
+export function PublishButton({ hubEnabled, quiz, link, revoked, defaults, estimatedDurationSec }: Props) {
   const t = useTranslations("hub.publish");
   const [open, setOpen] = useState(false);
   if (!hubEnabled) return null;
@@ -23,7 +26,15 @@ export function PublishButton({ hubEnabled, quiz, link }: Props) {
       >
         {label}
       </button>
-      <PublishModal open={open} quiz={quiz} link={link} onClose={() => setOpen(false)} />
+      <PublishModal
+        open={open}
+        quiz={quiz}
+        link={link}
+        revoked={revoked}
+        defaults={defaults}
+        estimatedDurationSec={estimatedDurationSec ?? 0}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }

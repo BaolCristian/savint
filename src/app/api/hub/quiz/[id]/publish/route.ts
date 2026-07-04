@@ -9,6 +9,7 @@ import {
   getAuthorizeUrl,
 } from "@/lib/hub/hub-client";
 import { publishMetadataSchema } from "@/lib/hub/quiz-metadata";
+import { savePublishDefaults } from "@/lib/hub/publish-defaults";
 
 async function loadOwnedQuiz(userId: string, id: string) {
   return prisma.quiz.findFirst({
@@ -95,6 +96,18 @@ export async function POST(
       hubAccountId: link?.hubAccountId,
     },
   });
+  // Ricorda i metadati usati come default dell'utente (non bloccare il publish).
+  try {
+    await savePublishDefaults(session.user.id, {
+      schoolLevel: metadata.data.schoolLevel,
+      subject: metadata.data.subject,
+      language: metadata.data.language,
+      ageMin: metadata.data.ageMin,
+      ageMax: metadata.data.ageMax,
+    });
+  } catch {
+    // ignore
+  }
   return NextResponse.json(body);
 }
 

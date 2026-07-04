@@ -805,7 +805,10 @@
       "errorQuota": "Hub account quota reached.",
       "errorReauth": "Please reauthorize savint.it access.",
       "cancel": "Cancel",
-      "unpublish": "Unpublish"
+      "unpublish": "Unpublish",
+      "reauthCta": "Reconnect to savint.it",
+      "reauthIntro": "Your savint.it authorization expired or was revoked. Reconnect to publish.",
+      "durationComputed": "Estimated duration: ~{min} min (computed from questions)"
     },
     "link": {
       "title": "savint.it account link",
