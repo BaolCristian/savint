@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 /** Bottone "Elimina" che apre un dialog di conferma e fa DELETE su `deleteUrl`
  *  (una richiesta di affiliazione o direttamente un'installazione). */
-export function ConfirmDelete({ deleteUrl }: { deleteUrl: string }) {
+export function ConfirmDelete({ deleteUrl, label }: { deleteUrl: string; label?: string }) {
   const t = useTranslations("adminAffiliations");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,7 +39,9 @@ export function ConfirmDelete({ deleteUrl }: { deleteUrl: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("confirmDeleteTitle")}</DialogTitle>
-            <DialogDescription>{t("confirmDeleteBody")}</DialogDescription>
+            <DialogDescription>
+              {label ? t("confirmDeleteNamed", { name: label }) : t("confirmDeleteBody")}
+            </DialogDescription>
           </DialogHeader>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <DialogFooter>
