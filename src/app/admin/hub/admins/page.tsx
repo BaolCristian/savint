@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/db/client";
 import { getHubSessionFromCookies } from "@/lib/auth/hub-session";
-import { PromoteForm, DemoteButton } from "./admin-account-actions";
+import { PromoteForm, DemoteButton, TransferForm } from "./admin-account-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,14 @@ export default async function Page() {
         <h2 className="text-lg font-bold text-slate-900">{t("promoteTitle")}</h2>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm max-w-xl">
           <PromoteForm />
+        </div>
+      </section>
+
+      {/* Trasferisci contenuti a SAVINT */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold text-slate-900">{t("transferTitle")}</h2>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm max-w-xl">
+          <TransferForm />
         </div>
       </section>
 

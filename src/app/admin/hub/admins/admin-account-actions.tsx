@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 /** Form: promuovi ad admin un utente esistente per email. */
 export function PromoteForm() {
@@ -55,6 +59,76 @@ export function PromoteForm() {
       </div>
       {msg && <p className={`text-sm ${msg.ok ? "text-brand-green" : "text-red-600"}`}>{msg.text}</p>}
     </form>
+  );
+}
+
+/** Form: trasferisci tutti i quiz di un docente (per email) all'account SAVINT. */
+export function TransferForm() {
+  const t = useTranslations("adminAccounts");
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function onConfirm() {
+    setBusy(true);
+    setMsg(null);
+    const res = await fetch("/api/hub/admin/accounts/transfer-content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    setBusy(false);
+    setOpen(false);
+    if (res.ok) {
+      const data = await res.json();
+      setMsg({ ok: true, text: t("transferSuccess", { count: data.moved }) });
+      setEmail("");
+      router.refresh();
+    } else if (res.status === 404) {
+      setMsg({ ok: false, text: t("transferNotFound") });
+    } else if (res.status === 409) {
+      setMsg({ ok: false, text: t("transferSystemMissing") });
+    } else {
+      setMsg({ ok: false, text: t("actionError") });
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-slate-600">{t("transferHelp")}</p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); setMsg(null); }}
+          placeholder={t("emailPlaceholder")}
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20"
+        />
+        <button
+          type="button"
+          disabled={busy || !email.trim()}
+          onClick={() => setOpen(true)}
+          className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+        >
+          {t("transferAction")}
+        </button>
+      </div>
+      {msg && <p className={`text-sm ${msg.ok ? "text-brand-green" : "text-red-600"}`}>{msg.text}</p>}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("transferConfirmTitle")}</DialogTitle>
+            <DialogDescription>{t("transferConfirmBody", { email: email.trim() })}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={onConfirm} disabled={busy}>{t("transferConfirmAction")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
