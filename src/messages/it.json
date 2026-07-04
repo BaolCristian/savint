@@ -1028,7 +1028,8 @@
     "confirmDeleteBody": "Questa azione elimina la richiesta e, se presente, l'installazione collegata con le sue credenziali. Non è reversibile.",
     "confirmDeleteAction": "Elimina",
     "cancel": "Annulla",
-    "actionError": "Operazione non riuscita."
+    "actionError": "Operazione non riuscita.",
+    "confirmDeleteNamed": "Eliminare definitivamente «{name}»? Questa azione cancella la scuola e, se presente, l'installazione collegata con le sue credenziali. Non è reversibile."
   },
   "adminAccounts": {
     "title": "Console admin — Amministratori",
@@ -1045,6 +1046,16 @@
     "you": "(tu)",
     "demoteAction": "Rimuovi admin",
     "none": "Nessuno.",
-    "actionError": "Operazione non riuscita."
+    "actionError": "Operazione non riuscita.",
+    "cancel": "Annulla",
+    "transferTitle": "Trasferisci contenuti a SAVINT",
+    "transferHelp": "Sposta tutti i quiz pubblicati da un docente all'account neutro SAVINT (utile quando un docente o una scuola lascia). L'autore mostrato diventa «SAVINT».",
+    "transferAction": "Trasferisci a SAVINT",
+    "transferConfirmTitle": "Trasferire tutti i quiz?",
+    "transferConfirmBody": "Tutti i quiz pubblicati da {email} passeranno all'account SAVINT. L'operazione non riassegna automaticamente indietro.",
+    "transferConfirmAction": "Trasferisci",
+    "transferSuccess": "{count} quiz trasferiti a SAVINT.",
+    "transferNotFound": "Nessun account registrato con questa email.",
+    "transferSystemMissing": "Account SAVINT non configurato sull'hub."
   }
 }

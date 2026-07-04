@@ -1028,7 +1028,8 @@
     "confirmDeleteBody": "This deletes the request and, if present, the linked installation with its credentials. It cannot be undone.",
     "confirmDeleteAction": "Delete",
     "cancel": "Cancel",
-    "actionError": "Operation failed."
+    "actionError": "Operation failed.",
+    "confirmDeleteNamed": "Permanently delete “{name}”? This deletes the school and, if present, the linked installation with its credentials. It cannot be undone."
   },
   "adminAccounts": {
     "title": "Admin console — Administrators",
@@ -1045,6 +1046,16 @@
     "you": "(you)",
     "demoteAction": "Remove admin",
     "none": "None.",
-    "actionError": "Operation failed."
+    "actionError": "Operation failed.",
+    "cancel": "Cancel",
+    "transferTitle": "Transfer content to SAVINT",
+    "transferHelp": "Move all quizzes published by a teacher to the neutral SAVINT account (useful when a teacher or school leaves). The displayed author becomes “SAVINT”.",
+    "transferAction": "Transfer to SAVINT",
+    "transferConfirmTitle": "Transfer all quizzes?",
+    "transferConfirmBody": "All quizzes published by {email} will move to the SAVINT account. This does not automatically reassign them back.",
+    "transferConfirmAction": "Transfer",
+    "transferSuccess": "{count} quizzes transferred to SAVINT.",
+    "transferNotFound": "No account registered with this email.",
+    "transferSystemMissing": "SAVINT account not configured on the hub."
   }
 }
