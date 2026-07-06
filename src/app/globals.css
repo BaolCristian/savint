@@ -374,6 +374,27 @@
   animation: timer-shake 0.3s ease-in-out;
 }
 
+/* Slow drift animation for login floating background shapes */
+@keyframes float-drift-1 {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-20px) rotate(180deg) scale(1.05); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+
+@keyframes float-drift-2 {
+  0% { transform: translateY(0) rotate(0deg) scale(1.05); }
+  50% { transform: translateY(25px) rotate(-180deg) scale(0.95); }
+  100% { transform: translateY(0) rotate(-360deg) scale(1.05); }
+}
+
+.animate-float-drift-1 {
+  animation: float-drift-1 25s ease-in-out infinite;
+}
+
+.animate-float-drift-2 {
+  animation: float-drift-2 30s ease-in-out infinite;
+}
+
 /* Podium firework particle */
 .firework-particle {
   position: absolute;
