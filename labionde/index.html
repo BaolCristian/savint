@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labionde 👵🌾 — Sterpo di Bertiolo</title>
+<style>
+  :root{
+    --bg:#1e2a1e; --panel:#2b3a2b; --panel2:#243224; --line:#3d523d;
+    --ink:#e8e6d8; --dim:#a8b39a; --gold:#e6c15a; --green:#8fc97a; --red:#e07a6a;
+    --blue:#7ab3c9;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:Georgia,'Times New Roman',serif;
+    min-height:100vh; padding:12px;
+  }
+  h1{font-size:1.5rem; color:var(--gold);}
+  .sub{color:var(--dim); font-style:italic; font-size:.85rem; margin-bottom:10px;}
+  .wrap{max-width:1100px; margin:0 auto;}
+  .topbar{
+    display:flex; flex-wrap:wrap; gap:8px; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:12px;
+    align-items:center; font-size:.95rem;
+  }
+  .topbar .stat{background:var(--panel2); border-radius:8px; padding:4px 10px; white-space:nowrap;}
+  .cols{display:grid; grid-template-columns:1fr 300px; gap:12px;}
+  @media(max-width:820px){ .cols{grid-template-columns:1fr;} }
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;}
+  .panel h2{font-size:1rem; color:var(--gold); margin-bottom:8px;}
+  .fields{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .plot{
+    aspect-ratio:1; border:1px solid var(--line); border-radius:8px; background:#33422c;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; font-size:1.5rem; position:relative; user-select:none;
+  }
+  .plot:hover{outline:2px solid var(--gold);}
+  .plot.river{background:#2c3e42;}
+  .plot.frozen{background:#3a4250;}
+  .plot .tag{font-size:.6rem; color:var(--dim); font-family:sans-serif;}
+  .plot .ready{position:absolute; top:2px; right:4px; font-size:.8rem;}
+  .plot .riv{position:absolute; bottom:2px; left:4px; font-size:.65rem;}
+  .actions{display:flex; flex-direction:column; gap:6px;}
+  button{
+    font-family:inherit; font-size:.9rem; background:var(--panel2); color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:7px 10px; cursor:pointer;
+    text-align:left;
+  }
+  button:hover:not(:disabled){border-color:var(--gold);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  button.primary{background:#4a5a33; font-weight:bold;}
+  select{
+    font-family:inherit; background:var(--panel2); color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:6px; width:100%;
+  }
+  .log{
+    height:190px; overflow-y:auto; font-size:.85rem; line-height:1.45;
+    background:var(--panel2); border-radius:8px; padding:8px; margin-top:8px;
+  }
+  .log .fur{color:var(--gold);}
+  .log .it{color:var(--dim); font-style:italic; font-size:.78rem;}
+  .log p{margin-bottom:6px; border-bottom:1px dotted #3d523d33; padding-bottom:4px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
+  .inv{display:flex; flex-wrap:wrap; gap:6px; font-size:.85rem;}
+  .inv span{background:var(--panel2); border-radius:6px; padding:3px 8px;}
+  .modal-bg{
+    position:fixed; inset:0; background:#000a; display:none;
+    align-items:center; justify-content:center; z-index:10;
+  }
+  .modal-bg.open{display:flex;}
+  .modal{
+    background:var(--panel); border:1px solid var(--gold); border-radius:12px;
+    padding:16px; max-width:440px; width:92%; max-height:85vh; overflow-y:auto;
+  }
+  .modal h2{color:var(--gold); margin-bottom:10px;}
+  .mrow{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:5px 0; border-bottom:1px dotted var(--line); font-size:.9rem;}
+  .mrow button{padding:4px 10px;}
+  .energybar{display:inline-flex; gap:1px; vertical-align:middle;}
+  .energybar i{width:9px; height:14px; background:#4a5a33; border-radius:2px; display:inline-block;}
+  .energybar i.on{background:var(--green);}
+  .stars{color:var(--gold);}
+  .hint{font-size:.75rem; color:var(--dim); margin-top:4px; font-family:sans-serif;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Labionde 👵🌾</h1>
+  <div class="sub">Sterpo di Bertiolo, Friûl — la bionde e la sô cjase di campagne</div>
+
+  <div class="topbar" id="topbar"></div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h2>I cjamps <span class="hint" style="display:inline">— clicca un campo per seminare o raccogliere</span></h2>
+        <select id="seedSelect"></select>
+        <div style="height:8px"></div>
+        <div class="fields" id="fields"></div>
+        <div class="hint">🌊 = dongje la Stele: cresce più in fretta, ma occhio alla piena d'autunno.</div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h2>La zornade de bionde</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="panel">
+        <h2>Lavôrs</h2>
+        <div class="actions">
+          <button id="btnWood">🪓 Taiâ lens tal bosc <small>(-2⚡ → +3 ciocchi)</small></button>
+          <button id="btnSplit">🪵 Spacâ i ciocs <small>(-1⚡ → +3 legna)</small></button>
+          <button id="btnFire">💨 Soflâ sul fûc <small>(inverno: -1 legna, +1⚡)</small></button>
+          <button id="btnFish">🎣 Pescjâ te Stele <small>(-2⚡)</small></button>
+          <button id="btnHens">🐔 Governâ lis gjalinis <small>(-1⚡, paston + uova)</small></button>
+          <button id="btnVine">🍇 Vendemâ <small>(autunno: -2⚡ → +5 uve)</small></button>
+          <button id="btnPress">🍷 Torcolâ <small>(-1⚡, 5 uve → 1 vin)</small></button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Polse e paîs</h2>
+        <div class="actions">
+          <button id="btnNap">😴 Pisulin <small>(+3⚡, 1 volta al dì)</small></button>
+          <button id="btnCoffee">☕ Un cafè <small>(-2€, +2⚡, max 2)</small></button>
+          <button id="btnGrappa">🥃 Une sgnape <small>(-3€, cura la schiena)</small></button>
+          <button id="btnFarnia">🌳 Lâ de Fàrnie <small>(+1⚡, 1 volta al dì)</small></button>
+          <button id="btnMarket">🧺 Marcjât di Bertiûl</button>
+          <button id="btnRestore">🏚️ Comedâ la cjase</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Te cantine</h2>
+        <div class="inv" id="inv"></div>
+      </div>
+      <button class="primary" id="btnEnd">🌙 Fin de zornade</button>
+      <button id="btnReset" style="font-size:.75rem">↺ Ricomincia da capo</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+'use strict';
+// ───────────────────────── dati di gioco ─────────────────────────
+const SEASONS = [
+  {id:0, fur:'Primevere', emoji:'🌱'},
+  {id:1, fur:'Istât',     emoji:'☀️'},
+  {id:2, fur:'Autun',     emoji:'🍂'},
+  {id:3, fur:'Unvier',    emoji:'❄️'},
+];
+const SEASON_DAYS = 28;
+
+const CROPS = {
+  forment:{name:'Forment', it:'frumento',  emoji:'🌾', seasons:[0],   growth:10, seed:2, sell:8},
+  fasui:  {name:'Fasûi',   it:'fagioli',   emoji:'🫘', seasons:[0,1], growth:6,  seed:2, sell:5},
+  blave:  {name:'Blave',   it:'mais',      emoji:'🌽', seasons:[0,1], growth:8,  seed:2, sell:6},
+  coce:   {name:'Coce',    it:'zucca',     emoji:'🎃', seasons:[1],   growth:9,  seed:3, sell:10},
+  radric: {name:'Radric',  it:'radicchio', emoji:'🥬', seasons:[2],   growth:6,  seed:2, sell:6},
+  verze:  {name:'Verze',   it:'verza',     emoji:'🥦', seasons:[2],   growth:7,  seed:2, sell:7},
+};
+
+const WEATHER = {
+  soreli:  {emoji:'☀️', fur:'Soreli',    it:'sole'},
+  ploie:   {emoji:'🌧️', fur:'Ploie',     it:'pioggia'},
+  brome:   {emoji:'🌫️', fur:'Brome',     it:'nebbia'},
+  gelo:    {emoji:'🥶', fur:'Gelo',      it:'gelo'},
+  tampieste:{emoji:'🌨️',fur:'Tampieste', it:'grandine'},
+};
+
+const RESTORATIONS = [
+  {id:'cuviert', name:'Comedâ il cuviert', it:'riparare il tetto',    cost:150, done:false, bonus:'+1 energia massima'},
+  {id:'spolert', name:'Gnove spolert',     it:'nuova cucina a legna', cost:250, done:false, bonus:'il cafè non costa più niente'},
+  {id:'ort',     name:'Slargjâ l\'ort',    it:'allargare l\'orto',    cost:400, done:false, bonus:'i campi crescono più in fretta'},
+  {id:'cantine', name:'Comedâ la cantine', it:'sistemare la cantina', cost:300, done:false, bonus:'il vino vale di più'},
+];
+
+const PHRASES = {
+  morning:[
+    ['Anìn, che il dì al è curt!','Andiamo, che la giornata è corta!'],
+    ['Jo o ai otantedoi agns, ma lis mans a son buinis.','Ho 82 anni, ma le mani sono buone.'],
+    ['Prime il lavôr, dopo il cafè... anzi no, prime il cafè.','Prima il lavoro, poi il caffè... anzi no, prima il caffè.'],
+  ],
+  tired:[
+    ['Ce stracje! O soi rote.','Che stanchezza! Sono a pezzi.'],
+    ['Une volte o levi come un tren. Cumò come une cariole.','Una volta andavo come un treno. Adesso come una carriola.'],
+  ],
+  harvest:[
+    ['Ben, benon! Robe di prin ordin.','Bene, benone! Roba di prim\'ordine.'],
+    ['Cheste e je tiere buine, sior!','Questa è terra buona, signore!'],
+  ],
+  fish:[
+    ['La Stele e je plene di trutis, baste savê spietâ.','La Stella è piena di trote, basta saper aspettare.'],
+  ],
+};
+
+// ───────────────────────── stato ─────────────────────────
+const SAVE_KEY = 'labionde-save-v1';
+let S = null;
+
+function newGame(){
+  return {
+    day:1, season:0, dayOfSeason:1, year:1,
+    energy:10, maxEnergy:10, money:20,
+    logs:2, wood:6,           // ciocchi grezzi / legna spaccata
+    hens:2, feed:6, eggs:0,
+    fish:0, grapes:0, wine:0,
+    seeds:{forment:3, fasui:0, blave:3, coce:0, radric:0, verze:0},
+    harvest:{forment:0, fasui:0, blave:0, coce:0, radric:0, verze:0},
+    plots:Array.from({length:12},(_,i)=>({crop:null, left:0, river:i>=8})),
+    weather:'soreli',
+    fireLit:false, napped:false, coffees:0, farniaDone:false,
+    badBack:false, cold:false,
+    vintagesToday:0, vineLeft:6,   // vendemmie disponibili in autunno
+    restored:{}, sagra:false,
+    totEarned:0, winesMade:0, wintersSurvived:0,
+    log:[],
+  };
+}
+
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+// ───────────────────────── util ─────────────────────────
+const $ = id => document.getElementById(id);
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+const chance = p => Math.random() < p;
+
+function say(fur, it){
+  S.log.unshift({fur, it});
+  if(S.log.length > 60) S.log.pop();
+}
+function phrase(cat){ const p = rnd(PHRASES[cat]); say(p[0], p[1]); }
+
+function spend(n){
+  if(S.energy < n){ say('No ai plui fuarce, frut...', 'Non ho più forza, ragazzo... (energia finita: fai un pisolino, un caffè, o chiudi la giornata)'); render(); return false; }
+  S.energy -= n; return true;
+}
+function isWinter(){ return S.season === 3; }
+function seasonInfo(){ return SEASONS[S.season]; }
+
+// ───────────────────────── meteo ─────────────────────────
+function rollWeather(){
+  const s = S.season;
+  const r = Math.random();
+  if(s===3){ // inverno
+    if(r<.35) return 'gelo';
+    if(r<.55) return 'brome';
+    if(r<.70) return 'ploie';
+    return 'soreli';
+  }
+  if(s===2){ // autunno
+    if(r<.35) return 'ploie';
+    if(r<.55) return 'brome';
+    return 'soreli';
+  }
+  if(s===1){ // estate
+    if(r<.06) return 'tampieste';
+    if(r<.20) return 'ploie';
+    return 'soreli';
+  }
+  // primavera
+  if(r<.30) return 'ploie';
+  if(r<.40) return 'brome';
+  return 'soreli';
+}
+
+// ───────────────────────── azioni ─────────────────────────
+function plotClick(i){
+  const p = S.plots[i];
+  if(isWinter()){ say('Il cjamp al è glaçât, no si semene di unvier.', 'Il campo è ghiacciato, non si semina d\'inverno.'); render(); return; }
+  if(p.crop){
+    if(p.left <= 0){ // raccogli
+      if(!spend(1)) return;
+      S.harvest[p.crop]++;
+      phrase('harvest');
+      say(`${CROPS[p.crop].emoji} Cjapât sù: ${CROPS[p.crop].name}.`, `Raccolto: ${CROPS[p.crop].it}.`);
+      p.crop = null;
+    } else {
+      say(`Il ${CROPS[p.crop].name} nol è pront: ancjemò ${p.left} dîs.`, `Il ${CROPS[p.crop].it} non è pronto: ancora ${p.left} giorni.`);
+    }
+  } else {
+    const c = $('seedSelect').value;
+    if(!c){ say('Sielç prime la semence.', 'Scegli prima la semenza (menu sopra ai campi).'); render(); return; }
+    if(S.seeds[c] <= 0){ say(`No tu âs semencis di ${CROPS[c].name}. Va al marcjât!`, `Non hai semi di ${CROPS[c].it}. Vai al mercato!`); render(); return; }
+    if(!CROPS[c].seasons.includes(S.season)){ say(`Il ${CROPS[c].name} no si semene in ${seasonInfo().fur}.`, `Il ${CROPS[c].it} non si semina in questa stagione.`); render(); return; }
+    if(!spend(1)) return;
+    S.seeds[c]--;
+    p.crop = c;
+    p.left = CROPS[c].growth;
+    say(`${CROPS[c].emoji} Semenât ${CROPS[c].name}.`, `Seminato ${CROPS[c].it}.`);
+  }
+  render();
+}
+
+function actWood(){
+  if(!spend(2)) return;
+  const n = 2 + Math.floor(Math.random()*3);
+  S.logs += n;
+  say(`🪓 Jù tal bosc: +${n} ciocs. La manarie e cjante ancjemò!`, `Giù nel bosco: +${n} ciocchi. L'accetta canta ancora!`);
+  render();
+}
+function actSplit(){
+  if(S.logs < 1){ say('Nissun cioc di spacâ.', 'Nessun ciocco da spaccare: prima taglia nel bosco.'); render(); return; }
+  if(!spend(1)) return;
+  const n = Math.min(3, S.logs);
+  S.logs -= n; S.wood += n;
+  say(`🪵 Spacâts ${n} ciocs. La cataste e cres.`, `Spaccati ${n} ciocchi. La catasta cresce.`);
+  render();
+}
+function actFire(){
+  if(!isWinter()){ say('Il fûc di unvier, frut. Cumò al è cjalt.', 'Il fuoco è cosa da inverno. Adesso fa caldo.'); render(); return; }
+  if(S.fireLit){ say('Il fûc al è za impiât.', 'Il fuoco è già acceso.'); render(); return; }
+  if(S.wood < 1){ say('No je legne! La cjase e glace...', 'Non c\'è legna! La casa gela...'); render(); return; }
+  S.wood--; S.fireLit = true; S.energy = Math.min(S.maxEnergy, S.energy + 1);
+  say('💨 Fuuu... fuuu... impiât! La spolert e ronronee.', 'Fuuu... fuuu... acceso! La cucina a legna ronfa. (+1⚡)');
+  render();
+}
+function actFish(){
+  if(!spend(2)) return;
+  phrase('fish');
+  const r = Math.random();
+  if(r < .10){ S.fish += 2; say('🎣 Un salmerin! E ancje une trute!', 'Un salmerino! E anche una trota! (+2 pesci)'); }
+  else if(r < .65){ S.fish++; say('🎣 Une biele trute de Stele.', 'Una bella trota della Stella. (+1 pesce)'); }
+  else { say('🎣 Nuie. Ma cjalâ l\'aghe e je une medisine.', 'Niente. Ma guardare l\'acqua è una medicina.'); }
+  render();
+}
+function actHens(){
+  if(S.hens === 0){ say('No tu âs gjalinis. Il gjalinâr al è vueit.', 'Non hai galline. Il pollaio è vuoto.'); render(); return; }
+  if(!spend(1)) return;
+  const need = S.hens;
+  if(S.feed >= need){
+    S.feed -= need;
+    S.fedToday = true;
+    let laid = 0;
+    for(let i=0;i<S.hens;i++) if(chance(.7)) laid++;
+    S.eggs += laid;
+    say(`🐔 Gjalinis governadis: +${laid} ûfs.`, `Galline accudite: +${laid} uova.`);
+  } else {
+    say(`Il paston nol baste (${S.feed}/${need}). Cumpre paston o dopre la blave.`, `Il mangime non basta (${S.feed}/${need}). Compra mangime al mercato.`);
+  }
+  render();
+}
+function actVine(){
+  if(S.season !== 2){ say('La vendeme e je in Autun.', 'La vendemmia è in autunno.'); render(); return; }
+  if(S.vineLeft <= 0){ say('La vigne e je nete: dut vendemât.', 'La vigna è spoglia: tutto vendemmiato per quest\'anno.'); render(); return; }
+  if(!spend(2)) return;
+  S.vineLeft--; S.grapes += 5;
+  say('🍇 +5 zeis di uve. Odôr di most par dut!', '+5 ceste d\'uva. Odore di mosto dappertutto!');
+  render();
+}
+function actPress(){
+  if(S.grapes < 5){ say('Masse pocje uve pal torcli (par un vin a coventin 5).', 'Troppa poca uva per il torchio (ne servono 5 per un vino).'); render(); return; }
+  if(!spend(1)) return;
+  S.grapes -= 5; S.wine++; S.winesMade++;
+  say('🍷 Un fiasc di vin gnûf! Il Friûl in butilie.', 'Un fiasco di vino nuovo! Il Friuli in bottiglia.');
+  render();
+}
+function actNap(){
+  if(S.napped){ say('Un pisulin al dì al baste, sino?', 'Un pisolino al giorno basta, no?'); render(); return; }
+  S.napped = true;
+  S.energy = Math.min(S.maxEnergy, S.energy + 3);
+  say('😴 Vincj minûts sul divan cul gjat... +3⚡', 'Venti minuti sul divano col gatto... +3⚡');
+  render();
+}
+function actCoffee(){
+  if(S.coffees >= 2){ say('Doi cafès a bastin, se no il cûr al bale.', 'Due caffè bastano, sennò il cuore balla.'); render(); return; }
+  const cost = S.restored.spolert ? 0 : 2;
+  if(S.money < cost){ say('No bêçs pal cafè. Miserie...', 'Niente soldi per il caffè. Miseria...'); render(); return; }
+  S.money -= cost; S.coffees++;
+  S.energy = Math.min(S.maxEnergy, S.energy + 2);
+  say('☕ La moka e sbrufe. Cumò sì che si resone!', 'La moka sbuffa. Adesso sì che si ragiona! +2⚡');
+  render();
+}
+function actGrappa(){
+  if(!S.badBack){ say('La sgnape e je pes zornadis di schene. Vuê no covente.', 'La grappa è per i giorni di schiena. Oggi non serve.'); render(); return; }
+  if(S.money < 3){ say('No bêçs pe sgnape.', 'Niente soldi per la grappa.'); render(); return; }
+  S.money -= 3; S.badBack = false;
+  S.maxEnergy += 2; S.energy += 2;
+  say('🥃 Une sgnape e la schene e tache a lâ. Medisine di Sterp!', 'Una grappa e la schiena riparte. Medicina di Sterpo!');
+  render();
+}
+function actFarnia(){
+  if(S.farniaDone){ say('La Fàrnie e je là di sîscent agns. Torne doman.', 'La Farnia è lì da seicento anni. Torna domani.'); render(); return; }
+  S.farniaDone = true;
+  S.energy = Math.min(S.maxEnergy, S.energy + 1);
+  say('🌳 Une cjaminade fint ae Fàrnie, la plui viele quercje de Italie. Cheste e à viodût la peste, jo dome otantedoi invièrs.', 'Una camminata fino alla Farnia, la quercia più vecchia d\'Italia. Lei ha visto la peste, io solo 82 inverni. +1⚡');
+  render();
+}
+
+// ───────────────────────── mercato & restauri ─────────────────────────
+function openMarket(){
+  const winePrice = (S.sagra ? 30 : 15) + (S.restored.cantine ? 5 : 0);
+  let html = `<h2>🧺 Marcjât di Bertiûl</h2>`;
+  if(S.sagra) html += `<p style="color:var(--gold)">🎉 SAGRE DAL VIN! Il vino si vende al doppio!</p>`;
+  html += `<h3 style="margin:8px 0 4px">Vendi</h3>`;
+  for(const k in CROPS){
+    if(S.harvest[k] > 0)
+      html += mrow(`${CROPS[k].emoji} ${CROPS[k].name} ×${S.harvest[k]}`, `Vendi (+${CROPS[k].sell}€)`, `sell('${k}')`);
+  }
+  if(S.eggs > 0) html += mrow(`🥚 Ûfs ×${S.eggs}`, `Vendi tutte (+${S.eggs*2}€)`, `sellEggs()`);
+  if(S.fish > 0) html += mrow(`🐟 Trutis ×${S.fish}`, `Vendi tutte (+${S.fish*8}€)`, `sellFish()`);
+  if(S.wine > 0) html += mrow(`🍷 Vin ×${S.wine}`, `Vendi 1 (+${winePrice}€)`, `sellWine()`);
+  html += `<h3 style="margin:8px 0 4px">Compra</h3>`;
+  for(const k in CROPS){
+    html += mrow(`${CROPS[k].emoji} Semencis di ${CROPS[k].name} <small>(${CROPS[k].seasons.map(s=>SEASONS[s].fur).join('/')})</small>`, `${CROPS[k].seed}€`, `buySeed('${k}')`);
+  }
+  html += mrow(`🌾 Paston ×10`, `5€`, `buyFeed()`);
+  html += mrow(`🐔 Une gjaline`, `12€`, `buyHen()`);
+  html += `<div style="margin-top:10px;text-align:right"><button onclick="closeModal()">Sierâ</button></div>`;
+  showModal(html);
+}
+function mrow(label, btn, fn){
+  return `<div class="mrow"><span>${label}</span><button onclick="${fn}">${btn}</button></div>`;
+}
+window.sell = k => { if(S.harvest[k]>0){ S.harvest[k]--; S.money += CROPS[k].sell; S.totEarned += CROPS[k].sell; openMarket(); renderBars(); } };
+window.sellEggs = () => { S.money += S.eggs*2; S.totEarned += S.eggs*2; S.eggs = 0; openMarket(); renderBars(); };
+window.sellFish = () => { S.money += S.fish*8; S.totEarned += S.fish*8; S.fish = 0; openMarket(); renderBars(); };
+window.sellWine = () => {
+  if(S.wine>0){
+    const p = (S.sagra ? 30 : 15) + (S.restored.cantine ? 5 : 0);
+    S.wine--; S.money += p; S.totEarned += p; openMarket(); renderBars();
+  }
+};
+window.buySeed = k => { if(S.money >= CROPS[k].seed){ S.money -= CROPS[k].seed; S.seeds[k]++; openMarket(); renderBars(); } };
+window.buyFeed = () => { if(S.money >= 5){ S.money -= 5; S.feed += 10; openMarket(); renderBars(); } };
+window.buyHen  = () => { if(S.money >= 12){ S.money -= 12; S.hens++; openMarket(); renderBars(); } };
+
+function openRestore(){
+  let html = `<h2>🏚️ Comedâ la cjase</h2><p class="hint">Restauri permanenti — gli obiettivi di lungo periodo della bionde.</p>`;
+  for(const r of RESTORATIONS){
+    if(S.restored[r.id]){
+      html += `<div class="mrow"><span>✅ ${r.name} <small>(${r.it})</small></span><span class="stars">fatto</span></div>`;
+    } else {
+      html += mrow(`${r.name} <small>(${r.it})</small><br><small style="color:var(--green)">${r.bonus}</small>`, `${r.cost}€`, `doRestore('${r.id}')`);
+    }
+  }
+  html += `<div style="margin-top:10px;text-align:right"><button onclick="closeModal()">Sierâ</button></div>`;
+  showModal(html);
+}
+window.doRestore = id => {
+  const r = RESTORATIONS.find(x=>x.id===id);
+  if(!r || S.restored[id] || S.money < r.cost) return;
+  S.money -= r.cost; S.restored[id] = true;
+  if(id==='cuviert'){ S.maxEnergy++; }
+  say(`🏠 ${r.name}: fat! ${r.bonus}.`, `${r.it}: fatto! ${r.bonus}.`);
+  openRestore(); renderBars();
+};
+
+function showModal(html){ $('modalBox').innerHTML = html; $('modalBg').classList.add('open'); }
+window.closeModal = () => { $('modalBg').classList.remove('open'); render(); };
+
+// ───────────────────────── fine giornata ─────────────────────────
+function endDay(){
+  // crescita campi
+  for(const p of S.plots){
+    if(p.crop && !isWinter() && p.left > 0){
+      p.left--;
+      const bonus = (p.river && chance(.25)) || (S.restored.ort && chance(.2));
+      if(bonus && p.left > 0) p.left--;
+    }
+  }
+  // galline
+  if(S.hens > 0 && !S.fedToday && chance(.25)){
+    S.hens--;
+    say('🦊 LA BOLP! Gjalinis no governadis... une e je lade.', 'LA VOLPE! Galline non accudite... una se n\'è andata.');
+  }
+  S.fedToday = false;
+
+  // inverno: consumo legna
+  S.cold = false;
+  if(isWinter()){
+    const need = S.weather === 'gelo' ? 3 : 2;
+    if(S.wood >= need){ S.wood -= need; }
+    else { S.wood = 0; S.cold = true; say('🥶 La cataste e je vueide! Gnot di fret...', 'La catasta è vuota! Notte di freddo... (domani -3⚡)'); }
+  }
+
+  // avanza il calendario
+  S.day++; S.dayOfSeason++;
+  if(S.dayOfSeason > SEASON_DAYS){
+    S.dayOfSeason = 1;
+    if(S.season === 3){
+      S.wintersSurvived++;
+      say(`🎊 Passât l'unvier numar ${S.wintersSurvived}! Anìn cun ${82+S.year} agns.`, `Superato l'inverno numero ${S.wintersSurvived}! Avanti col nuovo anno.`);
+      S.year++;
+    }
+    S.season = (S.season + 1) % 4;
+    if(S.season === 2) S.vineLeft = 6;
+    say(`${SEASONS[S.season].emoji} E je rivade ${SEASONS[S.season].fur}!`, `È arrivata la nuova stagione!`);
+    if(S.season === 3) say('❄️ Cjale la cataste: l\'unvier al mangje 2-3 legnis in dì.', 'Controlla la catasta: l\'inverno consuma 2-3 legna al giorno.');
+  }
+
+  // meteo & eventi del nuovo giorno
+  S.weather = rollWeather();
+  S.sagra = (S.season === 0 && S.dayOfSeason >= 20 && S.dayOfSeason <= 22);
+  if(S.sagra) say('🎉 SAGRE DAL VIN a Bertiûl! Il vin al va vie al dopli.', 'SAGRA DEL VINO a Bertiolo! Il vino si vende al doppio (3 giorni).');
+
+  if(S.weather === 'tampieste'){
+    const planted = S.plots.filter(p=>p.crop);
+    if(planted.length){
+      const victim = rnd(planted);
+      say(`🌨️ Tampieste! Il ${CROPS[victim.crop].name} al è lât in malore.`, `Grandine! Il ${CROPS[victim.crop].it} è andato distrutto.`);
+      victim.crop = null;
+    }
+  }
+  if(S.season === 2 && S.weather === 'ploie' && chance(.25)){
+    const riverCrops = S.plots.filter(p=>p.river && p.crop);
+    if(riverCrops.length){
+      for(const p of riverCrops) p.crop = null;
+      say('🌊 LA PLENE DE STELE! I cjamps dongje il flum a son sot aghe.', 'LA PIENA DELLA STELLA! I campi vicino al fiume sono sott\'acqua: raccolti persi.');
+    }
+  }
+
+  // nuova giornata
+  S.badBack = chance(.12);
+  S.maxEnergy = 10 + (S.restored.cuviert ? 1 : 0);
+  let e = S.maxEnergy;
+  if(S.badBack){ e -= 2; S.maxEnergy -= 2; say('😖 Orpo, la schene! Vuê si partìs plancut (-2⚡). Une sgnape e judarès...', 'Accidenti, la schiena! Oggi si parte piano (-2⚡). Una grappa aiuterebbe...'); }
+  if(S.cold){ e -= 3; say('🥶 Dopo une gnot di fret, pocje voie.', 'Dopo una notte al freddo, poca voglia. (-3⚡)'); }
+  S.energy = Math.max(1, e);
+  S.napped = false; S.coffees = 0; S.farniaDone = false; S.fireLit = false;
+  phrase(S.energy < 7 ? 'tired' : 'morning');
+
+  save();
+  render();
+}
+
+function resetGame(){
+  if(!confirm('Ricominciare da capo? Il salvataggio verrà cancellato.')) return;
+  localStorage.removeItem(SAVE_KEY);
+  S = newGame();
+  intro();
+  render();
+}
+
+function intro(){
+  say('Mandi! O soi la bionde: otantedoi agns, Sterp di Bertiûl, e une cjase di puartâ indenant.', 'Salve! Sono la bionde: 82 anni, Sterpo di Bertiolo, e una casa da mandare avanti.');
+  say('Semene, cjape sù, taie la legne prime dal unvier... e no stâ dismenteâ il cafè.', 'Semina, raccogli, taglia la legna prima dell\'inverno... e non dimenticare il caffè.');
+}
+
+// ───────────────────────── render ─────────────────────────
+function stars(){
+  let n = 0;
+  if(S.totEarned >= 100) n++;
+  if(S.wintersSurvived >= 1) n++;
+  if(S.winesMade >= 10) n++;
+  if(S.hens >= 6) n++;
+  if(RESTORATIONS.every(r=>S.restored[r.id])) n++;
+  return n;
+}
+function renderBars(){
+  const si = seasonInfo();
+  const w = WEATHER[S.weather];
+  let ebar = '<span class="energybar">';
+  for(let i=0;i<S.maxEnergy;i++) ebar += `<i class="${i<S.energy?'on':''}"></i>`;
+  ebar += '</span>';
+  $('topbar').innerHTML = `
+    <span class="stat">${si.emoji} ${si.fur}, dì ${S.dayOfSeason}/${SEASON_DAYS} · an ${S.year}</span>
+    <span class="stat">${w.emoji} ${w.fur}</span>
+    <span class="stat">⚡ ${ebar} ${S.energy}/${S.maxEnergy}</span>
+    <span class="stat">💰 ${S.money}€</span>
+    <span class="stat">🪵 ${S.wood} legne · ${S.logs} ciocs</span>
+    <span class="stat stars">${'⭐'.repeat(stars()) || '☆'} prestigjo</span>
+  `;
+}
+function render(){
+  renderBars();
+  // semi
+  const sel = $('seedSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— sielç la semence / scegli il seme —</option>' +
+    Object.keys(CROPS).map(k =>
+      `<option value="${k}" ${k===cur?'selected':''}>${CROPS[k].emoji} ${CROPS[k].name} (${CROPS[k].it}) — semi: ${S.seeds[k]}</option>`
+    ).join('');
+  // campi
+  $('fields').innerHTML = S.plots.map((p,i)=>{
+    const cls = `plot ${p.river?'river':''} ${isWinter()?'frozen':''}`;
+    let inner;
+    if(isWinter()) inner = '❄️<span class="tag">glaçât</span>';
+    else if(!p.crop) inner = '🟫<span class="tag">vueit</span>';
+    else if(p.left<=0) inner = `${CROPS[p.crop].emoji}<span class="tag">${CROPS[p.crop].name}</span><span class="ready">✨</span>`;
+    else inner = `🌱<span class="tag">${CROPS[p.crop].name} ${p.left}d</span>`;
+    return `<div class="${cls}" onclick="plotClick(${i})">${inner}${p.river?'<span class="riv">🌊</span>':''}</div>`;
+  }).join('');
+  // inventario
+  $('inv').innerHTML = [
+    `🥚 ${S.eggs}`, `🐔 ${S.hens}`, `🌾paston ${S.feed}`, `🐟 ${S.fish}`,
+    `🍇 ${S.grapes}`, `🍷 ${S.wine}`,
+    ...Object.keys(CROPS).filter(k=>S.harvest[k]>0).map(k=>`${CROPS[k].emoji} ${S.harvest[k]}`),
+  ].map(x=>`<span>${x}</span>`).join('');
+  // log
+  $('log').innerHTML = S.log.map(l=>`<p><span class="fur">${l.fur}</span><br><span class="it">${l.it}</span></p>`).join('');
+  // bottoni condizionali
+  $('btnFire').disabled = !isWinter() || S.fireLit;
+  $('btnVine').disabled = S.season !== 2 || S.vineLeft <= 0;
+  $('btnGrappa').disabled = !S.badBack;
+  $('btnNap').disabled = S.napped;
+  $('btnFarnia').disabled = S.farniaDone;
+}
+
+// ───────────────────────── avvio ─────────────────────────
+window.plotClick = plotClick;
+$('btnWood').onclick = actWood;
+$('btnSplit').onclick = actSplit;
+$('btnFire').onclick = actFire;
+$('btnFish').onclick = actFish;
+$('btnHens').onclick = actHens;
+$('btnVine').onclick = actVine;
+$('btnPress').onclick = actPress;
+$('btnNap').onclick = actNap;
+$('btnCoffee').onclick = actCoffee;
+$('btnGrappa').onclick = actGrappa;
+$('btnFarnia').onclick = actFarnia;
+$('btnMarket').onclick = openMarket;
+$('btnRestore').onclick = openRestore;
+$('btnEnd').onclick = endDay;
+$('btnReset').onclick = resetGame;
+$('modalBg').onclick = e => { if(e.target === $('modalBg')) closeModal(); };
+
+S = load();
+if(!S){ S = newGame(); intro(); }
+render();
+</script>
+</body>
+</html>
