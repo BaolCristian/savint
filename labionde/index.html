@@ -177,6 +177,11 @@
         <div class="hint" style="text-align:center">Vie Piave — il borc di Sterp: la cort, la cjase rosse, la torate, la fontane di claps e il mulin cu la ruede</div>
       </div>
       <div class="panel" style="margin-top:12px">
+        <h2>Sterp dal alt 🗺️ <span class="hint" style="display:inline">— frecce/WASD o tocca la mappa per camminare; ⭐ (o SPAZIO) per agire</span></h2>
+        <canvas id="map" width="480" height="340" style="width:100%; border-radius:8px; display:block; touch-action:none; cursor:pointer"></canvas>
+        <button id="btnDo" class="primary" style="margin-top:6px; width:100%" disabled>⭐ Cjamine viers un puest dal borc</button>
+      </div>
+      <div class="panel" id="fieldsPanel" style="margin-top:12px">
         <h2>I cjamps <span class="hint" style="display:inline">— clicca un campo per seminare o raccogliere</span></h2>
         <select id="seedSelect"></select>
         <div style="height:8px"></div>
@@ -1155,6 +1160,234 @@ function render(){
     : '🌙 Fin de zornade';
 }
 
+// ───────────────────────── la mape di Sterp dal alt ─────────────────────────
+// disposizione ricalcata dalle foto aeree: Via Piave che curva e si biforca,
+// la Stella a est col ponte, il castello a NE, il borgo lungo la strada,
+// la vigna a ovest, l'orto dietro la corte, la stalla a sud, la roggia col mulino.
+const MAP_W = 480, MAP_H = 340;
+const ZONES = [
+  {id:'cjase',   x:158, y:106, r:22, emoji:'🏠', label:'Cjase de bionde'},
+  {id:'marcjat', x:112, y:128, r:16, emoji:'🧺', label:'Place dal borc — marcjât'},
+  {id:'cjamps',  x:172, y:222, r:34, emoji:'🌾', label:'Cjamps e ort'},
+  {id:'stale',   x:254, y:238, r:18, emoji:'🐄', label:'Stale'},
+  {id:'gjalinar',x:300, y:220, r:14, emoji:'🐔', label:'Gjalinâr'},
+  {id:'bosc',    x:354, y:254, r:24, emoji:'🪓', label:'Bosc — taiâ lens'},
+  {id:'mulin',   x:76,  y:206, r:18, emoji:'🛞', label:'Mulin — masanâ la blave'},
+  {id:'patisce', x:102, y:58,  r:14, emoji:'🎣', label:'Roie Patisce — pescjâ'},
+  {id:'mulins',  x:86,  y:252, r:14, emoji:'🎣', label:'Roie dai Mulins — pescjâ'},
+  {id:'puint',   x:410, y:150, r:18, emoji:'🎣', label:'Puint su la Stele — pescjâ'},
+  {id:'vigne',   x:36,  y:192, r:26, emoji:'🍇', label:'Vigne — vendemâ'},
+  {id:'farnie',  x:304, y:106, r:14, emoji:'🌳', label:'La Fàrnie'},
+  {id:'fontane', x:246, y:84,  r:12, emoji:'⛲', label:'Fontane — zîr pal borc'},
+  {id:'morar',   x:170, y:152, r:11, emoji:'🫐', label:'Morâr — lis moris'},
+  {id:'fiar',    x:202, y:156, r:11, emoji:'🍑', label:'Fiâr — i fîcs'},
+];
+let P = {x:158, y:112, tx:null, ty:null, step:0};
+let currentZone = null, mapKeys = {}, mapOff = null, mapSeasonDrawn = -1;
+
+function roadPath(ctx, pts, w, color){
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
+}
+function tree(ctx, x, y, r, dark){
+  ctx.fillStyle = dark ? '#3f5c3a' : '#527a49';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.08)';
+  ctx.beginPath(); ctx.arc(x - r*0.3, y - r*0.3, r*0.5, 0, 7); ctx.fill();
+}
+function buildMap(){
+  mapOff = document.createElement('canvas');
+  mapOff.width = MAP_W; mapOff.height = MAP_H;
+  const c = mapOff.getContext('2d');
+  const win = isWinter();
+  // prati
+  c.fillStyle = win ? '#b9c4b4' : '#9dbd8f';
+  c.fillRect(0, 0, MAP_W, MAP_H);
+  // vigne a ovest (i filari veri della foto aerea)
+  for(let x=14; x<=64; x+=9) roadPath(c, [[x,130],[x,258]], 4, win ? '#8a9583' : '#5f7f4a');
+  // roggia (Patisce a nord, dai Mulins a sud)
+  roadPath(c, [[110,0],[98,90],[88,180],[84,260],[88,340]], 7, '#7ab3c9');
+  // fiume Stella a est
+  roadPath(c, [[438,0],[428,80],[414,150],[408,230],[396,340]], 26, '#5f98ad');
+  roadPath(c, [[438,0],[428,80],[414,150],[408,230],[396,340]], 20, '#7ab3c9');
+  // Via Piave: curva da NO, va a est e passa la Stella; il bivio scende a sud
+  roadPath(c, [[150,-10],[190,60],[240,110],[280,132],[340,142],[480,152]], 15, '#8d938c');
+  roadPath(c, [[262,124],[258,180],[252,250],[250,340]], 12, '#8d938c');
+  // puint su la Stele
+  c.fillStyle = '#a3866a'; c.fillRect(396, 138, 36, 22);
+  c.strokeStyle = '#6e5a44'; c.lineWidth = 2;
+  c.strokeRect(396, 138, 36, 22);
+  // place dal borc
+  c.fillStyle = win ? '#c9c2b2' : '#cfc4a6'; c.fillRect(96, 112, 44, 32);
+  // la cort: schiera di case lungo la strada
+  const houses = [[64,50,50,26,'#b06a4a'],[108,70,50,26,'#a86545'],[152,90,58,26,'#b06a4a']];
+  for(const [hx,hy,hw,hh,col] of houses){
+    c.fillStyle = col; c.fillRect(hx, hy, hw, hh);
+    c.strokeStyle = '#7d4835'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(hx, hy+hh/2); c.lineTo(hx+hw, hy+hh/2); c.stroke();
+    c.strokeRect(hx, hy, hw, hh);
+  }
+  // cjase de bionde (il segnaposto della foto)
+  c.fillStyle = '#c98a4a'; c.fillRect(150, 92, 28, 26);
+  c.strokeStyle = '#8a5a2a'; c.strokeRect(150, 92, 28, 26);
+  c.fillStyle = '#5c3a1e'; c.fillRect(160, 86, 5, 8);   // camino
+  // curtîl daûr de cjase
+  c.fillStyle = win ? '#c2bba9' : '#c9bd9c'; c.fillRect(132, 122, 84, 52);
+  // ort e cjamps a sud (le parcelle della foto aerea)
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    c.fillStyle = (i+j)%2 ? '#7a5a3a' : '#6e5234';
+    c.fillRect(134+i*30, 186+j*26, 26, 22);
+  }
+  // stale e gjalinâr (i capannoni a sud)
+  c.fillStyle = '#8a6a52'; c.fillRect(238, 226, 36, 22);
+  c.strokeStyle = '#5e4636'; c.strokeRect(238, 226, 36, 22);
+  c.fillStyle = '#96755b'; c.fillRect(286, 248, 30, 18); c.strokeRect(286, 248, 30, 18);
+  c.fillStyle = '#a3866a'; c.fillRect(292, 212, 16, 12); c.strokeRect(292, 212, 16, 12);
+  // cjistiel / vile a NE cul parc
+  c.fillStyle = '#e3d9be'; c.fillRect(286, 46, 88, 26);
+  c.strokeStyle = '#9a8a62'; c.strokeRect(286, 46, 88, 26);
+  for(const [tx,ty,tr] of [[268,64,9],[384,58,9],[344,86,8],[262,104,8],[376,96,10],[330,64,7]]) tree(c, tx, ty, tr, true);
+  tree(c, 304, 106, 13, true);            // la Fàrnie
+  c.strokeStyle = '#2e4429'; c.lineWidth = 1.5; c.beginPath(); c.arc(304, 106, 13, 0, 7); c.stroke();
+  tree(c, 276, 124, 8, false);            // il tulipifero
+  // fontane di claps
+  c.fillStyle = '#8f8f84'; c.beginPath(); c.arc(246, 84, 6, 0, 7); c.fill();
+  c.fillStyle = '#7ab3c9'; c.beginPath(); c.arc(246, 84, 3.4, 0, 7); c.fill();
+  // mulin cu la ruede su la roie
+  c.fillStyle = '#d9d0ba'; c.fillRect(58, 194, 26, 20);
+  c.strokeStyle = '#8a8064'; c.strokeRect(58, 194, 26, 20);
+  c.strokeStyle = '#6b5340'; c.lineWidth = 2;
+  c.beginPath(); c.arc(88, 206, 7, 0, 7); c.stroke();
+  c.beginPath(); c.moveTo(88,199); c.lineTo(88,213); c.moveTo(81,206); c.lineTo(95,206); c.stroke();
+  // bosc de Stele (sud-est) e morâr/fiâr tal curtîl
+  for(const [tx,ty,tr] of [[338,236,10],[362,258,11],[386,242,9],[344,282,10],[372,296,9],[398,272,10],[352,196,8],[382,206,9],[420,210,8],[424,296,9]]) tree(c, tx, ty, tr, !win);
+  tree(c, 170, 152, 9, false); c.fillStyle = '#6a4a8a';
+  for(const [mx,my] of [[166,149],[172,154],[175,149]]){ c.beginPath(); c.arc(mx,my,1.3,0,7); c.fill(); }
+  tree(c, 202, 156, 9, false);
+  // etichette emoji dei posti
+  c.font = '11px serif'; c.textAlign = 'center';
+  for(const z of ZONES) c.fillText(z.emoji, z.x, z.y - z.r - 3);
+  mapSeasonDrawn = S.season;
+}
+function drawBionde(c, moving){
+  const bob = moving ? Math.sin(P.step*0.5)*1.2 : 0;
+  const f = moving ? Math.sin(P.step*0.5)*2 : 0;
+  c.save(); c.translate(P.x, P.y + bob);
+  c.fillStyle = 'rgba(0,0,0,.28)';
+  c.beginPath(); c.ellipse(0, 11, 6, 2.4, 0, 0, 7); c.fill();
+  c.fillStyle = '#111';
+  c.fillRect(-4.5, 6 + f*0.5, 3.4, 4.5);
+  c.fillRect(1.1, 6 - f*0.5, 3.4, 4.5);
+  c.fillStyle = '#1e1e24';
+  c.beginPath(); c.roundRect ? c.roundRect(-6.5, -4, 13, 12, 4) : c.rect(-6.5, -4, 13, 12); c.fill();
+  c.strokeStyle = '#71717c'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(0, -3); c.lineTo(0, 7); c.stroke();
+  c.fillStyle = '#e6b28f'; c.beginPath(); c.arc(0, -9.5, 5.4, 0, 7); c.fill();
+  c.fillStyle = '#101318'; c.fillRect(-4.6, -11.4, 9.2, 3.6);
+  c.fillStyle = '#f4f1e9';
+  c.beginPath(); c.arc(0, -13, 5, Math.PI*0.95, Math.PI*2.05); c.fill();
+  c.beginPath(); c.arc(-3, -14.5, 2.6, 0, 7); c.arc(1.5, -15.2, 3, 0, 7); c.arc(4.2, -13, 2, 0, 7); c.fill();
+  c.restore();
+}
+function mapLoop(){
+  const cv = $('map');
+  if(!cv){ return; }
+  if(mapSeasonDrawn !== S.season || !mapOff) buildMap();
+  const c = cv.getContext('2d');
+  const modalOpen = $('modalBg').classList.contains('open');
+  let dx = 0, dy = 0;
+  if(!modalOpen){
+    if(mapKeys.ArrowLeft || mapKeys.a) dx -= 1;
+    if(mapKeys.ArrowRight || mapKeys.d) dx += 1;
+    if(mapKeys.ArrowUp || mapKeys.w) dy -= 1;
+    if(mapKeys.ArrowDown || mapKeys.s) dy += 1;
+  }
+  let moving = false;
+  const SPEED = 2.1;
+  if(dx || dy){
+    P.tx = P.ty = null;
+    const n = Math.hypot(dx, dy);
+    P.x += dx/n*SPEED; P.y += dy/n*SPEED;
+    moving = true;
+  } else if(P.tx !== null){
+    const vx = P.tx - P.x, vy = P.ty - P.y, d = Math.hypot(vx, vy);
+    if(d < 3){ P.tx = P.ty = null; }
+    else { P.x += vx/d*SPEED; P.y += vy/d*SPEED; moving = true; }
+  }
+  if(moving) P.step++;
+  P.x = Math.max(10, Math.min(MAP_W-10, P.x));
+  P.y = Math.max(16, Math.min(MAP_H-12, P.y));
+  // la Stele no si passe se no sul puint
+  if(P.x > 392 && !(P.y > 132 && P.y < 166)) P.x = 392;
+  currentZone = null;
+  for(const z of ZONES){
+    if(Math.hypot(P.x - z.x, P.y - z.y) <= z.r){ currentZone = z; break; }
+  }
+  c.clearRect(0, 0, MAP_W, MAP_H);
+  c.drawImage(mapOff, 0, 0);
+  if(currentZone){
+    c.strokeStyle = 'rgba(230,193,90,.9)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(currentZone.x, currentZone.y, currentZone.r, 0, 7); c.stroke();
+  }
+  drawBionde(c, moving);
+  if(currentZone){
+    const t = `${currentZone.emoji} ${currentZone.label}`;
+    c.font = 'bold 11px Georgia, serif'; c.textAlign = 'center';
+    const w = c.measureText(t).width + 12;
+    const bx = Math.max(w/2+4, Math.min(MAP_W-w/2-4, P.x));
+    c.fillStyle = 'rgba(20,28,20,.88)';
+    c.beginPath(); c.roundRect ? c.roundRect(bx-w/2, P.y-38, w, 16, 5) : c.rect(bx-w/2, P.y-38, w, 16); c.fill();
+    c.fillStyle = '#e6c15a'; c.fillText(t, bx, P.y-26);
+  }
+  const btn = $('btnDo');
+  btn.disabled = !currentZone;
+  btn.textContent = currentZone ? `⭐ ${currentZone.emoji} ${currentZone.label}` : '⭐ Cjamine viers un puest dal borc';
+  requestAnimationFrame(mapLoop);
+}
+function mapAction(id){
+  switch(id){
+    case 'cjase': homeMenu(); break;
+    case 'marcjat': openMarket(); break;
+    case 'cjamps': {
+      const fp = $('fieldsPanel');
+      fp.scrollIntoView({behavior:'smooth', block:'center'});
+      fp.style.outline = '2px solid var(--gold)';
+      setTimeout(() => { fp.style.outline = ''; }, 1600);
+      break;
+    }
+    case 'stale': actStable(); break;
+    case 'gjalinar': actHens(); break;
+    case 'bosc': actWood(); break;
+    case 'mulin': actMill(); break;
+    case 'patisce': $('riverSelect').value = 'patisce'; actFish(); break;
+    case 'mulins': $('riverSelect').value = 'mulini'; actFish(); break;
+    case 'puint': $('riverSelect').value = 'stele'; actFish(); break;
+    case 'vigne': actVine(); break;
+    case 'farnie': actFarnia(); break;
+    case 'fontane': actBorgo(); break;
+    case 'morar': actTree('gelso'); break;
+    case 'fiar': actTree('fico'); break;
+  }
+}
+function homeMenu(){
+  showModal(`<h2>🏠 La cjase de bionde</h2><div class="actions">
+    <button id="hm1">😴 Pisulin <small>(+3⚡)</small></button>
+    <button id="hm2">☕ Un cafè</button>
+    <button id="hm3">🥃 Une sgnape</button>
+    <button id="hm4">💨 Soflâ sul fûc</button>
+    <button id="hm5">🪵 Spacâ i ciocs</button>
+    <button id="hm6">🍷 Torcolâ</button>
+    <button id="hm7">🥓 Fâ sù il purcit</button>
+    <button id="hm8" class="primary">🌙 Fin de zornade</button>
+    <button id="hm9">Sierâ</button></div>`);
+  const wire = (id, fn, close) => { $(id).onclick = () => { fn(); if(close) closeModal(); }; };
+  wire('hm1', actNap); wire('hm2', actCoffee); wire('hm3', actGrappa); wire('hm4', actFire);
+  wire('hm5', actSplit); wire('hm6', actPress); wire('hm7', actPig);
+  wire('hm8', endDay, true); wire('hm9', () => {}, true);
+}
+
 // ───────────────────────── avvio ─────────────────────────
 window.plotClick = plotClick;
 $('btnWood').onclick = actWood;
@@ -1202,6 +1435,26 @@ if(S.realWx.enabled) fetchRealWeather();
 // in modalità tempo vero, se la pagina resta aperta a cavallo di mezzanotte
 document.addEventListener('visibilitychange', () => { if(!document.hidden) { checkRealDays(false); } });
 setInterval(() => checkRealDays(false), 10*60*1000);
+
+// ── controlli della mappa ──
+const MOVE_KEYS = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s'];
+window.addEventListener('keydown', e => {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if(MOVE_KEYS.includes(e.key)){ mapKeys[e.key] = true; e.preventDefault(); }
+  if((e.key === ' ' || e.key === 'Enter') && currentZone && !$('modalBg').classList.contains('open')){
+    mapAction(currentZone.id); e.preventDefault();
+  }
+});
+window.addEventListener('keyup', e => { delete mapKeys[e.key]; });
+$('map').addEventListener('pointerdown', e => {
+  const r = $('map').getBoundingClientRect();
+  P.tx = (e.clientX - r.left) * MAP_W / r.width;
+  P.ty = (e.clientY - r.top) * MAP_H / r.height;
+});
+$('btnDo').onclick = () => { if(currentZone) mapAction(currentZone.id); };
+buildMap();
+mapLoop();
 </script>
 </body>
 </html>
