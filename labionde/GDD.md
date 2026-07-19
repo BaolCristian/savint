@@ -65,7 +65,9 @@ L'età non è un dettaglio, è il design:
 | Campi | 12 campi, gli ultimi 4 "dongje la Stele" (crescita +, rischio piena) |
 | Colture | 6 colture stagionali, con semi da comprare al mercato |
 | Legna | Taglia (ciocchi) → spacca (legna) → catasta; l'inverno ne consuma 2-3/giorno |
-| Galline | Comprale, dagli il paston, raccogli uova; se non mangiano arriva **la bolp** (volpe) |
+| Galline | Comprale, dagli il paston, raccogli uova (1 volta al giorno); se non mangiano arriva **la bolp** (volpe) |
+| Stalla | La **vacje** "Stele" (2 paston/dì → 2 latte), il **purcit** da ingrassare fino a 15 e poi, solo d'inverno come da tradizione, "fâ sù il purcit" → 6 salami. Le **arnie** (max 3) fanno miele gratis nelle stagioni calde |
+| Intercalari | La bionde "bestemmia" a modo suo — esclamazioni innocue sparate nei momenti di sorpresa o disastro: *Par mil bucefais!*, *Sante Galine!*, *Beât idraulic!*, *Barbe cantant!* (zio cantante — *barbe* = zio in friulano), *Sacrabolt!*, *Ostrighe di Maran!*, *Sante polente fumante!*... |
 | Pesca | Trote e salmerini nella Stella |
 | Vigna | Vendemmia in autunno → torchio → vin; Sagra dal Vin lo paga doppio |
 | Mercato | Vendi raccolti/uova/pesce/vino, compra semi/paston/galline |

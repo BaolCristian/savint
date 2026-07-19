@@ -132,6 +132,8 @@
           <button id="btnWater">💧 Bagnâ i cjamps <small>(secjade: -2⚡)</small></button>
           <button id="btnFish">🎣 Pescjâ te Stele <small>(-2⚡)</small></button>
           <button id="btnHens">🐔 Governâ lis gjalinis <small>(-1⚡, paston + uova)</small></button>
+          <button id="btnStable">🐄 Governâ la stale <small>(-1⚡, latte + purcit)</small></button>
+          <button id="btnPig">🥓 Fâ sù il purcit <small>(inverno, -3⚡ → salami!)</small></button>
           <button id="btnVine">🍇 Vendemâ <small>(autunno: -2⚡ → +5 uve)</small></button>
           <button id="btnPress">🍷 Torcolâ <small>(-1⚡, 5 uve → 1 vin)</small></button>
         </div>
@@ -203,6 +205,20 @@ const RESTORATIONS = [
   {id:'cantine', name:'Comedâ la cantine', it:'sistemare la cantina', cost:300, done:false, bonus:'il vino vale di più'},
 ];
 
+// gli intercalari della bionde: sembrano bestemmie ma non lo sono — è il suo modo di parlare
+const OATHS = [
+  ['Par mil bucefais!', 'Per mille bucefali!'],
+  ['Sante Galine!', 'Santa Gallina!'],
+  ['Beât idraulic!', 'Beato idraulico!'],
+  ['Barbe cantant!', 'Zio cantante!'],
+  ['Sacrabolt!', 'Sacripante!'],
+  ['Ostrighe di Maran!', 'Ostriche di Marano!'],
+  ['Orpo di un orpo!', 'Orpo di un orpo!'],
+  ['Sante polente fumante!', 'Santa polenta fumante!'],
+  ['Par dutis lis cocis dal ort!', 'Per tutte le zucche dell\'orto!'],
+  ['Mil manariis rusinidis!', 'Mille accette arrugginite!'],
+];
+
 const PHRASES = {
   morning:[
     ['Anìn, che il dì al è curt!','Andiamo, che la giornata è corta!'],
@@ -232,6 +248,9 @@ function newGame(){
     energy:10, maxEnergy:10, money:20,
     logs:2, wood:6,           // ciocchi grezzi / legna spaccata
     hens:2, feed:6, eggs:0,
+    cow:0, pigWeight:-1, hives:0,          // -1 = nessun maiale
+    milk:0, honey:0, honeyTimer:0, salami:0,
+    stabledToday:false, hensDone:false,
     fish:0, grapes:0, wine:0,
     seeds:{forment:3, fasui:0, blave:3, coce:0, radric:0, verze:0},
     harvest:{forment:0, fasui:0, blave:0, coce:0, radric:0, verze:0},
@@ -267,6 +286,8 @@ function say(fur, it){
   if(S.log.length > 60) S.log.pop();
 }
 function phrase(cat){ const p = rnd(PHRASES[cat]); say(p[0], p[1]); }
+// per le sorprese, belle o brutte: la bionde "bestemmia" a modo suo
+function swear(fur, it){ const o = rnd(OATHS); say(`${o[0]} ${fur}`, `${o[1]} ${it}`); }
 
 function spend(n){
   if(S.energy < n){ say('No ai plui fuarce, frut...', 'Non ho più forza, ragazzo... (energia finita: fai un pisolino, un caffè, o chiudi la giornata)'); render(); return false; }
@@ -448,25 +469,49 @@ function actFish(){
   if(!spend(2)) return;
   phrase('fish');
   const r = Math.random();
-  if(r < .10){ S.fish += 2; say('🎣 Un salmerin! E ancje une trute!', 'Un salmerino! E anche una trota! (+2 pesci)'); }
+  if(r < .10){ S.fish += 2; swear('🎣 Un salmerin! E ancje une trute!', 'Un salmerino! E anche una trota! (+2 pesci)'); }
   else if(r < .65){ S.fish++; say('🎣 Une biele trute de Stele.', 'Una bella trota della Stella. (+1 pesce)'); }
   else { say('🎣 Nuie. Ma cjalâ l\'aghe e je une medisine.', 'Niente. Ma guardare l\'acqua è una medicina.'); }
   render();
 }
 function actHens(){
   if(S.hens === 0){ say('No tu âs gjalinis. Il gjalinâr al è vueit.', 'Non hai galline. Il pollaio è vuoto.'); render(); return; }
-  if(!spend(1)) return;
+  if(S.hensDone){ say('Lis gjalinis a son za governadis vuê.', 'Le galline sono già state accudite oggi.'); render(); return; }
   const need = S.hens;
-  if(S.feed >= need){
-    S.feed -= need;
-    S.fedToday = true;
-    let laid = 0;
-    for(let i=0;i<S.hens;i++) if(chance(.7)) laid++;
-    S.eggs += laid;
-    say(`🐔 Gjalinis governadis: +${laid} ûfs.`, `Galline accudite: +${laid} uova.`);
-  } else {
-    say(`Il paston nol baste (${S.feed}/${need}). Cumpre paston o dopre la blave.`, `Il mangime non basta (${S.feed}/${need}). Compra mangime al mercato.`);
+  if(S.feed < need){ say(`Il paston nol baste (${S.feed}/${need}). Cumpre paston al marcjât.`, `Il mangime non basta (${S.feed}/${need}). Compra mangime al mercato.`); render(); return; }
+  if(!spend(1)) return;
+  S.feed -= need;
+  S.fedToday = true; S.hensDone = true;
+  let laid = 0;
+  for(let i=0;i<S.hens;i++) if(chance(.7)) laid++;
+  S.eggs += laid;
+  say(`🐔 Gjalinis governadis: +${laid} ûfs.`, `Galline accudite: +${laid} uova.`);
+  render();
+}
+function actStable(){
+  if(S.cow === 0 && S.pigWeight < 0){ say('La stale e je vueide. Cjape une vacje o un purcitut al marcjât!', 'La stalla è vuota. Compra una mucca o un maialino al mercato!'); render(); return; }
+  if(S.stabledToday){ say('La stale e je za governade vuê.', 'La stalla è già stata governata oggi.'); render(); return; }
+  const need = S.cow*2 + (S.pigWeight >= 0 ? 2 : 0);
+  if(S.feed < need){ say(`Il paston nol baste pe stale (${S.feed}/${need}).`, `Il mangime non basta per la stalla (${S.feed}/${need}). Compralo al mercato.`); render(); return; }
+  if(!spend(1)) return;
+  S.feed -= need;
+  S.stabledToday = true;
+  const bits = [];
+  if(S.cow > 0){ S.milk += 2*S.cow; bits.push(`+${2*S.cow} lat 🥛`); }
+  if(S.pigWeight >= 0){
+    S.pigWeight = Math.min(15, S.pigWeight + 1);
+    bits.push(S.pigWeight >= 15 ? 'il purcit al è PRONT pal unvier 🐖' : `il purcit al ingrasse (${S.pigWeight}/15)`);
   }
+  say(`🐄 Stale governade: ${bits.join(', ')}.`, `Stalla governata: ${bits.join(', ').replace('lat','latte').replace('il purcit al ingrasse','il maiale ingrassa')}.`);
+  render();
+}
+function actPig(){
+  if(S.pigWeight < 15){ say('Il purcit nol è ancjemò pront: bisugne ingrassâlu (15).', 'Il maiale non è ancora pronto: va ingrassato governando la stalla (fino a 15).'); render(); return; }
+  if(!isWinter()){ say('Il purcit si fâs sù di unvier, cul frêt.', 'Il maiale si lavora d\'inverno, col freddo. Tradizione è tradizione.'); render(); return; }
+  if(!spend(3)) return;
+  S.pigWeight = -1;
+  S.salami += 6;
+  swear('🥓 Fat sù il purcit! Sîs salamis e un muset che al fâs vaî di gjonde.', 'Fatto su il maiale! Sei salami e un cotechino che fa piangere di gioia. (vendili al mercato o tienili per l\'inverno)');
   render();
 }
 function actVine(){
@@ -527,6 +572,9 @@ function openMarket(){
       html += mrow(`${CROPS[k].emoji} ${CROPS[k].name} ×${S.harvest[k]}`, `Vendi (+${CROPS[k].sell}€)`, `sell('${k}')`);
   }
   if(S.eggs > 0) html += mrow(`🥚 Ûfs ×${S.eggs}`, `Vendi tutte (+${S.eggs*2}€)`, `sellEggs()`);
+  if(S.milk > 0) html += mrow(`🥛 Lat ×${S.milk}`, `Vendi tutto (+${S.milk*4}€)`, `sellMilk()`);
+  if(S.honey > 0) html += mrow(`🍯 Mîl ×${S.honey}`, `Vendi tutto (+${S.honey*8}€)`, `sellHoney()`);
+  if(S.salami > 0) html += mrow(`🥓 Salamis ×${S.salami}`, `Vendi 1 (+15€)`, `sellSalami()`);
   if(S.fish > 0) html += mrow(`🐟 Trutis ×${S.fish}`, `Vendi tutte (+${S.fish*8}€)`, `sellFish()`);
   if(S.wine > 0) html += mrow(`🍷 Vin ×${S.wine}`, `Vendi 1 (+${winePrice}€)`, `sellWine()`);
   html += `<h3 style="margin:8px 0 4px">Compra</h3>`;
@@ -535,6 +583,9 @@ function openMarket(){
   }
   html += mrow(`🌾 Paston ×10`, `5€`, `buyFeed()`);
   html += mrow(`🐔 Une gjaline`, `12€`, `buyHen()`);
+  if(S.cow === 0)       html += mrow(`🐄 Une vacje <small>(2 paston/dì → 2 lat)</small>`, `60€`, `buyCow()`);
+  if(S.pigWeight < 0)   html += mrow(`🐖 Un purcitut <small>(ingrassalo → salami d'inverno)</small>`, `25€`, `buyPig()`);
+  if(S.hives < 3)       html += mrow(`🐝 Une arnie <small>(mîl gratis, max 3)</small>`, `30€`, `buyHive()`);
   html += `<div style="margin-top:10px;text-align:right"><button onclick="closeModal()">Sierâ</button></div>`;
   showModal(html);
 }
@@ -550,9 +601,15 @@ window.sellWine = () => {
     S.wine--; S.money += p; S.totEarned += p; openMarket(); renderBars();
   }
 };
+window.sellMilk  = () => { S.money += S.milk*4; S.totEarned += S.milk*4; S.milk = 0; openMarket(); renderBars(); };
+window.sellHoney = () => { S.money += S.honey*8; S.totEarned += S.honey*8; S.honey = 0; openMarket(); renderBars(); };
+window.sellSalami= () => { if(S.salami>0){ S.salami--; S.money += 15; S.totEarned += 15; openMarket(); renderBars(); } };
 window.buySeed = k => { if(S.money >= CROPS[k].seed){ S.money -= CROPS[k].seed; S.seeds[k]++; openMarket(); renderBars(); } };
 window.buyFeed = () => { if(S.money >= 5){ S.money -= 5; S.feed += 10; openMarket(); renderBars(); } };
 window.buyHen  = () => { if(S.money >= 12){ S.money -= 12; S.hens++; openMarket(); renderBars(); } };
+window.buyCow  = () => { if(S.money >= 60 && S.cow === 0){ S.money -= 60; S.cow = 1; say('🐄 Une vacje in stale! La bionde le clame Stele.', 'Una mucca in stalla! La bionde la chiama Stele, come il fiume.'); openMarket(); renderBars(); } };
+window.buyPig  = () => { if(S.money >= 25 && S.pigWeight < 0){ S.money -= 25; S.pigWeight = 0; say('🐖 Un purcitut! Di chi a Nadâl al devente un mostro.', 'Un maialino! Da qui a Natale diventa un mostro. Governalo ogni giorno.'); openMarket(); renderBars(); } };
+window.buyHive = () => { if(S.money >= 30 && S.hives < 3){ S.money -= 30; S.hives++; say('🐝 Une gnove arnie daûr de cjase.', 'Una nuova arnia dietro casa. Le api lavorano gratis!'); openMarket(); renderBars(); } };
 
 function openRestore(){
   let html = `<h2>🏚️ Comedâ la cjase</h2><p class="hint">Restauri permanenti — gli obiettivi di lungo periodo della bionde.</p>`;
@@ -594,16 +651,22 @@ function endDay(){
   // galline
   if(S.hens > 0 && !S.fedToday && chance(.25)){
     S.hens--;
-    say('🦊 LA BOLP! Gjalinis no governadis... une e je lade.', 'LA VOLPE! Galline non accudite... una se n\'è andata.');
+    swear('🦊 LA BOLP! Gjalinis no governadis... une e je lade.', 'LA VOLPE! Galline non accudite... una se n\'è andata.');
   }
-  S.fedToday = false;
+  S.fedToday = false; S.hensDone = false; S.stabledToday = false;
+
+  // api: miele nelle stagioni calde (1 vasetto ogni 5 giorni per arnia)
+  if(S.hives > 0 && !isWinter()){
+    S.honeyTimer += S.hives;
+    while(S.honeyTimer >= 5){ S.honeyTimer -= 5; S.honey++; say('🍯 Lis âfs a àn fat un vâs di mîl!', 'Le api hanno fatto un vasetto di miele!'); }
+  }
 
   // inverno: consumo legna
   S.cold = false;
   if(isWinter()){
     const need = (S.weather === 'gelo' || S.weather === 'nef') ? 3 : 2;
     if(S.wood >= need){ S.wood -= need; }
-    else { S.wood = 0; S.cold = true; say('🥶 La cataste e je vueide! Gnot di fret...', 'La catasta è vuota! Notte di freddo... (domani -3⚡)'); }
+    else { S.wood = 0; S.cold = true; swear('🥶 La cataste e je vueide! Gnot di fret...', 'La catasta è vuota! Notte di freddo... (domani -3⚡)'); }
   }
 
   // avanza il calendario
@@ -633,7 +696,7 @@ function endDay(){
     const planted = S.plots.filter(p=>p.crop);
     if(planted.length){
       const victim = rnd(planted);
-      say(`🧊 Tampieste! Il ${CROPS[victim.crop].name} al è lât in malore.`, `Grandine! Il ${CROPS[victim.crop].it} è andato distrutto.`);
+      swear(`🧊 Tampieste! Il ${CROPS[victim.crop].name} al è lât in malore.`, `Grandine! Il ${CROPS[victim.crop].it} è andato distrutto.`);
       victim.crop = null;
     }
   }
@@ -641,7 +704,7 @@ function endDay(){
     const planted = S.plots.filter(p=>p.crop);
     if(planted.length){
       const victim = rnd(planted);
-      say(`⛈️ Ce temporâl! Il vint al à sdrumât il ${CROPS[victim.crop].name}.`, `Che temporale! Il vento ha buttato giù il ${CROPS[victim.crop].it}.`);
+      swear(`⛈️ Ce temporâl! Il vint al à sdrumât il ${CROPS[victim.crop].name}.`, `Che temporale! Il vento ha buttato giù il ${CROPS[victim.crop].it}.`);
       victim.crop = null;
     }
   }
@@ -649,7 +712,7 @@ function endDay(){
     const riverCrops = S.plots.filter(p=>p.river && p.crop);
     if(riverCrops.length){
       for(const p of riverCrops) p.crop = null;
-      say('🌊 LA PLENE DE STELE! I cjamps dongje il flum a son sot aghe.', 'LA PIENA DELLA STELLA! I campi vicino al fiume sono sott\'acqua: raccolti persi.');
+      swear('🌊 LA PLENE DE STELE! I cjamps dongje il flum a son sot aghe.', 'LA PIENA DELLA STELLA! I campi vicino al fiume sono sott\'acqua: raccolti persi.');
     }
   }
 
@@ -662,7 +725,7 @@ function endDay(){
   let e = S.maxEnergy;
   if(trip === 'grado') say('⛱️ Domenie di gite: Grau! Bagn, sardele e gjelato sot il soreli.', 'Gita a Grado! Bagno, sardine e gelato sotto il sole. Oggi la bionde va a mille (+1⚡ max).');
   if(trip === 'trieste') say('🕶️ Gite a Triest: ocjâi di soreli, cafè in place Unitât e bore che tire!', 'Gita a Trieste: occhiali da sole, caffè in Piazza Unità e bora che tira! (+1⚡ max)');
-  if(S.badBack){ e -= 2; S.maxEnergy -= 2; say('😖 Orpo, la schene! Vuê si partìs plancut (-2⚡). Une sgnape e judarès...', 'Accidenti, la schiena! Oggi si parte piano (-2⚡). Una grappa aiuterebbe...'); }
+  if(S.badBack){ e -= 2; S.maxEnergy -= 2; swear('😖 La schene! Vuê si partìs plancut (-2⚡). Une sgnape e judarès...', 'La schiena! Oggi si parte piano (-2⚡). Una grappa aiuterebbe...'); }
   if(S.cold){ e -= 3; say('🥶 Dopo une gnot di fret, pocje voie.', 'Dopo una notte al freddo, poca voglia. (-3⚡)'); }
   S.energy = Math.max(1, e);
   S.napped = false; S.coffees = 0; S.farniaDone = false; S.fireLit = false;
@@ -735,7 +798,14 @@ function render(){
   }).join('');
   // inventario
   $('inv').innerHTML = [
-    `🥚 ${S.eggs}`, `🐔 ${S.hens}`, `🌾paston ${S.feed}`, `🐟 ${S.fish}`,
+    `🥚 ${S.eggs}`, `🐔 ${S.hens}`,
+    ...(S.cow > 0 ? [`🐄 Stele`] : []),
+    ...(S.pigWeight >= 0 ? [`🐖 ${Math.min(S.pigWeight,15)}/15`] : []),
+    ...(S.hives > 0 ? [`🐝 ×${S.hives}`] : []),
+    `🌾paston ${S.feed}`, `🐟 ${S.fish}`,
+    ...(S.milk > 0 ? [`🥛 ${S.milk}`] : []),
+    ...(S.honey > 0 ? [`🍯 ${S.honey}`] : []),
+    ...(S.salami > 0 ? [`🥓 ${S.salami}`] : []),
     `🍇 ${S.grapes}`, `🍷 ${S.wine}`,
     ...Object.keys(CROPS).filter(k=>S.harvest[k]>0).map(k=>`${CROPS[k].emoji} ${S.harvest[k]}`),
   ].map(x=>`<span>${x}</span>`).join('');
@@ -748,6 +818,9 @@ function render(){
   $('btnNap').disabled = S.napped;
   $('btnFarnia').disabled = S.farniaDone;
   $('btnWater').disabled = !S.dryToday || S.wateredToday;
+  $('btnHens').disabled = S.hensDone || S.hens === 0;
+  $('btnStable').disabled = S.stabledToday || (S.cow === 0 && S.pigWeight < 0);
+  $('btnPig').disabled = !(isWinter() && S.pigWeight >= 15);
   $('btnReal').textContent = '🌍 Meteo vêr di Sterp: ' + (S.realWx && S.realWx.enabled ? 'ON' : 'OFF');
 }
 
@@ -760,6 +833,8 @@ $('btnWater').onclick = actWater;
 $('btnReal').onclick = toggleRealWx;
 $('btnFish').onclick = actFish;
 $('btnHens').onclick = actHens;
+$('btnStable').onclick = actStable;
+$('btnPig').onclick = actPig;
 $('btnVine').onclick = actVine;
 $('btnPress').onclick = actPress;
 $('btnNap').onclick = actNap;
