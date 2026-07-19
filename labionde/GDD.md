@@ -101,6 +101,16 @@ L'età non è un dettaglio, è il design:
 | **Meteo vero** | Il cielo del gioco è quello VERO di Sterpo (Open-Meteo, coordinate 45.906N 13.079E, nessuna chiave API): condizioni + temperature dei prossimi 7 giorni reali. Con 2 settimane vere quasi senza pioggia e caldo scatta la **secjade** (siccità): i campi lontani dalla Stella non crescono se non annaffiati — quelli sul fiume si salvano con le risorgive. Neve e gelo veri fanno consumare più legna. Disattivabile in gioco; se offline, fallback al meteo simulato. |
 | Salvataggio | Automatico a fine giornata (localStorage) |
 
+## Salvataggio e progressi a lungo termine
+
+- **Oggi**: salvataggio automatico nel browser (localStorage) a fine giornata,
+  più **codici di salvataggio** esporta/importa per fare backup e spostare i
+  progressi tra dispositivi (copia negli appunti → incolla altrove).
+- **v0.8 (pianificato)**: **account utente** — il repo savint ha già login e
+  database (Prisma): registrazione, salvataggio cloud per utente, progressi
+  sincronizzati su qualsiasi dispositivo. È il requisito per un gioco che
+  "durerà tanto": il cortile della bionde non si perde mai.
+
 ## Roadmap
 
 - **PROSSIMO PASSO (concordato)** — **v0.7: mappa 2D dall'alto**. Sterpo vista

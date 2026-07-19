@@ -233,6 +233,10 @@
         <div class="inv" id="inv"></div>
       </div>
       <button class="primary" id="btnEnd">🌙 Fin de zornade</button>
+      <div class="row2">
+        <button id="btnExport" style="font-size:.75rem">💾 Copia salvataggio</button>
+        <button id="btnImport" style="font-size:.75rem">📥 Carica salvataggio</button>
+      </div>
       <button id="btnReset" style="font-size:.75rem">↺ Ricomincia da capo</button>
     </div>
   </div>
@@ -1015,6 +1019,37 @@ function morning(){
   render();
 }
 
+// ── codici di salvataggio: il progresso ti segue su qualsiasi dispositivo ──
+function exportSave(){
+  save();
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  const done = () => say('💾 Salvament copiât! Tegnilu di cont.', 'Codice di salvataggio copiato negli appunti! Incollalo in un file o mandatelo per messaggio: su un altro dispositivo basta "Carica salvataggio". Fai una copia ogni tanto, come si fa col vino buono.');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done).catch(() => { window.prompt('Copia questo codice e conservalo:', code); done(); });
+  } else {
+    window.prompt('Copia questo codice e conservalo:', code);
+    done();
+  }
+  render();
+}
+function importSave(){
+  const code = window.prompt('Incolla qui il codice di salvataggio:');
+  if(!code) return;
+  try{
+    const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if(typeof data.day !== 'number' || !Array.isArray(data.plots)) throw new Error('formato strano');
+    S = Object.assign(newGame(), data);
+    if(!S.realWx) S.realWx = {enabled:true, days:[], idx:0, drought:false};
+    if(!S.fishInv) S.fishInv = {};
+    save();
+    say('📥 Salvament cjamât: bentornade, bionde!', `Salvataggio caricato: giorno ${S.day}, ${S.money}€ in tasca. Bentornata, bionde!`);
+    if(S.mode === 'real') { syncRealSeason(); checkRealDays(false); }
+    render();
+  }catch(e){
+    say('Chel codiç nol è bon, frut.', 'Quel codice non è valido: controlla di averlo copiato tutto.');
+    render();
+  }
+}
 function resetGame(){
   if(!confirm('Ricominciare da capo? Il salvataggio verrà cancellato.')) return;
   localStorage.removeItem(SAVE_KEY);
@@ -1147,6 +1182,8 @@ $('btnMarket').onclick = openMarket;
 $('btnRestore').onclick = openRestore;
 $('btnEnd').onclick = endDay;
 $('btnReset').onclick = resetGame;
+$('btnExport').onclick = exportSave;
+$('btnImport').onclick = importSave;
 $('modalBg').onclick = e => { if(e.target === $('modalBg')) closeModal(); };
 
 const loaded = load();
