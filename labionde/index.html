@@ -130,7 +130,14 @@
           <button id="btnSplit">🪵 Spacâ i ciocs <small>(-1⚡ → +3 legna)</small></button>
           <button id="btnFire">💨 Soflâ sul fûc <small>(inverno: -1 legna, +1⚡)</small></button>
           <button id="btnWater">💧 Bagnâ i cjamps <small>(secjade: -2⚡)</small></button>
-          <button id="btnFish">🎣 Pescjâ te Stele <small>(-2⚡)</small></button>
+          <select id="riverSelect" title="dulà pescjâ / dove pescare">
+            <option value="stele">🌊 Flum Stele — trutis e salmerins</option>
+            <option value="patisce">🌊 Roie Patisce — tencjis e gjambars</option>
+            <option value="mulini">🌊 Roie dai Mulins — anguilis e luçs</option>
+          </select>
+          <button id="btnFish">🎣 Pescjâ <small>(-2⚡)</small></button>
+          <button id="btnGelso">🫐 Moris dal morâr <small>(mai–jugn, -1⚡)</small></button>
+          <button id="btnFico">🍑 Cjapâ i fîcs <small>(avost–setembar, -1⚡)</small></button>
           <button id="btnHens">🐔 Governâ lis gjalinis <small>(-1⚡, paston + uova)</small></button>
           <button id="btnStable">🐄 Governâ la stale <small>(-1⚡, latte + purcit)</small></button>
           <button id="btnPig">🥓 Fâ sù il purcit <small>(inverno, -3⚡ → salami!)</small></button>
@@ -148,6 +155,8 @@
           <button id="btnMarket">🧺 Marcjât di Bertiûl</button>
           <button id="btnRestore">🏚️ Comedâ la cjase</button>
           <button id="btnReal">🌍 Meteo vêr di Sterp: ON</button>
+          <button id="btnMode">⏱️ Timp vêr di vite: OFF</button>
+          <button id="btnLang">🌐 Sottotitoli: Italiano</button>
         </div>
       </div>
       <div class="panel">
@@ -175,13 +184,38 @@ const SEASONS = [
 ];
 const SEASON_DAYS = 28;
 
+// growth = giorni in modalità arcade · growReal = giorni VERI di coltivazione (modalità tempo vero)
 const CROPS = {
-  forment:{name:'Forment', it:'frumento',  emoji:'🌾', seasons:[0],   growth:10, seed:2, sell:8},
-  fasui:  {name:'Fasûi',   it:'fagioli',   emoji:'🫘', seasons:[0,1], growth:6,  seed:2, sell:5},
-  blave:  {name:'Blave',   it:'mais',      emoji:'🌽', seasons:[0,1], growth:8,  seed:2, sell:6},
-  coce:   {name:'Coce',    it:'zucca',     emoji:'🎃', seasons:[1],   growth:9,  seed:3, sell:10},
-  radric: {name:'Radric',  it:'radicchio', emoji:'🥬', seasons:[2],   growth:6,  seed:2, sell:6},
-  verze:  {name:'Verze',   it:'verza',     emoji:'🥦', seasons:[2],   growth:7,  seed:2, sell:7},
+  forment:{name:'Forment', it:'frumento',  emoji:'🌾', seasons:[0],   growth:10, growReal:100, seed:2, sell:8},
+  fasui:  {name:'Fasûi',   it:'fagioli',   emoji:'🫘', seasons:[0,1], growth:6,  growReal:60,  seed:2, sell:5},
+  blave:  {name:'Blave',   it:'mais',      emoji:'🌽', seasons:[0,1], growth:8,  growReal:120, seed:2, sell:6},
+  coce:   {name:'Coce',    it:'zucca',     emoji:'🎃', seasons:[1],   growth:9,  growReal:110, seed:3, sell:10},
+  radric: {name:'Radric',  it:'radicchio', emoji:'🥬', seasons:[2],   growth:6,  growReal:70,  seed:2, sell:6},
+  verze:  {name:'Verze',   it:'verza',     emoji:'🥦', seasons:[2],   growth:7,  growReal:80,  seed:2, sell:7},
+};
+
+// i trê flums di Sterp: la Stele e lis rois Patisce e dai Mulins (quelle vere attorno al castello)
+const FISH = {
+  trute:    {fur:'Trute',           it:'trota',            en:'trout',        emoji:'🐟', price:8},
+  marmo:    {fur:'Trute marmorade', it:'trota marmorata',  en:'marble trout', emoji:'🐠', price:16},
+  salmerin: {fur:'Salmerin',        it:'salmerino',        en:'char',         emoji:'🐟', price:12},
+  tencje:   {fur:'Tencje',          it:'tinca',            en:'tench',        emoji:'🐟', price:6},
+  gjambar:  {fur:'Gjambar',         it:'gambero di fiume', en:'crayfish',     emoji:'🦞', price:9},
+  cjavedan: {fur:'Cjavedan',        it:'cavedano',         en:'chub',         emoji:'🐟', price:4},
+  anguile:  {fur:'Anguile',         it:'anguilla',         en:'eel',          emoji:'🐍', price:11},
+  luc:      {fur:'Luç',             it:'luccio',           en:'pike',         emoji:'🦈', price:14},
+};
+const RIVERS = {
+  stele:  {fur:'Stele',           it:'fiume Stella',      catches:[['trute',.45],['salmerin',.12],['marmo',.06]]},
+  patisce:{fur:'Roie Patisce',    it:'roggia Patisce',    catches:[['cjavedan',.40],['tencje',.20],['gjambar',.15]]},
+  mulini: {fur:'Roie dai Mulins', it:'roggia dei Mulini', catches:[['anguile',.30],['tencje',.18],['luc',.09]]},
+};
+
+// arbui dal curtîl: morâr (gelso) e fiâr (fico), con le finestre di maturazione vere
+// arcade: [stagione, dal dì, al dì] · tempo vero: da 'MM-GG' a 'MM-GG'
+const TREES = {
+  gelso:{fur:'morâr', it:'gelso', emoji:'🫐', item:'moris', price:5, arcade:[0,15,28], real:['05-10','06-20']},
+  fico: {fur:'fiâr',  it:'fico',  emoji:'🍑', item:'fics',  price:6, arcade:[1,14,28], real:['08-10','09-30']},
 };
 
 const WEATHER = {
@@ -251,6 +285,8 @@ function newGame(){
     cow:0, pigWeight:-1, hives:0,          // -1 = nessun maiale
     milk:0, honey:0, honeyTimer:0, salami:0,
     stabledToday:false, hensDone:false,
+    mode:'arcade', lastReal:null, lang:'it',
+    fishInv:{}, moris:0, fics:0, gelsoDone:false, ficoDone:false, vineYear:0,
     fish:0, grapes:0, wine:0,
     seeds:{forment:3, fasui:0, blave:3, coce:0, radric:0, verze:0},
     harvest:{forment:0, fasui:0, blave:0, coce:0, radric:0, verze:0},
@@ -417,8 +453,8 @@ function plotClick(i){
     if(!spend(1)) return;
     S.seeds[c]--;
     p.crop = c;
-    p.left = CROPS[c].growth;
-    say(`${CROPS[c].emoji} Semenât ${CROPS[c].name}.`, `Seminato ${CROPS[c].it}.`);
+    p.left = S.mode === 'real' ? CROPS[c].growReal : CROPS[c].growth;
+    say(`${CROPS[c].emoji} Semenât ${CROPS[c].name} (${p.left} dîs).`, `Seminato ${CROPS[c].it} (${p.left} giorni${S.mode==='real' ? ' VERI — come in campagna' : ''}).`);
   }
   render();
 }
@@ -467,11 +503,37 @@ function toggleRealWx(){
 }
 function actFish(){
   if(!spend(2)) return;
-  phrase('fish');
+  const rv = RIVERS[$('riverSelect').value] || RIVERS.stele;
   const r = Math.random();
-  if(r < .10){ S.fish += 2; swear('🎣 Un salmerin! E ancje une trute!', 'Un salmerino! E anche una trota! (+2 pesci)'); }
-  else if(r < .65){ S.fish++; say('🎣 Une biele trute de Stele.', 'Una bella trota della Stella. (+1 pesce)'); }
-  else { say('🎣 Nuie. Ma cjalâ l\'aghe e je une medisine.', 'Niente. Ma guardare l\'acqua è una medicina.'); }
+  let acc = 0, caught = null;
+  for(const [k, p] of rv.catches){ acc += p; if(r < acc){ caught = k; break; } }
+  if(caught){
+    S.fishInv[caught] = (S.fishInv[caught] || 0) + 1;
+    const f = FISH[caught];
+    if(f.price >= 12) swear(`🎣 ${f.emoji} Une ${f.fur} te ${rv.fur}!`, `${f.it} — che presa nella ${rv.it}! (${f.price}€ al mercato)`);
+    else say(`🎣 ${f.emoji} Un ${f.fur} te ${rv.fur}.`, `Un ${f.it} nella ${rv.it}.`);
+  } else {
+    say(`🎣 Nuie te ${rv.fur}. Ma cjalâ l'aghe e je une medisine.`, `Niente nella ${rv.it}. Ma guardare l'acqua è una medicina.`);
+  }
+  render();
+}
+function treeOpen(t){
+  const T = TREES[t];
+  if(S.mode === 'real'){
+    const md = romeNow().slice(5);
+    return md >= T.real[0] && md <= T.real[1];
+  }
+  return S.season === T.arcade[0] && S.dayOfSeason >= T.arcade[1] && S.dayOfSeason <= T.arcade[2];
+}
+function actTree(t){
+  const T = TREES[t];
+  const doneKey = t === 'gelso' ? 'gelsoDone' : 'ficoDone';
+  if(!treeOpen(t)){ say(`Il ${T.fur} nol à nuie di dâti cumò: ogni robe e à la sô stagjon.`, `Il ${T.it} adesso non ha niente da darti: ogni cosa ha la sua stagione.`); render(); return; }
+  if(S[doneKey]){ say(`Za cjapât sù dal ${T.fur} vuê. Doman di gnûf.`, `Già raccolto dal ${T.it} oggi. Domani di nuovo.`); render(); return; }
+  if(!spend(1)) return;
+  S[doneKey] = true;
+  S[T.item] += 2;
+  say(`${T.emoji} Doi zeis dal ${T.fur}! Mans e musse tenzudis.`, `Due cestini dal ${T.it}! Mani e faccia macchiate. (si vendono al mercato)`);
   render();
 }
 function actHens(){
@@ -561,6 +623,80 @@ function actFarnia(){
   render();
 }
 
+// ───────────────────────── timp vêr di vite (tempo reale) ─────────────────────────
+function romeNow(){ return new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'}); } // 'YYYY-MM-DD'
+function daysDiff(a, b){ return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function syncRealSeason(){
+  const now = romeNow();
+  const m = +now.slice(5,7);
+  S.season = (m>=3 && m<=5) ? 0 : (m>=6 && m<=8) ? 1 : (m>=9 && m<=11) ? 2 : 3;
+  S.dayOfSeason = +now.slice(8,10);
+  const y = +now.slice(0,4);
+  if(S.season === 2 && S.vineYear !== y){ S.vineYear = y; S.vineLeft = 6; }
+}
+function checkRealDays(fromButton){
+  if(S.mode !== 'real') return;
+  const today = romeNow();
+  if(!S.lastReal) S.lastReal = today;
+  let missed = daysDiff(S.lastReal, today);
+  if(missed <= 0){
+    if(fromButton) say('⏱️ Il timp al passe di bessôl, frut: torne doman!', 'Il tempo passa da solo: torna domani! La bionde intanto si riposa.');
+    render(); return;
+  }
+  missed = Math.min(missed, 120);
+  for(let i=0; i<missed; i++){ S.day++; nightTick(); }
+  if(missed > 1) say(`⏳ ${missed} dîs passâts te vite vere cence di te.`, `${missed} giorni veri passati senza di te: campi, stalla e catasta sono andati avanti da soli. Speriamo bene...`);
+  S.lastReal = today;
+  syncRealSeason();
+  morning();
+}
+function toggleMode(){
+  if(S.mode === 'real'){
+    S.mode = 'arcade';
+    say('⏱️ Timp svelt: ogni "fin de zornade" un gnûf dì.', 'Modalità veloce: il tempo corre quando chiudi tu la giornata.');
+  } else {
+    S.mode = 'real';
+    S.lastReal = romeNow();
+    syncRealSeason();
+    for(const p of S.plots){ if(p.crop && p.left > 0) p.left = CROPS[p.crop].growReal; }
+    swear('⏱️ TIMP VÊR! Di cumò indenant une zornade dal zûc e je une zornade vere.',
+      'TEMPO VERO! Da adesso una giornata di gioco è una giornata vera: stagioni dal calendario, meteo di Sterpo, colture coi tempi veri (il mais 120 giorni!). Torna ogni giorno a governare il cortile — se stai via, va avanti da solo. Rischioso, ma è la vita.');
+  }
+  save(); render();
+}
+
+// ───────────────────────── sottotitoli multilingua ─────────────────────────
+const EN = {
+  'Salve! Sono la bionde: 82 anni, Sterpo di Bertiolo, e una casa da mandare avanti.':
+    'Hello! I\'m "la bionde": 82 years old, Sterpo di Bertiolo, and a farmhouse to keep running.',
+  'Capelli bianchi, occhiali da sole, crocetta d\'oro e scarpe nere: pronta a tutto.':
+    'White hair, sunglasses, a little gold cross and black shoes: ready for anything.',
+  'Semina, raccogli, taglia la legna prima dell\'inverno... e non dimenticare il caffè.':
+    'Sow, harvest, chop wood before winter... and don\'t forget the coffee.',
+  'Andiamo, che la giornata è corta!': 'Come on, the day is short!',
+  'Ho 82 anni, ma le mani sono buone.': 'I\'m 82, but my hands are still good.',
+  'Prima il lavoro, poi il caffè... anzi no, prima il caffè.': 'Work first, then coffee... actually no, coffee first.',
+  'Che stanchezza! Sono a pezzi.': 'So tired! I\'m worn out.',
+  'Una volta andavo come un treno. Adesso come una carriola.': 'I used to go like a train. Now like a wheelbarrow.',
+  'Bene, benone! Roba di prim\'ordine.': 'Good, very good! First-class stuff.',
+  'Questa è terra buona, signore!': 'This is good soil, sir!',
+  'La Stella è piena di trote, basta saper aspettare.': 'The Stella is full of trout, you just need to know how to wait.',
+  'LA VOLPE! Galline non accudite... una se n\'è andata.': 'THE FOX! Unfed hens... one is gone.',
+  'LA PIENA DELLA STELLA! I campi vicino al fiume sono sott\'acqua: raccolti persi.':
+    'THE STELLA IS FLOODING! Riverside fields are under water: crops lost.',
+  'La catasta è vuota! Notte di freddo... (domani -3⚡)': 'The woodpile is empty! A cold night... (-3⚡ tomorrow)',
+  'Venti minuti sul divano col gatto... +3⚡': 'Twenty minutes on the couch with the cat... +3⚡',
+  'La moka sbuffa. Adesso sì che si ragiona! +2⚡': 'The moka pot is puffing. Now we\'re talking! +2⚡',
+  'Il tempo passa da solo: torna domani! La bionde intanto si riposa.': 'Time passes on its own: come back tomorrow! La bionde will rest meanwhile.',
+};
+function sub(it){ return S.lang === 'en' ? (EN[it] || it) : it; }
+function toggleLang(){
+  S.lang = S.lang === 'it' ? 'en' : 'it';
+  say(S.lang === 'en' ? '🌐 Sottitui par inglês.' : '🌐 Sottitui par talian.',
+      S.lang === 'en' ? 'Subtitles in English (Friulian stays — that\'s her voice; untranslated lines fall back to Italian).' : 'Sottotitoli in italiano.');
+  save(); render();
+}
+
 // ───────────────────────── mercato & restauri ─────────────────────────
 function openMarket(){
   const winePrice = (S.sagra ? 30 : 15) + (S.restored.cantine ? 5 : 0);
@@ -575,7 +711,12 @@ function openMarket(){
   if(S.milk > 0) html += mrow(`🥛 Lat ×${S.milk}`, `Vendi tutto (+${S.milk*4}€)`, `sellMilk()`);
   if(S.honey > 0) html += mrow(`🍯 Mîl ×${S.honey}`, `Vendi tutto (+${S.honey*8}€)`, `sellHoney()`);
   if(S.salami > 0) html += mrow(`🥓 Salamis ×${S.salami}`, `Vendi 1 (+15€)`, `sellSalami()`);
-  if(S.fish > 0) html += mrow(`🐟 Trutis ×${S.fish}`, `Vendi tutte (+${S.fish*8}€)`, `sellFish()`);
+  for(const k in S.fishInv){
+    const n = S.fishInv[k];
+    if(n > 0 && FISH[k]) html += mrow(`${FISH[k].emoji} ${FISH[k].fur} ×${n}`, `Vendi tutte (+${n*FISH[k].price}€)`, `sellFishT('${k}')`);
+  }
+  if(S.moris > 0) html += mrow(`🫐 Moris di morâr ×${S.moris}`, `Vendi (+${S.moris*5}€)`, `sellTree('moris',5)`);
+  if(S.fics > 0) html += mrow(`🍑 Fîcs ×${S.fics}`, `Vendi (+${S.fics*6}€)`, `sellTree('fics',6)`);
   if(S.wine > 0) html += mrow(`🍷 Vin ×${S.wine}`, `Vendi 1 (+${winePrice}€)`, `sellWine()`);
   html += `<h3 style="margin:8px 0 4px">Compra</h3>`;
   for(const k in CROPS){
@@ -594,7 +735,8 @@ function mrow(label, btn, fn){
 }
 window.sell = k => { if(S.harvest[k]>0){ S.harvest[k]--; S.money += CROPS[k].sell; S.totEarned += CROPS[k].sell; openMarket(); renderBars(); } };
 window.sellEggs = () => { S.money += S.eggs*2; S.totEarned += S.eggs*2; S.eggs = 0; openMarket(); renderBars(); };
-window.sellFish = () => { S.money += S.fish*8; S.totEarned += S.fish*8; S.fish = 0; openMarket(); renderBars(); };
+window.sellFishT = k => { const n = S.fishInv[k]||0; if(n>0){ S.money += n*FISH[k].price; S.totEarned += n*FISH[k].price; S.fishInv[k] = 0; openMarket(); renderBars(); } };
+window.sellTree = (item, price) => { const n = S[item]||0; if(n>0){ S.money += n*price; S.totEarned += n*price; S[item] = 0; openMarket(); renderBars(); } };
 window.sellWine = () => {
   if(S.wine>0){
     const p = (S.sagra ? 30 : 15) + (S.restored.cantine ? 5 : 0);
@@ -636,7 +778,7 @@ function showModal(html){ $('modalBox').innerHTML = html; $('modalBg').classList
 window.closeModal = () => { $('modalBg').classList.remove('open'); render(); };
 
 // ───────────────────────── fine giornata ─────────────────────────
-function endDay(){
+function nightTick(){
   // crescita campi (con la secjade i campi lontani dalla Stella non crescono, se non annaffiati)
   let thirsty = 0;
   for(const p of S.plots){
@@ -669,6 +811,11 @@ function endDay(){
     else { S.wood = 0; S.cold = true; swear('🥶 La cataste e je vueide! Gnot di fret...', 'La catasta è vuota! Notte di freddo... (domani -3⚡)'); }
   }
 
+}
+
+function endDay(){
+  if(S.mode === 'real'){ checkRealDays(true); return; }
+  nightTick();
   // avanza il calendario
   S.day++; S.dayOfSeason++;
   if(S.dayOfSeason > SEASON_DAYS){
@@ -684,12 +831,19 @@ function endDay(){
     if(S.season === 3) say('❄️ Cjale la cataste: l\'unvier al mangje 2-3 legnis in dì.', 'Controlla la catasta: l\'inverno consuma 2-3 legna al giorno.');
   }
 
+  morning();
+}
+
+function morning(){
   // meteo & eventi del nuovo giorno (vero da Sterpo, se disponibile)
   pickWeather();
   S.wateredToday = false;
   S.dryToday = droughtToday();
   if(S.dryToday) say('🔥 Zornade di secjade: i cjamps lontans de Stele a àn sêt.', 'Giornata di siccità: i campi lontani dalla Stella hanno sete. Annaffia (💧) o non crescono.');
-  S.sagra = (S.season === 0 && S.dayOfSeason >= 20 && S.dayOfSeason <= 22);
+  // Sagra dal Vin di Bertiûl: in modalità tempo vero è a metà marzo, come quella vera
+  S.sagra = S.mode === 'real'
+    ? (romeNow().slice(5) >= '03-10' && romeNow().slice(5) <= '03-25')
+    : (S.season === 0 && S.dayOfSeason >= 20 && S.dayOfSeason <= 22);
   if(S.sagra) say('🎉 SAGRE DAL VIN a Bertiûl! Il vin al va vie al dopli.', 'SAGRA DEL VINO a Bertiolo! Il vino si vende al doppio (3 giorni).');
 
   if(S.weather === 'tampieste'){
@@ -729,6 +883,7 @@ function endDay(){
   if(S.cold){ e -= 3; say('🥶 Dopo une gnot di fret, pocje voie.', 'Dopo una notte al freddo, poca voglia. (-3⚡)'); }
   S.energy = Math.max(1, e);
   S.napped = false; S.coffees = 0; S.farniaDone = false; S.fireLit = false;
+  S.gelsoDone = false; S.ficoDone = false;
   phrase(S.energy < 7 ? 'tired' : 'morning');
 
   save();
@@ -767,8 +922,11 @@ function renderBars(){
   let ebar = '<span class="energybar">';
   for(let i=0;i<S.maxEnergy;i++) ebar += `<i class="${i<S.energy?'on':''}"></i>`;
   ebar += '</span>';
+  const dateStr = S.mode === 'real'
+    ? `${si.emoji} ${si.fur} · ${romeNow().split('-').reverse().join('/')} ⏱️`
+    : `${si.emoji} ${si.fur}, dì ${S.dayOfSeason}/${SEASON_DAYS} · an ${S.year}`;
   $('topbar').innerHTML = `
-    <span class="stat">${si.emoji} ${si.fur}, dì ${S.dayOfSeason}/${SEASON_DAYS} · an ${S.year}</span>
+    <span class="stat" title="${S.mode === 'real' ? 'tempo vero: una giornata di gioco = una giornata vera' : 'modalità veloce'}">${dateStr}</span>
     <span class="stat" title="${realTag ? 'meteo vero di Sterpo (Open-Meteo)' : 'meteo simulato'}">${w.emoji} ${w.fur}${temps}${realTag}</span>
     ${S.dryToday ? '<span class="stat" style="color:var(--red)">🔥 Secjade</span>' : ''}
     <span class="stat">⚡ ${ebar} ${S.energy}/${S.maxEnergy}</span>
@@ -802,15 +960,18 @@ function render(){
     ...(S.cow > 0 ? [`🐄 Stele`] : []),
     ...(S.pigWeight >= 0 ? [`🐖 ${Math.min(S.pigWeight,15)}/15`] : []),
     ...(S.hives > 0 ? [`🐝 ×${S.hives}`] : []),
-    `🌾paston ${S.feed}`, `🐟 ${S.fish}`,
+    `🌾paston ${S.feed}`,
+    `🐟 ${Object.values(S.fishInv).reduce((a,b)=>a+b, 0)}`,
+    ...(S.moris > 0 ? [`🫐 ${S.moris}`] : []),
+    ...(S.fics > 0 ? [`🍑 ${S.fics}`] : []),
     ...(S.milk > 0 ? [`🥛 ${S.milk}`] : []),
     ...(S.honey > 0 ? [`🍯 ${S.honey}`] : []),
     ...(S.salami > 0 ? [`🥓 ${S.salami}`] : []),
     `🍇 ${S.grapes}`, `🍷 ${S.wine}`,
     ...Object.keys(CROPS).filter(k=>S.harvest[k]>0).map(k=>`${CROPS[k].emoji} ${S.harvest[k]}`),
   ].map(x=>`<span>${x}</span>`).join('');
-  // log
-  $('log').innerHTML = S.log.map(l=>`<p><span class="fur">${l.fur}</span><br><span class="it">${l.it}</span></p>`).join('');
+  // log (voce in friulano, sottotitoli nella lingua scelta)
+  $('log').innerHTML = S.log.map(l=>`<p><span class="fur">${l.fur}</span><br><span class="it">${sub(l.it)}</span></p>`).join('');
   // bottoni condizionali
   $('btnFire').disabled = !isWinter() || S.fireLit;
   $('btnVine').disabled = S.season !== 2 || S.vineLeft <= 0;
@@ -822,6 +983,14 @@ function render(){
   $('btnStable').disabled = S.stabledToday || (S.cow === 0 && S.pigWeight < 0);
   $('btnPig').disabled = !(isWinter() && S.pigWeight >= 15);
   $('btnReal').textContent = '🌍 Meteo vêr di Sterp: ' + (S.realWx && S.realWx.enabled ? 'ON' : 'OFF');
+  $('btnMode').textContent = '⏱️ Timp vêr di vite: ' + (S.mode === 'real' ? 'ON' : 'OFF');
+  $('btnLang').textContent = '🌐 Sottotitoli: ' + (S.lang === 'en' ? 'English' : 'Italiano');
+  $('btnGelso').disabled = !treeOpen('gelso') || S.gelsoDone;
+  $('btnFico').disabled = !treeOpen('fico') || S.ficoDone;
+  $('btnEnd').disabled = S.mode === 'real' && S.lastReal === romeNow();
+  $('btnEnd').textContent = S.mode === 'real'
+    ? ($('btnEnd').disabled ? '🌙 Torne doman! (timp vêr)' : '🌙 Gnove zornade vere')
+    : '🌙 Fin de zornade';
 }
 
 // ───────────────────────── avvio ─────────────────────────
@@ -832,6 +1001,10 @@ $('btnFire').onclick = actFire;
 $('btnWater').onclick = actWater;
 $('btnReal').onclick = toggleRealWx;
 $('btnFish').onclick = actFish;
+$('btnGelso').onclick = () => actTree('gelso');
+$('btnFico').onclick = () => actTree('fico');
+$('btnMode').onclick = toggleMode;
+$('btnLang').onclick = toggleLang;
 $('btnHens').onclick = actHens;
 $('btnStable').onclick = actStable;
 $('btnPig').onclick = actPig;
@@ -852,11 +1025,17 @@ S = newGame();
 if(loaded){
   Object.assign(S, loaded);                    // i salvataggi vecchi ereditano i campi nuovi
   if(!S.realWx) S.realWx = {enabled:true, days:[], idx:0, drought:false};
+  if(!S.fishInv) S.fishInv = {};
+  if(typeof S.fish === 'number' && S.fish > 0){ S.fishInv.trute = (S.fishInv.trute||0) + S.fish; S.fish = 0; }
 } else {
   intro();
 }
+if(S.mode === 'real'){ syncRealSeason(); checkRealDays(false); }
 render();
 if(S.realWx.enabled) fetchRealWeather();
+// in modalità tempo vero, se la pagina resta aperta a cavallo di mezzanotte
+document.addEventListener('visibilitychange', () => { if(!document.hidden) { checkRealDays(false); } });
+setInterval(() => checkRealDays(false), 10*60*1000);
 </script>
 </body>
 </html>

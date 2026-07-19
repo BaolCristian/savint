@@ -68,7 +68,10 @@ L'età non è un dettaglio, è il design:
 | Galline | Comprale, dagli il paston, raccogli uova (1 volta al giorno); se non mangiano arriva **la bolp** (volpe) |
 | Stalla | La **vacje** "Stele" (2 paston/dì → 2 latte), il **purcit** da ingrassare fino a 15 e poi, solo d'inverno come da tradizione, "fâ sù il purcit" → 6 salami. Le **arnie** (max 3) fanno miele gratis nelle stagioni calde |
 | Intercalari | La bionde "bestemmia" a modo suo — esclamazioni innocue sparate nei momenti di sorpresa o disastro: *Par mil bucefais!*, *Sante Galine!*, *Beât idraulic!*, *Barbe cantant!* (zio cantante — *barbe* = zio in friulano), *Sacrabolt!*, *Ostrighe di Maran!*, *Sante polente fumante!*... |
-| Pesca | Trote e salmerini nella Stella |
+| Pesca | **Tre corsi d'acqua veri**: il fiume Stella (trote, salmerini e la rara trota marmorata), la roggia Patisce (cavedani, tinche, gamberi di fiume) e la roggia dei Mulini (anguille, tinche, lucci) — si sceglie dove pescare |
+| Alberi | Il **morâr** (gelso, more a maggio-giugno) e il **fiâr** (fico, agosto-settembre): finestre di maturazione vere, raccolta una volta al giorno |
+| **Tempo vero** | Modalità "Timp vêr di vite": una giornata di gioco = una giornata VERA. Stagioni dal calendario, colture coi tempi reali (mais 120 giorni, frumento 100, fagioli 60...), Sagra dal Vin a metà marzo come quella vera di Bertiolo, gelsi e fichi nei mesi giusti. Se stai via, il cortile va avanti da solo (recupero automatico fino a 120 giorni: la volpe, la catasta e i campi non ti aspettano). Attivabile/disattivabile in gioco |
+| Multilingua | Voce in **friulano** (è l'anima del gioco), sottotitoli commutabili **italiano/inglese** (le righe non ancora tradotte ricadono sull'italiano) |
 | Vigna | Vendemmia in autunno → torchio → vin; Sagra dal Vin lo paga doppio |
 | Mercato | Vendi raccolti/uova/pesce/vino, compra semi/paston/galline |
 | Restauri | Tetto, spolert nuova, ecc. — obiettivi di lungo periodo con bonus permanenti |
