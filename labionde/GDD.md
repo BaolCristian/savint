@@ -103,6 +103,14 @@ L'età non è un dettaglio, è il design:
 
 ## Roadmap
 
+- **PROSSIMO PASSO (concordato)** — **v0.7: mappa 2D dall'alto**. Sterpo vista
+  dall'alto (canvas), con uno sprite della bionde che cammina per il borgo:
+  la sua casa col cortile, i campi, la stalla, il mulino con la ruota, il ponte
+  sulla Stella, la fontana di claps, la corte, la villa col cancello, la Farnia.
+  Le azioni si fanno andando fisicamente nei posti (al mulino si macina, al
+  fiume si pesca...). Sprite della bionde fedele alle foto: capelli bianchi,
+  aviatori, piumino nero, scarpe nere.
+
 - **v0.2** — suoni, più eventi (sagra giocabile, vicini di Sterpo, la messa, il mercato
   di Bertiolo), ricette friulane (frico, brovada e muset) cucinabili coi raccolti.
 - **v0.3** — grafica vera (tile art da foto di Sterpo), mappa del paese, la Farnia
