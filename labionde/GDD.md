@@ -111,6 +111,19 @@ L'età non è un dettaglio, è il design:
   sincronizzati su qualsiasi dispositivo. È il requisito per un gioco che
   "durerà tanto": il cortile della bionde non si perde mai.
 
+## Direzione artistica: 8-bit ✅
+
+Adottata (v0.7.4): il gioco è in **pixel art 8-bit**.
+- La mappa è renderizzata a mezza risoluzione e ingrandita a pixel netti.
+- Lo sprite della bionde è un 12×17 disegnato a mano (2 frame di camminata,
+  specchiato per la direzione), derivato dall'illustrazione ufficiale.
+- Il ritratto nell'intestazione è la versione pixel (44×72, 16 colori)
+  dell'illustrazione, resa con `image-rendering: pixelated`.
+- Sorgenti in `assets/sprites/`: `bionde.png` (illustrazione pulita),
+  `bionde_8bit_0/1.png` (i frame dello sprite).
+- Prossimi passi: frame di spalle e di profilo, tile disegnati a mano per
+  case/alberi/acqua al posto delle forme generate.
+
 ## Funzionalità del genere che ancora mancano (benchmark: Stardew Valley, Fields of Mistria)
 
 In ordine di impatto, cosa hanno i giochi allo stato dell'arte e Labionde no:
