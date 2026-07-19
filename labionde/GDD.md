@@ -37,6 +37,21 @@ repo per riservatezza — l'avatar nel gioco è un ritratto SVG stilizzato):
   (bagno, sardine e gelato) → nel gioco sono eventi che danno +1 energia massima
   per quella giornata, e nei giorni di gita la schiena non fa mai male.
 
+## Il borgo (dalle foto di Via Piave)
+
+Luoghi veri di Sterpo documentati dalle foto (Street View di Via Piave), usati
+nella veduta SVG in testa al gioco e nelle scenette del "zîr pal borc":
+
+- La **cort**: la lunga schiera di case coloniche ocra e gialle con i tetti in
+  coppi, gli **androni** ad arco e il **portico** con le colonne.
+- La **casa rossa** con le cornici bianche, gli scuri verdi e il lampione in
+  ferro battuto.
+- La **torretta sul bivio** col muro di ciottoli di fiume coperto d'edera.
+- La **fontana di sassi** con le due vasche a cascata, nel bosco delle risorgive.
+- La **panchina semicircolare di claps** col vialetto in pietra.
+- La **bacheca del paese** e... le buche di Via Piave.
+- Dietro gli alberi, la villa del castello (Villa Colloredo Venier).
+
 ## La protagonista come meccanica
 
 L'età non è un dettaglio, è il design:
