@@ -24,6 +24,19 @@ tutto in friulano (con sottotitoli in italiano).
 - **Colture della Bassa**: forment (frumento), blave (mais), fasûi, coce (zucca),
   radric (radicchio), verze.
 
+## La bionde (dal vero)
+
+Riferimenti visivi e caratteriali presi dalle foto di famiglia (non incluse nel
+repo per riservatezza — l'avatar nel gioco è un ritratto SVG stilizzato):
+
+- Capelli bianchi corti, occhi chiari, sorriso furbo.
+- **Occhiali da sole da aviatore** — sempre, anche col cappuccio della giacca.
+- **Giacchetta nera imbottita** (piumino) e pantaloni neri, **sneakers nere**.
+- **Crocetta d'oro** con la catenina al collo.
+- Le piacciono le **gite**: Trieste (Piazza Unità, caffè e bora) e Grado
+  (bagno, sardine e gelato) → nel gioco sono eventi che danno +1 energia massima
+  per quella giornata, e nei giorni di gita la schiena non fa mai male.
+
 ## La protagonista come meccanica
 
 L'età non è un dettaglio, è il design:

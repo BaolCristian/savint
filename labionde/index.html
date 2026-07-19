@@ -85,8 +85,25 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Labionde 👵🌾</h1>
-  <div class="sub">Sterpo di Bertiolo, Friûl — la bionde e la sô cjase di campagne</div>
+  <div style="display:flex; gap:12px; align-items:center; margin-bottom:4px">
+    <svg width="60" height="60" viewBox="0 0 64 64" aria-label="La bionde">
+      <path d="M12 64 Q12 42 32 42 Q52 42 52 64 Z" fill="#1a1a1f" stroke="#000"/>
+      <path d="M16 55 Q32 49 48 55" stroke="#2e2e35" fill="none"/>
+      <path d="M14 60 Q32 54 50 60" stroke="#2e2e35" fill="none"/>
+      <line x1="32" y1="44" x2="32" y2="64" stroke="#555"/>
+      <path d="M32 45 v6 M29.5 47.5 h5" stroke="#e6c15a" stroke-width="1.6"/>
+      <circle cx="32" cy="26" r="13" fill="#e8b89a"/>
+      <path d="M19 27 Q16 9 32 9 Q48 9 45 27 Q45 16 32 15 Q19 16 19 27 Z" fill="#f2f0ea"/>
+      <ellipse cx="26" cy="26" rx="5" ry="4" fill="#20242a"/>
+      <ellipse cx="38" cy="26" rx="5" ry="4" fill="#20242a"/>
+      <path d="M31 26 h2 M21 25 l-3 -1 M43 25 l3 -1" stroke="#20242a" stroke-width="1.4" fill="none"/>
+      <path d="M27 34 Q32 37.5 37 34" stroke="#a05a3c" fill="none" stroke-width="1.6"/>
+    </svg>
+    <div>
+      <h1>Labionde 🕶️🌾</h1>
+      <div class="sub" style="margin-bottom:0">Sterpo di Bertiolo, Friûl — la bionde e la sô cjase di campagne</div>
+    </div>
+  </div>
 
   <div class="topbar" id="topbar"></div>
 
@@ -520,10 +537,15 @@ function endDay(){
     }
   }
 
-  // nuova giornata
-  S.badBack = chance(.12);
-  S.maxEnergy = 10 + (S.restored.cuviert ? 1 : 0);
+  // nuova giornata (ogni tanto: gita! niente schiena nei giorni di gita)
+  let trip = null;
+  if(S.season === 1 && chance(.07)) trip = 'grado';
+  else if(S.season !== 3 && chance(.04)) trip = 'trieste';
+  S.badBack = !trip && chance(.12);
+  S.maxEnergy = 10 + (S.restored.cuviert ? 1 : 0) + (trip ? 1 : 0);
   let e = S.maxEnergy;
+  if(trip === 'grado') say('⛱️ Domenie di gite: Grau! Bagn, sardele e gjelato sot il soreli.', 'Gita a Grado! Bagno, sardine e gelato sotto il sole. Oggi la bionde va a mille (+1⚡ max).');
+  if(trip === 'trieste') say('🕶️ Gite a Triest: ocjâi di soreli, cafè in place Unitât e bore che tire!', 'Gita a Trieste: occhiali da sole, caffè in Piazza Unità e bora che tira! (+1⚡ max)');
   if(S.badBack){ e -= 2; S.maxEnergy -= 2; say('😖 Orpo, la schene! Vuê si partìs plancut (-2⚡). Une sgnape e judarès...', 'Accidenti, la schiena! Oggi si parte piano (-2⚡). Una grappa aiuterebbe...'); }
   if(S.cold){ e -= 3; say('🥶 Dopo une gnot di fret, pocje voie.', 'Dopo una notte al freddo, poca voglia. (-3⚡)'); }
   S.energy = Math.max(1, e);
@@ -544,6 +566,7 @@ function resetGame(){
 
 function intro(){
   say('Mandi! O soi la bionde: otantedoi agns, Sterp di Bertiûl, e une cjase di puartâ indenant.', 'Salve! Sono la bionde: 82 anni, Sterpo di Bertiolo, e una casa da mandare avanti.');
+  say('Cjavei blancs, ocjâi di soreli, crosute di aur e scarpets neris: pronte a dut.', 'Capelli bianchi, occhiali da sole, crocetta d\'oro e scarpe nere: pronta a tutto.');
   say('Semene, cjape sù, taie la legne prime dal unvier... e no stâ dismenteâ il cafè.', 'Semina, raccogli, taglia la legna prima dell\'inverno... e non dimenticare il caffè.');
 }
 
