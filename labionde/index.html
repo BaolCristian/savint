@@ -129,6 +129,7 @@
           <button id="btnWood">🪓 Taiâ lens tal bosc <small>(-2⚡ → +3 ciocchi)</small></button>
           <button id="btnSplit">🪵 Spacâ i ciocs <small>(-1⚡ → +3 legna)</small></button>
           <button id="btnFire">💨 Soflâ sul fûc <small>(inverno: -1 legna, +1⚡)</small></button>
+          <button id="btnWater">💧 Bagnâ i cjamps <small>(secjade: -2⚡)</small></button>
           <button id="btnFish">🎣 Pescjâ te Stele <small>(-2⚡)</small></button>
           <button id="btnHens">🐔 Governâ lis gjalinis <small>(-1⚡, paston + uova)</small></button>
           <button id="btnVine">🍇 Vendemâ <small>(autunno: -2⚡ → +5 uve)</small></button>
@@ -144,6 +145,7 @@
           <button id="btnFarnia">🌳 Lâ de Fàrnie <small>(+1⚡, 1 volta al dì)</small></button>
           <button id="btnMarket">🧺 Marcjât di Bertiûl</button>
           <button id="btnRestore">🏚️ Comedâ la cjase</button>
+          <button id="btnReal">🌍 Meteo vêr di Sterp: ON</button>
         </div>
       </div>
       <div class="panel">
@@ -182,11 +184,17 @@ const CROPS = {
 
 const WEATHER = {
   soreli:  {emoji:'☀️', fur:'Soreli',    it:'sole'},
+  nul:     {emoji:'⛅', fur:'Nûl',       it:'nuvoloso'},
   ploie:   {emoji:'🌧️', fur:'Ploie',     it:'pioggia'},
+  temporal:{emoji:'⛈️', fur:'Temporâl',  it:'temporale'},
   brome:   {emoji:'🌫️', fur:'Brome',     it:'nebbia'},
   gelo:    {emoji:'🥶', fur:'Gelo',      it:'gelo'},
-  tampieste:{emoji:'🌨️',fur:'Tampieste', it:'grandine'},
+  nef:     {emoji:'🌨️', fur:'Nêf',       it:'neve'},
+  tampieste:{emoji:'🧊', fur:'Tampieste', it:'grandine'},
 };
+
+// Sterpo di Bertiolo (UD) — coordinate per il meteo vero (Open-Meteo, senza chiave)
+const STERPO = {lat:45.906, lon:13.079};
 
 const RESTORATIONS = [
   {id:'cuviert', name:'Comedâ il cuviert', it:'riparare il tetto',    cost:150, done:false, bonus:'+1 energia massima'},
@@ -228,7 +236,9 @@ function newGame(){
     seeds:{forment:3, fasui:0, blave:3, coce:0, radric:0, verze:0},
     harvest:{forment:0, fasui:0, blave:0, coce:0, radric:0, verze:0},
     plots:Array.from({length:12},(_,i)=>({crop:null, left:0, river:i>=8})),
-    weather:'soreli',
+    weather:'soreli', temps:null,
+    realWx:{enabled:true, days:[], idx:0, drought:false},
+    dryToday:false, wateredToday:false,
     fireLit:false, napped:false, coffees:0, farniaDone:false,
     badBack:false, cold:false,
     vintagesToday:0, vineLeft:6,   // vendemmie disponibili in autunno
@@ -270,6 +280,7 @@ function rollWeather(){
   const s = S.season;
   const r = Math.random();
   if(s===3){ // inverno
+    if(r<.12) return 'nef';
     if(r<.35) return 'gelo';
     if(r<.55) return 'brome';
     if(r<.70) return 'ploie';
@@ -282,13 +293,85 @@ function rollWeather(){
   }
   if(s===1){ // estate
     if(r<.06) return 'tampieste';
-    if(r<.20) return 'ploie';
+    if(r<.13) return 'temporal';
+    if(r<.24) return 'ploie';
     return 'soreli';
   }
   // primavera
   if(r<.30) return 'ploie';
   if(r<.40) return 'brome';
   return 'soreli';
+}
+
+// ── meteo VERO di Sterpo (Open-Meteo) ──
+// codici meteo WMO → meteo del gioco
+function mapWMO(d){
+  const c = d.code;
+  if(c===96 || c===99) return 'tampieste';           // temporale con grandine
+  if(c===95) return 'temporal';
+  if((c>=71 && c<=77) || c===85 || c===86) return 'nef';
+  if((c>=51 && c<=67) || (c>=80 && c<=82)) return 'ploie';
+  if(c===45 || c===48) return 'brome';
+  if(d.tmin <= -1) return 'gelo';
+  if(c>=2) return 'nul';
+  return 'soreli';
+}
+
+async function fetchRealWeather(){
+  try{
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${STERPO.lat}&longitude=${STERPO.lon}`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum`
+      + `&past_days=14&forecast_days=7&timezone=Europe%2FRome`;
+    const r = await fetch(u);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const t = data.daily;
+    if(!t || !t.time || !t.weather_code) throw new Error('risposta strana');
+    const days = [];
+    for(let i=14; i<t.time.length; i++){
+      days.push({code:t.weather_code[i], tmin:t.temperature_2m_min[i], tmax:t.temperature_2m_max[i]});
+    }
+    if(!days.length) throw new Error('nessun giorno');
+    let rain14 = 0;
+    for(let i=0; i<14; i++) rain14 += t.precipitation_sum[i] || 0;
+    S.realWx.days = days;
+    S.realWx.idx = 1;
+    S.realWx.drought = rain14 < 6 && days[0].tmax >= 24;   // 2 settimane quasi senza pioggia + caldo
+    // il giorno in corso prende subito il tempo vero di oggi
+    S.weather = mapWMO(days[0]);
+    S.temps = {min:Math.round(days[0].tmin), max:Math.round(days[0].tmax)};
+    S.dryToday = droughtToday();
+    say(`🌍 Cjapât jù il timp vêr di Sterp: ${WEATHER[S.weather].fur}, ${S.temps.min}°/${S.temps.max}°.`,
+        `Meteo vero di Sterpo scaricato: da adesso il cielo del gioco è quello vero della Bassa (dati Open-Meteo).`);
+    if(S.realWx.drought)
+      say('🔥 SECJADE! Dôs setemanis cence ploie te Basse. I cjamps a àn sêt: bisugne bagnâju!',
+          'SICCITÀ! Due settimane (vere) quasi senza pioggia nella Bassa. I campi hanno sete: vanno annaffiati, o non crescono. Quelli sulla Stella si salvano con le risorgive.');
+    save(); render();
+  }catch(e){
+    say('🌍 No rivi a cjapâ il timp vêr (offline?). O voi indenant cul timp simulât.',
+        'Non riesco a scaricare il meteo vero (sei offline?). Continuo col meteo simulato.');
+    render();
+  }
+}
+
+function droughtToday(){
+  return !!(S.realWx && S.realWx.enabled && S.realWx.drought && !isWinter()
+    && (S.weather === 'soreli' || S.weather === 'nul'));
+}
+
+function pickWeather(){
+  const rw = S.realWx;
+  S.temps = null;
+  if(rw && rw.enabled && rw.days.length){
+    // i primi 7 giorni di gioco seguono la settimana vera di Sterpo, poi si pesca a caso dalla stessa settimana
+    const d = rw.idx < rw.days.length ? rw.days[rw.idx] : rnd(rw.days);
+    rw.idx++;
+    S.weather = mapWMO(d);
+    S.temps = {min:Math.round(d.tmin), max:Math.round(d.tmax)};
+    if(rw.idx % 30 === 0) fetchRealWeather();   // ogni tanto rinfresca i dati veri
+  } else {
+    S.weather = rollWeather();
+  }
 }
 
 // ───────────────────────── azioni ─────────────────────────
@@ -341,6 +424,25 @@ function actFire(){
   S.wood--; S.fireLit = true; S.energy = Math.min(S.maxEnergy, S.energy + 1);
   say('💨 Fuuu... fuuu... impiât! La spolert e ronronee.', 'Fuuu... fuuu... acceso! La cucina a legna ronfa. (+1⚡)');
   render();
+}
+function actWater(){
+  if(!S.dryToday){ say('No covente bagnâ vuê: la tiere e je umide.', 'Oggi non serve annaffiare: la terra è umida.'); render(); return; }
+  if(S.wateredToday){ say('Za bagnât dut, frut.', 'Già annaffiato tutto.'); render(); return; }
+  if(!spend(2)) return;
+  S.wateredToday = true;
+  say('💧 Secjis di aghe de risultive, un viaç dopo chel altri. La secjade no le vinç la bionde!', 'Secchi d\'acqua dalla risorgiva, un viaggio dopo l\'altro. La siccità non la vince, la bionde! (oggi i campi crescono)');
+  render();
+}
+function toggleRealWx(){
+  S.realWx.enabled = !S.realWx.enabled;
+  if(S.realWx.enabled){
+    say('🌍 Timp vêr di Sterp: impiât.', 'Meteo vero di Sterpo: attivato. Scarico i dati...');
+    fetchRealWeather();
+  } else {
+    S.temps = null; S.dryToday = false;
+    say('🌍 Timp vêr distudât: si torne al timp simulât.', 'Meteo vero spento: si torna al meteo simulato.');
+  }
+  save(); render();
 }
 function actFish(){
   if(!spend(2)) return;
@@ -478,14 +580,17 @@ window.closeModal = () => { $('modalBg').classList.remove('open'); render(); };
 
 // ───────────────────────── fine giornata ─────────────────────────
 function endDay(){
-  // crescita campi
+  // crescita campi (con la secjade i campi lontani dalla Stella non crescono, se non annaffiati)
+  let thirsty = 0;
   for(const p of S.plots){
     if(p.crop && !isWinter() && p.left > 0){
+      if(S.dryToday && !p.river && !S.wateredToday){ thirsty++; continue; }
       p.left--;
       const bonus = (p.river && chance(.25)) || (S.restored.ort && chance(.2));
       if(bonus && p.left > 0) p.left--;
     }
   }
+  if(thirsty > 0) say(`🥀 ${thirsty} cjamps a sec: vuê no son cressûts.`, `${thirsty} campi a secco: oggi non sono cresciuti. Domani annaffia (💧) o aspetta la pioggia.`);
   // galline
   if(S.hens > 0 && !S.fedToday && chance(.25)){
     S.hens--;
@@ -496,7 +601,7 @@ function endDay(){
   // inverno: consumo legna
   S.cold = false;
   if(isWinter()){
-    const need = S.weather === 'gelo' ? 3 : 2;
+    const need = (S.weather === 'gelo' || S.weather === 'nef') ? 3 : 2;
     if(S.wood >= need){ S.wood -= need; }
     else { S.wood = 0; S.cold = true; say('🥶 La cataste e je vueide! Gnot di fret...', 'La catasta è vuota! Notte di freddo... (domani -3⚡)'); }
   }
@@ -516,8 +621,11 @@ function endDay(){
     if(S.season === 3) say('❄️ Cjale la cataste: l\'unvier al mangje 2-3 legnis in dì.', 'Controlla la catasta: l\'inverno consuma 2-3 legna al giorno.');
   }
 
-  // meteo & eventi del nuovo giorno
-  S.weather = rollWeather();
+  // meteo & eventi del nuovo giorno (vero da Sterpo, se disponibile)
+  pickWeather();
+  S.wateredToday = false;
+  S.dryToday = droughtToday();
+  if(S.dryToday) say('🔥 Zornade di secjade: i cjamps lontans de Stele a àn sêt.', 'Giornata di siccità: i campi lontani dalla Stella hanno sete. Annaffia (💧) o non crescono.');
   S.sagra = (S.season === 0 && S.dayOfSeason >= 20 && S.dayOfSeason <= 22);
   if(S.sagra) say('🎉 SAGRE DAL VIN a Bertiûl! Il vin al va vie al dopli.', 'SAGRA DEL VINO a Bertiolo! Il vino si vende al doppio (3 giorni).');
 
@@ -525,11 +633,19 @@ function endDay(){
     const planted = S.plots.filter(p=>p.crop);
     if(planted.length){
       const victim = rnd(planted);
-      say(`🌨️ Tampieste! Il ${CROPS[victim.crop].name} al è lât in malore.`, `Grandine! Il ${CROPS[victim.crop].it} è andato distrutto.`);
+      say(`🧊 Tampieste! Il ${CROPS[victim.crop].name} al è lât in malore.`, `Grandine! Il ${CROPS[victim.crop].it} è andato distrutto.`);
       victim.crop = null;
     }
   }
-  if(S.season === 2 && S.weather === 'ploie' && chance(.25)){
+  if(S.weather === 'temporal' && chance(.3)){
+    const planted = S.plots.filter(p=>p.crop);
+    if(planted.length){
+      const victim = rnd(planted);
+      say(`⛈️ Ce temporâl! Il vint al à sdrumât il ${CROPS[victim.crop].name}.`, `Che temporale! Il vento ha buttato giù il ${CROPS[victim.crop].it}.`);
+      victim.crop = null;
+    }
+  }
+  if(S.season === 2 && (S.weather === 'ploie' || S.weather === 'temporal') && chance(.25)){
     const riverCrops = S.plots.filter(p=>p.river && p.crop);
     if(riverCrops.length){
       for(const p of riverCrops) p.crop = null;
@@ -582,13 +698,16 @@ function stars(){
 }
 function renderBars(){
   const si = seasonInfo();
-  const w = WEATHER[S.weather];
+  const w = WEATHER[S.weather] || WEATHER.soreli;
+  const temps = S.temps ? ` ${S.temps.min}°/${S.temps.max}°` : '';
+  const realTag = (S.realWx && S.realWx.enabled && S.temps) ? ' 🌍' : '';
   let ebar = '<span class="energybar">';
   for(let i=0;i<S.maxEnergy;i++) ebar += `<i class="${i<S.energy?'on':''}"></i>`;
   ebar += '</span>';
   $('topbar').innerHTML = `
     <span class="stat">${si.emoji} ${si.fur}, dì ${S.dayOfSeason}/${SEASON_DAYS} · an ${S.year}</span>
-    <span class="stat">${w.emoji} ${w.fur}</span>
+    <span class="stat" title="${realTag ? 'meteo vero di Sterpo (Open-Meteo)' : 'meteo simulato'}">${w.emoji} ${w.fur}${temps}${realTag}</span>
+    ${S.dryToday ? '<span class="stat" style="color:var(--red)">🔥 Secjade</span>' : ''}
     <span class="stat">⚡ ${ebar} ${S.energy}/${S.maxEnergy}</span>
     <span class="stat">💰 ${S.money}€</span>
     <span class="stat">🪵 ${S.wood} legne · ${S.logs} ciocs</span>
@@ -628,6 +747,8 @@ function render(){
   $('btnGrappa').disabled = !S.badBack;
   $('btnNap').disabled = S.napped;
   $('btnFarnia').disabled = S.farniaDone;
+  $('btnWater').disabled = !S.dryToday || S.wateredToday;
+  $('btnReal').textContent = '🌍 Meteo vêr di Sterp: ' + (S.realWx && S.realWx.enabled ? 'ON' : 'OFF');
 }
 
 // ───────────────────────── avvio ─────────────────────────
@@ -635,6 +756,8 @@ window.plotClick = plotClick;
 $('btnWood').onclick = actWood;
 $('btnSplit').onclick = actSplit;
 $('btnFire').onclick = actFire;
+$('btnWater').onclick = actWater;
+$('btnReal').onclick = toggleRealWx;
 $('btnFish').onclick = actFish;
 $('btnHens').onclick = actHens;
 $('btnVine').onclick = actVine;
@@ -649,9 +772,16 @@ $('btnEnd').onclick = endDay;
 $('btnReset').onclick = resetGame;
 $('modalBg').onclick = e => { if(e.target === $('modalBg')) closeModal(); };
 
-S = load();
-if(!S){ S = newGame(); intro(); }
+const loaded = load();
+S = newGame();
+if(loaded){
+  Object.assign(S, loaded);                    // i salvataggi vecchi ereditano i campi nuovi
+  if(!S.realWx) S.realWx = {enabled:true, days:[], idx:0, drought:false};
+} else {
+  intro();
+}
 render();
+if(S.realWx.enabled) fetchRealWeather();
 </script>
 </body>
 </html>

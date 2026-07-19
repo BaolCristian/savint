@@ -70,7 +70,8 @@ L'età non è un dettaglio, è il design:
 | Vigna | Vendemmia in autunno → torchio → vin; Sagra dal Vin lo paga doppio |
 | Mercato | Vendi raccolti/uova/pesce/vino, compra semi/paston/galline |
 | Restauri | Tetto, spolert nuova, ecc. — obiettivi di lungo periodo con bonus permanenti |
-| Eventi | Tampieste (grandine), piena della Stella, la bolp, giornate di schiena |
+| Eventi | Tampieste (grandine), temporali, piena della Stella, la bolp, giornate di schiena, gite a Grado e Trieste |
+| **Meteo vero** | Il cielo del gioco è quello VERO di Sterpo (Open-Meteo, coordinate 45.906N 13.079E, nessuna chiave API): condizioni + temperature dei prossimi 7 giorni reali. Con 2 settimane vere quasi senza pioggia e caldo scatta la **secjade** (siccità): i campi lontani dalla Stella non crescono se non annaffiati — quelli sul fiume si salvano con le risorgive. Neve e gelo veri fanno consumare più legna. Disattivabile in gioco; se offline, fallback al meteo simulato. |
 | Salvataggio | Automatico a fine giornata (localStorage) |
 
 ## Roadmap
