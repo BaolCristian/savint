@@ -50,7 +50,14 @@ nella veduta SVG in testa al gioco e nelle scenette del "zîr pal borc":
 - La **fontana di sassi** con le due vasche a cascata, nel bosco delle risorgive.
 - La **panchina semicircolare di claps** col vialetto in pietra.
 - La **bacheca del paese** e... le buche di Via Piave.
-- Dietro gli alberi, la villa del castello (Villa Colloredo Venier).
+- Il **mulino con la ruota di legno** ancora al suo posto sulla roggia (ecco
+  perché "Roie dai Mulins") → nel gioco si porta la blave a macinare:
+  2 mais → 3 farine di polenta.
+- Il **ponte di pietra sulla Stella**, con l'acqua verde scura di risorgiva.
+- Il **cancello in ferro della villa** in fondo al viale coi lampioni, e il
+  grande albero con la targhetta accanto all'ingresso (la Farnia).
+- La strada che esce dal paese in **galleria d'alberi**, e il cortile rustico
+  con la betoniera d'epoca.
 
 ## La protagonista come meccanica
 

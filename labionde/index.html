@@ -137,16 +137,23 @@
           <circle cx="272" cy="46" r="1.5" fill="#8b8b80"/><circle cx="279" cy="50" r="1.5" fill="#8b8b80"/>
           <circle cx="287" cy="45" r="1.5" fill="#8b8b80"/><circle cx="295" cy="49" r="1.5" fill="#8b8b80"/>
           <!-- fontane di claps -->
-          <ellipse cx="345" cy="52" rx="24" ry="7" fill="#8f8f84"/>
-          <ellipse cx="345" cy="49" rx="18" ry="5" fill="#7ab3c9"/>
-          <ellipse cx="345" cy="42" rx="10" ry="4" fill="#8f8f84"/>
-          <ellipse cx="345" cy="40" rx="7" ry="2.5" fill="#7ab3c9"/>
-          <path d="M345 34 v4 M341 36 q4 -5 8 0" stroke="#7ab3c9" stroke-width="1.5" fill="none"/>
+          <ellipse cx="330" cy="52" rx="20" ry="6" fill="#8f8f84"/>
+          <ellipse cx="330" cy="49" rx="15" ry="4.5" fill="#7ab3c9"/>
+          <ellipse cx="330" cy="42" rx="9" ry="3.5" fill="#8f8f84"/>
+          <ellipse cx="330" cy="40" rx="6" ry="2.2" fill="#7ab3c9"/>
+          <path d="M330 34 v4 M326 36 q4 -5 8 0" stroke="#7ab3c9" stroke-width="1.5" fill="none"/>
+          <!-- il mulin cu la ruede su la roie -->
+          <rect x="362" y="24" width="30" height="30" fill="#cfc7b2"/>
+          <polygon points="360,24 394,24 389,16 365,16" fill="#8a8570"/>
+          <rect x="368" y="32" width="7" height="8" fill="#4a5a45"/>
+          <rect x="384" y="46" width="34" height="8" fill="#7ab3c9"/>
+          <circle cx="400" cy="42" r="11" fill="none" stroke="#6b5340" stroke-width="2"/>
+          <path d="M400 31 v22 M389 42 h22 M392.3 34.3 l15.4 15.4 M407.7 34.3 l-15.4 15.4" stroke="#6b5340" stroke-width="1.5"/>
           <!-- strade cun lis busis -->
           <rect x="0" y="54" width="420" height="10" fill="#7d7f78"/>
           <ellipse cx="120" cy="59" rx="6" ry="1.6" fill="#6a6c65"/><ellipse cx="230" cy="60" rx="5" ry="1.4" fill="#6a6c65"/>
         </svg>
-        <div class="hint" style="text-align:center">Vie Piave — il borc di Sterp: la cort, la cjase rosse, la torate e la fontane di claps</div>
+        <div class="hint" style="text-align:center">Vie Piave — il borc di Sterp: la cort, la cjase rosse, la torate, la fontane di claps e il mulin cu la ruede</div>
       </div>
       <div class="panel" style="margin-top:12px">
         <h2>I cjamps <span class="hint" style="display:inline">— clicca un campo per seminare o raccogliere</span></h2>
@@ -182,6 +189,7 @@
           <button id="btnPig">🥓 Fâ sù il purcit <small>(inverno, -3⚡ → salami!)</small></button>
           <button id="btnVine">🍇 Vendemâ <small>(autunno: -2⚡ → +5 uve)</small></button>
           <button id="btnPress">🍷 Torcolâ <small>(-1⚡, 5 uve → 1 vin)</small></button>
+          <button id="btnMill">🛞 Al mulin cu la blave <small>(-1⚡, 2 blave → 3 farine)</small></button>
         </div>
       </div>
       <div class="panel">
@@ -326,7 +334,7 @@ function newGame(){
     milk:0, honey:0, honeyTimer:0, salami:0,
     stabledToday:false, hensDone:false,
     mode:'arcade', lastReal:null, lang:'it',
-    fishInv:{}, moris:0, fics:0, gelsoDone:false, ficoDone:false, borgoDone:false, vineYear:0,
+    fishInv:{}, moris:0, fics:0, farine:0, gelsoDone:false, ficoDone:false, borgoDone:false, vineYear:0,
     fish:0, grapes:0, wine:0,
     seeds:{forment:3, fasui:0, blave:3, coce:0, radric:0, verze:0},
     harvest:{forment:0, fasui:0, blave:0, coce:0, radric:0, verze:0},
@@ -631,6 +639,15 @@ function actPress(){
   say('🍷 Un fiasc di vin gnûf! Il Friûl in butilie.', 'Un fiasco di vino nuovo! Il Friuli in bottiglia.');
   render();
 }
+function actMill(){
+  if(S.harvest.blave < 2){ say('Al mulin si va cun almancul dôs blavis tal sac.', 'Al mulino si va con almeno due mais nel sacco: coltivali nei campi.'); render(); return; }
+  if(!spend(1)) return;
+  S.harvest.blave -= 2;
+  S.farine = (S.farine||0) + 3;
+  if(chance(.15)) swear('🛞 Il mulinâr al conte storiis dal timp de vuere... La ruede e zire, la farine e cole.', 'Il mugnaio racconta storie del tempo di guerra... La ruota gira, la farina scende. (+3 farine, +1⚡)'), S.energy = Math.min(S.maxEnergy, S.energy+1);
+  else say('🛞 La ruede e zire su la roie, la blave e devente farine di polente.', 'La ruota gira sulla roggia, il mais diventa farina da polenta. (+3 farine)');
+  render();
+}
 function actNap(){
   if(S.napped){ say('Un pisulin al dì al baste, sino?', 'Un pisolino al giorno basta, no?'); render(); return; }
   S.napped = true;
@@ -687,6 +704,16 @@ const BORGO_SCENES = [
    it:'Dietro gli alberi, la villa del castello di Sterpo: sei secoli di storie. (+1⚡)', fx:'energy'},
   {fur:'👋 Doi peraulis cuntun vicin de cort: mieze ore di tabaiade, dut il paîs sistemât.',
    it:'Due parole con un vicino della corte: mezz\'ora di chiacchiere e tutto il paese è sistemato. (+1⚡)', fx:'energy'},
+  {fur:'🛞 La ruede dal mulin e je ancjemò li, sore la roie: len scûr, muscli e aghe che sglavine.',
+   it:'La ruota del mulino è ancora lì, sopra la roggia: legno scuro, muschio e acqua che scroscia. (+1⚡)', fx:'energy'},
+  {fur:'🌉 Dal puint di piere si viôt la Stele: aghe verde scure, clare come il veri.',
+   it:'Dal ponte di pietra si vede la Stella: acqua verde scura, limpida come il vetro. (+1⚡)', fx:'energy'},
+  {fur:'⛩️ Il cancel di fier de vile, in fonts al viâl cui ferai: sierât, come simpri.',
+   it:'Il cancello in ferro della villa, in fondo al viale coi lampioni: chiuso, come sempre. (+1⚡)', fx:'energy'},
+  {fur:'🌳 La strade jes dal paîs sot une galarie di arbui. D\'autun e je dute un tapêt di fueis.',
+   it:'La strada esce dal paese sotto una galleria di alberi. D\'autunno è tutta un tappeto di foglie. (+1⚡)', fx:'energy'},
+  {fur:'🚜 Tal curtîl di là, la betoniere dal 1970 e je ancjemò pronte: "no si sa mai", al dîs il paron.',
+   it:'Nel cortile di là, la betoniera del 1970 è ancora pronta: "non si sa mai", dice il padrone. (+1⚡)', fx:'energy'},
 ];
 function actBorgo(){
   if(S.borgoDone){ say('Il borc al è simpri chel, frut: torne doman.', 'Il borgo è sempre quello: torna domani.'); render(); return; }
@@ -793,6 +820,7 @@ function openMarket(){
   }
   if(S.moris > 0) html += mrow(`🫐 Moris di morâr ×${S.moris}`, `Vendi (+${S.moris*5}€)`, `sellTree('moris',5)`);
   if(S.fics > 0) html += mrow(`🍑 Fîcs ×${S.fics}`, `Vendi (+${S.fics*6}€)`, `sellTree('fics',6)`);
+  if(S.farine > 0) html += mrow(`🫓 Farine di polente ×${S.farine}`, `Vendi (+${S.farine*5}€)`, `sellTree('farine',5)`);
   if(S.wine > 0) html += mrow(`🍷 Vin ×${S.wine}`, `Vendi 1 (+${winePrice}€)`, `sellWine()`);
   html += `<h3 style="margin:8px 0 4px">Compra</h3>`;
   for(const k in CROPS){
@@ -1040,6 +1068,7 @@ function render(){
     `🐟 ${Object.values(S.fishInv).reduce((a,b)=>a+b, 0)}`,
     ...(S.moris > 0 ? [`🫐 ${S.moris}`] : []),
     ...(S.fics > 0 ? [`🍑 ${S.fics}`] : []),
+    ...(S.farine > 0 ? [`🫓 ${S.farine}`] : []),
     ...(S.milk > 0 ? [`🥛 ${S.milk}`] : []),
     ...(S.honey > 0 ? [`🍯 ${S.honey}`] : []),
     ...(S.salami > 0 ? [`🥓 ${S.salami}`] : []),
@@ -1087,6 +1116,7 @@ $('btnStable').onclick = actStable;
 $('btnPig').onclick = actPig;
 $('btnVine').onclick = actVine;
 $('btnPress').onclick = actPress;
+$('btnMill').onclick = actMill;
 $('btnNap').onclick = actNap;
 $('btnCoffee').onclick = actCoffee;
 $('btnGrappa').onclick = actGrappa;
