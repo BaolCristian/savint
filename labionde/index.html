@@ -1165,26 +1165,70 @@ function render(){
 // la Stella a est col ponte, il castello a NE, il borgo lungo la strada,
 // la vigna a ovest, l'orto dietro la corte, la stalla a sud, la roggia col mulino.
 const MAP_W = 480, MAP_H = 340;
-const ZONES = [
-  {id:'cjase',   x:158, y:106, r:22, emoji:'🏠', label:'Cjase de bionde'},
-  {id:'marcjat', x:112, y:128, r:16, emoji:'🧺', label:'Place dal borc — marcjât'},
-  {id:'cjamps',  x:172, y:222, r:34, emoji:'🌾', label:'Cjamps e ort'},
-  {id:'stale',   x:254, y:238, r:18, emoji:'🐄', label:'Stale'},
-  {id:'gjalinar',x:300, y:220, r:14, emoji:'🐔', label:'Gjalinâr'},
-  {id:'bosc',    x:354, y:254, r:24, emoji:'🪓', label:'Bosc — taiâ lens'},
-  {id:'mulin',   x:76,  y:206, r:18, emoji:'🛞', label:'Mulin — masanâ la blave'},
-  {id:'patisce', x:102, y:58,  r:14, emoji:'🎣', label:'Roie Patisce — pescjâ'},
-  {id:'mulins',  x:86,  y:252, r:14, emoji:'🎣', label:'Roie dai Mulins — pescjâ'},
-  {id:'puint',   x:410, y:150, r:18, emoji:'🎣', label:'Puint su la Stele — pescjâ'},
-  {id:'vigne',   x:36,  y:192, r:26, emoji:'🍇', label:'Vigne — vendemâ'},
-  {id:'farnie',  x:304, y:106, r:14, emoji:'🌳', label:'La Fàrnie'},
-  {id:'fontane', x:246, y:84,  r:12, emoji:'⛲', label:'Fontane — zîr pal borc'},
-  {id:'morar',   x:170, y:152, r:11, emoji:'🫐', label:'Morâr — lis moris'},
-  {id:'fiar',    x:202, y:156, r:11, emoji:'🍑', label:'Fiâr — i fîcs'},
+// ── topografia vera di Sterpo (dalle foto aeree) ──
+const STELLA_PTS  = [[445,0],[432,80],[420,150],[410,230],[398,340]];
+const PATISCE_PTS = [[112,0],[98,80],[88,160],[85,225]];
+const MULINS_PTS  = [[85,225],[150,243],[205,254],[252,263],[320,269],[400,264]];
+const MOAT = {x:288, y:34, w:104, h:92};                  // il fossato del castello
+const BR_STELLA  = {x:400, y:132, w:44, h:36};            // ponte di Via Piave sulla Stella
+const BR_MOAT    = {x:327, y:112, w:24, h:22};            // ponticello del castello
+const BR_MULINS  = {x:238, y:248, w:30, h:28};            // la strada passa il canale
+const PASS_ROGGIA= {x:72,  y:194, w:28, h:18};            // passerella sulla roggia
+const VIA  = [[150,-10],[192,58],[238,102],[288,130],[340,143],[480,153]];
+const FORK = [[268,122],[258,180],[252,250],[250,340]];
+const SOLIDS = [
+  {x:62,y:46,w:50,h:26},{x:106,y:66,w:50,h:26},          // la cort
+  {x:150,y:86,w:30,h:28},{x:182,y:94,w:34,h:22},          // cjase de bionde + vicini
+  {x:302,y:52,w:76,h:36},                                  // il cjistiel
+  {x:274,y:210,w:38,h:22},{x:312,y:196,w:16,h:12},        // stale e gjalinâr
+  {x:222,y:244,w:26,h:16},                                 // il mulin
 ];
-let P = {x:158, y:112, tx:null, ty:null, step:0};
+const ZONES = [
+  {id:'cjase',   x:165, y:126, r:18, emoji:'🏠', label:'Cjase de bionde'},
+  {id:'marcjat', x:116, y:128, r:16, emoji:'🧺', label:'Place dal borc — marcjât'},
+  {id:'cjamps',  x:105, y:300, r:34, emoji:'🌾', label:'Cjamps'},
+  {id:'stale',   x:293, y:240, r:15, emoji:'🐄', label:'Stale'},
+  {id:'gjalinar',x:332, y:202, r:13, emoji:'🐔', label:'Gjalinâr'},
+  {id:'bosc',    x:372, y:305, r:22, emoji:'🪓', label:'Bosc — taiâ lens'},
+  {id:'mulin',   x:240, y:270, r:14, emoji:'🛞', label:'Mulin — masanâ la blave'},
+  {id:'patisce', x:97,  y:120, r:12, emoji:'🎣', label:'Roie Patisce — pescjâ'},
+  {id:'mulins',  x:190, y:240, r:12, emoji:'🎣', label:'Roie dai Mulins — pescjâ'},
+  {id:'puint',   x:421, y:172, r:15, emoji:'🎣', label:'Puint su la Stele — pescjâ'},
+  {id:'vigne',   x:40,  y:180, r:24, emoji:'🍇', label:'Vigne — vendemâ'},
+  {id:'farnie',  x:302, y:140, r:13, emoji:'🌳', label:'La Fàrnie'},
+  {id:'cjistiel',x:339, y:132, r:12, emoji:'🏰', label:'Cjistiel di Sterp'},
+  {id:'fontane', x:256, y:96,  r:11, emoji:'⛲', label:'Fontane — zîr pal borc'},
+  {id:'morar',   x:172, y:150, r:10, emoji:'🫐', label:'Morâr — lis moris'},
+  {id:'fiar',    x:200, y:154, r:10, emoji:'🍑', label:'Fiâr — i fîcs'},
+];
+let P = {x:150, y:135, tx:null, ty:null, step:0};
 let currentZone = null, mapKeys = {}, mapOff = null, mapSeasonDrawn = -1;
+let RIPPLES = [];
 
+// ── geometria giocabile: collisioni ──
+function distSeg(px, py, x0, y0, x1, y1){
+  const dx = x1-x0, dy = y1-y0;
+  const t = Math.max(0, Math.min(1, ((px-x0)*dx + (py-y0)*dy) / (dx*dx + dy*dy || 1)));
+  return Math.hypot(px - (x0 + dx*t), py - (y0 + dy*t));
+}
+function distPoly(px, py, pts){
+  let d = 1e9;
+  for(let i=1;i<pts.length;i++) d = Math.min(d, distSeg(px, py, pts[i-1][0], pts[i-1][1], pts[i][0], pts[i][1]));
+  return d;
+}
+function inRect(px, py, r){ return px > r.x && px < r.x + r.w && py > r.y && py < r.y + r.h; }
+function blockedAt(x, y){
+  for(const r of SOLIDS)
+    if(x > r.x - 5 && x < r.x + r.w + 5 && y > r.y - 2 && y < r.y + r.h + 6) return true;
+  if(distPoly(x, y, STELLA_PTS) < 14 && !inRect(x, y, BR_STELLA)) return true;
+  if(distPoly(x, y, PATISCE_PTS) < 5.5 && !inRect(x, y, PASS_ROGGIA)) return true;
+  if(distPoly(x, y, MULINS_PTS) < 6 && !inRect(x, y, BR_MULINS)) return true;
+  const inOuter = x > MOAT.x-5 && x < MOAT.x+MOAT.w+5 && y > MOAT.y-5 && y < MOAT.y+MOAT.h+5;
+  const inInner = x > MOAT.x+8 && x < MOAT.x+MOAT.w-8 && y > MOAT.y+8 && y < MOAT.y+MOAT.h-8;
+  if(inOuter && !inInner && !inRect(x, y, BR_MOAT)) return true;
+  if(distSeg(x, y, 392, 78, 414, 78) < 5) return true;    // la presa d'acqua del fossato
+  return false;
+}
 function roadPath(ctx, pts, w, color){
   ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
@@ -1211,12 +1255,7 @@ function samplePath(pts, step){
   }
   return out;
 }
-const STELLA_PTS = [[438,0],[428,80],[414,150],[408,230],[396,340]];
-const ROGGIA_PTS = [[110,0],[98,90],[88,180],[84,260],[88,340]];
-let RIPPLES = [];
-
 function tree(ctx, x, y, r, dark){
-  // ombra, chioma a strati, luce
   ctx.fillStyle = 'rgba(30,45,25,.30)';
   ctx.beginPath(); ctx.ellipse(x+2.5, y+r*0.75, r*0.95, r*0.4, 0, 0, 7); ctx.fill();
   ctx.fillStyle = dark ? '#33502f' : '#43683c';
@@ -1231,24 +1270,29 @@ function tree(ctx, x, y, r, dark){
 }
 function building(c, x, y, w, h, roof, opts){
   opts = opts || {};
-  // ombra portata a sud-est
   c.fillStyle = 'rgba(25,30,22,.30)';
   c.fillRect(x+3, y+4, w, h);
-  // muro che spunta sotto la falda
   c.fillStyle = opts.wall || '#d8cdb4';
   c.fillRect(x, y+h-4, w, 5);
-  // tetto in coppi
   c.fillStyle = roof;
   c.fillRect(x, y, w, h-3);
   c.strokeStyle = 'rgba(60,30,20,.35)'; c.lineWidth = 1;
   for(let yy=y+3; yy<y+h-4; yy+=3.5){
     c.beginPath(); c.moveTo(x+1, yy); c.lineTo(x+w-1, yy); c.stroke();
   }
-  // colmo
   c.strokeStyle = 'rgba(255,235,210,.5)'; c.lineWidth = 1.4;
   c.beginPath(); c.moveTo(x+2, y + (h-3)/2); c.lineTo(x+w-2, y + (h-3)/2); c.stroke();
-  c.strokeStyle = '#5e4032'; c.lineWidth = 1.2;
+  c.strokeStyle = '#4a332a'; c.lineWidth = 1.4;
   c.strokeRect(x, y, w, h-3);
+}
+function plankBridge(c, r, vertical){
+  c.fillStyle = 'rgba(25,30,22,.3)'; c.fillRect(r.x+2, r.y+3, r.w, r.h);
+  c.fillStyle = '#b09372'; c.fillRect(r.x, r.y, r.w, r.h);
+  c.strokeStyle = '#7d6248'; c.lineWidth = 1;
+  if(vertical){ for(let yy=r.y+3; yy<r.y+r.h; yy+=4){ c.beginPath(); c.moveTo(r.x+1, yy); c.lineTo(r.x+r.w-1, yy); c.stroke(); } }
+  else { for(let xx=r.x+3; xx<r.x+r.w; xx+=4){ c.beginPath(); c.moveTo(xx, r.y+1); c.lineTo(xx, r.y+r.h-1); c.stroke(); } }
+  c.strokeStyle = '#e0d7c2'; c.lineWidth = 2;
+  c.strokeRect(r.x, r.y, r.w, r.h);
 }
 function buildMap(){
   mapOff = document.createElement('canvas');
@@ -1256,186 +1300,183 @@ function buildMap(){
   const c = mapOff.getContext('2d');
   const win = isWinter();
   const rng = mulberry(1976);
-  // ── prati con texture ──
+  // prati
   const g = c.createLinearGradient(0, 0, 0, MAP_H);
   if(win){ g.addColorStop(0, '#c3cdbd'); g.addColorStop(1, '#aebfa9'); }
   else { g.addColorStop(0, '#a5c496'); g.addColorStop(1, '#8fb281'); }
   c.fillStyle = g; c.fillRect(0, 0, MAP_W, MAP_H);
   for(let i=0;i<650;i++){
-    const x = rng()*MAP_W, y = rng()*MAP_H;
     c.fillStyle = rng() < .5 ? 'rgba(255,255,255,.06)' : 'rgba(30,60,25,.07)';
-    c.fillRect(x, y, 1.6, 1.6);
+    c.fillRect(rng()*MAP_W, rng()*MAP_H, 1.6, 1.6);
   }
   for(let i=0;i<7;i++){
     c.fillStyle = win ? 'rgba(255,255,255,.10)' : 'rgba(220,240,190,.12)';
     c.beginPath(); c.ellipse(rng()*MAP_W, rng()*MAP_H, 28+rng()*36, 16+rng()*20, rng()*3, 0, 7); c.fill();
   }
-  // ── vigne a ovest: filari con pali ──
+  // vigne a ovest
   for(let x=14; x<=64; x+=9){
-    roadPath(c, [[x,130],[x,258]], 4.5, win ? '#7d8a76' : '#4f7040');
-    roadPath(c, [[x,130],[x,258]], 2, win ? '#93a08c' : '#628a51');
+    roadPath(c, [[x,128],[x,238]], 4.5, win ? '#7d8a76' : '#4f7040');
+    roadPath(c, [[x,128],[x,238]], 2, win ? '#93a08c' : '#628a51');
     c.fillStyle = '#6e5a42';
-    for(let y=134; y<258; y+=18) c.fillRect(x-1, y, 2, 3);
+    for(let y=132; y<238; y+=18) c.fillRect(x-1, y, 2, 3);
   }
-  // ── roggia (Patisce a nord, dai Mulins a sud) ──
-  roadPath(c, ROGGIA_PTS, 10, '#40707f');
-  roadPath(c, ROGGIA_PTS, 6.5, '#7ab3c9');
-  // ── fiume Stella: sponde, acqua, corrente ──
+  // cjamps a sud-ovest, FUORI dal borgo
+  for(let i=0;i<4;i++) for(let j=0;j<3;j++){
+    const px = 56+i*26, py = 272+j*20;
+    c.fillStyle = 'rgba(25,30,22,.25)'; c.fillRect(px+2, py+2, 22, 16);
+    c.fillStyle = (i+j)%2 ? '#7a5a3a' : '#6e5234';
+    c.fillRect(px, py, 22, 16);
+    c.strokeStyle = 'rgba(45,32,20,.5)'; c.lineWidth = 1;
+    for(let yy=py+3; yy<py+16; yy+=4){ c.beginPath(); c.moveTo(px+2, yy); c.lineTo(px+20, yy); c.stroke(); }
+    if(!win && (i+j)%2){
+      c.fillStyle = '#7fae60';
+      for(let k=0;k<5;k++) c.fillRect(px+3+rng()*16, py+3+rng()*11, 1.8, 1.8);
+    }
+  }
+  // acque: roggia Patisce, canâl dai Mulins, Stele
+  roadPath(c, PATISCE_PTS, 9, '#40707f');
+  roadPath(c, PATISCE_PTS, 6, '#7ab3c9');
+  roadPath(c, MULINS_PTS, 10, '#40707f');
+  roadPath(c, MULINS_PTS, 6.5, '#7ab3c9');
   roadPath(c, STELLA_PTS, 31, '#3c6673');
   roadPath(c, STELLA_PTS, 25, '#57909f');
   roadPath(c, STELLA_PTS, 13, '#74acbf');
-  // canneti sulle sponde
   c.fillStyle = win ? '#8a9580' : '#5f7f4a';
+  const sp = samplePath(STELLA_PTS, 12);
   for(let i=0;i<26;i++){
-    const p = samplePath(STELLA_PTS, 12)[Math.floor(rng()*26)];
-    if(p) c.fillRect(p.x - 16 + rng()*4, p.y, 1.4, 4 + rng()*3);
+    const pt = sp[Math.floor(rng()*sp.length)];
+    if(pt) c.fillRect(pt.x - 16 + rng()*4, pt.y, 1.4, 4 + rng()*3);
   }
-  // ── strade: bordo, fondo, usura ──
-  const VIA = [[150,-10],[190,60],[240,110],[280,132],[340,142],[480,152]];
-  const FORK = [[262,124],[258,180],[252,250],[250,340]];
+  // strade
   roadPath(c, VIA, 17, '#6f746e'); roadPath(c, FORK, 14, '#6f746e');
   roadPath(c, VIA, 14, '#9aa096'); roadPath(c, FORK, 11, '#9aa096');
   c.setLineDash([5, 7]);
   roadPath(c, VIA, 1.2, 'rgba(255,255,255,.35)');
   c.setLineDash([]);
-  // le buse di Vie Piave :)
   c.fillStyle = 'rgba(70,72,66,.5)';
   for(const [bx,by] of [[214,96],[300,138],[256,200]]){ c.beginPath(); c.ellipse(bx, by, 3.4, 2, 0, 0, 7); c.fill(); }
-  // ── puint su la Stele: assi e spallette ──
-  c.save();
-  c.translate(414, 149); c.rotate(0.08);
-  c.fillStyle = 'rgba(25,30,22,.3)'; c.fillRect(-16, -8, 38, 22);
-  c.fillStyle = '#b09372'; c.fillRect(-18, -10, 38, 20);
-  c.strokeStyle = '#7d6248'; c.lineWidth = 1;
-  for(let xx=-15; xx<20; xx+=4){ c.beginPath(); c.moveTo(xx, -10); c.lineTo(xx, 10); c.stroke(); }
-  c.strokeStyle = '#e0d7c2'; c.lineWidth = 2.2;
-  c.beginPath(); c.moveTo(-18, -10); c.lineTo(20, -10); c.moveTo(-18, 10); c.lineTo(20, 10); c.stroke();
-  c.restore();
-  // ── place dal borc: acciottolato ──
+  // viâl dal cjistiel
+  roadPath(c, [[339,143],[338,124]], 5, '#b8ad92');
+  // ponti e passerelle (la geometria giocabile si vede)
+  plankBridge(c, BR_STELLA, false);
+  plankBridge(c, {x:BR_MULINS.x, y:257, w:BR_MULINS.w, h:14}, false);
+  plankBridge(c, PASS_ROGGIA, false);
+  // place dal borc
   c.fillStyle = win ? '#c5beae' : '#cfc4a6';
-  c.fillRect(96, 112, 44, 32);
+  c.fillRect(94, 112, 44, 32);
   for(let i=0;i<40;i++){
     c.fillStyle = 'rgba(110,100,80,.25)';
-    c.fillRect(98 + rng()*40, 114 + rng()*28, 2, 1.6);
+    c.fillRect(96 + rng()*40, 114 + rng()*28, 2, 1.6);
   }
-  // ── la cort: schiera di case in coppi ──
-  building(c, 62, 48, 52, 28, '#a45c40');
-  building(c, 106, 68, 52, 28, '#9c5840');
-  building(c, 150, 88, 60, 28, '#a45c40');
-  // cjase de bionde (quella del segnaposto)
-  building(c, 150, 90, 30, 28, '#c07838', {wall:'#e3d3ae'});
-  c.fillStyle = '#4a3222'; c.fillRect(161, 84, 6, 8);
-  c.fillStyle = '#e6c15a'; c.fillRect(162.5, 85.5, 3, 2);
-  // ── curtîl daûr de cjase ──
-  c.fillStyle = win ? '#c2bba9' : '#c9bd9c'; c.fillRect(132, 122, 84, 52);
-  c.strokeStyle = 'rgba(120,105,75,.4)'; c.strokeRect(132, 122, 84, 52);
-  // cataste di legne tal curtîl
-  c.fillStyle = '#7a5a3a'; c.fillRect(138, 128, 16, 8);
+  // curtîl daûr de cjase cul ort di cjase
+  c.fillStyle = win ? '#c2bba9' : '#c9bd9c'; c.fillRect(134, 120, 82, 48);
+  c.strokeStyle = 'rgba(120,105,75,.4)'; c.strokeRect(134, 120, 82, 48);
+  c.fillStyle = '#7a5a3a'; c.fillRect(140, 126, 16, 8);
   c.strokeStyle = '#54402c';
-  for(let xx=139; xx<154; xx+=3){ c.beginPath(); c.arc(xx+1, 132, 1.4, 0, 7); c.stroke(); }
-  // ── ort e cjamps: parcelle con solchi e germogli ──
-  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
-    const px = 134+i*30, py = 186+j*26;
-    c.fillStyle = 'rgba(25,30,22,.25)'; c.fillRect(px+2, py+2, 26, 22);
-    c.fillStyle = (i+j)%2 ? '#7a5a3a' : '#6e5234';
-    c.fillRect(px, py, 26, 22);
-    c.strokeStyle = 'rgba(45,32,20,.5)'; c.lineWidth = 1;
-    for(let yy=py+4; yy<py+22; yy+=4){ c.beginPath(); c.moveTo(px+2, yy); c.lineTo(px+24, yy); c.stroke(); }
-    if(!win && (i+j)%2){
-      c.fillStyle = '#7fae60';
-      for(let k=0;k<6;k++) c.fillRect(px+3+rng()*20, py+3+rng()*16, 1.8, 1.8);
-    }
-  }
-  // ── stale, tettoia e gjalinâr ──
-  building(c, 236, 224, 40, 24, '#8a6a52', {wall:'#c9b896'});
-  building(c, 284, 246, 32, 20, '#96755b');
-  building(c, 290, 210, 18, 14, '#a3866a');
+  for(let xx=141; xx<156; xx+=3){ c.beginPath(); c.arc(xx+1, 130, 1.4, 0, 7); c.stroke(); }
+  // la cort
+  building(c, 62, 46, 50, 26, '#a45c40');
+  building(c, 106, 66, 50, 26, '#9c5840');
+  building(c, 182, 94, 34, 22, '#a45c40');
+  building(c, 150, 86, 30, 28, '#c07838', {wall:'#e3d3ae'});
+  c.fillStyle = '#4a3222'; c.fillRect(161, 82, 6, 8);
+  c.fillStyle = '#e6c15a'; c.fillRect(162.5, 83.5, 3, 2);
+  // ── IL CJISTIEL TAL MIEÇ DE AGHE: il fossato vero ──
+  c.strokeStyle = '#3c6673'; c.lineWidth = 13; c.lineJoin = 'round';
+  c.strokeRect(MOAT.x, MOAT.y, MOAT.w, MOAT.h);
+  c.strokeStyle = '#6fa8bd'; c.lineWidth = 9;
+  c.strokeRect(MOAT.x, MOAT.y, MOAT.w, MOAT.h);
+  roadPath(c, [[392,78],[414,78]], 6, '#6fa8bd');       // presa dalla Stella
+  // l'isola del castello
+  c.fillStyle = win ? '#cfc6ae' : '#d6c9a4';
+  c.fillRect(MOAT.x+8, MOAT.y+8, MOAT.w-16, MOAT.h-16);
+  building(c, 302, 52, 76, 36, '#b5876a', {wall:'#ece0c2'});
+  c.fillStyle = '#5c4a34';
+  for(let xx=308; xx<372; xx+=11) c.fillRect(xx, 74, 3.5, 4);
+  c.fillStyle = '#8a6a52'; c.fillRect(306, 44, 12, 12);  // la torate
+  c.strokeStyle = '#4a332a'; c.strokeRect(306, 44, 12, 12);
+  plankBridge(c, BR_MOAT, true);
+  // la Fàrnie li dal cjistiel (com'è davvero) e il tulipifero
+  tree(c, 302, 140, 14, true);
+  c.strokeStyle = '#e6c15a'; c.lineWidth = 1.2;
+  c.beginPath(); c.arc(302, 140, 15.5, 0, 7); c.stroke();
+  tree(c, 372, 134, 8, false);
+  // parc: fontane di claps cu la bancje
+  c.fillStyle = '#8f8f84'; c.beginPath(); c.arc(256, 96, 7, 0, 7); c.fill();
+  c.fillStyle = '#9c9c90';
+  for(let a=0; a<6.28; a+=0.55){ c.beginPath(); c.arc(256+Math.cos(a)*7, 96+Math.sin(a)*7, 1.5, 0, 7); c.fill(); }
+  c.fillStyle = '#7ab3c9'; c.beginPath(); c.arc(256, 96, 4, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(256, 95, 1, 0, 7); c.fill();
+  c.strokeStyle = '#9c9c90'; c.lineWidth = 2.4;
+  c.beginPath(); c.arc(248, 106, 6, -0.6, 2.2); c.stroke();
+  for(const [tx,ty,tr] of [[236,70,8],[272,64,9],[232,110,7]]) tree(c, tx, ty, tr, true);
+  // stale e gjalinâr
+  building(c, 274, 210, 38, 22, '#8a6a52', {wall:'#c9b896'});
+  building(c, 312, 196, 16, 12, '#a3866a');
   c.fillStyle = '#f5f2ea';
-  for(const [hx,hy] of [[312,228],[318,234],[309,238]]){
+  for(const [hx,hy] of [[334,206],[340,212],[331,214]]){
     c.beginPath(); c.ellipse(hx, hy, 2, 1.5, 0, 0, 7); c.fill();
   }
-  // ── vile / cjistiel cul parc e il viâl ──
-  c.fillStyle = win ? '#cfc6ae' : '#d6c9a4';
-  c.fillRect(296, 74, 20, 52);
-  roadPath(c, [[306,126],[300,132]], 4, '#b8ad92');
-  c.strokeStyle = '#54402c'; c.lineWidth = 1.6;
-  c.beginPath(); c.moveTo(300, 128); c.lineTo(312, 128); c.stroke();
-  c.fillStyle = '#3e3e46'; c.fillRect(299, 124, 2, 6); c.fillRect(311, 124, 2, 6);
-  building(c, 284, 44, 90, 30, '#b5876a', {wall:'#ece0c2'});
-  c.fillStyle = '#5c4a34';
-  for(let xx=292; xx<366; xx+=12) c.fillRect(xx, 66, 3.5, 4);
-  for(const [tx,ty,tr] of [[268,62,9],[384,58,9],[344,88,8],[262,104,8],[378,96,10],[330,62,7],[290,96,7],[356,110,8]]) tree(c, tx, ty, tr, true);
-  tree(c, 304, 106, 14, true);           // la Fàrnie
-  c.strokeStyle = '#e6c15a'; c.lineWidth = 1.2;
-  c.beginPath(); c.arc(304, 106, 15.5, 0, 7); c.stroke();
-  tree(c, 276, 124, 8, false);           // il tulipifero
-  // ── fontane di claps cu la bancje ──
-  c.fillStyle = '#8f8f84'; c.beginPath(); c.arc(246, 84, 7, 0, 7); c.fill();
-  c.fillStyle = '#9c9c90';
-  for(let a=0; a<6.28; a+=0.55){ c.beginPath(); c.arc(246+Math.cos(a)*7, 84+Math.sin(a)*7, 1.5, 0, 7); c.fill(); }
-  c.fillStyle = '#7ab3c9'; c.beginPath(); c.arc(246, 84, 4, 0, 7); c.fill();
-  c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(246, 83, 1, 0, 7); c.fill();
-  c.strokeStyle = '#9c9c90'; c.lineWidth = 2.4;
-  c.beginPath(); c.arc(238, 94, 6, -0.6, 2.2); c.stroke();
-  // ── mulin cu la ruede ──
-  building(c, 56, 192, 28, 22, '#a08a64', {wall:'#ddd2b8'});
+  // il mulin su la roie dai Mulins (dov'è davvero, sulla strada)
+  building(c, 222, 244, 26, 16, '#a08a64', {wall:'#ddd2b8'});
   c.strokeStyle = '#54402c'; c.lineWidth = 2.4;
-  c.beginPath(); c.arc(88, 205, 8, 0, 7); c.stroke();
+  c.beginPath(); c.arc(251, 262, 8, 0, 7); c.stroke();
   c.strokeStyle = '#6b5340'; c.lineWidth = 1.4;
-  c.beginPath(); c.arc(88, 205, 5, 0, 7); c.stroke();
+  c.beginPath(); c.arc(251, 262, 5, 0, 7); c.stroke();
   for(let a=0; a<6.28; a+=0.785){
-    c.beginPath(); c.moveTo(88, 205); c.lineTo(88+Math.cos(a)*8, 205+Math.sin(a)*8); c.stroke();
+    c.beginPath(); c.moveTo(251, 262); c.lineTo(251+Math.cos(a)*8, 262+Math.sin(a)*8); c.stroke();
   }
   c.fillStyle = 'rgba(255,255,255,.55)';
-  for(let i=0;i<5;i++){ c.beginPath(); c.arc(84+rng()*9, 212+rng()*4, 1.1, 0, 7); c.fill(); }
-  // ── bosc de Stele e arbui dal curtîl ──
-  for(const [tx,ty,tr] of [[338,236,10],[362,258,12],[386,242,9],[344,282,10],[372,296,9],[398,272,10],[352,196,8],[382,206,9],[420,210,8],[424,296,9],[334,308,9],[404,318,8]]) tree(c, tx, ty, tr, !win);
-  tree(c, 170, 152, 9, false);
+  for(let i=0;i<5;i++){ c.beginPath(); c.arc(247+rng()*9, 268+rng()*4, 1.1, 0, 7); c.fill(); }
+  // bosc de Stele a sud-est e arbui dal curtîl
+  for(const [tx,ty,tr] of [[338,290,10],[362,310,12],[390,296,9],[344,325,9],[398,322,9],[352,200,8],[356,232,9],[386,214,8],[338,246,8],[366,262,9],[398,240,8],[422,300,8]]) tree(c, tx, ty, tr, !win);
+  tree(c, 172, 150, 9, false);
   c.fillStyle = '#6a4a8a';
-  for(const [mx,my] of [[166,149],[172,154],[175,149],[168,155]]){ c.beginPath(); c.arc(mx, my, 1.3, 0, 7); c.fill(); }
-  tree(c, 202, 156, 9, false);
+  for(const [mx,my] of [[168,147],[174,152],[177,147]]){ c.beginPath(); c.arc(mx, my, 1.3, 0, 7); c.fill(); }
+  tree(c, 200, 154, 9, false);
   c.fillStyle = '#7a5a8a';
-  for(const [mx,my] of [[199,153],[205,158]]){ c.beginPath(); c.arc(mx, my, 1.5, 0, 7); c.fill(); }
-  // ── neve d'inverno sui tetti e per terra ──
+  for(const [mx,my] of [[197,151],[203,156]]){ c.beginPath(); c.arc(mx, my, 1.5, 0, 7); c.fill(); }
   if(win){
     c.fillStyle = 'rgba(255,255,255,.55)';
     for(let i=0;i<240;i++) c.fillRect(rng()*MAP_W, rng()*MAP_H, 2, 1.2);
   }
-  // ── segnaposti dei posti ──
+  // segnaposti
   for(const z of ZONES){
     c.fillStyle = 'rgba(230,193,90,.85)';
     c.beginPath(); c.arc(z.x, z.y - z.r - 8, 2.2, 0, 7); c.fill();
   }
   c.font = '11px serif'; c.textAlign = 'center';
   for(const z of ZONES) c.fillText(z.emoji, z.x, z.y - z.r - 13);
-  RIPPLES = [samplePath(STELLA_PTS, 6), samplePath(ROGGIA_PTS, 6)];
+  RIPPLES = [
+    samplePath(STELLA_PTS, 6),
+    samplePath(PATISCE_PTS, 6),
+    samplePath(MULINS_PTS, 6),
+    samplePath([[MOAT.x,MOAT.y+40],[MOAT.x,MOAT.y],[MOAT.x+MOAT.w,MOAT.y],[MOAT.x+MOAT.w,MOAT.y+MOAT.h],[MOAT.x,MOAT.y+MOAT.h],[MOAT.x,MOAT.y+40]], 8),
+  ];
   mapSeasonDrawn = S.season;
 }
 function drawLiveFX(c){
   const t = performance.now() / 1000;
-  // corrente dei fiumi
   c.strokeStyle = 'rgba(255,255,255,.30)'; c.lineWidth = 1.3;
   RIPPLES.forEach((path, pi) => {
     const n = path.length; if(!n) return;
     const count = pi === 0 ? 9 : 5;
     for(let i=0;i<count;i++){
       const idx = Math.floor(t*20 + i*n/count + pi*17) % n;
-      const p = path[idx];
+      const pt = path[idx];
       c.beginPath();
-      c.moveTo(p.x - Math.cos(p.a)*3, p.y - Math.sin(p.a)*3);
-      c.lineTo(p.x + Math.cos(p.a)*3, p.y + Math.sin(p.a)*3);
+      c.moveTo(pt.x - Math.cos(pt.a)*3, pt.y - Math.sin(pt.a)*3);
+      c.lineTo(pt.x + Math.cos(pt.a)*3, pt.y + Math.sin(pt.a)*3);
       c.stroke();
     }
   });
-  // fumo dal camino quando il fuoco è acceso
   if(S.fireLit){
     for(let i=0;i<3;i++){
       const ph = (t*0.5 + i*0.33) % 1;
       c.fillStyle = `rgba(220,220,220,${(1-ph)*0.4})`;
-      c.beginPath(); c.arc(164 + Math.sin(t*2+i)*2, 82 - ph*16, 2 + ph*3, 0, 7); c.fill();
+      c.beginPath(); c.arc(164 + Math.sin(t*2+i)*2, 80 - ph*16, 2 + ph*3, 0, 7); c.fill();
     }
   }
-  // meteo disegnato
   if(S.weather === 'ploie' || S.weather === 'temporal'){
     c.strokeStyle = 'rgba(170,200,225,.4)'; c.lineWidth = 1;
     for(let i=0;i<44;i++){
@@ -1495,21 +1536,26 @@ function mapLoop(){
   }
   let moving = false;
   const SPEED = 2.1;
+  let mx = 0, my = 0;
   if(dx || dy){
     P.tx = P.ty = null;
     const n = Math.hypot(dx, dy);
-    P.x += dx/n*SPEED; P.y += dy/n*SPEED;
-    moving = true;
+    mx = dx/n*SPEED; my = dy/n*SPEED;
   } else if(P.tx !== null){
     const vx = P.tx - P.x, vy = P.ty - P.y, d = Math.hypot(vx, vy);
     if(d < 3){ P.tx = P.ty = null; }
-    else { P.x += vx/d*SPEED; P.y += vy/d*SPEED; moving = true; }
+    else { mx = vx/d*SPEED; my = vy/d*SPEED; }
+  }
+  if(mx || my){
+    // scivolamento lungo gli ostacoli: X e Y provate separatamente
+    const nx = Math.max(10, Math.min(MAP_W-10, P.x + mx));
+    const ny = Math.max(16, Math.min(MAP_H-12, P.y + my));
+    let stuck = true;
+    if(!blockedAt(nx, P.y)){ P.x = nx; moving = true; stuck = false; }
+    if(!blockedAt(P.x, ny)){ P.y = ny; moving = true; stuck = false; }
+    if(stuck && P.tx !== null){ P.tx = P.ty = null; }   // meta irraggiungibile: fermati
   }
   if(moving) P.step++;
-  P.x = Math.max(10, Math.min(MAP_W-10, P.x));
-  P.y = Math.max(16, Math.min(MAP_H-12, P.y));
-  // la Stele no si passe se no sul puint
-  if(P.x > 392 && !(P.y > 132 && P.y < 166)) P.x = 392;
   currentZone = null;
   for(const z of ZONES){
     if(Math.hypot(P.x - z.x, P.y - z.y) <= z.r){ currentZone = z; break; }
@@ -1556,6 +1602,7 @@ function mapAction(id){
     case 'puint': $('riverSelect').value = 'stele'; actFish(); break;
     case 'vigne': actVine(); break;
     case 'farnie': actFarnia(); break;
+    case 'cjistiel': say('🏰 Il cjistiel tal mieç de aghe: sachegjât tal 1509, ma ancjemò in pîts. Come me.', 'Il castello in mezzo all\'acqua del fossato: saccheggiato nel 1509, ma ancora in piedi. Come me.'); render(); break;
     case 'fontane': actBorgo(); break;
     case 'morar': actTree('gelso'); break;
     case 'fiar': actTree('fico'); break;

@@ -111,6 +111,26 @@ L'età non è un dettaglio, è il design:
   sincronizzati su qualsiasi dispositivo. È il requisito per un gioco che
   "durerà tanto": il cortile della bionde non si perde mai.
 
+## Funzionalità del genere che ancora mancano (benchmark: Stardew Valley, Fields of Mistria)
+
+In ordine di impatto, cosa hanno i giochi allo stato dell'arte e Labionde no:
+
+1. **Orologio della giornata** (6:00 → 24:00): le azioni consumano tempo oltre
+   che energia; il buio che arriva, il gallo al mattino.
+2. **Minigioco di pesca** (barra di tensione) invece della pesca a fortuna.
+3. **NPC con routine e amicizia**: il mugnaio, i vicini della corte, il prete,
+   la gente della sagra — dialoghi, cuori, regali.
+4. **Commissioni dalla bacheca del paese** (quest): "servono 10 uova per la
+   sagra", ricompense e reputazione.
+5. **Cucina e ricette** friulane (frico, brovada e muset, gubana) con bonus.
+6. **Upgrade degli attrezzi** (accetta → motosega; secchio → pompa).
+7. **Artigianato**: marmellata di more di gelso, formaggio dal latte, miele in vasetti.
+8. **Collezioni/museo**: tutti i pesci dei tre corsi d'acqua, tutte le colture.
+9. **Festival giocabili**: la Sagra dal Vin con minigiochi (tombola, pesca alla trota).
+10. **Audio**: la ruota del mulino, il gallo, la pioggia, la moka, musica.
+11. **Decorazione** della casa e del cortile.
+12. **Notte/luci**: lampioni del borgo accesi, finestre illuminate.
+
 ## Roadmap
 
 - ~~v0.7: mappa 2D dall'alto~~ — **FATTA** (prima versione). Sterpo su canvas,
