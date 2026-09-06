@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { Users, FolderOpen, Layers, ClipboardCheck } from "lucide-react";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { prisma } from "@/lib/db/client";
 import { Card } from "@/components/ui/card";
@@ -12,9 +14,30 @@ export default async function Page() {
     include: { versions: { orderBy: { version: "desc" }, take: 1 } },
   });
 
+  const sezioni = [
+    { href: "/dashboard/esercizi/classi", label: t("navClassi"), icon: Users },
+    { href: "/dashboard/esercizi/contenitori", label: t("navContenitori"), icon: FolderOpen },
+    { href: "/dashboard/esercizi/batterie", label: t("navBatterie"), icon: Layers },
+    { href: "/dashboard/esercizi/compiti", label: t("navCompiti"), icon: ClipboardCheck },
+  ];
+
   return (
     <div className="space-y-4 p-6">
       <h1 className="text-2xl font-semibold">{t("titoloDocente")}</h1>
+
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {sezioni.map((s) => (
+          <li key={s.href}>
+            <Link href={s.href}>
+              <Card className="items-center gap-2 p-4 text-center transition hover:bg-muted/50">
+                <s.icon className="mx-auto h-5 w-5 text-brand-blue" />
+                <p className="font-medium">{s.label}</p>
+              </Card>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
       {esercizi.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("nessunEsercizio")}</p>
       ) : (
