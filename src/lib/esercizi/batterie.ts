@@ -21,11 +21,15 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
 }
 
 /** Il bacino di candidati di una regola dopo aver tolto gli esercizi già
- * "presi" da regole precedenti della stessa batteria e quelli senza
- * versione risolvibile. Usata sia da `verificaBatteria` qui sotto (che non
- * pesca, misura solo la capienza) sia da `assegna` in compiti.ts (che poi
- * mescola quello che risulta e ne prende `count`): la stessa esclusione,
- * non due riscritture che potrebbero divergere silenziosamente. */
+ * REALMENTE pescati da regole precedenti della stessa batteria (l'insieme
+ * `presi` cresce con le scelte vere del sorteggio, non con una stima) e
+ * quelli senza versione risolvibile. Usata da `assegna` in compiti.ts, che
+ * mescola quello che risulta con un seme vero e ne prende `count`.
+ *
+ * NON usata da `verificaBatteria` qui sotto: prima di un'assegnazione non
+ * esiste un seme, quindi non c'è un "presi" vero da passare — quella
+ * funzione stima invece un limite superiore al consumo possibile (vedi il
+ * suo commento). Le due condividono `idsConVersione`, non questa. */
 export function candidatiDisponibili(
   esercizioIds: string[],
   presi: ReadonlySet<string>,
@@ -81,22 +85,39 @@ export async function elencoBatterie(): Promise<
 }
 
 /** Confronta, per ogni regola della batteria, quanti esercizi chiede contro
- * quanti il suo contenitore può davvero fornire — applicando la STESSA
- * esclusione incrociata fra regole e lo stesso filtro di disponibilità di
- * versione che `assegna` (compiti.ts) applica quando pesca sul serio: un
- * esercizio già "preso" da una regola precedente, o senza nessuna
- * `EsercizioVersione`, non conta come disponibile per nessuna regola.
+ * quanti il suo contenitore può davvero fornire — tenendo conto sia del
+ * filtro di disponibilità di versione (un esercizio senza
+ * `EsercizioVersione` non conta mai) sia della sovrapposizione con le
+ * regole precedenti, con una stima **per difetto** (Fix round 2), non con
+ * un sorteggio simulato.
  *
- * Non c'è un sorteggio vero qui (nessun seme, nessuna assegnazione): quando
- * una regola risulta capiente, gli esercizi "presi" per calcolare cosa
- * resta alla regola successiva sono scelti per id (ordine stabile), non a
- * caso. Nel caso comune — contenitori disgiunti, o capienza abbondante — il
- * verdetto coincide sempre con quello di un'assegnazione vera; con più
- * regole che condividono esercizi E capienza risicata su entrambe, un
- * sorteggio realmente casuale potrebbe consumare la sovrapposizione in modo
- * leggermente diverso da questa stima. Resta comunque la stessa esclusione
- * strutturale di `assegna`, non un conteggio indipendente che può
- * scoprire "abbastanza" quando la pesca vera scoprirebbe il contrario.
+ * CONTRATTO, e perché è cambiato: qui non esiste ancora un seme (nessuna
+ * assegnazione è avvenuta), quindi non si può sapere con certezza QUALI
+ * esercizi condivisi una regola precedente "si prenderebbe" — dipende dal
+ * sorteggio vero, che è casuale. Un tentativo di simularlo con una scelta
+ * qualunque (per id, ad esempio) è un'esecuzione ARBITRARIA, non la
+ * PEGGIORE: un'assegnazione vera sfortunata può consumare più
+ * sovrapposizione di quanto quella scelta arbitraria preveda, facendo dire
+ * qui "ok" a una batteria che poi fallisce — lo stesso difetto per cui
+ * questa funzione è stata corretta nel giro precedente, spostato di un
+ * livello. Per questo la stima assume il caso PEGGIORE possibile: per ogni
+ * regola, quanti dei suoi esercizi potrebbero essere già stati consumati
+ * dalle regole precedenti è limitato da due cose — non più di quanti
+ * esercizi condivisi esistono davvero (`overlap`), e non più di quanti le
+ * regole precedenti possono complessivamente pescare in tutto
+ * (`sum(count precedenti)`); il minore dei due è un limite superiore vero
+ * al consumo reale, in QUALUNQUE esecuzione, non una stima plausibile.
+ *
+ * Il contratto che ne segue: un verdetto positivo (`{ ok: true }`)
+ * GARANTISCE che `assegna` (compiti.ts) su questa batteria non fallirà per
+ * `esercizi_insufficienti`, qualunque seme venga estratto. Un verdetto
+ * negativo NON garantisce il contrario: può capitare che un'assegnazione
+ * vera avrebbe comunque avuto successo (la stima è per difetto, non
+ * esatta) — in tal caso il rimedio più economico è aggiungere un esercizio
+ * al contenitore scarso, non ignorare l'avviso. Errare da questo lato
+ * costa un minuto al docente; l'errore opposto — dire "ok" e poi fallire —
+ * gli costa un'assegnazione persa dopo che gli era stato detto che andava
+ * bene.
  *
  * Non guarda i compiti già assegnati: è un controllo "questa batteria è
  * ancora assegnabile?", non uno storico. */
@@ -116,19 +137,30 @@ export async function verificaBatteria(
   const tuttiGliId = [...new Set(batteria.regole.flatMap((r) => r.contenitore.esercizi.map((e) => e.esercizioId)))];
   const conVersione = await idsConVersione(tuttiGliId);
 
-  const presi = new Set<string>();
+  // Il bacino di ciascuna regola, filtrato sulla disponibilità di versione
+  // (non ancora sulla sovrapposizione con le regole precedenti: quella si
+  // stima per difetto qui sotto, regola per regola).
+  const bacini = batteria.regole.map(
+    (r) => new Set(r.contenitore.esercizi.map((e) => e.esercizioId).filter((id) => conVersione.has(id))),
+  );
+
   const mancanti: { contenitore: string; richiesti: number; disponibili: number }[] = [];
-  for (const regola of batteria.regole) {
-    const candidati = candidatiDisponibili(
-      regola.contenitore.esercizi.map((e) => e.esercizioId),
-      presi,
-      conVersione,
-    );
-    if (candidati.length < regola.count) {
-      mancanti.push({ contenitore: regola.contenitore.name, richiesti: regola.count, disponibili: candidati.length });
-      continue;
+  const precedentiUnione = new Set<string>();
+  let sommaContiPrecedenti = 0;
+  for (let i = 0; i < batteria.regole.length; i++) {
+    const regola = batteria.regole[i]!;
+    const bacino = bacini[i]!;
+
+    const overlap = [...bacino].filter((id) => precedentiUnione.has(id)).length;
+    const consumoPeggiore = Math.min(overlap, sommaContiPrecedenti);
+    const disponibili = bacino.size - consumoPeggiore;
+
+    if (disponibili < regola.count) {
+      mancanti.push({ contenitore: regola.contenitore.name, richiesti: regola.count, disponibili });
     }
-    for (const id of candidati.slice(0, regola.count)) presi.add(id);
+
+    for (const id of bacino) precedentiUnione.add(id);
+    sommaContiPrecedenti += regola.count;
   }
 
   if (mancanti.length > 0) return { ok: false, mancanti };

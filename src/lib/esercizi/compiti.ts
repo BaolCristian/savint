@@ -24,7 +24,8 @@ type MotivoAssegna =
  * se questo la fa fallire per insufficienza. Un esercizio senza nessuna
  * `EsercizioVersione` non conta mai come disponibile, per nessuna regola:
  * non potrebbe comunque essere consegnato (vedi `candidatiDisponibili` e
- * `idsConVersione` in batterie.ts, condivise con `verificaBatteria`).
+ * `idsConVersione` in batterie.ts — quest'ultima condivisa anche da
+ * `verificaBatteria`, che stima la stessa cosa senza un sorteggio vero).
  *
  * Tutti i controlli (batteria, classe, insegnamento, capienza dei
  * contenitori) avvengono PRIMA di qualunque scrittura: un fallimento non

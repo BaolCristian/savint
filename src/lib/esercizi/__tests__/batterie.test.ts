@@ -117,6 +117,85 @@ describe("batterie", () => {
     });
   });
 
+  // Fix round 2: la stima di verificaBatteria deve essere PER DIFETTO, non
+  // arbitraria. Qui il sorteggio vero potrebbe andare bene o male a seconda
+  // del seme (contIncerto ha 4 esercizi e la sua regola ne chiede 2: un
+  // sorteggio potrebbe prenderne 0, 1 o 2 dei due condivisi con contRischio);
+  // se ne prendesse i due condivisi, a contRischio (che li condivide
+  // entrambi e ne chiede 2 su un bacino di 3) resterebbe un solo esercizio
+  // proprio: insufficiente. Una stima arbitraria (per id) potrebbe non
+  // consumare nessuno dei due condivisi e dire "ok" nonostante quell'esito
+  // sfortunato resti possibile; la stima per difetto deve rifiutare
+  // comunque, perché assume che le regole precedenti abbiano consumato la
+  // sovrapposizione al massimo possibile.
+  it("verificaBatteria rifiuta quando la sovrapposizione rende il sorteggio incerto", async () => {
+    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1 };
+    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1`, title: "Shared1", ...base } })).id;
+    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2`, title: "Shared2", ...base } })).id;
+    const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1`, title: "AOnly1", ...base } })).id;
+    const aOnly2 = (await prisma.esercizio.create({ data: { id: `${P}aonly2`, title: "AOnly2", ...base } })).id;
+    const bOnly1 = (await prisma.esercizio.create({ data: { id: `${P}bonly1`, title: "BOnly1", ...base } })).id;
+    await prisma.esercizioVersione.createMany({
+      data: [shared1, shared2, aOnly1, aOnly2, bOnly1].map((esercizioId, i) => ({
+        esercizioId, version: 1, content: {}, hash: `hh${i}`,
+      })),
+    });
+
+    const contIncerto = (await prisma.contenitore.create({ data: { name: `${P}Incerto`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [shared1, shared2, aOnly1, aOnly2].map((esercizioId) => ({ contenitoreId: contIncerto, esercizioId })),
+    });
+    const contRischio = (await prisma.contenitore.create({ data: { name: `${P}Rischio`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [shared1, shared2, bOnly1].map((esercizioId) => ({ contenitoreId: contRischio, esercizioId })),
+    });
+
+    const b = await creaBatteria(teacherId, `${P}Incerta`, [
+      { contenitoreId: contIncerto, count: 2 },
+      { contenitoreId: contRischio, count: 2 },
+    ]);
+
+    expect(await verificaBatteria(b.id)).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: `${P}Rischio`, richiesti: 2, disponibili: 1 }],
+    });
+  });
+
+  // Stessa sovrapposizione del test sopra, ma la seconda regola ne chiede
+  // solo 1: anche nel caso peggiore (i due condivisi consumati per intero
+  // dalla prima regola) resta comunque il suo esercizio proprio. La
+  // prudenza della stima non deve rendere la funzione inutile sui casi in
+  // cui la capienza regge anche nello scenario più sfortunato.
+  it("verificaBatteria non rifiuta quando la capienza regge anche nel caso peggiore", async () => {
+    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1 };
+    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1b`, title: "Shared1", ...base } })).id;
+    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2b`, title: "Shared2", ...base } })).id;
+    const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1b`, title: "AOnly1", ...base } })).id;
+    const aOnly2 = (await prisma.esercizio.create({ data: { id: `${P}aonly2b`, title: "AOnly2", ...base } })).id;
+    const bOnly1 = (await prisma.esercizio.create({ data: { id: `${P}bonly1b`, title: "BOnly1", ...base } })).id;
+    await prisma.esercizioVersione.createMany({
+      data: [shared1, shared2, aOnly1, aOnly2, bOnly1].map((esercizioId, i) => ({
+        esercizioId, version: 1, content: {}, hash: `hb${i}`,
+      })),
+    });
+
+    const contIncerto = (await prisma.contenitore.create({ data: { name: `${P}Ample`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [shared1, shared2, aOnly1, aOnly2].map((esercizioId) => ({ contenitoreId: contIncerto, esercizioId })),
+    });
+    const contComodo = (await prisma.contenitore.create({ data: { name: `${P}Comodo`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [shared1, shared2, bOnly1].map((esercizioId) => ({ contenitoreId: contComodo, esercizioId })),
+    });
+
+    const b = await creaBatteria(teacherId, `${P}Ample`, [
+      { contenitoreId: contIncerto, count: 2 },
+      { contenitoreId: contComodo, count: 1 },
+    ]);
+
+    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+  });
+
   it("una batteria libera si cancella", async () => {
     const b = await creaBatteria(teacherId, `${P}Libera`, [{ contenitoreId: contA, count: 1 }]);
     expect(await eliminaBatteria(b.id)).toEqual({ ok: true });
