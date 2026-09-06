@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { creaBatteria, elencoBatterie, verificaBatteria } from "../batterie";
+import { creaBatteria, elencoBatterie, verificaBatteria, eliminaBatteria } from "../batterie";
 
 const P = "battest-";
 let teacherId: string;
@@ -29,6 +29,11 @@ beforeEach(async () => {
   const a1 = (await prisma.esercizio.create({ data: { id: `${P}a1`, title: "A1", ...base } })).id;
   const a2 = (await prisma.esercizio.create({ data: { id: `${P}a2`, title: "A2", ...base } })).id;
   const b1 = (await prisma.esercizio.create({ data: { id: `${P}b1`, title: "B1", ...base } })).id;
+  // Ognuno ha una versione: verificaBatteria conta solo esercizi con una
+  // EsercizioVersione risolvibile come "disponibili" (Fix round 1).
+  await prisma.esercizioVersione.createMany({
+    data: [a1, a2, b1].map((esercizioId, i) => ({ esercizioId, version: 1, content: {}, hash: `h${i}` })),
+  });
   await prisma.contenitoreEsercizio.createMany({
     data: [
       { contenitoreId: contA, esercizioId: a1 },
@@ -92,5 +97,41 @@ describe("batterie", () => {
       ok: false,
       mancanti: [{ contenitore: `${P}Sistemi`, richiesti: 5, disponibili: 1 }],
     });
+  });
+
+  it("verificaBatteria su una batteria inesistente lancia invece di dire ok in silenzio", async () => {
+    await expect(verificaBatteria("non-esiste")).rejects.toThrow();
+  });
+
+  it("verificaBatteria non conta un esercizio senza versione come disponibile", async () => {
+    const senzaVersione = (await prisma.esercizio.create({
+      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1 },
+    })).id;
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: contA, esercizioId: senzaVersione } });
+    // contA ha ora 3 membri (a1, a2 con versione, senza-versione senza): una
+    // regola che ne chiede 3 deve vedersi dire che ne sono disponibili 2.
+    const b = await creaBatteria(teacherId, `${P}TreSuTre`, [{ contenitoreId: contA, count: 3 }]);
+    expect(await verificaBatteria(b.id)).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: `${P}Equazioni`, richiesti: 3, disponibili: 2 }],
+    });
+  });
+
+  it("una batteria libera si cancella", async () => {
+    const b = await creaBatteria(teacherId, `${P}Libera`, [{ contenitoreId: contA, count: 1 }]);
+    expect(await eliminaBatteria(b.id)).toEqual({ ok: true });
+    expect(await prisma.batteria.findUnique({ where: { id: b.id } })).toBeNull();
+  });
+
+  it("una batteria con compiti assegnati NON si cancella", async () => {
+    const b = await creaBatteria(teacherId, `${P}Assegnata`, [{ contenitoreId: contA, count: 1 }]);
+    const classe = await prisma.classe.create({
+      data: { googleGroupEmail: `${P}elimina@scuola.it`, name: "Elimina", yearLevel: 2 },
+    });
+    await prisma.compito.create({
+      data: { batteriaId: b.id, classeId: classe.id, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] },
+    });
+    expect(await eliminaBatteria(b.id)).toEqual({ ok: false, motivo: "in_uso" });
+    expect(await prisma.batteria.findUnique({ where: { id: b.id } })).not.toBeNull();
   });
 });

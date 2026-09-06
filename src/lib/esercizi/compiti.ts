@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
+import { candidatiDisponibili, idsConVersione } from "./batterie";
 
 type MotivoAssegna =
   | "batteria_non_trovata"
@@ -13,6 +14,17 @@ type MotivoAssegna =
  * contenitore, alle versioni degli esercizi o una nuova assegnazione della
  * stessa batteria può cambiare cosa quella classe ha ricevuto: il seme e le
  * versioni pescate sono già scritte nella riga.
+ *
+ * Le regole vengono eseguite nel loro `order`: un esercizio pescato da una
+ * regola non può essere ripescato da una regola successiva della stessa
+ * batteria (due contenitori possono condividere un esercizio, Task 3).
+ * Questo significa che l'ORDINE delle regole decide chi ha la precedenza su
+ * un esercizio condiviso — la prima regola che lo trova nel suo contenitore
+ * se lo prende, e alla regola successiva non resta più disponibile, anche
+ * se questo la fa fallire per insufficienza. Un esercizio senza nessuna
+ * `EsercizioVersione` non conta mai come disponibile, per nessuna regola:
+ * non potrebbe comunque essere consegnato (vedi `candidatiDisponibili` e
+ * `idsConVersione` in batterie.ts, condivise con `verificaBatteria`).
  *
  * Tutti i controlli (batteria, classe, insegnamento, capienza dei
  * contenitori) avvengono PRIMA di qualunque scrittura: un fallimento non
@@ -45,6 +57,9 @@ export async function assegna(
   });
   if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
 
+  const tuttiGliId = [...new Set(batteria.regole.flatMap((r) => r.contenitore.esercizi.map((e) => e.esercizioId)))];
+  const conVersione = await idsConVersione(tuttiGliId);
+
   const drawSeed = randomUUID();
   const rng = seedrandom(drawSeed);
   const drawnVersionIds: string[] = [];
@@ -56,10 +71,11 @@ export async function assegna(
   const giaPescati = new Set<string>();
 
   for (const regola of batteria.regole) {
-    const candidati = regola.contenitore.esercizi
-      .map((e) => e.esercizioId)
-      .filter((esercizioId) => !giaPescati.has(esercizioId))
-      .sort();
+    const candidati = candidatiDisponibili(
+      regola.contenitore.esercizi.map((e) => e.esercizioId),
+      giaPescati,
+      conVersione,
+    );
     if (candidati.length < regola.count) {
       return {
         ok: false,

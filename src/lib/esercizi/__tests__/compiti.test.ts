@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { creaBatteria } from "../batterie";
+import { creaBatteria, verificaBatteria } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
 import {
   assegna, compitiDellaClasse, compitiDelloStudente, consegneDelCompito,
@@ -104,6 +104,23 @@ describe("assegna", () => {
     expect(dopo).toEqual(prima);
   });
 
+  it("una nuova versione di un esercizio pescato non cambia il compito già assegnato", async () => {
+    const r = await assegna(batteriaId, classeId, teacherId);
+    if (!r.ok) throw new Error("assegnazione fallita");
+    const prima = (await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } })).drawnVersionIds;
+    const versionePescata = await prisma.esercizioVersione.findUniqueOrThrow({ where: { id: prima[0]! } });
+    await prisma.esercizioVersione.create({
+      data: {
+        esercizioId: versionePescata.esercizioId,
+        version: versionePescata.version + 1,
+        content: { nuovo: true },
+        hash: "hash-nuova-versione",
+      },
+    });
+    const dopo = (await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } })).drawnVersionIds;
+    expect(dopo).toEqual(prima);
+  });
+
   it("un contenitore che non basta blocca l'assegnazione e dice quale", async () => {
     const r = await assegna(batteriaTroppoGrande, classeId, teacherId);
     expect(r.ok).toBe(false);
@@ -117,6 +134,31 @@ describe("assegna", () => {
     expect(r.dettaglio).toEqual({ contenitore: `${P}Equazioni`, richiesti: 100, disponibili: 5 });
     // Nessun compito scritto quando l'assegnazione fallisce.
     expect(await prisma.compito.count({ where: { batteriaId: batteriaTroppoGrande } })).toBe(0);
+  });
+
+  it("un esercizio senza versione non viene mai consegnato e non gonfia i disponibili", async () => {
+    const senzaVersione = (await prisma.esercizio.create({
+      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1 },
+    })).id;
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId, esercizioId: senzaVersione } });
+    // contenitoreId ha ora 6 membri: 5 con versione (dal beforeEach) + 1
+    // senza. Una regola che ne chiede 6 deve rifiutare dicendo che ne sono
+    // disponibili 5, non prometterne 6 e consegnarne solo 5 in silenzio.
+    const batteriaSeiSuSei = (await creaBatteria(teacherId, `${P}SeiSuSei`, [{ contenitoreId, count: 6 }])).id;
+    const r = await assegna(batteriaSeiSuSei, classeId, teacherId);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.motivo).toBe("esercizi_insufficienti");
+    expect(r.dettaglio).toEqual({ contenitore: `${P}Equazioni`, richiesti: 6, disponibili: 5 });
+
+    // Con una richiesta che il bacino "vero" (con versione) può soddisfare,
+    // la pesca riesce e non include mai l'esercizio senza versione.
+    const r2 = await assegna(batteriaId, classeId, teacherId);
+    expect(r2.ok).toBe(true);
+    if (!r2.ok) return;
+    const c = await prisma.compito.findUniqueOrThrow({ where: { id: r2.compitoId } });
+    const versioniPescate = await prisma.esercizioVersione.findMany({ where: { id: { in: c.drawnVersionIds } } });
+    expect(versioniPescate.every((v) => v.esercizioId !== senzaVersione)).toBe(true);
   });
 
   it("un docente non puo' assegnare a una classe che non insegna", async () => {
@@ -195,6 +237,52 @@ describe("assegna", () => {
     expect(await consegneDelCompito(r.compitoId)).toEqual([]);
   });
 
+  // Fix round 1: verificaBatteria applica la stessa esclusione incrociata
+  // fra regole che assegna applica davvero. Il caso qui è costruito perché
+  // il verdetto sia deterministico qualunque sia il seme: il contenitore
+  // "Due" ha ESATTAMENTE due esercizi e la sua regola ne chiede due, quindi
+  // il sorteggio li prende SEMPRE entrambi, qualunque sia l'ordine con cui
+  // vengono mescolati. Il contenitore "Tre" condivide quei due esercizi e ne
+  // ha uno suo, ma la sua regola ne chiede tre: dopo che "Due" li ha presi
+  // entrambi, a "Tre" resta solo il suo, quindi l'insufficienza è certa a
+  // prescindere dal seme — un caso in cui il verdetto di verificaBatteria e
+  // quello di assegna DEVONO combaciare sempre, non "di solito".
+  it("verificaBatteria e assegna concordano su una batteria con contenitori sovrapposti", async () => {
+    const sharedA = await creaEsercizioConVersione(`${P}shareda`, "Shared A");
+    const sharedB = await creaEsercizioConVersione(`${P}sharedb`, "Shared B");
+    const soloSuo = await creaEsercizioConVersione(`${P}solosuo`, "Solo Suo");
+
+    const contDue = (await prisma.contenitore.create({ data: { name: `${P}Due`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [
+        { contenitoreId: contDue, esercizioId: sharedA },
+        { contenitoreId: contDue, esercizioId: sharedB },
+      ],
+    });
+    const contTre = (await prisma.contenitore.create({ data: { name: `${P}Tre`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [
+        { contenitoreId: contTre, esercizioId: sharedA },
+        { contenitoreId: contTre, esercizioId: sharedB },
+        { contenitoreId: contTre, esercizioId: soloSuo },
+      ],
+    });
+
+    const battAggressiva = (await creaBatteria(teacherId, `${P}Aggressiva`, [
+      { contenitoreId: contDue, count: 2 },
+      { contenitoreId: contTre, count: 3 },
+    ])).id;
+
+    const verifica = await verificaBatteria(battAggressiva);
+    expect(verifica).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: `${P}Tre`, richiesti: 3, disponibili: 1 }],
+    });
+
+    const assegnazione = await assegna(battAggressiva, classeId, teacherId);
+    expect(assegnazione).toMatchObject({ ok: false, motivo: "esercizi_insufficienti" });
+  });
+
   // Prova di composizione oltre i test del brief: due contenitori con
   // esercizi che si sovrappongono, una batteria che pesca da entrambi, e la
   // verifica che le versioni pescate siano reali, distinte e appartengano al
@@ -221,6 +309,10 @@ describe("assegna", () => {
       { contenitoreId, count: 2 },
       { contenitoreId: contB, count: 2 },
     ])).id;
+
+    // Anche qui capienza abbondante su entrambi i lati anche nel caso
+    // peggiore: verificaBatteria e assegna devono concordare sul sì.
+    expect(await verificaBatteria(batteriaMista)).toEqual({ ok: true });
 
     const r = await assegna(batteriaMista, classeId, teacherId);
     expect(r.ok).toBe(true);
