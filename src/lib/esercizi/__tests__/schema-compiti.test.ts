@@ -38,6 +38,14 @@ describe("schema di classi, contenitori, batterie e compiti", () => {
     expect(model("Tentativo")).toMatch(/compito\s+Compito\?\s+@relation/);
   });
 
+  it("cancellare un compito non distrugge i tentativi già fatti", () => {
+    expect(model("Tentativo")).toMatch(/compito\s+Compito\?\s+@relation\([^)]*onDelete:\s*SetNull/);
+  });
+
+  it("un esercizio ha il lato inverso verso i suoi contenitori", () => {
+    expect(model("Esercizio")).toMatch(/contenitori\s+ContenitoreEsercizio\[\]/);
+  });
+
   it("User ha i lati inversi delle nuove relazioni", () => {
     const u = model("User");
     for (const r of ["classi", "classiInsegnate", "contenitoriCreati", "batterieCreate", "compitiAssegnati"]) {

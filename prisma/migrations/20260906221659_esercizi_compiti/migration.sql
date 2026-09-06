@@ -1,3 +1,10 @@
+-- Come in 20260906202645_add_tentativo_abandoned_status: `prisma migrate dev`
+-- proponeva qui in testa un `ALTER TABLE "PracticeRun" ALTER COLUMN
+-- "expiresAt" SET DEFAULT now() + interval '1 hour'`, riasserzione del
+-- default già applicato (drift spurio del diffing di Prisma sul
+-- `dbgenerated` di quella colonna, estraneo a questo cambiamento): rimosso
+-- perché non è nostro da toccare qui.
+
 -- CreateTable
 CREATE TABLE "Classe" (
     "id" TEXT NOT NULL,
