@@ -19,8 +19,21 @@ export interface TentativoAperto {
 }
 
 /** Restituisce il tentativo in corso dello studente su quell'esercizio, o ne
- * apre uno nuovo sull'ultima versione. `null` se l'esercizio non esiste. */
-export async function avviaORiprendi(studentId: string, esercizioId: string): Promise<TentativoAperto | null> {
+ * apre uno nuovo sull'ultima versione. `null` se l'esercizio non esiste.
+ *
+ * `compitoId`, se passato, viene scritto sul tentativo e usato anche per
+ * TROVARLO: senza filtrare su di esso la ricerca del tentativo in corso
+ * riprenderebbe quello aperto dal link libero (che ha `compitoId` nullo),
+ * attribuendo al compito un lavoro che era già iniziato fuori da esso.
+ * Aprire lo stesso esercizio dentro e fuori da un compito produce quindi
+ * sempre due tentativi distinti: uno con `compitoId` valorizzato, uno con
+ * `compitoId` nullo, esattamente come un esercizio aperto dal link libero
+ * si è sempre comportato. */
+export async function avviaORiprendi(
+  studentId: string,
+  esercizioId: string,
+  compitoId?: string,
+): Promise<TentativoAperto | null> {
   const versione = await prisma.esercizioVersione.findFirst({
     where: { esercizioId },
     orderBy: { version: "desc" },
@@ -36,13 +49,14 @@ export async function avviaORiprendi(studentId: string, esercizioId: string): Pr
   const inCorso = await prisma.tentativo.findFirst({
     where: {
       studentId, esercizioVersioneId: versione.id, status: "IN_PROGRESS",
+      compitoId: compitoId ?? null,
       lastActivityAt: { gte: sogliaAttivita },
     },
     orderBy: { startedAt: "desc" },
   });
 
   const t = inCorso ?? (await prisma.tentativo.create({
-    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID() },
+    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID(), compitoId: compitoId ?? null },
   }));
 
   return {

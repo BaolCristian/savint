@@ -1124,6 +1124,11 @@
     "ricominciaAzione": "Ricomincia",
     "annulla": "Annulla",
     "erroreRicomincio": "Non è stato possibile ricominciare. Riprova.",
+    "compitiTitolo": "I tuoi compiti",
+    "compitoScadenza": "Scade il {quando}",
+    "compitoSenzaScadenza": "Nessuna scadenza",
+    "compitoProgresso": "{fatti} su {totali} esercizi completati",
+    "liberiTitolo": "Esercizi liberi",
     "classi": {
       "titolo": "Le tue classi",
       "descrizione": "Scegli le classi che insegni: potrai assegnare compiti solo a queste.",

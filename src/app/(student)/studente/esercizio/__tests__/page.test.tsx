@@ -43,4 +43,29 @@ describe("pagina dell'esercizio", () => {
     const albero = await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
     expect((albero as { key: string | null }).key).toBe("t1");
   });
+
+  // Task 7: un esercizio aperto da un compito (link con ?compitoId=...) deve
+  // registrare quel compito sul tentativo — altrimenti `avviaORiprendi`
+  // riprenderebbe/creerebbe sempre il tentativo "libero", vedi il commento
+  // gemello nel dominio (tentativo.ts).
+  it("inoltra il compitoId dai searchParams ad avviaORiprendi", async () => {
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+    });
+    await Page({
+      params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }),
+      searchParams: Promise.resolve({ compitoId: "compito-1" }),
+    });
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", "compito-1");
+  });
+
+  it("senza compitoId nei searchParams, avviaORiprendi si comporta come per un esercizio libero", async () => {
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+    });
+    await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", undefined);
+  });
 });

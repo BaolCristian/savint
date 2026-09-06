@@ -1124,6 +1124,11 @@
     "ricominciaAzione": "Start over",
     "annulla": "Cancel",
     "erroreRicomincio": "Could not start over. Please try again.",
+    "compitiTitolo": "Your assignments",
+    "compitoScadenza": "Due on {quando}",
+    "compitoSenzaScadenza": "No deadline",
+    "compitoProgresso": "{fatti} of {totali} exercises completed",
+    "liberiTitolo": "Free exercises",
     "classi": {
       "titolo": "Your classes",
       "descrizione": "Choose the classes you teach: you'll only be able to assign work to these.",
