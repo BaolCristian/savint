@@ -30,10 +30,16 @@ export type ParteEditor =
   | { tipo: "scelta"; consegna: string; punti: number; risposte: string[]; indiceGiusta: number }
   | { tipo: "espressione"; consegna: string; punti: number; risposta: string };
 
+/** Una parte da zero punti non ha senso in un esercizio: per una parte a
+ * scelta multipla produrrebbe una matrice di marcatura tutta a zero, e la
+ * posizione della risposta giusta smetterebbe di essere ricostruibile dal
+ * file (vedi da-numbas.ts). Ogni parte vale quindi almeno un punto. */
+const puntiSchema = z.number().min(1, "ogni parte deve valere almeno un punto");
+
 const parteNumericaSchema = z.object({
   tipo: z.literal("numerica"),
   consegna: testoSenzaMarcatori("consegna"),
-  punti: z.number().nonnegative(),
+  punti: puntiSchema,
   valore: z.string().min(1),
   tolleranza: tolleranzaSchema,
 });
@@ -42,7 +48,7 @@ const parteSceltaSchema = z
   .object({
     tipo: z.literal("scelta"),
     consegna: testoSenzaMarcatori("consegna"),
-    punti: z.number().nonnegative(),
+    punti: puntiSchema,
     risposte: z.array(testoSenzaMarcatori("risposta")).min(2).max(6),
     indiceGiusta: z.number().int().nonnegative(),
   })
@@ -54,7 +60,7 @@ const parteSceltaSchema = z
 const parteEspressioneSchema = z.object({
   tipo: z.literal("espressione"),
   consegna: testoSenzaMarcatori("consegna"),
-  punti: z.number().nonnegative(),
+  punti: puntiSchema,
   risposta: z.string().min(1),
 });
 
