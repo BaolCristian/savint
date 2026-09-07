@@ -325,10 +325,16 @@ function identificatoriLiberi(albero: jme.Tree, scope: jme.Scope): string[] {
  * Si fallisce se ANCHE UN SOLO campione non è finito (o lancia): è lo
  * stesso comportamento di `compare()`, che avvolge l'intero ciclo di
  * campionamento in un unico `try` — un solo punto che lancia rompe
- * l'INTERO confronto. Nella pratica questo ramo non troverà quasi mai un
- * problema (`vsetRange` pesca valori continui, la probabilità di colpire
- * esattamente una singolarità è nulla): resta per rispecchiare fedelmente
- * cosa fa la correzione, non perché ci si aspetti che scatti spesso. */
+ * l'INTERO confronto.
+ *
+ * Attenzione a non sottovalutare questo ramo. È vero che colpire ESATTAMENTE
+ * una singolarità ha probabilità nulla, perché `vsetRange` pesca valori
+ * continui: una risposta come `1/x` non verrà quasi mai intercettata qui, e
+ * nemmeno deve esserlo, perché la correzione vera si comporta allo stesso
+ * modo. Ma cadere in una REGIONE non valida è tutt'altra cosa e può essere
+ * frequente: `sqrt(x-5)` campionata su [0,1] lancia a ogni punto, e viene
+ * intercettata sempre. Sono due eventi diversi, e confonderli porterebbe a
+ * concludere che questo ramo è peso morto e a toglierlo. Non lo è. */
 function rispostaJmeFinita(rispostaTesto: string, scope: jme.Scope, parte: parts.PartBase): boolean {
   let albero: jme.Tree | null;
   try {
