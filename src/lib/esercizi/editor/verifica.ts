@@ -176,8 +176,10 @@ function erroreTestoStatico(question: NumbasQuestionJSON): EsitoVerifica | undef
  * `substitutePartPrompts` nel costruttore di `Question`). Le risposte a
  * scelta multipla e le loro spiegazioni NON compaiono qui: il motore non
  * le sostituisce affatto al caricamento (restano il testo grezzo che
- * l'autore ha scritto), quindi il controllo su queste — e su ogni altro
- * campo — resta quello statico sopra, che le guarda grezze. */
+ * l'autore ha scritto) — ma non per questo restano senza controllo: vedi
+ * `campiSceltaGrezzi` qui sotto, che le copre con lo STESSO meccanismo di
+ * sostituzione che il player usa a schermo (I1, Onda di correzioni
+ * finale), non con questo. */
 function testiSostituiti(caricata: Question): CampoTesto[] {
   return [
     { descrizione: "il testo dell'esercizio", testo: caricata.statementHtml },
@@ -189,6 +191,68 @@ function testiSostituiti(caricata: Question): CampoTesto[] {
   ];
 }
 
+/** Un campo di testo grezzo di una parte a scelta multipla, ancora da
+ * sostituire, con lo SCOPE della parte che serve a sostituirlo — la stessa
+ * coppia (testo grezzo, scope) che `costruisciParte`
+ * (`player-esercizio.tsx:94-107`) usa per costruire `parte.scelte` a
+ * schermo, tramite `variables.substituteHtml(html, scope)`. Non un secondo
+ * meccanismo di sostituzione: lo stesso, chiamato da qui invece che dal
+ * player. */
+interface CampoScelta {
+  descrizione: string;
+  testoGrezzo: string;
+  scope: jme.Scope;
+}
+
+/** Le spiegazioni (`distractors`) di una parte a scelta multipla, così come
+ * il motore le tiene in `part.settings` dopo il caricamento: NON un array
+ * piatto di stringhe (quello che l'autore scrive nel JSON, e che
+ * `versoNumbas`/`daNumbas` maneggiano — vedi `soloStringhe` sopra), ma un
+ * array di righe `string[][]`, una per scelta, ciascuna con UN solo
+ * elemento (`MultipleResponsePart#loadFromJSON`, engine:
+ * `this.settings.distractors = (distractors as string[]).map((d) => [d])`
+ * per un tipo "flipped" come "1_n_2" — la stessa trasposizione riga/colonna
+ * che flippa scelte e risposte per questo tipo). Un `soloStringhe` qui
+ * troverebbe sempre un array vuoto (i suoi elementi sono array, non
+ * stringhe): serve questo spacchettamento dedicato, non quello generico. */
+function distrattoriDichiarati(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((riga) => (Array.isArray(riga) && typeof riga[0] === "string" ? riga[0] : ""));
+}
+
+/** Le risposte proposte (`choices`) e le spiegazioni (`distractors`) di
+ * ogni parte a scelta multipla ("1_n_2", l'unico tipo che questo editor
+ * produce per una parte "scelta" — vedi `versoNumbas`), grezze, con lo
+ * scope necessario a sostituirle. Il controllo statico sopra
+ * (`erroreTestoStatico`/`campiTesto`) già guarda questi stessi campi per un
+ * identificatore non dichiarato dentro `\var{}`/`\simplify{{...}}`: questo
+ * è il controllo GEMELLO, a runtime, che rispecchia cosa succede quando la
+ * sostituzione vera gira (un comando LaTeX che compila ma produce
+ * "undefined", o che lancia del tutto) — lo stesso rapporto che
+ * `testiSostituiti` ha con `erroreTestoStatico` per statement/advice/prompt,
+ * un campo più in là (I1). */
+function campiSceltaGrezzi(caricata: Question): CampoScelta[] {
+  const campi: CampoScelta[] = [];
+  caricata.allParts().forEach((parte) => {
+    if (parte.type !== "1_n_2") return;
+    const scope = parte.getScope();
+    const impostazioni = parte.settings as Record<string, unknown>;
+    const numero = parte.index + 1;
+    soloStringhe(impostazioni.choices).forEach((scelta, i) => {
+      campi.push({ descrizione: `nella risposta ${i + 1} della parte ${numero}`, testoGrezzo: scelta, scope });
+    });
+    distrattoriDichiarati(impostazioni.distractors).forEach((spiegazione, i) => {
+      if (spiegazione === "") return; // versoNumbas riempie sempre le celle vuote: niente da sostituire.
+      campi.push({
+        descrizione: `nella spiegazione della risposta ${i + 1} della parte ${numero}`,
+        testoGrezzo: spiegazione,
+        scope,
+      });
+    });
+  });
+  return campi;
+}
+
 /** Un valore JME "spacchettato" (`jme.unwrapValue` dichiara `unknown`: è
  * la funzione di basso livello, senza il contratto di forma che porta il
  * tipo pubblico `JMEValue`) come numero JS finito? `number`/`bigint` sono
@@ -198,10 +262,21 @@ function testiSostituiti(caricata: Question): CampoTesto[] {
  * distingue un numero vero da un "numero" con denominatore zero, la
  * stessa cosa che `number-entry-part.ts` verifica con
  * `ComplexDecimal#isFinite` per decidere se un estremo è utilizzabile.
- * Non serve gestire un numero complesso qui: una risposta il cui estremo
- * valuta a un complesso fa già fallire `correctAnswer()` (i numeri
- * complessi non si possono ordinare — vedi il rapporto del task) prima di
- * arrivare a questo controllo. */
+ *
+ * **Corretto nella "Onda di correzioni finale" (C1)**: mancava il token
+ * JME "decimal" (`math.ComplexDecimal`, quello che `unwrapValue`
+ * restituisce per quel tipo). Non e' un caso raro: qualunque tolleranza a
+ * margine (`(valore) - (margine)`) fra un valore RAZIONALE (es. `(c-b)/a`
+ * con a, b, c interi — l'esempio della specifica stessa, "risolvi
+ * ax+b=c, accetta ±0.01") e un margine scritto come letterale decimale
+ * ("0.01") promuove l'intero risultato a "decimal": l'aritmetica JME fra
+ * un rational e un decimal produce sempre un decimal, mai un rational. Lo
+ * stesso identico controllo di `number-entry-part.ts` — finitezza della
+ * sola parte reale (`.re`), la parte immaginaria non serve controllarla
+ * qui per lo stesso motivo per cui non serve gestire un complesso in
+ * generale: un estremo che valuta a un complesso fa già fallire
+ * `correctAnswer()` (i numeri complessi non si possono ordinare — vedi
+ * il rapporto del task) prima di arrivare a questo controllo. */
 function comeNumeroFinito(valore: unknown): boolean {
   if (typeof valore === "number") {
     return Number.isFinite(valore);
@@ -211,6 +286,9 @@ function comeNumeroFinito(valore: unknown): boolean {
   }
   if (valore instanceof math.Fraction) {
     return Number.isFinite(valore.toFloat());
+  }
+  if (valore instanceof math.ComplexDecimal) {
+    return valore.re.isFinite();
   }
   return false;
 }
@@ -433,10 +511,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
     // Nessuno dei testi GIÀ sostituiti (enunciato, suggerimento, consegna
     // di ogni parte — vedi `testiSostituiti`) deve lasciare un marcatore
     // `\var{` non risolto o la stringa "undefined": o finirebbe stampato,
-    // letteralmente, davanti allo studente. Le risposte a scelta multipla
-    // e le loro spiegazioni non compaiono qui apposta: il motore non le
-    // sostituisce al caricamento, quindi il controllo statico sopra —
-    // che le guarda grezze — è l'unico che le copre.
+    // letteralmente, davanti allo studente.
     for (const campo of testiSostituiti(caricata)) {
       if (campo.testo.includes("\\var{")) {
         return {
@@ -447,6 +522,43 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
         };
       }
       if (campo.testo.includes("undefined")) {
+        return {
+          ok: false,
+          seme,
+          fase: "testo",
+          messaggio: `${campo.descrizione} contiene la stringa "undefined"`,
+        };
+      }
+    }
+
+    // Le risposte proposte e le spiegazioni di una parte a scelta multipla
+    // (I1, Onda di correzioni finale): il motore non le sostituisce al
+    // caricamento (restano grezze in `parte.settings`), ma il PLAYER le
+    // sostituisce a schermo con `variables.substituteHtml` — quindi vanno
+    // sostituite ANCHE qui, con lo stesso meccanismo, prima di applicare la
+    // stessa coppia di controlli di sopra. La sostituzione stessa può
+    // lanciare (un `\var{sqrt()}` fa fallire `scope.evaluate` per un numero
+    // di argomenti sbagliato, non solo produrre "undefined" come
+    // `\simplify{sqrt()}`): un fallimento qui è un esito da riportare, in
+    // fase "testo" come ogni altro difetto di questi campi, mai
+    // un'eccezione che scappa da `verificaSuSemi` — la stessa disciplina
+    // educata di `erroreTestoStatico` per lo stesso comando LaTeX.
+    for (const campo of campiSceltaGrezzi(caricata)) {
+      let sostituito: string;
+      try {
+        sostituito = variables.substituteHtml(campo.testoGrezzo, campo.scope);
+      } catch (e) {
+        return { ok: false, seme, fase: "testo", messaggio: `${campo.descrizione}: ${errorMessageIn(e, "it")}` };
+      }
+      if (sostituito.includes("\\var{")) {
+        return {
+          ok: false,
+          seme,
+          fase: "testo",
+          messaggio: `${campo.descrizione} contiene ancora un marcatore \\var{} non risolto`,
+        };
+      }
+      if (sostituito.includes("undefined")) {
         return {
           ok: false,
           seme,
@@ -468,7 +580,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
           ok: false,
           seme,
           fase: "risposta",
-          messaggio: `la parte "${parte.path}" non ha una risposta corretta`,
+          messaggio: `la parte ${parte.index + 1} non ha una risposta corretta`,
         };
       }
 
@@ -486,7 +598,9 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
           ok: false,
           seme,
           fase: "risposta",
-          messaggio: `la parte "${parte.path}" ha un estremo (minimo o massimo) non finito`,
+          messaggio:
+            `la parte ${parte.index + 1} ha un valore o una tolleranza che con questi numeri ` +
+            `produce un risultato non finito (per esempio una divisione per zero)`,
         };
       }
 
@@ -516,7 +630,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
             ok: false,
             seme,
             fase: "risposta",
-            messaggio: `la parte "${parte.path}" rende una risposta con "undefined": ${latex}`,
+            messaggio: `la parte ${parte.index + 1} rende una risposta con "undefined": ${latex}`,
           };
         }
 
@@ -536,7 +650,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
             ok: false,
             seme,
             fase: "risposta",
-            messaggio: `la parte "${parte.path}" ha come risposta "${risposta}", che non valuta a un numero finito`,
+            messaggio: `la parte ${parte.index + 1} ha come risposta "${risposta}", che non valuta a un numero finito`,
           };
         }
       }

@@ -396,4 +396,141 @@ describe("verificaSuSemi", () => {
     const esito = verificaSuSemi(question, 15);
     expect(esito.ok).toBe(false);
   });
+
+  describe("C1 — un valore razionale con margine (ComplexDecimal)", () => {
+    // L'esempio della specifica stessa: "risolvi ax+b=c, accetta ±0.01" —
+    // il primo esercizio che un docente scrive. a, b, c sono interi
+    // (random(...)): (c-b)/a valuta a un token JME "rational"
+    // (math.Fraction), ma sottrarre/sommare il margine decimale "0.01" (un
+    // letterale con la virgola, token "decimal") promuove l'intero
+    // risultato a "decimal" (math.ComplexDecimal) — comeNumeroFinito prima
+    // di questa correzione non sapeva riconoscere quel tipo e giudicava
+    // l'estremo "non finito" anche quando vale un numero reale finitissimo.
+    it("(c-b)/a con margine 0.01 non viene rifiutato per estremo non finito", () => {
+      const e: EsercizioEditor = { ...base,
+        variabili: [
+          { nome: "a", definizione: "random(2..9)", descrizione: "" },
+          { nome: "b", definizione: "random(-9..9 except 0)", descrizione: "" },
+          { nome: "c", definizione: "random(-9..9 except 0)", descrizione: "" },
+        ],
+        parti: [{ tipo: "numerica", consegna: "\\(x=\\)", punti: 2,
+                  valore: "(c-b)/a", tolleranza: { tipo: "margine", margine: "0.01" } }] };
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+
+    it("a/2 con margine 0.01 non viene rifiutato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        variabili: [{ nome: "a", definizione: "random(2..9)", descrizione: "" }],
+        parti: [{ tipo: "numerica", consegna: "x", punti: 2,
+                  valore: "a/2", tolleranza: { tipo: "margine", margine: "0.01" } }] };
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+
+    // Guardia contro la correzione eccessiva: un estremo che valuta
+    // DAVVERO a un numero non finito (divisione per zero) deve restare
+    // rifiutato anche dopo che comeNumeroFinito riconosce ComplexDecimal —
+    // qui a*b/c, con c che vale zero al seme 0 (random(0..3)).
+    it("a*b/c con c che puo' valere zero resta rifiutato", () => {
+      const e: EsercizioEditor = { ...base,
+        variabili: [
+          { nome: "a", definizione: "random(2..9)", descrizione: "" },
+          { nome: "b", definizione: "random(2..9)", descrizione: "" },
+          { nome: "c", definizione: "random(0..3)", descrizione: "" },
+        ],
+        parti: [{ tipo: "numerica", consegna: "x", punti: 2,
+                  valore: "a*b/c", tolleranza: { tipo: "margine", margine: "0.01" } }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+    });
+  });
+
+  describe("I1 — le scelte e le spiegazioni di una parte a scelta multipla non bypassano piu' la verifica", () => {
+    // Il difetto dimostrato dal revisore: `testiSostituiti` copre statement,
+    // advice e i prompt (gia' sostituiti dal motore al caricamento), ma
+    // "choices"/"distractors" restano grezzi finche' il PLAYER non li
+    // sostituisce a schermo (player-esercizio.tsx:107,
+    // `variables.substituteHtml` sullo scope della parte) — lo stesso
+    // meccanismo, non un secondo. Lo stesso identico \simplify{sqrt()} che
+    // nello statement viene gia' rifiutato ("il difetto sqrt() reso con
+    // 'undefined' viene intercettato nel testo dell'esercizio", sopra) qui
+    // passava indenne quando scritto in una risposta proposta o nella sua
+    // spiegazione.
+    it("\\simplify{sqrt()} in una risposta proposta (choices) viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
+          risposte: ["\\(\\simplify{sqrt()}\\)", "altro"], indiceGiusta: 1 }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("undefined");
+        expect(esito.messaggio).toContain("risposta");
+      }
+    });
+
+    it("\\simplify{sqrt()} nella spiegazione di una risposta sbagliata (distractors) viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
+          risposte: ["giusta", "sbagliata"], indiceGiusta: 0,
+          spiegazioni: ["", "\\(\\simplify{sqrt()}\\)"] }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("undefined");
+        expect(esito.messaggio).toContain("spiegazione");
+      }
+    });
+
+    // `\var{sqrt()}` (chiamata senza argomenti) fa LANCIARE la sostituzione
+    // vera (`scope.evaluate`, dentro `variables.substituteHtml`) invece di
+    // restituire "undefined" — il difetto dimostrato: "il player throws".
+    // La verifica deve intercettare anche questo, come un esito normale, non
+    // lasciarlo scappare come eccezione non gestita da verificaSuSemi.
+    it("\\var{sqrt()} in una risposta proposta non manda in eccezione la verifica, viene rifiutato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
+          risposte: ["\\(\\var{sqrt()}\\)", "altro"], indiceGiusta: 1 }] };
+      let esito: ReturnType<typeof verificaSuSemi> | undefined;
+      expect(() => {
+        esito = verificaSuSemi(versoNumbas(e));
+      }).not.toThrow();
+      expect(esito?.ok).toBe(false);
+      if (esito && !esito.ok) expect(esito.fase).toBe("testo");
+    });
+
+    // Guardia contro la correzione eccessiva: una scelta e una spiegazione
+    // "pulite", che referenziano solo variabili dichiarate, restano accettate.
+    it("scelte e spiegazioni che referenziano variabili dichiarate restano accettate", () => {
+      const e: EsercizioEditor = { ...base,
+        parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
+          risposte: ["\\(\\var{a}\\)", "\\(\\var{b}\\)"], indiceGiusta: 0,
+          spiegazioni: ["", "No, e' \\(\\var{a}\\), non \\(\\var{b}\\)"] }] };
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+  });
+
+  // I2 (Onda di correzioni finale): il revisore ha dimostrato con sedici
+  // mutazioni usa-e-getta, mai committate, che diversi controlli non
+  // facevano fallire NESSUN test esistente se rimossi — fra queste, rendere
+  // `rispostaJmeFinita` sempre vera. Nessun test già presente esercita il
+  // suo ramo "almeno un identificatore libero" quando quella libertà porta
+  // OGNI campione in una regione non valida (il commento su
+  // `rispostaJmeFinita` cita esattamente questo esempio, "sqrt(x-5)
+  // campionata su [0,1] lancia a ogni punto"): il test più vicino ("una
+  // risposta con una vera variabile libera dello studente resta accettata")
+  // copre solo il caso SANO. Questo test copre il rifiuto.
+  describe("I2 — rispostaJmeFinita rifiuta una risposta jme che cade sempre fuori dominio", () => {
+    it("sqrt(x-5), con x variabile libera campionata sul vsetRange di default [0,1], viene rifiutata", () => {
+      const e: EsercizioEditor = { ...base, testo: "x", variabili: [],
+        parti: [{ tipo: "espressione", consegna: "x", punti: 2, risposta: "sqrt(x-5)" }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("risposta");
+        expect(esito.messaggio).toContain("sqrt(x");
+        expect(esito.messaggio).toContain("non valuta a un numero finito");
+      }
+    });
+  });
 });
