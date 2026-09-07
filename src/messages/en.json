@@ -1291,6 +1291,7 @@
       "verifica": "Check",
       "verificaInCorso": "Checking…",
       "verificaOk": "No problems found across the twenty test seeds.",
+      "salvataggioBloccatoScelta": "Saving is blocked: one or more multiple-choice parts don't have a correct answer chosen yet.",
       "erroreVerifica": {
         "titolo": "Check failed",
         "seme": "Seed",

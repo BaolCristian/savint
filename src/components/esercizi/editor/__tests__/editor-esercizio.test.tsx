@@ -164,4 +164,50 @@ describe("EditorEsercizio — salvataggio e il dettaglio del rifiuto", () => {
     const [url] = vi.mocked(fetchMock).mock.calls[0]!;
     expect(String(url)).toContain("/api/esercizi/redazione/verifica");
   });
+
+  // Giro di correzioni 1: la versione precedente teneva "manca una scelta"
+  // come stato locale dentro ParteScelta, che il salvataggio non vedeva —
+  // `indiceGiusta` tornava comunque a 0 (un valore VALIDO) nel modello
+  // nell'istante stesso della rimozione, e "salva" lo scriveva senza che il
+  // docente scegliesse nulla, avviso o no. Qui si preme davvero "salva" e si
+  // ispeziona il corpo della richiesta — non l'avviso — riproducendo esattamente
+  // il modo in cui la revisione lo ha dimostrato.
+  it("rimuovere la risposta corretta blocca il salvataggio finché non se ne sceglie una nuova, e la richiesta non porta mai un indice indovinato", async () => {
+    const fetchMock: MockFetch = vi.fn(async () => new Response(JSON.stringify({ esercizioId: "e1", versione: 1 }), { status: 201 }));
+    global.fetch = fetchMock as never;
+    montaggio();
+
+    await userEvent.selectOptions(screen.getByLabelText(R.parti.tipo), "scelta");
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi }));
+
+    // Una parte nuova parte con due risposte, e il pulsante "rimuovi
+    // risposta" è disabilitato a due (MIN_RISPOSTE): ne serve una terza
+    // prima di poter rimuovere quella segnata come corretta.
+    await userEvent.click(screen.getByRole("button", { name: R.parti.scelta.aggiungiRisposta }));
+
+    // Segna la seconda risposta come corretta, poi la rimuove.
+    const radios = screen.getAllByRole("radio");
+    await userEvent.click(radios[1]!);
+    const bottoniRimuovi = screen.getAllByRole("button", { name: R.parti.scelta.rimuoviRisposta });
+    await userEvent.click(bottoniRimuovi[1]!);
+
+    const salvaBtn = screen.getByRole("button", { name: R.salva });
+    expect(salvaBtn).toBeDisabled();
+
+    // Il repro esatto della revisione: premere "salva" senza toccare nessun
+    // radio. Prima della correzione questo mandava una richiesta con
+    // `indiceGiusta: 0`.
+    await userEvent.click(salvaBtn);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    // Solo una scelta vera sblocca il salvataggio, e porta l'indice appena
+    // scelto — mai un valore preimpostato in silenzio.
+    await userEvent.click(screen.getAllByRole("radio")[0]!);
+    expect(salvaBtn).not.toBeDisabled();
+
+    await userEvent.click(salvaBtn);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const corpo = JSON.parse((vi.mocked(fetchMock).mock.calls[0]![1] as RequestInit).body as string);
+    expect(corpo.editor.parti[0].indiceGiusta).toBe(0);
+  });
 });

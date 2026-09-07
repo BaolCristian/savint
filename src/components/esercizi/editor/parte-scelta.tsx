@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,23 @@ type ParteSceltaEditor = Extract<ParteEditor, { tipo: "scelta" }>;
 
 const MIN_RISPOSTE = 2;
 const MAX_RISPOSTE = 6;
+
+/** Sentinella per "nessuna risposta corretta ancora scelta": mai un indice
+ * reale (0..risposte.length-1), quindi nessun `<input type="radio">` la
+ * mostra segnata per costruzione — non serve uno stato locale parallelo che
+ * ricordi "manca una scelta" e che il salvataggio non potrebbe comunque
+ * vedere (correzione riportata dal Giro di correzioni 1: la versione
+ * precedente teneva quello stato dentro `ParteScelta`, il salvataggio non
+ * lo vedeva, e `indiceGiusta` tornava comunque a 0 — un valore VALIDO — nel
+ * modello nell'istante stesso della rimozione). Qui il modello stesso porta
+ * il fatto che manca una scelta, ed `EditorEsercizio` lo legge per
+ * disabilitare "salva" (vedi editor-esercizio.tsx). `ParteEditor` (variante
+ * "scelta", in modello.ts — dominio, non toccato da questo task) tipizza
+ * `indiceGiusta` come `number` senza vincolo di segno a livello di tipo: lo
+ * schema zod che lo vincola non negativo entra in gioco solo al momento del
+ * salvataggio vero, che qui non può mai partire mentre vale questa
+ * sentinella. */
+export const NESSUNA_RISPOSTA_CORRETTA = -1;
 
 export interface ParteSceltaProps {
   parte: ParteSceltaEditor;
@@ -24,16 +40,7 @@ export interface ParteSceltaProps {
 export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
   const t = useTranslations("esercizi.redazione.parti");
   const nomeGruppo = "parte-scelta-corretta";
-
-  // Correzione riportata dalla revisione del task precedente: rimuovere la
-  // risposta segnata come corretta faceva tornare `indiceGiusta` a 0 in
-  // silenzio, e l'esercizio poteva essere salvato così — contenuto diverso
-  // da quello che il docente credeva di aver scritto, senza nessun avviso.
-  // Qui si richiede una scelta nuova: mentre questo flag è vero, nessun
-  // radio è mostrato segnato (anche se `parte.indiceGiusta` punta già a una
-  // risposta valida, per lo schema) finché il docente non ne clicca uno —
-  // quel click aggiorna `indiceGiusta` come sempre e riabbassa il flag.
-  const [correttaDaRiscegliere, setCorrettaDaRiscegliere] = useState(false);
+  const mancaScelta = parte.indiceGiusta === NESSUNA_RISPOSTA_CORRETTA;
 
   // `spiegazioni` è opzionale nel modello (assente = nessuna spiegazione per
   // nessuna risposta, vedi modello.ts): qui, per scrivere, si allinea sempre
@@ -55,7 +62,6 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
   }
 
   function segnaCorretta(indice: number) {
-    setCorrettaDaRiscegliere(false);
     onChange({ ...parte, indiceGiusta: indice });
   }
 
@@ -72,11 +78,15 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
     if (parte.risposte.length <= MIN_RISPOSTE) return;
     const risposte = parte.risposte.filter((_, i) => i !== indice);
     let indiceGiusta = parte.indiceGiusta;
-    const correttaRimossa = indice === parte.indiceGiusta;
-    if (correttaRimossa) indiceGiusta = 0;
-    else if (indice < parte.indiceGiusta) indiceGiusta -= 1;
+    if (indice === parte.indiceGiusta) {
+      // Nessun indice valido può sostituirlo in silenzio: il docente deve
+      // sceglierne uno vero prima che si possa salvare (vedi la sentinella
+      // sopra ed EditorEsercizio, che legge questo stesso valore).
+      indiceGiusta = NESSUNA_RISPOSTA_CORRETTA;
+    } else if (indice < parte.indiceGiusta) {
+      indiceGiusta -= 1;
+    }
     const spiegazioni = parte.spiegazioni?.filter((_, i) => i !== indice);
-    if (correttaRimossa) setCorrettaDaRiscegliere(true);
     onChange({ ...parte, risposte, indiceGiusta, spiegazioni });
   }
 
@@ -99,7 +109,7 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{t("scelta.risposte")}</legend>
-        {correttaDaRiscegliere && (
+        {mancaScelta && (
           <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm text-destructive">
             {t("scelta.correttaRimossa")}
           </p>
@@ -112,7 +122,7 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
                   <input
                     type="radio"
                     name={nomeGruppo}
-                    checked={!correttaDaRiscegliere && parte.indiceGiusta === i}
+                    checked={parte.indiceGiusta === i}
                     onChange={() => segnaCorretta(i)}
                     aria-label={t("scelta.corretta")}
                   />

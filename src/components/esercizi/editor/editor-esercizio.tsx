@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { EsercizioEditor, ParteEditor } from "@/lib/esercizi/editor/modello";
 import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
-import { ParteScelta } from "./parte-scelta";
+import { ParteScelta, NESSUNA_RISPOSTA_CORRETTA } from "./parte-scelta";
 import { ParteEspressione } from "./parte-espressione";
 import { Anteprima } from "./anteprima";
 
@@ -121,6 +121,20 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
   const [verificando, setVerificando] = useState(false);
   const [rifiutoVerifica, setRifiutoVerifica] = useState<CorpoRifiuto | null>(null);
   const [verificaOk, setVerificaOk] = useState(false);
+
+  // Giro di correzioni 1: qui, non dentro `ParteScelta`, perché è questo il
+  // componente che salva. Uno stato "manca una scelta" che vive solo dentro
+  // la parte non può mai bloccare nulla — il salvataggio non lo vede. La
+  // fonte di verità è il modello stesso: `ParteScelta` scrive la sentinella
+  // `NESSUNA_RISPOSTA_CORRETTA` in `indiceGiusta` quando la risposta
+  // segnata come corretta viene rimossa (vedi parte-scelta.tsx), e finché
+  // resta lì "salva" (e "controlla", che manderebbe comunque un
+  // `indiceGiusta` fuori dai vincoli dello schema del dominio) restano
+  // disabilitati — mai solo un avviso accanto a un pulsante che funziona lo
+  // stesso.
+  const sceltaMancante = editor.parti.some(
+    (p) => p.tipo === "scelta" && p.indiceGiusta === NESSUNA_RISPOSTA_CORRETTA,
+  );
 
   function aggiornaMeta<K extends keyof EsercizioEditor["meta"]>(campo: K, valore: EsercizioEditor["meta"][K]) {
     setEditor((e) => ({ ...e, meta: { ...e.meta, [campo]: valore } }));
@@ -357,15 +371,21 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       <Anteprima editor={editor} locale="it" />
 
       <section className="flex flex-wrap items-center gap-3 border-t pt-4">
-        <Button type="button" variant="outline" onClick={verifica} disabled={verificando}>
+        <Button type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
           {verificando ? t("verificaInCorso") : t("verifica")}
         </Button>
-        <Button type="button" onClick={salva} disabled={salvando}>
+        <Button type="button" onClick={salva} disabled={salvando || sceltaMancante}>
           {salvando ? t("salvataggioInCorso") : t("salva")}
         </Button>
         {salvatoOk && <span className="text-sm text-brand-green">{t("salvato")}</span>}
         {verificaOk && <span className="text-sm text-brand-green">{t("verificaOk")}</span>}
       </section>
+
+      {sceltaMancante && (
+        <p role="alert" className="text-sm text-destructive">
+          {t("salvataggioBloccatoScelta")}
+        </p>
+      )}
 
       {rifiutoVerifica && <DettaglioRifiuto corpo={rifiutoVerifica} />}
       {rifiutoSalvataggio && <DettaglioRifiuto corpo={rifiutoSalvataggio} />}

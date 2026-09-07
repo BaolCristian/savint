@@ -1291,6 +1291,7 @@
       "verifica": "Controlla",
       "verificaInCorso": "Controllo…",
       "verificaOk": "Nessun problema nei venti semi di prova.",
+      "salvataggioBloccatoScelta": "Il salvataggio è bloccato: una o più parti a scelta multipla non hanno ancora una risposta corretta scelta.",
       "erroreVerifica": {
         "titolo": "Verifica non superata",
         "seme": "Seme",
