@@ -41,6 +41,8 @@ export function CompitoForm({ batterie, classi }: { batterie: Opzione[]; classi:
     if (corpo.error === "non_insegni_questa_classe") return t("erroreNonInsegni");
     if (corpo.error === "batteria_non_trovata") return t("erroreBatteriaNonTrovata");
     if (corpo.error === "classe_non_trovata") return t("erroreClasseNonTrovata");
+    if (corpo.error === "scadenza_prima_apertura") return t("erroreScadenzaPrimaApertura");
+    if (corpo.error === "scadenza_nel_passato") return t("erroreScadenzaPassata");
     return t("erroreGenerico");
   }
 

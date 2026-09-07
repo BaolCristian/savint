@@ -1191,6 +1191,8 @@
       "erroreNonInsegni": "You don't teach this class.",
       "erroreBatteriaNonTrovata": "The chosen battery no longer exists.",
       "erroreClasseNonTrovata": "The chosen class no longer exists.",
+      "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
+      "erroreScadenzaPassata": "The deadline is already in the past.",
       "erroreGenerico": "Something went wrong. Please try again.",
       "elencoTitolo": "Assigned work",
       "nessunCompito": "You haven't assigned any work yet.",

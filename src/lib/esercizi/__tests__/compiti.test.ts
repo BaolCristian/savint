@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
 import { creaBatteria as creaBatteriaGrezza, verificaBatteria } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
+import { dichiaraInsegnamento } from "../classi";
 import {
   assegna, compitiDellaClasse, compitiDelloStudente, consegneDelCompito,
 } from "../compiti";
@@ -426,6 +427,32 @@ describe("assegna", () => {
     expect(secondaMeta.every((eid) => inContB.has(eid))).toBe(true);
   });
 
+  // Fix round finale, item 4: `assegna` non si lamentava affatto di date
+  // assurde — né una scadenza prima dell'apertura, né una già nel passato.
+  describe("le date della finestra", () => {
+    it("una scadenza prima dell'apertura viene rifiutata", async () => {
+      const apertura = new Date(Date.now() + 10 * 86_400_000);
+      const scadenza = new Date(Date.now() + 5 * 86_400_000); // prima di apertura
+      const r = await assegna(batteriaId, classeId, teacherId, { opensAt: apertura, dueAt: scadenza });
+      expect(r).toMatchObject({ ok: false, motivo: "scadenza_prima_apertura" });
+      expect(await prisma.compito.count({ where: { batteriaId, classeId } })).toBe(0);
+    });
+
+    it("una scadenza già nel passato viene rifiutata", async () => {
+      const scadenza = new Date(Date.now() - 86_400_000);
+      const r = await assegna(batteriaId, classeId, teacherId, { dueAt: scadenza });
+      expect(r).toMatchObject({ ok: false, motivo: "scadenza_nel_passato" });
+      expect(await prisma.compito.count({ where: { batteriaId, classeId } })).toBe(0);
+    });
+
+    it("apertura e scadenza entrambe future, con apertura prima, si assegna normalmente", async () => {
+      const apertura = new Date(Date.now() + 5 * 86_400_000);
+      const scadenza = new Date(Date.now() + 10 * 86_400_000);
+      const r = await assegna(batteriaId, classeId, teacherId, { opensAt: apertura, dueAt: scadenza });
+      expect(r.ok).toBe(true);
+    });
+  });
+
   // Fix round finale, item 1 (seconda metà — "conta solo ciò che è stato
   // pescato"): il committente ha dimostrato uno studente che non aveva
   // risolto NESSUNO degli esercizi assegnati comparire come 5/3 nella
@@ -491,6 +518,46 @@ describe("assegna", () => {
       // assegnato (`suo.esercizi`).
       expect(suo.fatti).toBe(0);
       expect(suo.esercizi).toHaveLength(3);
+    });
+  });
+
+  // Fix round finale, item 2: la revisione ha dimostrato che un'assegnazione
+  // può diventare illeggibile da CHIUNQUE. `dichiaraInsegnamento` è una
+  // sostituzione integrale (dominio, classi.ts): un docente che smette di
+  // insegnare la classe (anche per errore, con due schede aperte) perde
+  // l'unico controllo che prima autorizzava `consegneDelCompito` — pur
+  // essendo lui ad aver creato quel compito.
+  describe("chi ha assegnato il compito lo vede sempre, anche se non insegna più la classe", () => {
+    it("il docente che ha smesso di insegnare la classe vede comunque le proprie consegne", async () => {
+      const r = await assegna(batteriaId, classeId, teacherId);
+      if (!r.ok) throw new Error("assegnazione fallita");
+
+      // Sostituzione integrale dell'elenco insegnato: `teacherId` smette di
+      // insegnare QUALUNQUE classe, `classeId` compresa — esattamente ciò
+      // che succede salvando da una scheda rimasta indietro con la casella
+      // di `classeId` scoperta.
+      await dichiaraInsegnamento(teacherId, []);
+
+      const esito = await consegneDelCompito(r.compitoId, teacherId);
+      // Prima del fix: `{ ok: false, motivo: "non_insegni_questa_classe" }`
+      // — il docente che aveva assegnato il compito, cacciato dalle proprie
+      // consegne.
+      expect(esito.ok).toBe(true);
+      if (!esito.ok) return;
+      expect(esito.righe).toHaveLength(2);
+    });
+
+    it("un terzo docente che non insegna la classe e non ha assegnato il compito resta rifiutato", async () => {
+      const r = await assegna(batteriaId, classeId, teacherId);
+      if (!r.ok) throw new Error("assegnazione fallita");
+      await dichiaraInsegnamento(teacherId, []);
+
+      // `teacherAltro` non insegna `classeId` (insegna solo `classeAltrui`,
+      // vedi il beforeEach) e non è lui ad aver assegnato questo compito: la
+      // seconda clausola non deve allargare l'accesso a chiunque, solo a
+      // chi ha davvero assegnato quel compito.
+      const esito = await consegneDelCompito(r.compitoId, teacherAltro);
+      expect(esito).toEqual({ ok: false, motivo: "non_insegni_questa_classe" });
     });
   });
 

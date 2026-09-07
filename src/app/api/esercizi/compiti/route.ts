@@ -21,6 +21,8 @@ const STATI: Record<string, number> = {
   classe_non_trovata: 404,
   non_insegni_questa_classe: 403,
   esercizi_insufficienti: 409,
+  scadenza_prima_apertura: 400,
+  scadenza_nel_passato: 400,
 };
 
 export async function POST(request: Request) {

@@ -1191,6 +1191,8 @@
       "erroreNonInsegni": "Non insegni questa classe.",
       "erroreBatteriaNonTrovata": "La batteria scelta non esiste più.",
       "erroreClasseNonTrovata": "La classe scelta non esiste più.",
+      "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
+      "erroreScadenzaPassata": "La scadenza è già nel passato.",
       "erroreGenerico": "Si è verificato un errore. Riprova.",
       "elencoTitolo": "Compiti assegnati",
       "nessunCompito": "Non hai ancora assegnato nessun compito.",

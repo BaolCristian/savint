@@ -7,7 +7,9 @@ type MotivoAssegna =
   | "batteria_non_trovata"
   | "classe_non_trovata"
   | "non_insegni_questa_classe"
-  | "esercizi_insufficienti";
+  | "esercizi_insufficienti"
+  | "scadenza_prima_apertura"
+  | "scadenza_nel_passato";
 
 /** Assegna una batteria a una classe: pesca UNA volta, con un seme nuovo, e
  * fissa il risultato nel Compito. Da quel momento in poi nessuna modifica al
@@ -39,6 +41,19 @@ export async function assegna(
   | { ok: true; compitoId: string }
   | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown }
 > {
+  // Controllo di forma sulle date, prima di qualunque interrogazione: non
+  // richiede il database, quindi è il più economico da fare per primo. Una
+  // scadenza prima dell'apertura non ha senso (la finestra sarebbe già
+  // chiusa quando si apre), e una scadenza già nel passato produce un
+  // compito "scaduto all'arrivo" — probabilmente un anno digitato male —
+  // senza che nessuno, dominio, rotta o form, se ne accorga.
+  if (opzioni?.opensAt && opzioni?.dueAt && opzioni.dueAt < opzioni.opensAt) {
+    return { ok: false, motivo: "scadenza_prima_apertura" };
+  }
+  if (opzioni?.dueAt && opzioni.dueAt < new Date()) {
+    return { ok: false, motivo: "scadenza_nel_passato" };
+  }
+
   const batteria = await prisma.batteria.findUnique({
     where: { id: batteriaId },
     include: {

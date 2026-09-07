@@ -93,6 +93,31 @@ describe("pagina di assegnazione dei compiti", () => {
     expect(await screen.findByText("erroreNonInsegni")).toBeInTheDocument();
   });
 
+  // Fix round finale, item 4: `assegna` (dominio) rifiuta ora una scadenza
+  // prima dell'apertura o già nel passato — surfaced nel form con lo stesso
+  // schema del rifiuto per capienza (un ramo dedicato in `messaggioErrore`).
+  it("un rifiuto per scadenza prima dell'apertura mostra il motivo", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "scadenza_prima_apertura" }), { status: 400 }),
+    ) as typeof fetch;
+
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "assegna" }));
+
+    expect(await screen.findByText("erroreScadenzaPrimaApertura")).toBeInTheDocument();
+  });
+
+  it("un rifiuto per scadenza già nel passato mostra il motivo", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "scadenza_nel_passato" }), { status: 400 }),
+    ) as typeof fetch;
+
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "assegna" }));
+
+    expect(await screen.findByText("erroreScadenzaPassata")).toBeInTheDocument();
+  });
+
   it("elenca i compiti già assegnati alle classi del docente, linkando al dettaglio", async () => {
     vi.mocked(compitiDellaClasse).mockResolvedValue([
       { id: "comp1", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
