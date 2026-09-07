@@ -42,6 +42,7 @@ export default async function Page({
       content={tentativo.content}
       statoIniziale={tentativo.state}
       lastActivityAt={tentativo.lastActivityAt}
+      richiestaCompitoRifiutata={tentativo.richiestaCompitoRifiutata}
       locale={locale}
     />
   );

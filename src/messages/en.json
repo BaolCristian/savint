@@ -1118,6 +1118,7 @@
     "tentativoAperto": "Attempt in progress",
     "ultimoTentativo": "Last attempt: {score}/{maxScore}",
     "ripresaTentativo": "You're continuing an attempt you already started. Last edited: {quando}.",
+    "praticaLiberaAvviso": "This exercise is no longer linked to an assigned task: what you do here counts as free practice.",
     "ricomincia": "Start over",
     "ricominciaTitolo": "Start over?",
     "ricominciaDescrizione": "Your answers so far will be lost: the exercise will restart from scratch, with different numbers.",

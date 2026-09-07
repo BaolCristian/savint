@@ -40,6 +40,14 @@ export interface PlayerEsercizioProps {
    * sta riprendendo, non se riprenderlo — quella decisione la prende
    * `statoGiaRisposto` da `statoIniziale`, mai da questa data. */
   lastActivityAt: Date;
+  /** Vero quando lo studente aveva chiesto l'esercizio come parte di un
+   * compito (link `?compitoId=...`) ma quella richiesta è stata respinta
+   * (dominio: `richiestaCompitoRifiutata`, tentativo.ts) — questo tentativo
+   * è aperto come pratica libera, non come consegna di un'assegnazione.
+   * Opzionale: assente (o `false`) per un esercizio aperto dal link libero,
+   * dove non c'è mai stata nessuna richiesta da respingere e quindi niente
+   * da segnalare (Secondo giro, item 2). */
+  richiestaCompitoRifiutata?: boolean;
   locale: "it" | "en";
 }
 
@@ -379,7 +387,7 @@ function SpiegazioneParte({
 }
 
 export function PlayerEsercizio({
-  tentativoId, esercizioId, seed, content, statoIniziale, lastActivityAt, locale,
+  tentativoId, esercizioId, seed, content, statoIniziale, lastActivityAt, richiestaCompitoRifiutata, locale,
 }: PlayerEsercizioProps) {
   const t = useTranslations("esercizi");
   const router = useRouter();
@@ -679,6 +687,17 @@ export function PlayerEsercizio({
 
   return (
     <section className="space-y-6">
+      {richiestaCompitoRifiutata && (
+        // Una riga silenziosa, non un avviso (Secondo giro, item 2): lo
+        // studente non ha sbagliato nulla, e mostrarla come un errore
+        // allarmerebbe per un esito che nella maggioranza dei casi è
+        // benigno (un'assegnazione non ancora aperta, una classe cambiata
+        // fra un accesso e l'altro — vedi `richiestaCompitoRifiutata` nel
+        // dominio). Ma deve essere VISIBILE: senza questa riga il player non
+        // diceva nulla che permettesse allo studente di distinguere un
+        // tentativo che conta per un compito da uno che non conta più.
+        <p className="text-sm text-muted-foreground">{t("praticaLiberaAvviso")}</p>
+      )}
       {bannerRipresaVisibile && (
         // `role="status"` (live region "polite"): comparire in silenzio,
         // senza che chi usa uno screen reader se ne accorga, sarebbe

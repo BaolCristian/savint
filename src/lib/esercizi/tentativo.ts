@@ -17,6 +17,23 @@ export interface TentativoAperto {
    * QUANDO risale il lavoro che sta riprendendo, non solo che lo sta
    * riprendendo. */
   lastActivityAt: Date;
+  /** Vero quando un `compitoId` è stato richiesto (query string) ma
+   * `compitoApribile` lo ha respinto — il tentativo qui sotto è comunque
+   * aperto, ma come esercizio LIBERO, non come consegna dell'assegnazione
+   * che lo studente pensava di star facendo (Secondo giro, item 2). Falso
+   * sia per un esercizio libero vero (nessun `compitoId` mai richiesto:
+   * niente da segnalare) sia per un `compitoId` valido.
+   *
+   * Il percorso non è ipotetico: `allineaClassi` gira a OGNI accesso per
+   * risincronizzare le classi dai gruppi Google. Uno studente può iniziare
+   * un esercizio assegnato, cambiare classe fra un accesso e l'altro (la
+   * classe cambia gruppo, o lui esce dal gruppo), e tornare sullo stesso
+   * link: `compitoApribile` non lo trova più iscritto, il lavoro già fatto
+   * resta nel tentativo vecchio (mai più ripreso, perché la ricerca del
+   * tentativo IN_PROGRESS ora filtra su `compitoId: null`) e quello nuovo
+   * non conterà mai come consegna. La pagina non mostrava nulla che
+   * permettesse allo studente di accorgersene. */
+  richiestaCompitoRifiutata: boolean;
 }
 
 /** Restituisce il tentativo in corso dello studente su quell'esercizio, o ne
@@ -60,9 +77,13 @@ export async function avviaORiprendi(
   });
   if (!versione) return null;
 
-  const compitoIdEffettivo = compitoId && (await compitoApribile(compitoId, studentId, esercizioId))
-    ? compitoId
-    : undefined;
+  const compitoValido = compitoId ? await compitoApribile(compitoId, studentId, esercizioId) : false;
+  const compitoIdEffettivo = compitoValido ? compitoId : undefined;
+  // Vero solo se qualcosa era stato DAVVERO richiesto e quel qualcosa è
+  // stato respinto — mai per un esercizio libero vero (`compitoId`
+  // assente fin dall'inizio, `compitoValido` resta `false` ma non c'è
+  // nessuna richiesta da segnalare come rifiutata).
+  const richiestaCompitoRifiutata = !!compitoId && !compitoValido;
 
   // Conservazione pigra, come per PracticeRun: un tentativo fermo da più della
   // finestra non si riprende, se ne apre uno nuovo. Nessun lavoro pianificato
@@ -92,6 +113,7 @@ export async function avviaORiprendi(
     maxScore: t.maxScore,
     status: t.status,
     lastActivityAt: t.lastActivityAt,
+    richiestaCompitoRifiutata,
   };
 }
 

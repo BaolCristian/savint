@@ -1118,6 +1118,7 @@
     "tentativoAperto": "Tentativo in corso",
     "ultimoTentativo": "Ultimo tentativo: {score}/{maxScore}",
     "ripresaTentativo": "Stai riprendendo un tentativo già iniziato. Ultima modifica: {quando}.",
+    "praticaLiberaAvviso": "Questo esercizio non risulta più collegato a un compito assegnato: quello che fai qui conta come pratica libera.",
     "ricomincia": "Ricomincia",
     "ricominciaTitolo": "Ricominciare da capo?",
     "ricominciaDescrizione": "Le risposte date finora andranno perse: l'esercizio ripartirà da zero, con numeri diversi.",

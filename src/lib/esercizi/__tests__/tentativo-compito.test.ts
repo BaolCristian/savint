@@ -36,6 +36,7 @@ async function pulisci() {
   await prisma.batteria.deleteMany({ where: { name: { startsWith: PREFIX } } });
   await prisma.contenitoreEsercizio.deleteMany({ where: { contenitore: { name: { startsWith: PREFIX } } } });
   await prisma.contenitore.deleteMany({ where: { name: { startsWith: PREFIX } } });
+  await prisma.classeStudente.deleteMany({ where: { classe: { googleGroupEmail: { startsWith: PREFIX } } } });
   await prisma.classeDocente.deleteMany({ where: { classe: { googleGroupEmail: { startsWith: PREFIX } } } });
   await prisma.classe.deleteMany({ where: { googleGroupEmail: { startsWith: PREFIX } } });
   await prisma.esercizio.deleteMany({ where: { id: { startsWith: PREFIX } } });
@@ -192,6 +193,47 @@ describe("avviaORiprendi con un compito", () => {
       // rifiuta la PAGINA, apre l'esercizio come libero — `t` non è `null`.
       expect(t).not.toBeNull();
       expect(t!.content).toBeTruthy();
+    });
+  });
+
+  // Secondo giro, item 2: `richiestaCompitoRifiutata` deve distinguere "non
+  // era mai stato richiesto niente" da "qualcosa era stato richiesto ed è
+  // stato respinto" — solo il secondo caso va segnalato allo studente.
+  describe("richiestaCompitoRifiutata segnala solo una richiesta davvero respinta", () => {
+    it("un compitoId non valido la segnala vera", async () => {
+      const t = await avviaORiprendi(studentId, ESERCIZIO_ID, "non-esiste-questo-compito");
+      expect(t!.richiestaCompitoRifiutata).toBe(true);
+    });
+
+    it("nessun compitoId richiesto non segnala nessun rifiuto", async () => {
+      const t = await avviaORiprendi(studentId, ESERCIZIO_ID);
+      expect(t!.richiestaCompitoRifiutata).toBe(false);
+    });
+
+    it("un compitoId valido non segnala nessun rifiuto", async () => {
+      const t = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+      expect(t!.richiestaCompitoRifiutata).toBe(false);
+    });
+
+    // Il percorso reale segnalato dal revisore, non ipotetico:
+    // `allineaClassi` gira a OGNI accesso per risincronizzare le classi dai
+    // gruppi Google. Uno studente può iniziare un esercizio assegnato,
+    // perdere l'iscrizione alla classe fra un accesso e l'altro, e tornare
+    // sullo stesso link — qui simulato togliendo direttamente l'iscrizione,
+    // l'effetto che un cambio di gruppo Google produrrebbe.
+    it("una classe persa fra un accesso e l'altro fa cadere il compito, e lo segnala", async () => {
+      const primo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+      expect(primo!.richiestaCompitoRifiutata).toBe(false);
+
+      await prisma.classeStudente.delete({ where: { classeId_studentId: { classeId, studentId } } });
+
+      const secondo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+      // Prima del fix: questo campo non esisteva — niente diceva allo
+      // studente che il lavoro che sta per fare non conta più per il
+      // compito che pensava di stare svolgendo.
+      expect(secondo!.richiestaCompitoRifiutata).toBe(true);
+      const riga = await prisma.tentativo.findUniqueOrThrow({ where: { id: secondo!.tentativoId } });
+      expect(riga.compitoId).toBeNull();
     });
   });
 });
