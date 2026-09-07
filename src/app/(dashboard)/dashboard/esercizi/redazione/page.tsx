@@ -20,7 +20,11 @@ import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-clien
  * (`caricaPerEditor` rilegge riga, versione e autore), ~68 query e 864 ms
  * misurati su 24 esercizi. Corretto qui, lato dominio (`VoceRedazione.motivo`,
  * redazione.ts) e qui, lato pagina (nessuna rilettura). Vedi il rapporto:
- * .superpowers/sdd/2026-09-07-esercizi-05-editor/onda-finale-interfaccia.md */
+ * .superpowers/sdd/2026-09-07-esercizi-05-editor/onda-finale-interfaccia.md
+ *
+ * "Duplica" (`testi.duplica*`, sotto) è di nuovo offerto — solo sulle righe
+ * già modificabili, non su quelle di sola lettura: vedi il commento in
+ * `redazione-elenco-client.tsx`. */
 export default async function Page() {
   await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.redazione.elenco");
@@ -65,7 +69,9 @@ export default async function Page() {
             modificabile: t("modificabile"),
             soloLettura: t("soloLettura"),
             apri: t("apri"),
-            soloRepository: t("soloRepository"),
+            duplica: t("duplica"),
+            duplicaInCorso: t("duplicaInCorso"),
+            duplicaErrore: t("duplicaErrore"),
           }}
         />
       )}

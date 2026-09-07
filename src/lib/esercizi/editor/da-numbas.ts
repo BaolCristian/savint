@@ -24,14 +24,19 @@ const rifiutaCostrutto = (dettaglio: string): Lettura => ({ ok: false, motivo: "
  * trattare: una via d'uscita concreta, non solo una porta chiusa.
  *
  * **Rinominata da `SUGGERIMENTO_DUPLICA` (Onda finale, I4)**: il pulsante
- * "duplica" che questo testo raccomandava è stato tolto dall'elenco e dalla
- * pagina di modifica (`redazione-elenco-client.tsx`, `[id]/page.tsx`) — la
- * duplicazione copia il contenuto GREZZO dell'ultima versione, quindi per
- * un esercizio non rappresentabile il duplicato ha lo stesso identico
- * contenuto e riceve lo stesso identico rifiuto da questo modulo: "duplica"
- * non porta MAI a una copia modificabile con l'implementazione attuale.
- * Il vecchio testo, lasciato invariato, avrebbe indicato un pulsante che
- * non esiste più nella pagina che il docente ha davanti. */
+ * "duplica" che questo testo raccomandava non è più offerto per un
+ * esercizio non rappresentabile — la duplicazione copia il contenuto
+ * GREZZO dell'ultima versione, quindi per un esercizio non rappresentabile
+ * il duplicato ha lo stesso identico contenuto e riceve lo stesso identico
+ * rifiuto da questo modulo: "duplica" non porta MAI a una copia
+ * modificabile con l'implementazione attuale, quindi non va promesso qui.
+ * Il vecchio testo, lasciato invariato, avrebbe indicato un pulsante che il
+ * docente non ha davanti per QUESTA riga.
+ *
+ * (La correzione successiva a I4 aveva tolto il pulsante anche dalle righe
+ * già modificabili dell'elenco — una correzione eccessiva, non richiesta
+ * da questo modulo: `redazione-elenco-client.tsx` lo offre di nuovo lì, e
+ * solo lì, dove duplicare produce davvero una copia modificabile.) */
 const SUGGERIMENTO_REPOSITORIO =
   "Può essere modificato solo intervenendo direttamente nel repository dei contenuti.";
 

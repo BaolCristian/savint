@@ -283,7 +283,9 @@ describe("duplicaEsercizio", () => {
 
     const copia = await prisma.esercizio.findUniqueOrThrow({ where: { id: esito.esercizioId } });
     expect(copia.authorId).toBe(altroDocenteId);
-    expect(copia.title).toBe(base.meta.titolo);
+    // Il titolo porta "(copia)" in coda: senza, l'elenco mostrerebbe due
+    // righe con lo stesso identico titolo, distinguibili solo aprendole.
+    expect(copia.title).toBe(`${base.meta.titolo} (copia)`);
 
     const originale = await prisma.esercizio.findUniqueOrThrow({ where: { id: creato.esercizioId } });
     expect(originale.authorId).toBe(docenteId);
@@ -292,7 +294,13 @@ describe("duplicaEsercizio", () => {
     expect(versioniCopia).toHaveLength(1);
   });
 
-  it("duplica anche un esercizio che l'editor non sa rappresentare (la via d'uscita che i messaggi promettono)", async () => {
+  // La funzione stessa non guarda `daNumbas` (vedi il commento su
+  // `duplicaEsercizio`): duplica un contenuto non rappresentabile
+  // altrettanto fedelmente di uno modificabile. È l'elenco della
+  // redazione a non chiamarla per queste righe — offrire "duplica" lì
+  // lascerebbe solo un'altra riga di sola lettura (vedi
+  // `redazione/__tests__/page.test.tsx`, che prova entrambe le direzioni).
+  it("duplica anche un esercizio che l'editor non sa rappresentare, benché l'elenco non offra il pulsante per queste righe", async () => {
     // Costruito a mano: un tipo di parte (m_n_2) che daNumbas rifiuta.
     const originale = await prisma.esercizio.create({
       data: { title: `${PREFIX}Non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, authorId: docenteId },

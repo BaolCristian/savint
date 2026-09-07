@@ -74,9 +74,9 @@ describe("il corpus reale", () => {
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
       expect(esito.dettaglio).toContain("checkVariableNames");
-      // Onda finale, I4: il messaggio non raccomanda più "duplica" (il
-      // pulsante è stato tolto, vedi SUGGERIMENTO_REPOSITORIO) — indica
-      // invece che l'unica via è il repository dei contenuti.
+      // Onda finale, I4: il messaggio non raccomanda più "duplica" per
+      // questa riga di sola lettura (vedi SUGGERIMENTO_REPOSITORIO) —
+      // indica invece che l'unica via è il repository dei contenuti.
       expect(esito.dettaglio).toContain("repository dei contenuti");
     }
   });

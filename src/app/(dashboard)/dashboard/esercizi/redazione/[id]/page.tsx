@@ -11,7 +11,9 @@ import { ModificaEsercizioClient } from "./modifica-esercizio-client";
  * modificabile o inesistente, non solo il caso comodo. `caricaPerEditor` è
  * anche il controllo: `non_trovato` è un 404 (mai una pagina che finge un
  * esercizio inesistente), `non_rappresentabile` mostra lo stesso motivo del
- * dominio e lo stesso "duplica" dell'elenco, invece dell'editor. */
+ * dominio invece dell'editor — mai "duplica" qui: duplicare non
+ * cambierebbe il verdetto (vedi il commento su `duplicaEsercizio`,
+ * redazione.ts), lasciando solo un'altra copia di sola lettura. */
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.redazione.elenco");
@@ -27,13 +29,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {t("torna")}
         </Link>
         <h1 className="text-xl font-semibold">{t("nonModificabileTitolo")}</h1>
+        {/* `esito.dettaglio` è il messaggio del dominio (`daNumbas`,
+            SUGGERIMENTO_REPOSITORIO): chiude già da sé con "può essere
+            modificato solo intervenendo direttamente nel repository dei
+            contenuti". Questa pagina non lo ripete più in un secondo
+            paragrafo — prima diceva la stessa frase due volte. */}
         <p className="text-sm text-muted-foreground">{esito.dettaglio}</p>
-        {/* I4 dell'onda di correzioni: qui, come nell'elenco, "duplica" non
-            porta più da nessuna parte (il duplicato eredita esattamente lo
-            stesso verdetto di `daNumbas`, il contenuto è identico) — dirlo
-            chiaramente, invece di offrire un pulsante che promette un
-            editor Numbas che non esiste in questo prodotto. */}
-        <p className="text-sm text-muted-foreground">{t("soloRepository")}</p>
       </div>
     );
   }

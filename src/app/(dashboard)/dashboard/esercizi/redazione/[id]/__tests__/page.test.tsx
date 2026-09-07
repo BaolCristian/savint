@@ -69,21 +69,30 @@ describe("pagina di modifica di un esercizio esistente", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  // Item I4 dell'onda di correzioni: "duplica" è sparito anche da qui. Il
-  // duplicato di un esercizio non rappresentabile eredita esattamente lo
-  // stesso verdetto (contenuto grezzo identico, vedi `duplicaEsercizio` in
-  // redazione.ts) — offrirlo prometteva un'uscita che non esisteva mai.
-  it("un esercizio non rappresentabile mostra il motivo del dominio invece dell'editor, e non offre più duplica", async () => {
+  // Item I4 dell'onda di correzioni: "duplica" è sparito anche da qui, ed è
+  // corretto che resti così — il duplicato di un esercizio non
+  // rappresentabile eredita esattamente lo stesso verdetto (contenuto
+  // grezzo identico, vedi `duplicaEsercizio` in redazione.ts), quindi
+  // offrirlo lascerebbe solo un'altra copia di sola lettura.
+  //
+  // `esito.dettaglio` è il messaggio del dominio (`daNumbas`,
+  // SUGGERIMENTO_REPOSITORIO): chiude già da sé con "il repository dei
+  // contenuti" — questa pagina non lo ripete più in un secondo paragrafo
+  // (era la stessa frase due volte, corretto insieme a quest'onda).
+  it("un esercizio non rappresentabile mostra il motivo del dominio invece dell'editor, una sola volta, e non offre duplica", async () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({
       ok: false,
       motivo: "non_rappresentabile",
-      dettaglio: "Contiene un tipo di parte che l'editor non sa ricostruire.",
+      dettaglio: "Contiene un tipo di parte che l'editor non sa ricostruire. Può essere modificato solo intervenendo direttamente nel repository dei contenuti.",
     });
     await rendi("e2");
 
     expect(screen.queryByTestId("editor-stub")).toBeNull();
     expect(screen.getByText(/non sa ricostruire/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "duplica" })).toBeNull();
-    expect(screen.getByText("soloRepository")).toBeInTheDocument();
+    // La frase "repository dei contenuti" compare una sola volta: prima
+    // c'era anche in un secondo paragrafo statico (`soloRepository`), ora
+    // rimosso — mai due nodi che la contengono.
+    expect(screen.getAllByText(/repository dei contenuti/)).toHaveLength(1);
   });
 });

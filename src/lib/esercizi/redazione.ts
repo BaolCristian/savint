@@ -244,12 +244,22 @@ export async function salvaNuovaVersione(esercizioId: string, input: EsercizioEd
 
 /** Duplica un esercizio: riga nuova (`version = 1`), `authorId` di chi
  * duplica — mai l'autore originale. Copia il contenuto GREZZO dell'ultima
- * versione, non passando dal modello dell'editor: è deliberato. "Duplica"
- * è l'unica via d'uscita che i messaggi di rifiuto di `daNumbas`
- * promettono ("usa duplica per continuare a modificarlo direttamente in
- * Numbas" — Task 2) per un esercizio che l'editor non sa rappresentare, e
- * quella promessa sarebbe falsa se la duplicazione stessa richiedesse la
- * rappresentabilità. */
+ * versione, non passando dal modello dell'editor: è deliberato.
+ *
+ * Questa funzione non guarda `daNumbas`: duplica un esercizio non
+ * rappresentabile esattamente come uno modificabile (il duplicato eredita
+ * lo stesso contenuto e quindi, se `daNumbas` rifiutava l'originale,
+ * rifiuta identico anche la copia — mai una copia diventata modificabile).
+ * Per questo il chiamante (l'elenco della redazione,
+ * `redazione-elenco-client.tsx`) offre "duplica" solo sulle righe già
+ * modificabili: offrirlo su una riga di sola lettura lascerebbe solo
+ * un'altra riga di sola lettura, un vicolo cieco travestito da via
+ * d'uscita (vedi il commento su `SUGGERIMENTO_REPOSITORIO`, da-numbas.ts).
+ *
+ * Il titolo della copia porta " (copia)" in coda (stessa convenzione di
+ * `/api/quiz/duplicate`): senza, la riga nuova avrebbe lo stesso titolo
+ * identico dell'originale nell'elenco — due righe indistinguibili a
+ * vista, che si differenziano solo aprendole. */
 export async function duplicaEsercizio(esercizioId: string, authorId: string): Promise<EsitoRedazione> {
   const originale = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
   if (!originale) {
@@ -267,7 +277,7 @@ export async function duplicaEsercizio(esercizioId: string, authorId: string): P
   const nuovo = await prisma.$transaction(async (tx) => {
     const e = await tx.esercizio.create({
       data: {
-        title: originale.title,
+        title: `${originale.title} (copia)`,
         description: originale.description,
         authorId,
         yearLevel: originale.yearLevel,
