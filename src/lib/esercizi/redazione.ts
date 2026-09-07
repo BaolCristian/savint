@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/client";
-import type { Esercizio } from "@prisma/client";
+import { Prisma, type Esercizio } from "@prisma/client";
+import { errorMessageIn } from "@savint/engine";
 import type { EsercizioEditor } from "./editor/modello";
 import { versoNumbas } from "./editor/verso-numbas";
 import { daNumbas } from "./editor/da-numbas";
@@ -8,7 +9,11 @@ import { hashContenuto, type EsercizioFile } from "./format/schema";
 
 export type EsitoRedazione =
   | { ok: true; esercizioId: string; versione: number }
-  | { ok: false; motivo: "non_trovato" | "non_rappresentabile" | "verifica_fallita"; dettaglio?: unknown };
+  | {
+      ok: false;
+      motivo: "non_trovato" | "non_rappresentabile" | "verifica_fallita" | "versione_in_conflitto";
+      dettaglio?: unknown;
+    };
 
 export type VoceRedazione = {
   id: string;
@@ -84,7 +89,18 @@ function savintPerLettura(
  * fallimento è un rifiuto, mai una scrittura parziale — non deve dipendere
  * dal fatto che ogni caso patologico venga già intercettato più a monte:
  * un docente che scrive una formula un po' storta deve vedere un
- * messaggio di rifiuto, non un errore del server. */
+ * messaggio di rifiuto, non un errore del server.
+ *
+ * `fase: "testo"`, non "caricamento": ciò che può sfuggire da qui è sempre
+ * il controllo statico sui campi di testo (lo spezzatore invocato da
+ * `erroreTestoStatico`), mai un caricamento vero del motore — quello
+ * lancia dentro il proprio ciclo sui semi e torna già come un `EsitoVerifica`
+ * con `fase: "caricamento"`, senza bisogno di questa rete. Un'etichetta
+ * sbagliata manda il docente a cercare il difetto nel posto sbagliato.
+ * Il messaggio passa da `errorMessageIn(e, "it")`, come ogni altro rifiuto
+ * di `verifica.ts`: `e.message` da solo è nella lingua predefinita del
+ * PROCESSO al momento del lancio (vedi `errors.ts`), non necessariamente
+ * l'italiano che il docente legge altrove in questo stesso esito. */
 function verificaInSicurezza(question: unknown): EsitoVerifica {
   try {
     return verificaSuSemi(question);
@@ -92,10 +108,21 @@ function verificaInSicurezza(question: unknown): EsitoVerifica {
     return {
       ok: false,
       seme: 0,
-      fase: "caricamento",
-      messaggio: e instanceof Error ? e.message : String(e),
+      fase: "testo",
+      messaggio: errorMessageIn(e, "it"),
     };
   }
+}
+
+/** La stessa verifica che `creaEsercizio` e `salvaNuovaVersione` fanno
+ * correre prima di scrivere, qui senza scrivere nulla: è quello che il
+ * pulsante "controlla" del modulo di redazione chiama. Passa dalla stessa
+ * `verificaInSicurezza` — un esercizio scritto storto deve produrre lo
+ * stesso rifiuto educato (mai un errore del server) sia che il docente
+ * prema "controlla" sia che prema "salva"; due percorsi diversi per la
+ * stessa garanzia sarebbero due posti in cui poterla rompere. */
+export function verificaEsercizio(input: EsercizioEditor): EsitoVerifica {
+  return verificaInSicurezza(versoNumbas(input));
 }
 
 async function nomeAutore(authorId: string | null): Promise<string | null> {
@@ -142,7 +169,21 @@ export async function creaEsercizio(input: EsercizioEditor, authorId: string): P
  * metadati (titolo, anno, argomento, tag, difficoltà) si aggiornano sulla
  * riga `Esercizio`; il contenuto vive solo nelle versioni. Come
  * `creaEsercizio`, la verifica corre prima di qualunque scrittura: un
- * rifiuto non crea una versione nuova né tocca i metadati della riga. */
+ * rifiuto non crea una versione nuova né tocca i metadati della riga.
+ *
+ * Il `findFirst` che legge `ultima` e il `create` che scrive `prossima` non
+ * sono atomici fra loro rispetto a un ALTRO salvataggio dello stesso
+ * esercizio: due transazioni che leggono "l'ultima è la 3" nello stesso
+ * istante calcolano entrambe `prossima = 4` e solo una delle due `create`
+ * riesce — il vincolo `@@unique([esercizioId, version])` sullo schema
+ * impedisce la corruzione (mai due righe con lo stesso numero), ma senza
+ * questo catch la transazione persa uscirebbe da qui come un
+ * `PrismaClientKnownRequestError` P2002 non gestito, e la rotta lo
+ * trasformerebbe in un 500 — la stessa disciplina che motiva
+ * `verificaInSicurezza` sopra: un fallimento prevedibile è un rifiuto
+ * strutturato, mai un errore del server. Un docente con due schede aperte
+ * sullo stesso esercizio deve poter riprovare, non vedere un errore
+ * generico. */
 export async function salvaNuovaVersione(esercizioId: string, input: EsercizioEditor): Promise<EsitoRedazione> {
   const esistente = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
   if (!esistente) {
@@ -154,30 +195,41 @@ export async function salvaNuovaVersione(esercizioId: string, input: EsercizioEd
   if (!esito.ok) return { ok: false, motivo: "verifica_fallita", dettaglio: esito };
 
   const hash = hashContenuto(question);
-  const nuovaVersione = await prisma.$transaction(async (tx) => {
-    const ultima = await tx.esercizioVersione.findFirst({
-      where: { esercizioId },
-      orderBy: { version: "desc" },
+  try {
+    const nuovaVersione = await prisma.$transaction(async (tx) => {
+      const ultima = await tx.esercizioVersione.findFirst({
+        where: { esercizioId },
+        orderBy: { version: "desc" },
+      });
+      const prossima = (ultima?.version ?? 0) + 1;
+      await tx.esercizioVersione.create({
+        data: { esercizioId, version: prossima, content: question as object, hash },
+      });
+      await tx.esercizio.update({
+        where: { id: esercizioId },
+        data: {
+          title: input.meta.titolo,
+          description: input.meta.descrizione,
+          yearLevel: input.meta.anno,
+          topic: input.meta.argomento,
+          tags: input.meta.tag,
+          difficulty: input.meta.difficolta,
+        },
+      });
+      return prossima;
     });
-    const prossima = (ultima?.version ?? 0) + 1;
-    await tx.esercizioVersione.create({
-      data: { esercizioId, version: prossima, content: question as object, hash },
-    });
-    await tx.esercizio.update({
-      where: { id: esercizioId },
-      data: {
-        title: input.meta.titolo,
-        description: input.meta.descrizione,
-        yearLevel: input.meta.anno,
-        topic: input.meta.argomento,
-        tags: input.meta.tag,
-        difficulty: input.meta.difficolta,
-      },
-    });
-    return prossima;
-  });
 
-  return { ok: true, esercizioId, versione: nuovaVersione };
+    return { ok: true, esercizioId, versione: nuovaVersione };
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return {
+        ok: false,
+        motivo: "versione_in_conflitto",
+        dettaglio: "un altro salvataggio ha già scritto una versione nel frattempo; riprova",
+      };
+    }
+    throw e;
+  }
 }
 
 /** Duplica un esercizio: riga nuova (`version = 1`), `authorId` di chi
