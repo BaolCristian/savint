@@ -66,19 +66,67 @@ describe("verificaSuSemi", () => {
     }
   });
 
-  it("un \\var{} che nomina una variabile inesistente viene intercettato", () => {
-    // "zeta" non e' fra le variabili dell'esercizio. Usata da sola dentro
-    // \var{} il motore la tratterebbe come un simbolo libero (comportamento
-    // di JME, non un baco) e non lancerebbe affatto — per questo qui e'
-    // dentro un'espressione (2*zeta): un nome libero moltiplicato da un
-    // numero forza davvero la ricerca della variabile, che fallisce.
+  it("un \\var{} che nomina una variabile inesistente viene intercettato (giro 1)", () => {
+    // "zeta" non e' fra le variabili dell'esercizio, usata DA SOLA dentro
+    // \var{}. Il motore la tratterebbe come un simbolo libero — vedi la
+    // nota sotto identificatoriTesto in verifica.ts — e caricherebbe senza
+    // errori: e' esattamente il caso che il controllo statico deve
+    // riconoscere PRIMA di provare a caricare, confrontando gli
+    // identificatori estratti dal testo grezzo con le variabili dichiarate.
+    const e: EsercizioEditor = { ...base, testo: "Il valore e' \\(\\var{zeta}\\)" };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.seme).toBe(0);
+      expect(esito.messaggio).toContain("zeta");
+    }
+  });
+
+  it("la stessa variabile inesistente dentro un'espressione viene comunque intercettata", () => {
+    // Prima della correzione del giro 1, questo caso (il nome sciolto usato
+    // dentro un'operazione) era l'UNICO che il motore stesso intercettava,
+    // lanciando in caricamento. Ora il controllo statico lo intercetta
+    // prima ancora di provare a caricare, in fase testo — stesso esito per
+    // entrambe le forme, come deve essere: la differenza fra "\\var{zeta}"
+    // e "\\var{2*zeta}" non e' rilevante per il docente.
     const e: EsercizioEditor = { ...base, testo: "Il valore e' \\(\\var{2*zeta}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("caricamento");
-      expect(esito.seme).toBe(0);
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("zeta");
     }
+  });
+
+  it("una variabile inesistente dentro \\simplify{{...}} viene intercettata", () => {
+    // "c" non e' dichiarata (l'esercizio ha solo a e b): il docente ha
+    // probabilmente rinominato una variabile e dimenticato di aggiornare
+    // il testo. Le graffe di raggruppamento LaTeX (x^{2}, \frac{a}{b}) non
+    // devono essere confuse con questa forma: verificato separatamente
+    // sotto ("le graffe di raggruppamento LaTeX non sono confuse...").
+    const e: EsercizioEditor = { ...base, testo: "Risolvi \\(\\simplify{ {a}x+{c} }=0\\)" };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.seme).toBe(0);
+      expect(esito.messaggio).toContain("c");
+    }
+  });
+
+  it("le graffe di raggruppamento LaTeX non sono confuse con \\var{}/\\simplify{}", () => {
+    // x^{2} e \frac{p}{q} usano le graffe per raggruppare, non per marcare
+    // una sostituzione: non contengono il comando letterale \var o
+    // \simplify, quindi identificatoriTesto non li tocca. "p" e "q" qui
+    // NON sono variabili dichiarate (l'esercizio ha solo a e b): se il
+    // controllo li confondesse con riferimenti a variabili, l'esercizio
+    // fallirebbe in fase testo per "p" o "q". Invece passa — la prova che
+    // le graffe di raggruppamento sono ignorate — mentre \var{a}, che
+    // referenzia una variabile vera, resta permesso.
+    const e: EsercizioEditor = { ...base,
+      testo: "Il polinomio \\(x^{2}+\\frac{p}{q}\\) e il valore \\(\\var{a}\\)" };
+    expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
   });
 
   it("una condizione impossibile viene intercettata, non attesa all'infinito", () => {
@@ -107,6 +155,27 @@ describe("verificaSuSemi", () => {
     if (!esito.ok) {
       expect(esito.fase).toBe("risposta");
       expect(esito.seme).toBe(0);
+    }
+  });
+
+  it("una parte numerica la cui risposta e' 'infinity' viene intercettata (giro 1)", () => {
+    // "1/a" con a = random(-3..3): quando a vale 0 (semi 14 e 17, stesso
+    // generatore del test sulla divisione per zero) il motore NON lancia —
+    // restituisce la stringa "infinity" come risposta corretta, un valore
+    // che nessuno studente puo' scrivere in una casella numerica. Prima
+    // della correzione del giro 1, il controllo "risposta" si fermava a
+    // "correctAnswer() ha restituito qualcosa di non nullo" e lasciava
+    // passare questo caso: una parte numerica non aveva alcun controllo
+    // sul CONTENUTO della risposta, solo sulla sua presenza.
+    const e: EsercizioEditor = { ...base, testo: "x",
+      variabili: [{ nome: "a", definizione: "random(-3..3)", descrizione: "" }],
+      parti: [{ tipo: "numerica", consegna: "x", punti: 2,
+                valore: "1/a", tolleranza: { tipo: "esatta" } }] };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("risposta");
+      expect(esito.seme).toBe(14);
     }
   });
 
