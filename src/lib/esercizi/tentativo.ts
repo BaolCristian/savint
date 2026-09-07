@@ -83,6 +83,15 @@ export async function avviaORiprendi(
   // stato respinto — mai per un esercizio libero vero (`compitoId`
   // assente fin dall'inizio, `compitoValido` resta `false` ma non c'è
   // nessuna richiesta da segnalare come rifiutata).
+  // ATTENZIONE per chi aggiungerà un altro punto che costruisce questo
+  // indirizzo. `!!compitoId` rende indistinguibili "parametro assente" e
+  // "parametro presente ma vuoto": con `?compitoId=` lo studente ottiene una
+  // pratica libera SENZA l'avviso qui sopra, cioè il fallimento silenzioso
+  // che questo avviso esiste per chiudere. Oggi non è raggiungibile, perché
+  // l'unico posto che costruisce quel collegamento è `studente/page.tsx` e
+  // prende l'id da una chiave primaria che vuota non può essere. Un
+  // collegamento da condividere, una notifica o un "copia indirizzo" che
+  // inoltrasse un id eventualmente vuoto lo renderebbe raggiungibile.
   const richiestaCompitoRifiutata = !!compitoId && !compitoValido;
 
   // Conservazione pigra, come per PracticeRun: un tentativo fermo da più della
