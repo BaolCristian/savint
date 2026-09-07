@@ -64,6 +64,51 @@ function identificatoriTesto(testoGrezzo: string): string[] {
   return trovati;
 }
 
+/** Un campo di testo grezzo da controllare, con una descrizione in
+ * linguaggio da docente di dove si trova — usata nel messaggio d'errore
+ * così che chi legge sappia DOVE guardare, non solo quale nome cercare. */
+interface CampoTesto {
+  descrizione: string;
+  testo: string;
+}
+
+/** I soli elementi di un valore che sono stringhe: `choices`/`distractors`
+ * arrivano dal JSON generico (`PartJSON` li dichiara solo tramite l'indice
+ * `[k: string]: unknown`), quindi vanno controllati a runtime invece che
+ * assunti. */
+function soloStringhe(valore: unknown): string[] {
+  return Array.isArray(valore) ? valore.filter((v): v is string => typeof v === "string") : [];
+}
+
+/** Ogni campo di testo che il motore sostituisce e che finisce, prima o
+ * poi, sotto gli occhi di uno studente: l'enunciato, il suggerimento (il
+ * "come si risolve" che il player mostra dopo una risposta sbagliata — nel
+ * corpus reale è il campo più denso di riferimenti a variabili, non il
+ * meno), la consegna di ogni parte, e per le parti a scelta multipla le
+ * risposte proposte e la spiegazione di ognuna. Le consegne delle parti
+ * sono vuote in tutto il corpus oggi, ma non c'è motivo di lasciarle senza
+ * controllo: è la stessa sostituzione, sullo stesso motore. */
+function campiTesto(question: NumbasQuestionJSON): CampoTesto[] {
+  const campi: CampoTesto[] = [
+    { descrizione: "nel testo dell'esercizio", testo: question.statement ?? "" },
+    { descrizione: "nel suggerimento", testo: question.advice ?? "" },
+  ];
+  (question.parts ?? []).forEach((parte, indice) => {
+    const numero = indice + 1;
+    campi.push({ descrizione: `nella consegna della parte ${numero}`, testo: parte.prompt ?? "" });
+    soloStringhe(parte["choices"]).forEach((scelta, i) => {
+      campi.push({ descrizione: `nella risposta ${i + 1} della parte ${numero}`, testo: scelta });
+    });
+    soloStringhe(parte["distractors"]).forEach((spiegazione, i) => {
+      campi.push({
+        descrizione: `nella spiegazione della risposta ${i + 1} della parte ${numero}`,
+        testo: spiegazione,
+      });
+    });
+  });
+  return campi;
+}
+
 /** I nomi di variabile dichiarati da `question.variables`: la fonte
  * autorevole per il motore stesso (question.js:621, `Object.values`, mai le
  * chiavi dell'oggetto — vedi il commento su `QuestionVariableJSON.name` in
@@ -79,12 +124,23 @@ function nomiDichiarati(question: NumbasQuestionJSON): Set<string> {
   return nomi;
 }
 
-/** Il primo identificatore che il testo referenzia (via `\var{}` o
- * `\simplify{}`) senza che sia una variabile dichiarata, o `undefined` se
- * sono tutti dichiarati. */
-function primoIdentificatoreNonDichiarato(question: NumbasQuestionJSON): string | undefined {
+/** Il primo riferimento (via `\var{}` o `\simplify{}`, in un qualunque
+ * campo di testo — vedi `campiTesto`) a una variabile non dichiarata, con
+ * la descrizione di dove si trova; `undefined` se sono tutti dichiarati.
+ * I campi si controllano nell'ordine in cui `campiTesto` li elenca
+ * (enunciato, suggerimento, poi parte per parte): non è un ordine
+ * arbitrario, è l'ordine in cui il docente li ha scritti nell'editor. */
+function primoRiferimentoNonDichiarato(
+  question: NumbasQuestionJSON,
+): { identificatore: string; descrizione: string } | undefined {
   const dichiarati = nomiDichiarati(question);
-  return identificatoriTesto(question.statement ?? "").find((nome) => !dichiarati.has(nome));
+  for (const campo of campiTesto(question)) {
+    const nome = identificatoriTesto(campo.testo).find((n) => !dichiarati.has(n));
+    if (nome !== undefined) {
+      return { identificatore: nome, descrizione: campo.descrizione };
+    }
+  }
+  return undefined;
 }
 
 /** La risposta di una parte "numerica" (Numbas `numberentry`) è già
@@ -123,23 +179,28 @@ export type EsitoVerifica =
  * un compromesso dichiarato fra copertura e costo per ogni salvataggio —
  * va discusso se la misura cambia, non alzato in silenzio. */
 export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFINITI): EsitoVerifica {
-  // Controllo statico, non per-seme: quali identificatori il testo
-  // referenzia via \var{}/\simplify{} non dipende dal seme (solo i VALORI
-  // delle variabili dipendono da esso, non i loro nomi) — girarlo venti
-  // volte dentro il ciclo sarebbe lavoro ripetuto senza motivo. Lo si fa
-  // PRIMA di provare a caricare: un nome sciolto usato da solo dentro
+  // Controllo statico, non per-seme: quali identificatori i testi
+  // referenziano via \var{}/\simplify{} non dipende dal seme (solo i
+  // VALORI delle variabili dipendono da esso, non i loro nomi) — girarlo
+  // venti volte dentro il ciclo sarebbe lavoro ripetuto senza motivo. Lo si
+  // fa PRIMA di provare a caricare: un nome sciolto usato da solo dentro
   // \var{} (es. `\var{zeta}`) il motore lo tratta come un simbolo libero e
   // NON lancia (vedi il rapporto del task) — aspettare che lanciasse
   // avrebbe lasciato passare esattamente l'errore di battitura più comune
-  // in un esercizio a variabili. `seme: 0` perché non c'è un seme a cui
-  // attribuire un difetto che non dipende da nessun seme.
-  const nomeSconosciuto = primoIdentificatoreNonDichiarato(question as NumbasQuestionJSON);
-  if (nomeSconosciuto !== undefined) {
+  // in un esercizio a variabili. Copre ogni campo che finisce sotto gli
+  // occhi di uno studente (enunciato, suggerimento, consegne, risposte a
+  // scelta multipla e le loro spiegazioni — vedi `campiTesto`), non solo
+  // l'enunciato: il suggerimento in particolare è il testo "come si
+  // risolve" mostrato dopo una risposta sbagliata, ed è il campo più denso
+  // di riferimenti a variabili nel corpus reale. `seme: 0` perché non c'è
+  // un seme a cui attribuire un difetto che non dipende da nessun seme.
+  const riferimento = primoRiferimentoNonDichiarato(question as NumbasQuestionJSON);
+  if (riferimento !== undefined) {
     return {
       ok: false,
       seme: 0,
       fase: "testo",
-      messaggio: `il testo referenzia la variabile "${nomeSconosciuto}", che non è dichiarata`,
+      messaggio: `la variabile "${riferimento.identificatore}" ${riferimento.descrizione} non è dichiarata`,
     };
   }
 

@@ -129,6 +129,64 @@ describe("verificaSuSemi", () => {
     expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
   });
 
+  it("una variabile inesistente nel suggerimento (advice) viene intercettata (giro 2)", () => {
+    // Il suggerimento e' il testo "come si risolve" che il player mostra
+    // DOPO che lo studente ha sbagliato: nel corpus reale e' il campo piu'
+    // denso di riferimenti a variabili (sei file su otto, fino a cinque
+    // riferimenti), eppure prima di questa correzione non era guardato
+    // affatto — solo il testo dell'enunciato lo era.
+    const e: EsercizioEditor = { ...base, suggerimento: "Si usa \\(\\var{zeta}\\)" };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("zeta");
+      expect(esito.messaggio).toContain("suggerimento");
+    }
+  });
+
+  it("una variabile inesistente nella consegna di una parte viene intercettata (giro 2)", () => {
+    const e: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
+      consegna: "Quanto vale \\(\\var{zeta}\\)?", punti: 2,
+      valore: "a", tolleranza: { tipo: "esatta" } }] };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("zeta");
+      expect(esito.messaggio).toContain("consegna");
+    }
+  });
+
+  it("una variabile inesistente in una risposta a scelta multipla viene intercettata (giro 2)", () => {
+    // Nel corpus reale le scelte del file 02 sono piene di \var{a}: e'
+    // l'altro campo denso che la correzione del giro 1 lasciava scoperto.
+    const e: EsercizioEditor = { ...base, parti: [{ tipo: "scelta",
+      consegna: "Quale?", punti: 2,
+      risposte: ["\\(\\var{zeta}\\)", "altro"], indiceGiusta: 1 }] };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("zeta");
+      expect(esito.messaggio).toContain("risposta");
+    }
+  });
+
+  it("una variabile inesistente nella spiegazione di una risposta sbagliata viene intercettata (giro 2)", () => {
+    const e: EsercizioEditor = { ...base, parti: [{ tipo: "scelta",
+      consegna: "Quale?", punti: 2,
+      risposte: ["giusta", "sbagliata"], indiceGiusta: 0,
+      spiegazioni: ["", "No, perche' \\(\\var{zeta}\\) non c'entra"] }] };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("zeta");
+      expect(esito.messaggio).toContain("spiegazione");
+    }
+  });
+
   it("una condizione impossibile viene intercettata, non attesa all'infinito", () => {
     // a e' random(2..9): non supera mai 100. variablesTest.maxRuns e' 10
     // (versoNumbas), quindi il motore esaurisce i tentativi e lancia invece
