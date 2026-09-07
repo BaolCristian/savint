@@ -3,9 +3,11 @@ import {
   jme,
   loadQuestion,
   math,
+  parts,
   renderLatex,
   variables,
   type NumbasQuestionJSON,
+  type Question,
 } from "@savint/engine";
 
 /** Quante volte la verifica prova, per difetto: vedi la nota sotto
@@ -124,35 +126,132 @@ function nomiDichiarati(question: NumbasQuestionJSON): Set<string> {
   return nomi;
 }
 
-/** Il primo riferimento (via `\var{}` o `\simplify{}`, in un qualunque
- * campo di testo — vedi `campiTesto`) a una variabile non dichiarata, con
- * la descrizione di dove si trova; `undefined` se sono tutti dichiarati.
- * I campi si controllano nell'ordine in cui `campiTesto` li elenca
- * (enunciato, suggerimento, poi parte per parte): non è un ordine
- * arbitrario, è l'ordine in cui il docente li ha scritti nell'editor. */
-function primoRiferimentoNonDichiarato(
-  question: NumbasQuestionJSON,
-): { identificatore: string; descrizione: string } | undefined {
+/** Il controllo statico completo sui campi di testo grezzi (vedi
+ * `campiTesto`): o un riferimento (via `\var{}`/`\simplify{}`) a una
+ * variabile non dichiarata, o un comando LaTeX che `texsplit` non riesce a
+ * spezzare (vedi sotto) — entrambi difetti dell'esercizio, riportati allo
+ * stesso modo, in fase "testo", nominando il campo. Restituisce l'esito da
+ * riportare, o `undefined` se tutti i campi sono a posto. I campi si
+ * controllano nell'ordine in cui `campiTesto` li elenca (enunciato,
+ * suggerimento, poi parte per parte): non è un ordine arbitrario, è
+ * l'ordine in cui il docente li ha scritti nell'editor. */
+function erroreTestoStatico(question: NumbasQuestionJSON): EsitoVerifica | undefined {
   const dichiarati = nomiDichiarati(question);
   for (const campo of campiTesto(question)) {
-    const nome = identificatoriTesto(campo.testo).find((n) => !dichiarati.has(n));
+    let identificatori: string[];
+    try {
+      identificatori = identificatoriTesto(campo.testo);
+    } catch (e) {
+      // `texsplit` (il motore) riconosce SOLO il prefisso letterale
+      // "\var" (jme.js:443-494 upstream, non un difetto del port): un
+      // comando LaTeX che comincia con quelle quattro lettere e non è
+      // seguito da `{` — `\varphi`, `\vartheta`, `\varepsilon`, le
+      // varianti greche che un esercizio di trigonometria usa — fa
+      // fallire la ricerca dell'argomento invece di essere riconosciuto
+      // come "non è \var". `loadQuestion` incontrerebbe lo STESSO errore
+      // più avanti (fase caricamento: verificato che il messaggio è
+      // identico) — qui, siccome il controllo statico gira PRIMA del
+      // ciclo sui semi, va intercettato con lo stesso trattamento
+      // educato: un esito da riportare, non un'eccezione che scappa da
+      // `verificaSuSemi`. Limite noto del motore (upstream), non
+      // corretto qui — vedi il rapporto del task.
+      return { ok: false, seme: 0, fase: "testo", messaggio: `${campo.descrizione}: ${errorMessageIn(e, "it")}` };
+    }
+    const nome = identificatori.find((n) => !dichiarati.has(n));
     if (nome !== undefined) {
-      return { identificatore: nome, descrizione: campo.descrizione };
+      return {
+        ok: false,
+        seme: 0,
+        fase: "testo",
+        messaggio: `la variabile "${nome}" ${campo.descrizione} non è dichiarata`,
+      };
     }
   }
   return undefined;
 }
 
-/** La risposta di una parte "numerica" (Numbas `numberentry`) è già
- * formattata per la lettura in stile europeo — virgola decimale, es.
- * `"-0,25"` — non un'espressione JME (vedi il commento più sotto sul
- * perché il controllo LaTeX non la tocca). Qui basta verificare che sia
- * davvero un numero finito: il motore non lancia mai su una divisione per
- * zero (produce un valore "infinito" valido, reso come la stringa
- * `"infinity"`/`"-infinity"` — vedi il rapporto del task), e senza questo
- * controllo quella stringa passerebbe come "una risposta c'è". */
-function eNumeroFinito(rispostaFormattata: string): boolean {
-  return Number.isFinite(Number(rispostaFormattata.replace(",", ".")));
+/** Ogni campo di testo GIÀ sostituito che `loadQuestion` produce e che
+ * finisce sotto gli occhi di uno studente: l'enunciato, il suggerimento, e
+ * la consegna sostituita di ogni parte (`promptHtml`, riempito da
+ * `substitutePartPrompts` nel costruttore di `Question`). Le risposte a
+ * scelta multipla e le loro spiegazioni NON compaiono qui: il motore non
+ * le sostituisce affatto al caricamento (restano il testo grezzo che
+ * l'autore ha scritto), quindi il controllo su queste — e su ogni altro
+ * campo — resta quello statico sopra, che le guarda grezze. */
+function testiSostituiti(caricata: Question): CampoTesto[] {
+  return [
+    { descrizione: "il testo dell'esercizio", testo: caricata.statementHtml },
+    { descrizione: "il suggerimento", testo: caricata.adviceHtml },
+    ...caricata.allParts().map((parte) => ({
+      descrizione: `la consegna della parte ${parte.index + 1}`,
+      testo: parte.promptHtml,
+    })),
+  ];
+}
+
+/** Un valore JME "spacchettato" (`jme.unwrapValue` dichiara `unknown`: è
+ * la funzione di basso livello, senza il contratto di forma che porta il
+ * tipo pubblico `JMEValue`) come numero JS finito? `number`/`bigint` sono
+ * già numerici; un razionale (`math.Fraction`, che `unwrapValue`
+ * restituisce per un token di tipo "rational") si converte con lo stesso
+ * metodo — una divisione reale fra numeratore e denominatore — che
+ * distingue un numero vero da un "numero" con denominatore zero, la
+ * stessa cosa che `number-entry-part.ts` verifica con
+ * `ComplexDecimal#isFinite` per decidere se un estremo è utilizzabile.
+ * Non serve gestire un numero complesso qui: una risposta il cui estremo
+ * valuta a un complesso fa già fallire `correctAnswer()` (i numeri
+ * complessi non si possono ordinare — vedi il rapporto del task) prima di
+ * arrivare a questo controllo. */
+function comeNumeroFinito(valore: unknown): boolean {
+  if (typeof valore === "number") {
+    return Number.isFinite(valore);
+  }
+  if (typeof valore === "bigint") {
+    return true;
+  }
+  if (valore instanceof math.Fraction) {
+    return Number.isFinite(valore.toFloat());
+  }
+  return false;
+}
+
+/** Gli estremi (`minValue`/`maxValue`) di una parte "numerica" (Numbas
+ * `numberentry`), valutati nello SCOPE CARICATO di questo seme — non la
+ * stringa che `correctAnswer()` restituisce per la lettura. Quella
+ * stringa è un artefatto di presentazione: `niceNumber` rende un multiplo
+ * ESATTO di pi greco in forma simbolica ("4*pi", l'area di un cerchio di
+ * raggio 2) quando la precisione non è impostata — cosa che sia la
+ * tolleranza esatta sia quella a margine lasciano — e un'espressione
+ * simbolica valida non è un esercizio rotto. Gli estremi sono invece ciò
+ * che DECIDE se la risposta di uno studente è giusta: sono loro a dover
+ * essere numeri finiti, non il modo in cui vengono mostrati.
+ *
+ * Correla `parte` alla sua definizione grezza in `question.parts` tramite
+ * `.index`, che vale solo per una parte di PRIMO livello (nessun gap):
+ * per una parte-gap `.index` è la posizione fra i gap del genitore, un
+ * indice diverso che punterebbe alla parte SBAGLIATA di `question.parts`.
+ * Questo editor non produce mai parti gapfill; per un JSON scritto a mano
+ * che ne avesse, qui ci si limita a non applicare il controllo (`true`,
+ * "non trovato rotto") invece di rischiare una correlazione sbagliata. */
+function estremiFiniti(question: NumbasQuestionJSON, parte: parts.PartBase, scope: jme.Scope): boolean {
+  if (parte.path !== `p${parte.index}`) {
+    return true;
+  }
+  const definizione = (question.parts ?? [])[parte.index] as Record<string, unknown> | undefined;
+  if (!definizione) {
+    return true;
+  }
+  for (const campo of ["minValue", "maxValue"]) {
+    const espressione = definizione[campo];
+    if (typeof espressione !== "string") {
+      continue;
+    }
+    const token = scope.evaluate(espressione);
+    if (token === null || !comeNumeroFinito(jme.unwrapValue(token))) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export type EsitoVerifica =
@@ -194,14 +293,13 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
   // risolve" mostrato dopo una risposta sbagliata, ed è il campo più denso
   // di riferimenti a variabili nel corpus reale. `seme: 0` perché non c'è
   // un seme a cui attribuire un difetto che non dipende da nessun seme.
-  const riferimento = primoRiferimentoNonDichiarato(question as NumbasQuestionJSON);
-  if (riferimento !== undefined) {
-    return {
-      ok: false,
-      seme: 0,
-      fase: "testo",
-      messaggio: `la variabile "${riferimento.identificatore}" ${riferimento.descrizione} non è dichiarata`,
-    };
+  // Anche un comando LaTeX che condivide il prefisso "\var" (\varphi,
+  // \vartheta...) e manda in errore la ricerca dell'argomento viene
+  // riportato da qui, come esito e non come eccezione — vedi il commento
+  // su `erroreTestoStatico`.
+  const erroreStatico = erroreTestoStatico(question as NumbasQuestionJSON);
+  if (erroreStatico !== undefined) {
+    return erroreStatico;
   }
 
   for (let seme = 0; seme < quanti; seme++) {
@@ -212,24 +310,30 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
       return { ok: false, seme, fase: "caricamento", messaggio: errorMessageIn(e, "it") };
     }
 
-    // Il testo sostituito non deve lasciare marcatori `\var{` non risolti
-    // né la stringa "undefined": un marcatore rimasto grezzo o un valore
-    // mancante finirebbe stampato, letteralmente, davanti allo studente.
-    if (caricata.statementHtml.includes("\\var{")) {
-      return {
-        ok: false,
-        seme,
-        fase: "testo",
-        messaggio: "il testo sostituito contiene ancora un marcatore \\var{} non risolto",
-      };
-    }
-    if (caricata.statementHtml.includes("undefined")) {
-      return {
-        ok: false,
-        seme,
-        fase: "testo",
-        messaggio: "il testo sostituito contiene la stringa \"undefined\"",
-      };
+    // Nessuno dei testi GIÀ sostituiti (enunciato, suggerimento, consegna
+    // di ogni parte — vedi `testiSostituiti`) deve lasciare un marcatore
+    // `\var{` non risolto o la stringa "undefined": o finirebbe stampato,
+    // letteralmente, davanti allo studente. Le risposte a scelta multipla
+    // e le loro spiegazioni non compaiono qui apposta: il motore non le
+    // sostituisce al caricamento, quindi il controllo statico sopra —
+    // che le guarda grezze — è l'unico che le copre.
+    for (const campo of testiSostituiti(caricata)) {
+      if (campo.testo.includes("\\var{")) {
+        return {
+          ok: false,
+          seme,
+          fase: "testo",
+          messaggio: `${campo.descrizione} contiene ancora un marcatore \\var{} non risolto`,
+        };
+      }
+      if (campo.testo.includes("undefined")) {
+        return {
+          ok: false,
+          seme,
+          fase: "testo",
+          messaggio: `${campo.descrizione} contiene la stringa "undefined"`,
+        };
+      }
     }
 
     for (const parte of caricata.allParts()) {
@@ -250,16 +354,19 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
 
       // Una parte "numerica" (Numbas `numberentry`) non passa dal
       // controllo LaTeX qui sotto (vedi il perché nel commento su quel
-      // controllo), ma non per questo resta senza verifica: la sua
-      // risposta deve comunque essere un numero finito vero, non la
-      // stringa "infinity" che il motore produce senza lanciare quando la
-      // definizione divide per zero.
-      if (parte.type === "numberentry" && typeof risposta === "string" && !eNumeroFinito(risposta)) {
+      // controllo), ma non per questo resta senza verifica: i suoi estremi
+      // (minValue/maxValue, ciò che decide DAVVERO se una risposta è
+      // giusta — non la stringa che `correctAnswer()` restituisce per la
+      // lettura, un artefatto di presentazione, vedi `estremiFiniti`)
+      // devono essere numeri finiti veri, non il valore "infinito" che il
+      // motore produce senza lanciare quando la definizione divide per
+      // zero.
+      if (parte.type === "numberentry" && !estremiFiniti(question as NumbasQuestionJSON, parte, caricata.scope)) {
         return {
           ok: false,
           seme,
           fase: "risposta",
-          messaggio: `la parte "${parte.path}" ha come risposta corretta "${risposta}", che non è un numero finito`,
+          messaggio: `la parte "${parte.path}" ha un estremo (minimo o massimo) non finito`,
         };
       }
 

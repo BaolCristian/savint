@@ -187,6 +187,74 @@ describe("verificaSuSemi", () => {
     }
   });
 
+  it("un comando LaTeX che condivide il prefisso \\var (\\varphi) non manda in eccezione la verifica (giro 3)", () => {
+    // \varphi, \vartheta, \varepsilon... condividono il prefisso letterale
+    // "\var" col marcatore di sostituzione: texsplit (il motore) cerca
+    // solo quel prefisso, senza un confine di parola, e senza una graffa
+    // subito dopo lancia "manca il parametro" — loadQuestion incontra lo
+    // STESSO errore piu' avanti (fase caricamento), quindi un esercizio
+    // di trigonometria con \varphi nel testo e' genuinamente rotto. Prima
+    // di questa correzione pero' il controllo statico (che gira PRIMA di
+    // loadQuestion) non intercettava quel lancio: scappava non gestito da
+    // verificaSuSemi invece di diventare un esito normale — un problema
+    // suo, non dell'esercizio.
+    const e: EsercizioEditor = { ...base, testo: "L'angolo \\(\\varphi\\) e' acuto" };
+    let esito: ReturnType<typeof verificaSuSemi> | undefined;
+    expect(() => {
+      esito = verificaSuSemi(versoNumbas(e));
+    }).not.toThrow();
+    expect(esito?.ok).toBe(false);
+    if (esito && !esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("varphi");
+    }
+  });
+
+  it("il difetto sqrt() reso con 'undefined' viene intercettato nel testo dell'esercizio (giro 3)", () => {
+    // \simplify{sqrt()} senza graffe di sostituzione interne: il
+    // controllo statico non lo vede (non c'e' nessun identificatore da
+    // estrarre — "sqrt()" non ha un {...} dentro, vedi identificatoriTesto
+    // in verifica.ts), quindi e' il controllo a runtime sul testo GIA'
+    // sostituito a doverlo intercettare. Pin di quel controllo: prima di
+    // questa correzione nessun test lo raggiungeva piu', perche' ogni caso
+    // a forma di \var{} viene ora intercettato prima dal controllo
+    // statico.
+    const e: EsercizioEditor = { ...base, testo: "\\(\\simplify{sqrt()}\\)" };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("undefined");
+    }
+  });
+
+  it("lo stesso difetto viene intercettato anche nel suggerimento, non solo nel testo (giro 3)", () => {
+    // Prima di questa correzione il controllo a runtime guardava solo
+    // statementHtml: lo stesso \simplify{sqrt()} scritto nel suggerimento
+    // (il campo piu' denso di riferimenti a variabili nel corpus reale)
+    // restituiva ok:true — il difetto per cui la fase "testo" esiste
+    // proprio non veniva visto, nel campo che il corpus usa di piu'.
+    const e: EsercizioEditor = { ...base, suggerimento: "\\(\\simplify{sqrt()}\\)" };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("suggerimento");
+    }
+  });
+
+  it("lo stesso difetto viene intercettato anche nella consegna sostituita di una parte (giro 3)", () => {
+    const e: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
+      consegna: "\\(\\simplify{sqrt()}\\)", punti: 2,
+      valore: "a", tolleranza: { tipo: "esatta" } }] };
+    const esito = verificaSuSemi(versoNumbas(e));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.fase).toBe("testo");
+      expect(esito.messaggio).toContain("consegna");
+    }
+  });
+
   it("una condizione impossibile viene intercettata, non attesa all'infinito", () => {
     // a e' random(2..9): non supera mai 100. variablesTest.maxRuns e' 10
     // (versoNumbas), quindi il motore esaurisce i tentativi e lancia invece
@@ -214,6 +282,22 @@ describe("verificaSuSemi", () => {
       expect(esito.fase).toBe("risposta");
       expect(esito.seme).toBe(0);
     }
+  });
+
+  it("un multiplo esatto di pi greco come risposta numerica non viene rifiutato (giro 3)", () => {
+    // L'area di un cerchio di raggio 2: pi*4, tolleranza esatta.
+    // correctAnswer() restituisce "4*pi" — niceNumber rende un multiplo
+    // ESATTO di pi greco in forma simbolica quando la precisione non e'
+    // impostata (il caso sia della tolleranza esatta sia di quella a
+    // margine) — una stringa che non e' un numero JME valutabile as-is,
+    // ma un artefatto di PRESENTAZIONE: la correzione per uno studente
+    // vero funziona benissimo, perche' minValue/maxValue valutano a un
+    // numero reale finito (12.566...). L'esercizio non e' rotto.
+    const e: EsercizioEditor = { ...base, testo: "Area del cerchio di raggio 2",
+      variabili: [],
+      parti: [{ tipo: "numerica", consegna: "x", punti: 2,
+                valore: "pi*4", tolleranza: { tipo: "esatta" } }] };
+    expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
   });
 
   it("una parte numerica la cui risposta e' 'infinity' viene intercettata (giro 1)", () => {
