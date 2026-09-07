@@ -273,4 +273,23 @@ describe("markup HTML vero non e' rappresentabile (giro di correzioni 3)", () =>
     const esito = daNumbas(file);
     expect(esito.ok).toBe(false);
   });
+
+  // Colma un buco di copertura, non un difetto: il revisore aveva già
+  // verificato a mano (con test usa e getta) che advice e prompt si
+  // comportano come statement/choices/distractors/description; qui resta
+  // solo da fissarlo nel repository, perché un cambiamento futuro non lo
+  // faccia regredire in silenzio.
+  it("un <strong> vero nel suggerimento (advice) viene rifiutato", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.advice = "<p>Ricorda: <strong>controlla il segno</strong></p>";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("un <em> vero nella consegna di una parte (prompt) viene rifiutato", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].prompt = "<p>Quanto vale <em>x</em>?</p>";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
 });
