@@ -10,9 +10,15 @@ export async function creaContenitore(
   return { id: c.id };
 }
 
-/** Tutti i contenitori, col conteggio degli esercizi che contengono. */
+/** Tutti i contenitori, col conteggio degli esercizi che contengono.
+ *
+ * Non espone `createdById`: nessun chiamante lo usa (l'interfaccia lato
+ * client non ha nemmeno un campo per riceverlo, Fix round finale, item 6) —
+ * un id utente grezzo che non serve a nulla qui non deve viaggiare oltre
+ * questa funzione, per non diventare un'abitudine che il prossimo chiamante
+ * copia senza chiedersi se serva davvero. */
 export async function elencoContenitori(): Promise<
-  { id: string; name: string; description: string | null; esercizi: number; createdBy: string | null }[]
+  { id: string; name: string; description: string | null; esercizi: number }[]
 > {
   const righe = await prisma.contenitore.findMany({
     orderBy: { name: "asc" },
@@ -23,7 +29,6 @@ export async function elencoContenitori(): Promise<
     name: r.name,
     description: r.description,
     esercizi: r._count.esercizi,
-    createdBy: r.createdById,
   }));
 }
 

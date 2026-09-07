@@ -31,7 +31,7 @@ describe("pagina dei contenitori", () => {
 
   it("elenca i contenitori con il conteggio degli esercizi e un link al dettaglio", async () => {
     vi.mocked(elencoContenitori).mockResolvedValue([
-      { id: "cont1", name: "Equazioni", description: null, esercizi: 5, createdBy: "doc1" },
+      { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
     ]);
     await rendi();
     expect(screen.getByText("Equazioni")).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("pagina dei contenitori", () => {
 
   it("eliminare un contenitore in uso mostra il motivo del rifiuto", async () => {
     vi.mocked(elencoContenitori).mockResolvedValue([
-      { id: "cont1", name: "Equazioni", description: null, esercizi: 5, createdBy: "doc1" },
+      { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
     ]);
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ error: "in_uso" }), { status: 409 })) as typeof fetch;
 

@@ -19,7 +19,7 @@ beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(elencoBatterie).mockReset();
   vi.mocked(elencoContenitori).mockReset().mockResolvedValue([
-    { id: "cont1", name: "Equazioni", description: null, esercizi: 5, createdBy: "doc1" },
+    { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
   ]);
 });
 
