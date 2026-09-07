@@ -21,8 +21,19 @@ const rifiutaCostrutto = (dettaglio: string): Lettura => ({ ok: false, motivo: "
 
 /** Il suggerimento con cui chiude ogni messaggio che riguarda un esercizio
  * altrimenti valido, solo espresso in un modo che l'editor non sa ancora
- * trattare: una via d'uscita concreta, non solo una porta chiusa. */
-const SUGGERIMENTO_DUPLICA = 'Usa "duplica" per continuare a modificarlo direttamente in Numbas.';
+ * trattare: una via d'uscita concreta, non solo una porta chiusa.
+ *
+ * **Rinominata da `SUGGERIMENTO_DUPLICA` (Onda finale, I4)**: il pulsante
+ * "duplica" che questo testo raccomandava è stato tolto dall'elenco e dalla
+ * pagina di modifica (`redazione-elenco-client.tsx`, `[id]/page.tsx`) — la
+ * duplicazione copia il contenuto GREZZO dell'ultima versione, quindi per
+ * un esercizio non rappresentabile il duplicato ha lo stesso identico
+ * contenuto e riceve lo stesso identico rifiuto da questo modulo: "duplica"
+ * non porta MAI a una copia modificabile con l'implementazione attuale.
+ * Il vecchio testo, lasciato invariato, avrebbe indicato un pulsante che
+ * non esiste più nella pagina che il docente ha davanti. */
+const SUGGERIMENTO_REPOSITORIO =
+  "Può essere modificato solo intervenendo direttamente nel repository dei contenuti.";
 
 // ---- lettura non fidata di JSON arbitrario -----------------------------
 // `question` è tipizzato `unknown` nello schema del file (lo valida solo il
@@ -98,7 +109,7 @@ function messaggioTestoAmbiguo(soggetto: string, campoTecnico: string): string {
   return (
     `${soggetto} potrebbe contenere un simbolo di disuguaglianza scritto a mano (come "<" o ">"), oppure una ` +
     `formattazione HTML vera (corsivo, un link, ...): l'editor non riesce a distinguerli in sicurezza, e in ` +
-    `entrambi i casi salvare di nuovo lo cambierebbe. ${SUGGERIMENTO_DUPLICA} (${campoTecnico})`
+    `entrambi i casi salvare di nuovo lo cambierebbe. ${SUGGERIMENTO_REPOSITORIO} (${campoTecnico})`
   );
 }
 
@@ -183,7 +194,7 @@ function motivoIntervalloEsplicito(p: Record<string, unknown>): string | null {
   if (min !== null && max !== null && min !== max && (p.precision !== undefined || p.precisionType !== undefined)) {
     return (
       "la risposta accetta sia un margine di tolleranza sia un arrotondamento a un certo numero di cifre " +
-      `decimali insieme: l'editor sa rappresentare l'uno o l'altro, non insieme. ${SUGGERIMENTO_DUPLICA} ` +
+      `decimali insieme: l'editor sa rappresentare l'uno o l'altro, non insieme. ${SUGGERIMENTO_REPOSITORIO} ` +
       "(precision + minValue/maxValue)"
     );
   }
@@ -248,7 +259,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
       ok: false,
       lettura: rifiutaTipo(
         `${posizione} ${descrizione} (tipo "${nomeTipo}"): l'editor gestisce solo domande numeriche, a ` +
-          `scelta multipla singola, o con risposta in formula matematica. ${SUGGERIMENTO_DUPLICA}`,
+          `scelta multipla singola, o con risposta in formula matematica. ${SUGGERIMENTO_REPOSITORIO}`,
       ),
     };
   }
@@ -288,7 +299,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
           `${posizione}: l'intervallo di risposte accettate non è in una forma che l'editor sa interpretare ` +
             "(un valore esatto, un margine di tolleranza, o un arrotondamento a un certo numero di cifre " +
             "decimali) — potrebbe essere un intervallo scritto a mano in modo asimmetrico. " +
-            `${SUGGERIMENTO_DUPLICA} (minValue/maxValue)`,
+            `${SUGGERIMENTO_REPOSITORIO} (minValue/maxValue)`,
         ),
       };
     }
@@ -321,7 +332,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
         ok: false,
         lettura: rifiutaCostrutto(
           `${posizione} controlla quali lettere (nomi di variabile) lo studente usa nella propria risposta, o ` +
-            `genera valori di anteprima per la formula: non ancora supportato dall'editor. ${SUGGERIMENTO_DUPLICA} ` +
+            `genera valori di anteprima per la formula: non ancora supportato dall'editor. ${SUGGERIMENTO_REPOSITORIO} ` +
             "(checkVariableNames/expectedVariableNames/valuegenerators)",
         ),
       };
@@ -448,10 +459,29 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
  * (`contenutoGrezzo`, gli stessi byte, non un valore ricalcolato dal
  * modello — il difetto scoperto dalla review nella correzione 2, dove
  * `escapaTesto(valore-già-estratto)` era sempre uguale a se stesso qualunque
- * cosa contenesse davvero il file); voci della matrice come stringa;
- * intervallo a margine con le parentesi. Ogni altro campo passa inalterato:
- * se differisce dal rigenerato, il confronto lo scopre — è esattamente così
- * che `distractors` è stato scoperto perso, prima di essere modellato. */
+ * cosa contenesse davvero il file); voci della matrice come stringa.
+ *
+ * `minValue`/`maxValue` di una parte a margine NON vengono qui ricalcolati
+ * dal modello (`estratta.valore`/`estratta.tolleranza.margine`): restano i
+ * byte grezzi già presenti in `raw` tramite `{...raw}` sopra. È la STESSA
+ * correzione applicata ai campi di testo, un round in più (Onda di
+ * correzioni finale, C3): la review ha dimostrato che ricostruire
+ * `(${estratta.valore}) - (${estratta.tolleranza.margine})` qui era un
+ * confronto tautologico X === X, perché `versoNumbas` (chiamato sotto per
+ * produrre `rigenerato`) scrive ESATTAMENTE la stessa formula dagli STESSI
+ * dati — non poteva mai fallire, qualunque cosa avesse spezzato
+ * `intervalloAMargine` (che spezza per prefisso/suffisso comune, ignorando
+ * la profondità delle parentesi: un margine scritto dentro una chiamata,
+ * `exp(k - 0.05)`, viene spezzato in `valore="exp(k"` e
+ * `margine="0.05)"` — sintatticamente plausibile, semanticamente un
+ * intervallo diverso). Confrontando invece i byte grezzi contro il
+ * rigenerato dal modello, l'unica forma accettata è quella già
+ * byte-per-byte identica a quella che `versoNumbas` produce — la stessa
+ * garanzia "canonica o rifiutata" di `estraiTesto` per il testo, non una
+ * riscrittura più permissiva che perdona parentesi mancanti. Non si
+ * introduce uno spezzatore più furbo (consapevole delle parentesi): la
+ * lezione di tre giri di correzioni è che qualunque cosa ricostruita dal
+ * modello non può essere il termine di paragone. */
 function normalizzaParte(raw: Record<string, unknown>, estratta: ParteEditor): Record<string, unknown> {
   const normalizzato: Record<string, unknown> = { ...raw, prompt: `<p>${contenutoGrezzo(raw.prompt) ?? ""}</p>` };
   if (estratta.tipo === "scelta") {
@@ -462,9 +492,6 @@ function normalizzaParte(raw: Record<string, unknown>, estratta: ParteEditor): R
       const distractorsGrezzi = lista(raw.distractors) ?? [];
       normalizzato.distractors = distractorsGrezzi.map((d) => contenutoGrezzo(d) ?? "");
     }
-  } else if (estratta.tipo === "numerica" && estratta.tolleranza.tipo === "margine") {
-    normalizzato.minValue = `(${estratta.valore}) - (${estratta.tolleranza.margine})`;
-    normalizzato.maxValue = `(${estratta.valore}) + (${estratta.tolleranza.margine})`;
   }
   return normalizzato;
 }
@@ -509,7 +536,7 @@ export function daNumbas(file: EsercizioFile): Lettura {
     return rifiutaCostrutto(
       `questo esercizio usa funzioni scritte apposta per lui, in codice Numbas (functions: ` +
         `${Object.keys(funzioni).join(", ")}): l'editor non sa mostrarle, e salvarlo di nuovo le cancellerebbe. ` +
-        SUGGERIMENTO_DUPLICA,
+        SUGGERIMENTO_REPOSITORIO,
     );
   }
 
@@ -517,7 +544,7 @@ export function daNumbas(file: EsercizioFile): Lettura {
   if (gruppi.length > 0) {
     return rifiutaCostrutto(
       `questo esercizio raggruppa le variabili in gruppi (variable_groups): l'editor non gestisce i gruppi. ` +
-        SUGGERIMENTO_DUPLICA,
+        SUGGERIMENTO_REPOSITORIO,
     );
   }
 
@@ -663,7 +690,7 @@ export function daNumbas(file: EsercizioFile): Lettura {
     primeDifferenze(originaleNormalizzato, rigenerato, "$", differenze, 5);
     return rifiutaCostrutto(
       "questo esercizio ha un dettaglio che l'editor non sa ancora rappresentare fedelmente: salvarlo di nuovo " +
-        `lo cambierebbe. ${SUGGERIMENTO_DUPLICA} (dettaglio tecnico: ${differenze.join("; ")})`,
+        `lo cambierebbe. ${SUGGERIMENTO_REPOSITORIO} (dettaglio tecnico: ${differenze.join("; ")})`,
     );
   }
 

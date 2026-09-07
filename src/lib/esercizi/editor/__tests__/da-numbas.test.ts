@@ -74,7 +74,10 @@ describe("il corpus reale", () => {
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
       expect(esito.dettaglio).toContain("checkVariableNames");
-      expect(esito.dettaglio).toContain("duplica");
+      // Onda finale, I4: il messaggio non raccomanda più "duplica" (il
+      // pulsante è stato tolto, vedi SUGGERIMENTO_REPOSITORIO) — indica
+      // invece che l'unica via è il repository dei contenuti.
+      expect(esito.dettaglio).toContain("repository dei contenuti");
     }
   });
 
@@ -291,5 +294,171 @@ describe("markup HTML vero non e' rappresentabile (giro di correzioni 3)", () =>
     file.question.parts[0].prompt = "<p>Quanto vale <em>x</em>?</p>";
     const esito = daNumbas(file);
     expect(esito.ok).toBe(false);
+  });
+});
+
+// Giro di correzioni finale (C3): il confronto strutturale per
+// minValue/maxValue a margine confrontava un valore RICALCOLATO dal
+// modello (`normalizzaParte`: `(${estratta.valore}) - (${estratta.tolleranza.margine})`)
+// con `versoNumbas` che scrive esattamente la stessa formula dagli stessi
+// dati — un confronto X === X che non poteva mai fallire. L'unica guardia
+// reale era `intervalloAMargine`, che spezza per prefisso/suffisso comune
+// senza ragionare sulla profondità delle parentesi: un margine scritto
+// dentro una chiamata (non intorno a tutta l'espressione) viene spezzato
+// nel punto sbagliato, il docente vede un valore/margine incoerenti in
+// editor, e se salva di nuovo l'intervallo cambia silenziosamente.
+describe("il margine dentro una chiamata non viene accettato e riscritto (giro di correzioni finale, C3)", () => {
+  it("exp(k - 0.05)/exp(k + 0.05) non e' rappresentabile (il margine non avvolge l'intera espressione)", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].minValue = "exp(a - 0.05)";
+    file.question.parts[0].maxValue = "exp(a + 0.05)";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("una tolleranza percentuale scritta come v*(1 - 0.01)/v*(1 + 0.01) non e' rappresentabile", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].minValue = "a*(1 - 0.01)";
+    file.question.parts[0].maxValue = "a*(1 + 0.01)";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("sqrt(k - 0.5)/sqrt(k + 0.5) non e' rappresentabile", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].minValue = "sqrt(a - 0.5)";
+    file.question.parts[0].maxValue = "sqrt(a + 0.5)";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  // Guardia contro la correzione eccessiva: la forma canonica che
+  // `versoNumbas` scrive davvero (margine attorno all'INTERA espressione,
+  // con le parentesi che il motore aggiunge sempre) deve restare
+  // accettata — e` il test gemello, gia' presente, "(c-b)/a con margine
+  // 0.01 torna identico" (sopra) a dimostrarlo end-to-end; qui si
+  // verifica lo stesso anche quando il valore e' gia' una chiamata.
+  it("exp(a) ± 0.05, scritto nella forma canonica con le parentesi attorno all'intera espressione, resta accettato", () => {
+    const originale: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
+      consegna: "\\(x=\\)", punti: 2, valore: "exp(a)",
+      tolleranza: { tipo: "margine", margine: "0.05" } }] };
+    const esito = daNumbas(versoFile(originale));
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+});
+
+// I2 (Onda di correzioni finale): il revisore ha dimostrato con sedici
+// mutazioni usa-e-getta, mai committate, che diversi controlli di questo
+// modulo possono essere disattivati senza che NESSUN test esistente se ne
+// accorga. Questi quattro test fissano nel repository esattamente quelle
+// mutazioni — uno scenario per ciascuna — così che disattivarle di nuovo
+// (in futuro, magari come "pulizia" di codice che sembra ridondante) faccia
+// fallire un test, non passare inosservato.
+describe("I2 — mutazioni che prima di questo giro non facevano fallire nessun test", () => {
+  // Mutazione: disattivare per intero il confronto strutturale
+  // (`hashContenuto(originaleNormalizzato) !== hashContenuto(rigenerato)`
+  // in fondo a questo file). Ogni test di rifiuto già presente in questo
+  // file è raggiunto da un controllo NOMINATO PRIMA di arrivare li' (tipo di
+  // parte, funzioni, intervallo, markup ambiguo, ...): nessuno di loro
+  // isola davvero il confronto. Un campo Numbas che nessun controllo
+  // nominato guarda — qui un campo di impostazione reale della parte
+  // (`showFeedbackIcon`, che l'editor non modella affatto) — passa oltre
+  // TUTTI i controlli nominati (il tipo di parte, l'intervallo, il testo
+  // sono comunque tutti a posto) e arriva al confronto: solo lui può
+  // accorgersi che il campo è sparito dalla versione rigenerata.
+  it("un campo di impostazione della parte che nessun controllo nominato guarda (showFeedbackIcon) rende l'esercizio non rappresentabile", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].showFeedbackIcon = false;
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  // Mutazione: far restituire a `estraiTesto` il suo input senza il
+  // controllo di andata e ritorno (`escapaTesto(testo) === grezzo`) — cioè
+  // accettare qualunque `<`/`>` grezzo come fosse già canonico. Verificato
+  // (vedi il rapporto del task) che questa mutazione da SOLA non cambia mai
+  // `esito.ok` per nessuno dei sei test già presenti in "markup HTML vero
+  // non e' rappresentabile": il confronto strutturale, ancora attivo, fa
+  // comunque da rete e la risposta resta correttamente `false` — la
+  // mutazione è quindi INVISIBILE a un test che guarda solo `ok`. Ciò che
+  // CAMBIA è il messaggio: senza il controllo di `estraiTesto`, a
+  // rifiutare non è più lui (che spiega "potrebbe essere una
+  // disuguaglianza scritta a mano O una formattazione HTML vera") ma il
+  // confronto strutturale, con un messaggio tecnico ("dettaglio tecnico:
+  // ...") molto meno utile per un docente. Il test pinna quindi anche IL
+  // MESSAGGIO, non solo l'esito: è quello che fa fallire l'assert quando
+  // `estraiTesto` smette di controllare.
+  it("un <em> vero nella spiegazione di una risposta sbagliata (distractors) viene rifiutato con il messaggio giusto (ambiguità del testo, non un dettaglio tecnico)", () => {
+    const conScelta: EsercizioEditor = { ...base, parti: [
+      { tipo: "scelta", consegna: "Quale?", punti: 1,
+        risposte: ["uno", "due"], indiceGiusta: 0,
+        spiegazioni: ["", "sbagliata"] },
+    ] };
+    const file = versoFile(conScelta) as FileMutabile;
+    file.question.parts[0].distractors = ["", "guarda <em>qui</em>"];
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.dettaglio).toContain("simbolo di disuguaglianza scritto a mano");
+      expect(esito.dettaglio).toContain("distractors");
+    }
+  });
+
+  // Mutazione: togliere il vincolo dello spazio in `intervalloAMargine`
+  // (`if (!prefisso.endsWith(" ") || !suffisso.startsWith(" ")) return
+  // null;`), lasciando comunque lo scarto di un carattere che lo segue
+  // (`.slice(0,-1)`/`.slice(1)`). Il test già presente ("un margine senza
+  // gli spazi attorno all'operatore non è riconosciuto", sopra) usa
+  // "k-1"/"k+1": valore e margine di UN solo carattere, che lo scarto di un
+  // carattere riduce a stringa vuota — caso che resta rifiutato anche senza
+  // il vincolo dello spazio (dal controllo successivo sulla lunghezza), e
+  // quindi non distingue la mutazione. Qui valore e margine hanno DUE
+  // caratteri ("10"/"20"): senza lo spazio, lo scarto di un carattere lascia
+  // comunque "1"/"0" non vuoti — la mutazione li accetterebbe come
+  // valore="1", margine="0", un intervallo tutt'altro che [10-20, 10+20].
+  // Anche questa mutazione, da SOLA, non cambia mai `esito.ok` per
+  // "10-20"/"10+20" (verificato: il confronto strutturale, ancora attivo,
+  // scopre comunque che il valore/margine mangiato ("1"/"0") rigenera un
+  // intervallo diverso da quello scritto). Cambia però il messaggio: senza
+  // il vincolo dello spazio, a rifiutare non è più `leggiIntervallo` (che
+  // spiega perché — "l'intervallo... non è in una forma che l'editor sa
+  // interpretare") ma il confronto strutturale, con un "dettaglio tecnico"
+  // molto meno utile. Pin sul messaggio, non solo sull'esito.
+  it("un margine senza spazio con valore e margine di più di un carattere (10-20/10+20) resta rifiutato col messaggio giusto (intervallo non interpretabile)", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.parts[0].minValue = "10-20";
+    file.question.parts[0].maxValue = "10+20";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.dettaglio).toContain("l'intervallo di risposte accettate non è in una forma che l'editor sa interpretare");
+      expect(esito.dettaglio).toContain("minValue/maxValue");
+    }
+  });
+
+  // Mutazione: togliere il rifiuto per `functions` non vuoto. Il test già
+  // presente ("una funzione definita dal docente rende l'esercizio non
+  // modificabile", sopra) verifica solo l'ESITO, non PERCHÉ: qui si fissa
+  // anche che il motivo sia quello giusto (non un rifiuto casuale su
+  // qualcos'altro), così un domani "sembra ridondante col confronto
+  // strutturale" non lo faccia sparire senza che il messaggio per il
+  // docente ("l'editor non sa mostrarle") sparisca con lui.
+  // Stessa cautela delle due mutazioni sopra: `esito.dettaglio` contiene
+  // comunque la parola "functions" pure quando è il confronto strutturale a
+  // rifiutare al posto del controllo nominato (compare come percorso JSON,
+  // "$.functions..."), quindi non basta cercare quella parola per
+  // distinguere le due strade. La frase in lingua da docente ("usa funzioni
+  // scritte apposta per lui, in codice Numbas") è invece unica del
+  // controllo nominato: solo lui la scrive.
+  it("una funzione definita dal docente viene rifiutata dal controllo nominato, non dal confronto strutturale", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.functions = { f: { parameters: [], type: "number", definition: "1", language: "jme" } };
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.motivo).toBe("costrutti_non_supportati");
+      expect(esito.dettaglio).toContain("usa funzioni scritte apposta per lui, in codice Numbas");
+    }
   });
 });
