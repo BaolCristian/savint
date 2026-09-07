@@ -35,18 +35,32 @@ describe("il corpus reale", () => {
   // a "false" perche' la mia prima tabella non era stata verificata contro
   // la rigenerazione reale, solo contro i controlli specifici che avevo
   // scritto — che non potevano sapere di checkVariableNames o della
-  // combinazione margine+precisione, campi a cui non avevo pensato.
+  // combinazione margine+precisione, campi a cui non avevo pensato. Il
+  // motivo di 04 e' cambiato nel giro di correzioni 2: prima veniva
+  // rifiutato per il "<" letterale nello statement (< 0), un difetto del
+  // divieto sui marcatori che rendeva l'editor incapace di scrivere una
+  // disequazione; ora quel "<" e' testo matematico legittimo, e il vero
+  // (unico) ostacolo e' il tipo di parte m_n_2, non supportato.
   it.each([
     ["01-equazione-primo-grado.json", true],   // rigenera byte per byte
     ["02-scomposizione-polinomi.json", true],  // distractors ora modellati
     ["03-sistemi-lineari.json", false],   // gapfill
-    ["04-disequazioni-secondo-grado.json", false], // "<" letterale nel testo (< 0)
+    ["04-disequazioni-secondo-grado.json", false], // m_n_2, non piu' il "<" nello statement
     ["05-goniometria-valori.json", false],  // m_n_x
     ["06-derivate-elementari.json", false], // checkVariableNames/expectedVariableNames
     ["07-limiti-notevoli.json", false],     // margine E precisione insieme
     ["08-terminologia-funzioni.json", false], // patternmatch
   ] as const)("%s rappresentabile: %s", (nome, atteso) => {
     expect(daNumbas(leggi(nome)).ok).toBe(atteso);
+  });
+
+  it("04 e' rifiutato per il tipo di parte (m_n_2), non piu' per il '<' nello statement", () => {
+    const esito = daNumbas(leggi("04-disequazioni-secondo-grado.json"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.motivo).toBe("tipo_non_supportato");
+      expect(esito.dettaglio).toContain("m_n_2");
+    }
   });
 
   it("quando rifiuta, dice cosa non sa trattare", () => {
@@ -119,6 +133,39 @@ describe("andata e ritorno", () => {
     const esito = daNumbas(versoFile(originale));
     expect(esito.ok).toBe(true);
     if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+});
+
+// Giro di correzioni 2: il divieto sui marcatori impediva di scrivere una
+// disequazione. Ora `versoNumbas` scappa `<`/`>`/`&` invece di rifiutarli, e
+// `daNumbas` li recupera com'erano: questi test lo provano end-to-end,
+// invece di fermarsi al livello dello schema (coperto in verso-numbas.test.ts).
+describe("< > & sopravvivono al giro completo", () => {
+  it("una disuguaglianza reale (x < 0) torna identica", () => {
+    const originale: EsercizioEditor = { ...base, testo: "Risolvi \\(x^2-1 < 0\\)" };
+    const esito = daNumbas(versoFile(originale));
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+
+  it("<, > e & insieme in uno stesso testo tornano identici", () => {
+    const originale: EsercizioEditor = { ...base,
+      testo: "Se a < b e b > 0, allora a/b < 1 & questo si verifica sempre" };
+    const esito = daNumbas(versoFile(originale));
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+
+  it("un payload da iniezione torna come testo visibile, non viene rifiutato", () => {
+    const payload = "<script>alert(1)</script>";
+    const originale: EsercizioEditor = { ...base, testo: payload };
+    const file = versoFile(originale);
+    // scritto come entità: non e' markup eseguibile nel file salvato.
+    expect(JSON.stringify(file.question)).toContain("&lt;script&gt;");
+    expect(JSON.stringify(file.question)).not.toContain("<script>");
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor.testo).toBe(payload);
   });
 });
 

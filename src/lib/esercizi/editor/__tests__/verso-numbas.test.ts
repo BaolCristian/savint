@@ -159,50 +159,55 @@ describe("esercizioEditorSchema - casi limite", () => {
   });
 });
 
-describe("esercizioEditorSchema - rifiuta i marcatori nei campi di testo", () => {
+describe("esercizioEditorSchema - marcatori HTML nei campi di testo", () => {
+  // Fix round 2 di Task 2: una disuguaglianza (`x < 0`) è testo matematico
+  // legittimo, e lo schema non rifiuta più `<`/`>`/`&`. Chi neutralizza un
+  // payload come questo non è più un rifiuto a monte, ma `versoNumbas`, con
+  // l'escaping HTML: il player legge `textContent` da HTML già passato per
+  // il parser (contenuto-html.tsx), quindi un `&lt;script&gt;` scritto qui
+  // torna sullo schermo come il testo letterale "<script>...", non come tag.
   const payload = "<script>alert(1)</script>";
+  const payloadScappato = "&lt;script&gt;alert(1)&lt;/script&gt;";
 
-  it("rifiuta i marcatori nel testo (statement)", () => {
+  it("accetta i marcatori nel testo (statement)", () => {
     const e = { ...base, testo: payload };
-    const r = esercizioEditorSchema.safeParse(e);
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const msg = JSON.stringify(r.error.issues);
-      expect(msg).toMatch(/\\\(/);
-    }
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
   });
 
-  it("rifiuta i marcatori nel suggerimento (advice)", () => {
+  it("il testo (statement) esce da versoNumbas come testo visibile, non come markup", () => {
+    const e = { ...base, testo: payload };
+    const q = versoNumbas(e) as { statement: string };
+    expect(q.statement).toBe(`<p>${payloadScappato}</p>`);
+  });
+
+  it("accetta i marcatori nel suggerimento (advice)", () => {
     const e = { ...base, suggerimento: payload };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
   });
 
-  it("rifiuta i marcatori nella descrizione della variabile", () => {
+  it("accetta i marcatori nella descrizione della variabile", () => {
     const e = { ...base, variabili: [{ nome: "a", definizione: "1", descrizione: payload }] };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
   });
 
-  it("rifiuta i marcatori nella consegna di una parte numerica", () => {
+  it("accetta i marcatori nella consegna di una parte numerica", () => {
     const e = { ...base, parti: [{ ...base.parti[0], consegna: payload }] };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
   });
 
-  it("rifiuta i marcatori nella consegna di una parte a scelta", () => {
-    const e = { ...base, parti: [{ tipo: "scelta", consegna: payload, punti: 1,
-      risposte: ["a", "b"], indiceGiusta: 0 }] };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
-  });
-
-  it("rifiuta i marcatori nel testo di una risposta a scelta", () => {
-    const e = { ...base, parti: [{ tipo: "scelta", consegna: "Q", punti: 1,
+  it("accetta i marcatori nella consegna di una parte a scelta, e li scappa nel choice HTML", () => {
+    const e: EsercizioEditor = { ...base, parti: [{ tipo: "scelta", consegna: payload, punti: 1,
       risposte: [payload, "b"], indiceGiusta: 0 }] };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
+    const p = parte(versoNumbas(e));
+    expect(p.prompt).toBe(`<p>${payloadScappato}</p>`);
+    expect((p.choices as string[])[0]).toBe(`<p>${payloadScappato}</p>`);
   });
 
-  it("rifiuta i marcatori nella consegna di una parte espressione", () => {
+  it("accetta i marcatori nella consegna di una parte espressione", () => {
     const e = { ...base, parti: [{ tipo: "espressione", consegna: payload, punti: 1,
       risposta: "x" }] };
-    expect(esercizioEditorSchema.safeParse(e).success).toBe(false);
+    expect(esercizioEditorSchema.safeParse(e).success).toBe(true);
   });
 
   it("accetta le formule scritte fra \\( \\)", () => {

@@ -1,14 +1,12 @@
 import { z } from "zod";
 
-/** Testo semplice con formule fra `\( \)`: mai marcatori HTML. Il player
- * rende questo testo com'è nella pagina di ogni studente della scuola, quindi
- * un `<` o `>` qui non è un errore di battitura tollerabile: è HTML che
- * finirebbe iniettato. Lo schema è anche la validazione delle rotte, non solo
- * dell'interfaccia, quindi il rifiuto vive qui e non nel form. */
-const testoSenzaMarcatori = (messaggio: string) =>
-  z.string().refine((v) => !v.includes("<") && !v.includes(">"), {
-    message: `${messaggio}: niente marcatori HTML, scrivi le formule fra \\( \\) invece.`,
-  });
+/** Testo libero scritto dal docente: può contenere `<`, `>`, `&` — una
+ * disuguaglianza (`x < 0`) è testo matematico legittimo, non un errore. Non
+ * li vieta più lo schema: li neutralizza `versoNumbas` con l'escaping HTML
+ * (`&` -> `&amp;`, `<` -> `&lt;`, `>` -> `&gt;`) quando li incorpora nella
+ * pagina, e `daNumbas` li recupera com'erano al ritorno. Il rifiuto qui
+ * avrebbe reso l'editor incapace di scrivere una disequazione. */
+const testoLibero = z.string();
 
 const identificatore = z
   .string()
@@ -51,7 +49,7 @@ const puntiSchema = z.number().min(1, "ogni parte deve valere almeno un punto");
 
 const parteNumericaSchema = z.object({
   tipo: z.literal("numerica"),
-  consegna: testoSenzaMarcatori("consegna"),
+  consegna: testoLibero,
   punti: puntiSchema,
   valore: z.string().min(1),
   tolleranza: tolleranzaSchema,
@@ -60,11 +58,11 @@ const parteNumericaSchema = z.object({
 const parteSceltaSchema = z
   .object({
     tipo: z.literal("scelta"),
-    consegna: testoSenzaMarcatori("consegna"),
+    consegna: testoLibero,
     punti: puntiSchema,
-    risposte: z.array(testoSenzaMarcatori("risposta")).min(2).max(6),
+    risposte: z.array(testoLibero).min(2).max(6),
     indiceGiusta: z.number().int().nonnegative(),
-    spiegazioni: z.array(testoSenzaMarcatori("spiegazione")).optional(),
+    spiegazioni: z.array(testoLibero).optional(),
   })
   .refine((v) => v.indiceGiusta < v.risposte.length, {
     message: "indiceGiusta deve indicare una risposta fra quelle elencate",
@@ -77,7 +75,7 @@ const parteSceltaSchema = z
 
 const parteEspressioneSchema = z.object({
   tipo: z.literal("espressione"),
-  consegna: testoSenzaMarcatori("consegna"),
+  consegna: testoLibero,
   punti: puntiSchema,
   risposta: z.string().min(1),
 });
@@ -97,7 +95,7 @@ export type VariabileEditor = {
 const variabileEditorSchema: z.ZodType<VariabileEditor> = z.object({
   nome: identificatore,
   definizione: z.string().min(1),
-  descrizione: testoSenzaMarcatori("descrizione della variabile"),
+  descrizione: testoLibero,
 });
 
 export type EsercizioEditor = {
@@ -125,8 +123,8 @@ export const esercizioEditorSchema: z.ZodType<EsercizioEditor> = z.object({
     tag: z.array(z.string()),
     difficolta: z.number().int().min(1).max(3),
   }),
-  testo: testoSenzaMarcatori("testo"),
-  suggerimento: testoSenzaMarcatori("suggerimento"),
+  testo: testoLibero,
+  suggerimento: testoLibero,
   variabili: z.array(variabileEditorSchema),
   condizione: z.string(),
   parti: z.array(parteEditorSchema).min(1),

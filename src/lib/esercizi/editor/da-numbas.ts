@@ -1,7 +1,7 @@
 import { esercizioEditorSchema } from "./modello";
 import type { EsercizioEditor, ParteEditor, Tolleranza, VariabileEditor } from "./modello";
 import { hashContenuto, stabile, type EsercizioFile } from "../format/schema";
-import { versoNumbas } from "./verso-numbas";
+import { versoNumbas, escapaTesto } from "./verso-numbas";
 
 /** L'esito della lettura: o un editor ricostruito fedelmente, o un rifiuto
  * motivato. Non esiste una terza via "ricostruito parzialmente": è proprio
@@ -37,20 +37,33 @@ function numero(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
+/** L'inverso di `escapaTesto` (verso-numbas.ts): disfa gli ordini in ordine
+ * opposto a come sono stati fatti. `escapaTesto` scappa prima `&`, poi
+ * `<`/`>`, perché altrimenti un `<` del docente diventerebbe `&lt;` e quell'
+ * `&` verrebbe scappato di nuovo. Per la stessa ragione al contrario, qui
+ * `&lt;`/`&gt;` vanno disfatti PRIMA di `&amp;`: un `&lt;` scritto a mano dal
+ * docente come testo letterale (non un vero `<` scappato) diventa `&amp;lt;`
+ * in scrittura — disfacendo `&amp;` per primo in lettura, quel testo
+ * tornerebbe un `<` vero, che non è mai stato. */
+function unescapaTesto(s: string): string {
+  return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+}
+
 /** Numbas avvolge testo/prompt/scelte in un unico `<p>...</p>`; l'editor li
- * mostra senza quell'involucro. Un campo è recuperabile solo se non ha
- * marcatori HTML del tutto (come le scelte scritte a mano nel corpus, che
- * non sono avvolte), oppure se è avvolto ESATTAMENTE da quella coppia di
- * tag senza nient'altro dentro: riaprirlo perderebbe qualunque altro
- * marcatore (un secondo `<p>`, un `<br>`, ...). Rifiuta in ogni altro caso. */
+ * mostra senza quell'involucro. Un `<`/`>` letterale non è più un motivo di
+ * rifiuto (una disuguaglianza `x < 0` è testo matematico legittimo): quello
+ * che il docente ha scritto attraverso questo editor arriva già come
+ * entità HTML (`&lt;`/`&gt;`/`&amp;`), disfatte qui; un file scritto a mano
+ * col simbolo letterale (come il corpus) arriva senza entità da disfare, e
+ * torna com'è. L'unico motivo di rifiuto residuo è un campo che non è
+ * affatto una stringa. */
 function estraiTesto(v: unknown): string | null {
   const s = stringa(v);
   if (s === null) return null;
   if (s.startsWith("<p>") && s.endsWith("</p>") && s.length >= "<p></p>".length) {
-    const interno = s.slice(3, -4);
-    return interno.includes("<") || interno.includes(">") ? null : interno;
+    return unescapaTesto(s.slice(3, -4));
   }
-  return s.includes("<") || s.includes(">") ? null : s;
+  return unescapaTesto(s);
 }
 
 // ---- l'intervallo minValue/maxValue ------------------------------------
@@ -204,7 +217,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
   if (consegna === null) {
     return {
       ok: false,
-      lettura: rifiutaCostrutto(`${posizione}: il prompt contiene marcatori oltre al <p> che lo avvolge.`),
+      lettura: rifiutaCostrutto(`${posizione}: il prompt (prompt) non è una stringa valida.`),
     };
   }
 
@@ -282,7 +295,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
     if (r === null) {
       return {
         ok: false,
-        lettura: rifiutaCostrutto(`${posizione}: una risposta contiene marcatori oltre al <p> che la avvolge.`),
+        lettura: rifiutaCostrutto(`${posizione}: una risposta (choices) non è una stringa valida.`),
       };
     }
     risposte.push(r);
@@ -340,7 +353,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
       if (s === null) {
         return {
           ok: false,
-          lettura: rifiutaCostrutto(`${posizione}: una spiegazione (distractors) contiene marcatori non gestibili.`),
+          lettura: rifiutaCostrutto(`${posizione}: una spiegazione (distractors) non è una stringa valida.`),
         };
       }
       spiegazioniEstratte.push(s);
@@ -368,18 +381,21 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
 /** Ricostruisce, a partire dal JSON grezzo di una parte e dalla parte
  * dell'editor estratta da esso, la stessa parte con le sole equivalenze già
  * usate in lettura risolte a favore della forma canonica che `versoNumbas`
- * scrive (prompt/scelte riavvolti in `<p>...</p>`, voci della matrice come
- * stringa, intervallo a margine con le parentesi). Ogni altro campo passa
- * inalterato: se differisce dal rigenerato, il confronto lo scopre — è
- * esattamente così che `distractors` è stato scoperto perso, prima di
- * essere modellato. */
+ * scrive: prompt/scelte/distractors riavvolti in `<p>...</p>` (dove
+ * previsto) e passati per `escapaTesto` — la stessa funzione che userebbe
+ * `versoNumbas`, non una copia — così un `<` letterale nel file originale e
+ * un `&lt;` scritto da questo stesso editor normalizzano alla stessa forma
+ * canonica; voci della matrice come stringa; intervallo a margine con le
+ * parentesi. Ogni altro campo passa inalterato: se differisce dal
+ * rigenerato, il confronto lo scopre — è esattamente così che `distractors`
+ * è stato scoperto perso, prima di essere modellato. */
 function normalizzaParte(raw: Record<string, unknown>, estratta: ParteEditor): Record<string, unknown> {
-  const normalizzato: Record<string, unknown> = { ...raw, prompt: `<p>${estratta.consegna}</p>` };
+  const normalizzato: Record<string, unknown> = { ...raw, prompt: `<p>${escapaTesto(estratta.consegna)}</p>` };
   if (estratta.tipo === "scelta") {
-    normalizzato.choices = estratta.risposte.map((r) => `<p>${r}</p>`);
+    normalizzato.choices = estratta.risposte.map((r) => `<p>${escapaTesto(r)}</p>`);
     normalizzato.matrix = estratta.risposte.map((_, i) => (i === estratta.indiceGiusta ? String(estratta.punti) : "0"));
     if ("distractors" in raw) {
-      normalizzato.distractors = estratta.spiegazioni ?? estratta.risposte.map(() => "");
+      normalizzato.distractors = (estratta.spiegazioni ?? estratta.risposte.map(() => "")).map(escapaTesto);
     }
   } else if (estratta.tipo === "numerica" && estratta.tolleranza.tipo === "margine") {
     normalizzato.minValue = `(${estratta.valore}) - (${estratta.tolleranza.margine})`;
@@ -473,21 +489,21 @@ export function daNumbas(file: EsercizioFile): Lettura {
     }
     const descrizione = estraiTesto(v.description ?? "");
     if (descrizione === null) {
-      return rifiutaCostrutto(`la descrizione della variabile "${nome}" contiene marcatori non gestibili.`);
+      return rifiutaCostrutto(`la descrizione della variabile "${nome}" non è una stringa valida.`);
     }
     variabili.push({ nome, definizione, descrizione });
   }
 
   const testoEsercizio = estraiTesto(q.statement ?? "");
   if (testoEsercizio === null) {
-    return rifiutaCostrutto("il testo dell'esercizio (statement) contiene marcatori oltre al <p> che lo avvolge.");
+    return rifiutaCostrutto("il testo dell'esercizio (statement) non è una stringa valida.");
   }
 
   let suggerimento = "";
   if (q.advice) {
     const s = estraiTesto(q.advice);
     if (s === null) {
-      return rifiutaCostrutto("il suggerimento (advice) contiene marcatori oltre al <p> che lo avvolge.");
+      return rifiutaCostrutto("il suggerimento (advice) non è una stringa valida.");
     }
     suggerimento = s;
   }
@@ -539,12 +555,13 @@ export function daNumbas(file: EsercizioFile): Lettura {
   // usate in lettura (un campo dell'involucro assente rispetto al valore
   // vuoto che Numbas stesso usa quando manca — verificato in
   // packages/engine/src/question/load.ts, non assunto — un testo avvolto o
-  // no in `<p>`, una voce di matrice numero invece che stringa, un margine
-  // scritto senza le parentesi che `versoNumbas` aggiunge sempre).
+  // no in `<p>`, un `<`/`>`/`&` letterale rispetto alla stessa entità HTML,
+  // una voce di matrice numero invece che stringa, un margine scritto senza
+  // le parentesi che `versoNumbas` aggiunge sempre).
   const variabiliNormalizzate = Object.fromEntries(
-    Object.entries(variabiliGrezze).map(([nome, v]) => {
-      const rec = record(v) ?? {};
-      return [nome, { ...rec, description: rec.description ?? "" }];
+    ordine.map((nome, i) => {
+      const rec = record(variabiliGrezze[nome]) ?? {};
+      return [nome, { ...rec, description: escapaTesto(variabili[i].descrizione) }];
     }),
   );
   const originaleNormalizzato: Record<string, unknown> = {
@@ -555,8 +572,8 @@ export function daNumbas(file: EsercizioFile): Lettura {
     variablesTest: variablesTest ?? { condition: condizione, maxRuns: 10 },
     ungrouped_variables: ordine,
     variables: variabiliNormalizzate,
-    statement: `<p>${testoEsercizio}</p>`,
-    advice: suggerimento ? `<p>${suggerimento}</p>` : "",
+    statement: `<p>${escapaTesto(testoEsercizio)}</p>`,
+    advice: suggerimento ? `<p>${escapaTesto(suggerimento)}</p>` : "",
     parts: partiGrezze.map((raw, i) => normalizzaParte(record(raw) ?? {}, parti[i])),
   };
   const rigenerato = versoNumbas(validato.data);
