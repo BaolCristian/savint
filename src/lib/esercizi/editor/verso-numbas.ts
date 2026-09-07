@@ -56,7 +56,11 @@ function versoParte(parte: ParteEditor): unknown {
         showCellAnswerState: true,
         minMarks: 0,
         maxMarks: 0,
-        distractors: parte.risposte.map(() => ""),
+        // Il commento che lo studente legge dopo una risposta sbagliata.
+        // "" per ogni risposta quando il docente non ha scritto spiegazioni:
+        // stesso involucro (Numbas vuole comunque un array lungo quanto
+        // le risposte), nessuna informazione persa.
+        distractors: parte.spiegazioni ?? parte.risposte.map(() => ""),
       };
     case "espressione":
       return {

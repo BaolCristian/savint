@@ -27,7 +27,20 @@ const tolleranzaSchema: z.ZodType<Tolleranza> = z.discriminatedUnion("tipo", [
 
 export type ParteEditor =
   | { tipo: "numerica"; consegna: string; punti: number; valore: string; tolleranza: Tolleranza }
-  | { tipo: "scelta"; consegna: string; punti: number; risposte: string[]; indiceGiusta: number }
+  | {
+      tipo: "scelta";
+      consegna: string;
+      punti: number;
+      risposte: string[];
+      indiceGiusta: number;
+      // Il commento che lo studente legge dopo aver scelto una risposta
+      // sbagliata (il campo `distractors` di Numbas): una voce per ogni
+      // risposta, "" quando il docente non ne ha scritto uno. Campo
+      // opzionale — assente equivale a nessuna spiegazione per nessuna
+      // risposta — così le parti a scelta scritte prima di questo campo
+      // restano valide senza doverlo aggiungere ovunque.
+      spiegazioni?: string[];
+    }
   | { tipo: "espressione"; consegna: string; punti: number; risposta: string };
 
 /** Una parte da zero punti non ha senso in un esercizio: per una parte a
@@ -51,10 +64,15 @@ const parteSceltaSchema = z
     punti: puntiSchema,
     risposte: z.array(testoSenzaMarcatori("risposta")).min(2).max(6),
     indiceGiusta: z.number().int().nonnegative(),
+    spiegazioni: z.array(testoSenzaMarcatori("spiegazione")).optional(),
   })
   .refine((v) => v.indiceGiusta < v.risposte.length, {
     message: "indiceGiusta deve indicare una risposta fra quelle elencate",
     path: ["indiceGiusta"],
+  })
+  .refine((v) => v.spiegazioni === undefined || v.spiegazioni.length === v.risposte.length, {
+    message: "spiegazioni, se presente, deve avere una voce per ogni risposta",
+    path: ["spiegazioni"],
   });
 
 const parteEspressioneSchema = z.object({

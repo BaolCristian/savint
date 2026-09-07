@@ -29,15 +29,21 @@ const base: EsercizioEditor = {
 
 describe("il corpus reale", () => {
   // Il valore di questo test e' che i file NON sono stati scritti
-  // dall'editor: sono il banco di prova indipendente.
+  // dall'editor: sono il banco di prova indipendente. La tabella qui sotto
+  // e' derivata dal confronto strutturale (giro di correzioni 1), non da
+  // un elenco di campi controllati a mano: 06 e 07 sono passati da "true"
+  // a "false" perche' la mia prima tabella non era stata verificata contro
+  // la rigenerazione reale, solo contro i controlli specifici che avevo
+  // scritto — che non potevano sapere di checkVariableNames o della
+  // combinazione margine+precisione, campi a cui non avevo pensato.
   it.each([
-    ["01-equazione-primo-grado.json", true],
-    ["02-scomposizione-polinomi.json", true],
+    ["01-equazione-primo-grado.json", true],   // rigenera byte per byte
+    ["02-scomposizione-polinomi.json", true],  // distractors ora modellati
     ["03-sistemi-lineari.json", false],   // gapfill
-    ["04-disequazioni-secondo-grado.json", false], // m_n_2
+    ["04-disequazioni-secondo-grado.json", false], // "<" letterale nel testo (< 0)
     ["05-goniometria-valori.json", false],  // m_n_x
-    ["06-derivate-elementari.json", true],
-    ["07-limiti-notevoli.json", true],      // numberentry con precision
+    ["06-derivate-elementari.json", false], // checkVariableNames/expectedVariableNames
+    ["07-limiti-notevoli.json", false],     // margine E precisione insieme
     ["08-terminologia-funzioni.json", false], // patternmatch
   ] as const)("%s rappresentabile: %s", (nome, atteso) => {
     expect(daNumbas(leggi(nome)).ok).toBe(atteso);
@@ -47,6 +53,45 @@ describe("il corpus reale", () => {
     const esito = daNumbas(leggi("03-sistemi-lineari.json"));
     expect(esito.ok).toBe(false);
     if (!esito.ok) expect(esito.dettaglio).toContain("gapfill");
+  });
+
+  it("06 dice che è il controllo dei nomi delle variabili a mancare, non solo che 'non torna'", () => {
+    const esito = daNumbas(leggi("06-derivate-elementari.json"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.dettaglio).toContain("checkVariableNames");
+      expect(esito.dettaglio).toContain("duplica");
+    }
+  });
+
+  it("07 dice che è la combinazione di margine e precisione a mancare", () => {
+    const esito = daNumbas(leggi("07-limiti-notevoli.json"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.dettaglio).toContain("precision");
+      expect(esito.dettaglio).toContain("margine");
+    }
+  });
+
+  // La perdita che ha innescato questo giro di correzioni: prima di
+  // modellare le spiegazioni (distractors), 02 veniva accettato ma
+  // salvandolo di nuovo le tre spiegazioni delle risposte sbagliate
+  // sparivano (sostituite da stringhe vuote da versoNumbas). Questo test
+  // fallisce se quella perdita si ripresenta.
+  it("02 non perde le spiegazioni delle risposte sbagliate (distractors)", () => {
+    const file = leggi("02-scomposizione-polinomi.json");
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (esito.ok) {
+      const parte = esito.editor.parti[0];
+      if (parte.tipo !== "scelta") throw new Error("attesa una parte a scelta");
+      expect(parte.spiegazioni).toEqual([
+        "",
+        "Manca il doppio prodotto cambiato di segno: questo è il quadrato di un binomio, non una differenza di quadrati.",
+        "Anche qui manca il doppio prodotto cambiato di segno.",
+        "Una differenza di quadrati si scompone sempre come somma per differenza.",
+      ]);
+    }
   });
 });
 
@@ -59,6 +104,17 @@ describe("andata e ritorno", () => {
       { tipo: "scelta", consegna: "Quale?", punti: 1,
         risposte: ["uno", "due"], indiceGiusta: 0 },
       { tipo: "espressione", consegna: "Deriva", punti: 2, risposta: "2*x" },
+    ] };
+    const esito = daNumbas(versoFile(originale));
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+
+  it("una parte a scelta con spiegazioni torna identica, spiegazioni incluse", () => {
+    const originale: EsercizioEditor = { ...base, parti: [
+      { tipo: "scelta", consegna: "Quale?", punti: 1,
+        risposte: ["uno", "due", "tre"], indiceGiusta: 1,
+        spiegazioni: ["non è il doppio di uno", "", "non è nemmeno il numero giusto di zeri"] },
     ] };
     const esito = daNumbas(versoFile(originale));
     expect(esito.ok).toBe(true);
