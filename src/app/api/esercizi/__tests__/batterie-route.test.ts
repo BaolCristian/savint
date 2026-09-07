@@ -64,7 +64,7 @@ describe("POST /api/esercizi/batterie", () => {
   });
 
   it("201 con l'id della batteria creata", async () => {
-    vi.mocked(creaBatteria).mockResolvedValue({ id: "batt1" });
+    vi.mocked(creaBatteria).mockResolvedValue({ ok: true, id: "batt1" });
     const r = await POST(richiesta(corpoValido));
     expect(r.status).toBe(201);
     expect(await r.json()).toEqual({ id: "batt1" });
@@ -72,9 +72,22 @@ describe("POST /api/esercizi/batterie", () => {
   });
 
   it("inoltra la description quando presente", async () => {
-    vi.mocked(creaBatteria).mockResolvedValue({ id: "batt1" });
+    vi.mocked(creaBatteria).mockResolvedValue({ ok: true, id: "batt1" });
     await POST(richiesta({ ...corpoValido, description: "prime prove" }));
     expect(creaBatteria).toHaveBeenCalledWith("docente1", "Batteria 1", corpoValido.regole, "prime prove");
+  });
+
+  // Fix round finale, item 5: un contenitore inesistente in una regola è un
+  // rifiuto del dominio (`contenitore_non_trovato`), non un errore che
+  // arriva alla rotta senza forma — deve diventare un 4xx col motivo, mai un
+  // 500.
+  it("404 quando una regola nomina un contenitore inesistente", async () => {
+    vi.mocked(creaBatteria).mockResolvedValue({
+      ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: "cont1" },
+    });
+    const r = await POST(richiesta(corpoValido));
+    expect(r.status).toBe(404);
+    expect(await r.json()).toEqual({ error: "contenitore_non_trovato", dettaglio: { contenitoreId: "cont1" } });
   });
 });
 

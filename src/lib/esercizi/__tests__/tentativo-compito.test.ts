@@ -5,7 +5,7 @@ import path from "path";
 import { prisma } from "@/lib/db/client";
 import { avviaORiprendi } from "../tentativo";
 import { seedEsercizi } from "../seed";
-import { creaBatteria } from "../batterie";
+import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
 import { assegna } from "../compiti";
 
@@ -14,6 +14,14 @@ import { assegna } from "../compiti";
 // sulle stesse tabelle.
 const PREFIX = "tenttestc-";
 const ESERCIZIO_ID = `${PREFIX}equazione-primo-grado`;
+
+// `creaBatteria` (Fix round finale, item 5) rifiuta esplicitamente invece di
+// lanciare: qui la si vuole sempre riuscita, quindi si spacchetta o si lancia.
+async function creaBatteria(...args: Parameters<typeof creaBatteriaGrezza>) {
+  const r = await creaBatteriaGrezza(...args);
+  if (!r.ok) throw new Error(`creaBatteria rifiutata inaspettatamente: ${r.motivo}`);
+  return r;
+}
 
 let studentId: string;
 let compitoId: string;

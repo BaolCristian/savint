@@ -1,6 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { creaBatteria, elencoBatterie, verificaBatteria, eliminaBatteria } from "../batterie";
+import { creaBatteria as creaBatteriaGrezza, elencoBatterie, verificaBatteria, eliminaBatteria } from "../batterie";
+
+// `creaBatteria` (Fix round finale, item 5) restituisce ora un rifiuto
+// esplicito — `{ ok: false, motivo, dettaglio }` — invece di lasciar
+// scappare l'errore grezzo di Prisma quando una regola nomina un
+// contenitore inesistente. La maggior parte dei test qui sotto non riguarda
+// quel rifiuto: questa scorciatoia spacchetta il successo o lancia.
+async function creaBatteria(...args: Parameters<typeof creaBatteriaGrezza>) {
+  const r = await creaBatteriaGrezza(...args);
+  if (!r.ok) throw new Error(`creaBatteria rifiutata inaspettatamente: ${r.motivo}`);
+  return r;
+}
 
 const P = "battest-";
 let teacherId: string;
@@ -212,5 +223,31 @@ describe("batterie", () => {
     });
     expect(await eliminaBatteria(b.id)).toEqual({ ok: false, motivo: "in_uso" });
     expect(await prisma.batteria.findUnique({ where: { id: b.id } })).not.toBeNull();
+  });
+
+  // Fix round finale, item 5: prima del fix, questa chiamata non restituiva
+  // niente — la promessa RIFIUTAVA con l'errore grezzo di Prisma (vincolo di
+  // chiave esterna violato su `BatteriaRegola.contenitoreId`), che la rotta
+  // trasformava in un 500 senza nessun messaggio utile al docente.
+  it("una regola che nomina un contenitore inesistente viene rifiutata, non lascia scappare un errore di Prisma", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}ContInesistente`, [
+      { contenitoreId: "questo-contenitore-non-esiste", count: 1 },
+    ]);
+    expect(r).toEqual({
+      ok: false,
+      motivo: "contenitore_non_trovato",
+      dettaglio: { contenitoreId: "questo-contenitore-non-esiste" },
+    });
+    // Nessuna scrittura parziale: né la batteria né le sue regole.
+    expect(await prisma.batteria.count({ where: { name: `${P}ContInesistente` } })).toBe(0);
+  });
+
+  it("una regola valida insieme a una che nomina un contenitore inesistente rifiuta l'intera batteria", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}Mista2`, [
+      { contenitoreId: contA, count: 1 },
+      { contenitoreId: "questo-non-esiste", count: 1 },
+    ]);
+    expect(r).toMatchObject({ ok: false, motivo: "contenitore_non_trovato" });
+    expect(await prisma.batteria.count({ where: { name: `${P}Mista2` } })).toBe(0);
   });
 });

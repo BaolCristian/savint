@@ -32,6 +32,9 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
 
-  const { id } = await creaBatteria(teacherId, parsed.data.name, parsed.data.regole, parsed.data.description);
-  return NextResponse.json({ id }, { status: 201 });
+  const esito = await creaBatteria(teacherId, parsed.data.name, parsed.data.regole, parsed.data.description);
+  if (!esito.ok) {
+    return NextResponse.json({ error: esito.motivo, dettaglio: esito.dettaglio }, { status: 404 });
+  }
+  return NextResponse.json({ id: esito.id }, { status: 201 });
 }

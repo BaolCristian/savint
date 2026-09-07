@@ -40,13 +40,39 @@ export function candidatiDisponibili(
 
 /** Crea una batteria con le sue regole, in una transazione: o vanno dentro
  * tutte, o niente. L'ordine delle regole (per la pesca, più avanti) è
- * l'ordine in cui compaiono nell'array. */
+ * l'ordine in cui compaiono nell'array.
+ *
+ * Controlla PRIMA che ogni `contenitoreId` nominato da una regola esista
+ * davvero: senza questo controllo (Fix round finale, item 5) un id
+ * inesistente arrivava intatto fino a `batteriaRegola.createMany`, che
+ * violava il vincolo di chiave esterna e lasciava scappare l'errore grezzo
+ * di Prisma — la rotta lo trasformava in un 500 senza nessun messaggio utile
+ * al docente, l'unico punto di questo modulo dove un input scorretto non
+ * produceva un rifiuto con un motivo. Stessa forma delle funzioni gemelle
+ * (`assegna`, `eliminaBatteria`, `eliminaContenitore`): un `{ ok: false,
+ * motivo, dettaglio }`, non un'eccezione. */
 export async function creaBatteria(
   createdById: string,
   name: string,
   regole: RegolaInput[],
   description?: string,
-): Promise<{ id: string }> {
+): Promise<
+  | { ok: true; id: string }
+  | { ok: false; motivo: "contenitore_non_trovato"; dettaglio: { contenitoreId: string } }
+> {
+  const contenitoreIds = [...new Set(regole.map((r) => r.contenitoreId))];
+  if (contenitoreIds.length > 0) {
+    const esistenti = await prisma.contenitore.findMany({
+      where: { id: { in: contenitoreIds } },
+      select: { id: true },
+    });
+    const trovati = new Set(esistenti.map((c) => c.id));
+    const mancante = contenitoreIds.find((id) => !trovati.has(id));
+    if (mancante) {
+      return { ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: mancante } };
+    }
+  }
+
   const id = await prisma.$transaction(async (tx) => {
     const b = await tx.batteria.create({ data: { createdById, name, description } });
     if (regole.length > 0) {
@@ -61,7 +87,7 @@ export async function creaBatteria(
     }
     return b.id;
   });
-  return { id };
+  return { ok: true, id };
 }
 
 /** Tutte le batterie, con le loro regole (nome del contenitore + quanti) e il

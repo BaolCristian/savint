@@ -1,10 +1,22 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { creaBatteria, verificaBatteria } from "../batterie";
+import { creaBatteria as creaBatteriaGrezza, verificaBatteria } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
 import {
   assegna, compitiDellaClasse, compitiDelloStudente, consegneDelCompito,
 } from "../compiti";
+
+// `creaBatteria` (Fix round finale, item 5) restituisce ora un rifiuto
+// esplicito invece di lasciar scappare un errore di Prisma quando una
+// regola nomina un contenitore inesistente — stessa forma delle sue gemelle
+// (`assegna`, `eliminaBatteria`). La maggior parte dei test qui non
+// riguarda quel rifiuto: questa scorciatoia spacchetta il successo o lancia,
+// sullo stesso modello di `righeDi` più sotto.
+async function creaBatteria(...args: Parameters<typeof creaBatteriaGrezza>) {
+  const r = await creaBatteriaGrezza(...args);
+  if (!r.ok) throw new Error(`creaBatteria rifiutata inaspettatamente: ${r.motivo}`);
+  return r;
+}
 
 const P = "compititest-";
 let teacherId: string;
