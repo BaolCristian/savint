@@ -35,10 +35,10 @@ const EDITOR: EsercizioEditor = {
   parti: [{ tipo: "espressione", consegna: "Quanto fa 2+2?", punti: 1, risposta: "4" }],
 };
 
-function montaggio(editor: EsercizioEditor = EDITOR) {
+function montaggio(editor: EsercizioEditor = EDITOR, semeRifiuto?: number) {
   return render(
     <NextIntlClientProvider locale="it" messages={messaggiIt}>
-      <Anteprima editor={editor} locale="it" />
+      <Anteprima editor={editor} locale="it" semeRifiuto={semeRifiuto} />
     </NextIntlClientProvider>,
   );
 }
@@ -87,5 +87,60 @@ describe("Anteprima", () => {
     const semiNuovi = screen.getAllByTestId("player").map((p) => p.getAttribute("data-seed"));
     expect(semiNuovi).not.toEqual(semiIniziali);
     expect(new Set(semiNuovi).size).toBe(3);
+  });
+});
+
+// Item I6 dell'onda di correzioni: il seme su cui la verifica a venti semi
+// (o il salvataggio) ha rifiutato l'esercizio, quando presente, deve
+// comparire in uno dei tre riquadri — non un quarto aggiunto, non un
+// riquadro invariato — così il docente vede con i propri occhi il sorteggio
+// che ha rotto l'esercizio.
+describe("Anteprima — il seme del rifiuto", () => {
+  let sequenza: number[];
+
+  beforeEach(() => {
+    // Una sequenza, non una costante: un `Math.random` costante farebbe
+    // sorteggiare lo stesso identico seme per i due riquadri casuali,
+    // colliderebbero sulla `key` React (avviso "same key" in console) e
+    // renderebbero la prova meno fedele a un vero rigenerare di tre numeri
+    // diversi — stesso motivo del blocco `describe` gemello più sopra.
+    sequenza = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
+    let i = 0;
+    vi.spyOn(Math, "random").mockImplementation(() => sequenza[i++ % sequenza.length]!);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("senza un seme di rifiuto, resta a tre riquadri, tutti casuali", () => {
+    montaggio(EDITOR, undefined);
+    expect(screen.getAllByTestId("player")).toHaveLength(3);
+    expect(document.querySelector("[data-seme-rifiuto]")).toBeNull();
+  });
+
+  it("con un seme di rifiuto, resta a tre riquadri — non quattro — e uno porta esattamente quel seme", () => {
+    montaggio(EDITOR, 14);
+    const player = screen.getAllByTestId("player");
+    expect(player).toHaveLength(3);
+    expect(player.some((p) => p.getAttribute("data-seed") === "14")).toBe(true);
+  });
+
+  it("il riquadro del rifiuto è marcato ed etichettato distintamente dagli altri due", () => {
+    montaggio(EDITOR, 14);
+    const evidenziato = document.querySelector('[data-seme-rifiuto] [data-testid="player"]');
+    expect(evidenziato).not.toBeNull();
+    expect(evidenziato).toHaveAttribute("data-seed", "14");
+    expect(
+      screen.getByText(messaggiIt.esercizi.redazione.anteprima.semeRifiuto.replace("{seme}", "14")),
+    ).toBeInTheDocument();
+  });
+
+  it("«nuovi numeri» rigenera solo i due riquadri casuali: quello del rifiuto resta ancorato", async () => {
+    montaggio(EDITOR, 14);
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.anteprima.rigenera }));
+
+    const player = screen.getAllByTestId("player");
+    expect(player).toHaveLength(3);
+    expect(player.some((p) => p.getAttribute("data-seed") === "14")).toBe(true);
   });
 });

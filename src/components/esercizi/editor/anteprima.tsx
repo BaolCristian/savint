@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
 import { versoNumbas } from "@/lib/esercizi/editor/verso-numbas";
 import { PlayerEsercizioLazy } from "@/components/esercizi/player/player-esercizio-lazy";
@@ -23,6 +24,19 @@ function nuoviSemi(): string[] {
 export interface AnteprimaProps {
   editor: EsercizioEditor;
   locale: "it" | "en";
+  /** Il seme su cui la verifica a venti semi (o il salvataggio, che corre la
+   * stessa verifica) ha rifiutato l'esercizio, quando un rifiuto è ancora in
+   * vista — Item I6 dell'onda di correzioni: "Seme: 14" da solo non è
+   * azionabile, perché questa anteprima genera sempre semi casuali e non
+   * offre modo di inserirne uno. Quando presente, sostituisce il PRIMO dei
+   * tre riquadri con questo stesso seme (non un quarto riquadro aggiunto: il
+   * rapporto della revisione chiede "uno dei" tre) — il docente vede così
+   * con i propri occhi il sorteggio che ha rotto l'esercizio, invece di
+   * dover portare un numero a uno sviluppatore. Resta ancorato a questo
+   * seme finché il rifiuto resta in vista: "Nuovi numeri" rigenera solo gli
+   * altri due, non questo — altrimenti un clic sul pulsante lo farebbe
+   * sparire proprio mentre serve di più, mentre si prova una correzione. */
+  semeRifiuto?: number;
 }
 
 /** L'anteprima: lo stesso `player-esercizio` dello studente, tre volte
@@ -44,11 +58,17 @@ export interface AnteprimaProps {
  * volta sola per (seme, contenuto) — cambiarne uno dei due lo rimonta da
  * capo, perché il player carica la domanda una volta sola al montaggio
  * (vedi il commento gemello in player-esercizio.tsx). */
-export function Anteprima({ editor, locale }: AnteprimaProps) {
+export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
   const t = useTranslations("esercizi.redazione.anteprima");
   const [semi, setSemi] = useState<string[]>(nuoviSemi);
   const content = useMemo(() => versoNumbas(editor), [editor]);
   const contentKey = useMemo(() => JSON.stringify(content), [content]);
+
+  // Il seme del rifiuto è lo stesso che `verificaSuSemi` passa al motore
+  // (`seed: String(seme)`, vedi verifica.ts): riusarlo qui com'è, non un
+  // valore derivato, è ciò che garantisce che questo riquadro riproduca
+  // ESATTAMENTE lo stesso sorteggio che ha rotto l'esercizio.
+  const semiVisibili = semeRifiuto === undefined ? semi : [String(semeRifiuto), ...semi.slice(1)];
 
   return (
     <section className="space-y-3" aria-label={t("titolo")}>
@@ -60,21 +80,31 @@ export function Anteprima({ editor, locale }: AnteprimaProps) {
       </div>
       <p className="text-sm text-muted-foreground">{t("spiegazione")}</p>
       <div className="grid gap-4 md:grid-cols-3">
-        {semi.map((seme, indice) => (
-          <div key={`${seme}-${contentKey}`} className="rounded-lg border p-3" data-anteprima={indice}>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">{t("seme", { seme })}</p>
-            <PlayerEsercizioLazy
-              tentativoId={`anteprima-${seme}`}
-              esercizioId="anteprima"
-              seed={seme}
-              content={content}
-              statoIniziale={null}
-              lastActivityAt={new Date()}
-              locale={locale}
-              soloLocale
-            />
-          </div>
-        ))}
+        {semiVisibili.map((seme, indice) => {
+          const evidenziato = semeRifiuto !== undefined && indice === 0;
+          return (
+            <div
+              key={`${seme}-${contentKey}`}
+              className={cn("rounded-lg border p-3", evidenziato && "border-destructive")}
+              data-anteprima={indice}
+              data-seme-rifiuto={evidenziato ? "" : undefined}
+            >
+              <p className={cn("mb-2 text-xs font-medium", evidenziato ? "text-destructive" : "text-muted-foreground")}>
+                {evidenziato ? t("semeRifiuto", { seme }) : t("seme", { seme })}
+              </p>
+              <PlayerEsercizioLazy
+                tentativoId={`anteprima-${seme}`}
+                esercizioId="anteprima"
+                seed={seme}
+                content={content}
+                statoIniziale={null}
+                lastActivityAt={new Date()}
+                locale={locale}
+                soloLocale
+              />
+            </div>
+          );
+        })}
       </div>
     </section>
   );

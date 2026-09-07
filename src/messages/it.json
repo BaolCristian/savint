@@ -1283,8 +1283,10 @@
         "titolo": "Anteprima",
         "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi, come lo vedrebbero tre studenti diversi seduti vicini. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
         "seme": "Seme: {seme}",
+        "semeRifiuto": "Seme del rifiuto: {seme} — il sorteggio che ha rotto l'esercizio",
         "rigenera": "Nuovi numeri"
       },
+      "confermaUscita": "Ci sono modifiche non salvate. Vuoi davvero uscire senza salvare?",
       "salva": "Salva",
       "salvataggioInCorso": "Salvataggio…",
       "salvato": "Esercizio salvato.",

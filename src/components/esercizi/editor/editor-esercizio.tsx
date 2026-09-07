@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,6 +122,106 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
   const [rifiutoVerifica, setRifiutoVerifica] = useState<CorpoRifiuto | null>(null);
   const [verificaOk, setVerificaOk] = useState(false);
 
+  // I7 dell'onda di correzioni: nessuno stato "sporco", nessun `beforeunload`
+  // — il modulo di redazione non avvertiva mai di modifiche non salvate
+  // prima di uscire. `modificato` è vero dalla prima modifica del modello
+  // fino al successivo salvataggio riuscito (mai svuotato da "controlla",
+  // che non scrive nulla): è la base sia dell'avviso `beforeunload` sia
+  // della conferma su un clic fuori dal modulo, entrambi più sotto.
+  const [modificato, setModificato] = useState(false);
+
+  // I3 dell'onda di correzioni: `verificaOk`/`salvatoOk` (sopra) venivano
+  // azzerati solo quando la PROSSIMA azione partiva ("controlla"/"salva"),
+  // mai quando il modello cambiava — un "nessun problema nei venti semi" o
+  // uno "salvato" restavano a schermo anche dopo una modifica che li aveva
+  // già resi falsi. Ogni `setEditor` del modulo passa quindi da qui, mai da
+  // una chiamata diretta: azzera insieme le due rassicurazioni verdi e marca
+  // il modulo come sporco, nello stesso istante in cui il modello cambia
+  // davvero — non al prossimo giro di "controlla" o "salva".
+  function mutaEditor(updater: (e: EsercizioEditor) => EsercizioEditor) {
+    setSalvatoOk(false);
+    setVerificaOk(false);
+    setModificato(true);
+    setEditor(updater);
+  }
+
+  // I6 dell'onda di correzioni (la parte che tocca l'interfaccia): il seme
+  // su cui la verifica a venti semi — o il salvataggio, che corre la stessa
+  // verifica prima di scrivere — ha rifiutato l'esercizio, quando il
+  // rifiuto ancora in vista ne porta uno. È l'unica informazione che il
+  // docente non può riprodurre da solo (l'anteprima genera sempre semi
+  // casuali, senza modo di inserirne uno): passato all'anteprima qui sotto,
+  // che lo mostra davvero invece di lasciarlo un numero da inoltrare a uno
+  // sviluppatore.
+  const rifiutoAttivo = rifiutoVerifica ?? rifiutoSalvataggio;
+  const semeInEvidenza =
+    rifiutoAttivo && rifiutoAttivo.error === "verifica_fallita" && eDettaglioVerifica(rifiutoAttivo.dettaglio)
+      ? rifiutoAttivo.dettaglio.seme
+      : undefined;
+
+  // Sempre I6: l'alert del rifiuto è l'ultimo elemento della pagina, sotto i
+  // tre riquadri di anteprima — a 1440×1000 (misurato dalla revisione) resta
+  // fuori dallo schermo dopo "controlla". Porta lo scroll e il focus sul suo
+  // contenitore ogni volta che un rifiuto compare, invece di lasciare che il
+  // docente lo scopra scrollando a caso. `tabIndex={-1}` sul contenitore
+  // (nel JSX più sotto) è ciò che rende `.focus()` valido su un elemento non
+  // interattivo.
+  const rifiutoRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!rifiutoVerifica && !rifiutoSalvataggio) return;
+    const nodo = rifiutoRef.current;
+    if (!nodo) return;
+    if (typeof nodo.scrollIntoView === "function") {
+      nodo.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    nodo.focus();
+  }, [rifiutoVerifica, rifiutoSalvataggio]);
+
+  // I7: il caso più semplice di modifiche non salvate — chiudere la scheda,
+  // ricaricare, digitare un altro URL. Il testo passato a `returnValue` non
+  // è quello che il browser mostra davvero (ogni browser moderno mostra un
+  // proprio messaggio generico, ignorando questo): serve solo, insieme a
+  // `preventDefault`, a far comparire IL dialogo nativo.
+  useEffect(() => {
+    function alPrimaDiUscire(e: BeforeUnloadEvent) {
+      if (!modificato) return;
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", alPrimaDiUscire);
+    return () => window.removeEventListener("beforeunload", alPrimaDiUscire);
+  }, [modificato]);
+
+  // I7: il caso che il rapporto della revisione nomina per nome — la
+  // sidebar e "Torna alla redazione" sono entrambi un `<Link>` di Next.js,
+  // cioè una navigazione client-side che non scarica mai la pagina: nessun
+  // `beforeunload` la vede (quell'evento esiste solo per una navigazione
+  // vera del browser). Un ascoltatore sulla fase di cattura di `document`,
+  // registrato qui e mai su un file di layout condiviso, intercetta il clic
+  // PRIMA che l'handler di Next.js (in fase di bubbling) lo consumi:
+  // se il docente annulla la conferma, `stopImmediatePropagation` impedisce
+  // sia il comportamento nativo dell'ancora sia quello di Next.js. Ignora
+  // deliberatamente un'ancora `#…`, un download, un `target="_blank"` (non
+  // si lascia la scheda corrente) o un clic con tasto modificatore (li vuole
+  // gestire il browser, non questo modulo) — lo stesso perimetro con cui
+  // Next.js stesso decide se intercettare un clic.
+  useEffect(() => {
+    function alClicSuUnLink(e: MouseEvent) {
+      if (!modificato) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element | null)?.closest("a[href]") as HTMLAnchorElement | null;
+      if (!link) return;
+      const href = link.getAttribute("href") ?? "";
+      if (href.startsWith("#") || link.target === "_blank" || link.hasAttribute("download")) return;
+      if (!window.confirm(t("confermaUscita"))) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    document.addEventListener("click", alClicSuUnLink, true);
+    return () => document.removeEventListener("click", alClicSuUnLink, true);
+  }, [modificato, t]);
+
   // Giro di correzioni 1: qui, non dentro `ParteScelta`, perché è questo il
   // componente che salva. Uno stato "manca una scelta" che vive solo dentro
   // la parte non può mai bloccare nulla — il salvataggio non lo vede. La
@@ -137,19 +237,19 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
   );
 
   function aggiornaMeta<K extends keyof EsercizioEditor["meta"]>(campo: K, valore: EsercizioEditor["meta"][K]) {
-    setEditor((e) => ({ ...e, meta: { ...e.meta, [campo]: valore } }));
+    mutaEditor((e) => ({ ...e, meta: { ...e.meta, [campo]: valore } }));
   }
 
   function aggiornaParte(indice: number, parte: ParteEditor) {
-    setEditor((e) => ({ ...e, parti: e.parti.map((p, i) => (i === indice ? parte : p)) }));
+    mutaEditor((e) => ({ ...e, parti: e.parti.map((p, i) => (i === indice ? parte : p)) }));
   }
 
   function rimuoviParte(indice: number) {
-    setEditor((e) => ({ ...e, parti: e.parti.filter((_, i) => i !== indice) }));
+    mutaEditor((e) => ({ ...e, parti: e.parti.filter((_, i) => i !== indice) }));
   }
 
   function aggiungiParte() {
-    setEditor((e) => ({ ...e, parti: [...e.parti, parteVuota(nuovoTipoParte)] }));
+    mutaEditor((e) => ({ ...e, parti: [...e.parti, parteVuota(nuovoTipoParte)] }));
   }
 
   async function salva() {
@@ -170,6 +270,9 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       }
       const corpo = (await res.json()) as { esercizioId: string; versione: number };
       setSalvatoOk(true);
+      // I7: un salvataggio riuscito è l'unico momento in cui "sporco" torna
+      // falso — "controlla" (sopra) non scrive nulla, quindi non lo tocca.
+      setModificato(false);
       onSalvato?.(corpo);
     } finally {
       setSalvando(false);
@@ -299,7 +402,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
         <Textarea
           id="redazione-testo"
           value={editor.testo}
-          onChange={(e) => setEditor((ed) => ({ ...ed, testo: e.target.value }))}
+          onChange={(e) => mutaEditor((ed) => ({ ...ed, testo: e.target.value }))}
         />
       </div>
 
@@ -310,16 +413,16 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
         <Textarea
           id="redazione-suggerimento"
           value={editor.suggerimento}
-          onChange={(e) => setEditor((ed) => ({ ...ed, suggerimento: e.target.value }))}
+          onChange={(e) => mutaEditor((ed) => ({ ...ed, suggerimento: e.target.value }))}
         />
         <p className="text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
       </div>
 
       <PannelloVariabili
         variabili={editor.variabili}
-        onChange={(variabili) => setEditor((ed) => ({ ...ed, variabili }))}
+        onChange={(variabili) => mutaEditor((ed) => ({ ...ed, variabili }))}
         condizione={editor.condizione}
-        onChangeCondizione={(condizione) => setEditor((ed) => ({ ...ed, condizione }))}
+        onChangeCondizione={(condizione) => mutaEditor((ed) => ({ ...ed, condizione }))}
       />
 
       <section className="space-y-3">
@@ -368,7 +471,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
         </div>
       </section>
 
-      <Anteprima editor={editor} locale="it" />
+      <Anteprima editor={editor} locale="it" semeRifiuto={semeInEvidenza} />
 
       <section className="flex flex-wrap items-center gap-3 border-t pt-4">
         <Button type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
@@ -387,8 +490,15 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
         </p>
       )}
 
-      {rifiutoVerifica && <DettaglioRifiuto corpo={rifiutoVerifica} />}
-      {rifiutoSalvataggio && <DettaglioRifiuto corpo={rifiutoSalvataggio} />}
+      {(rifiutoVerifica || rifiutoSalvataggio) && (
+        // I6: contenitore che riceve scroll e focus (vedi l'effetto sopra) —
+        // `tabIndex={-1}` lo rende un bersaglio valido per `.focus()` pur
+        // restando fuori dall'ordine di tabulazione normale.
+        <div ref={rifiutoRef} tabIndex={-1}>
+          {rifiutoVerifica && <DettaglioRifiuto corpo={rifiutoVerifica} />}
+          {rifiutoSalvataggio && <DettaglioRifiuto corpo={rifiutoSalvataggio} />}
+        </div>
+      )}
     </div>
   );
 }
