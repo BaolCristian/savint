@@ -3,6 +3,7 @@ import type { TentativoStatus } from "@prisma/client";
 import type { Answer, QuestionState, MarkingResult, Locale } from "@savint/engine";
 import { prisma } from "@/lib/db/client";
 import { ricalcola } from "./marking";
+import { compitoApribile } from "./compiti";
 
 export interface TentativoAperto {
   tentativoId: string;
@@ -16,16 +17,73 @@ export interface TentativoAperto {
    * QUANDO risale il lavoro che sta riprendendo, non solo che lo sta
    * riprendendo. */
   lastActivityAt: Date;
+  /** Vero quando un `compitoId` è stato richiesto (query string) ma
+   * `compitoApribile` lo ha respinto — il tentativo qui sotto è comunque
+   * aperto, ma come esercizio LIBERO, non come consegna dell'assegnazione
+   * che lo studente pensava di star facendo (Secondo giro, item 2). Falso
+   * sia per un esercizio libero vero (nessun `compitoId` mai richiesto:
+   * niente da segnalare) sia per un `compitoId` valido.
+   *
+   * Il percorso non è ipotetico: `allineaClassi` gira a OGNI accesso per
+   * risincronizzare le classi dai gruppi Google. Uno studente può iniziare
+   * un esercizio assegnato, cambiare classe fra un accesso e l'altro (la
+   * classe cambia gruppo, o lui esce dal gruppo), e tornare sullo stesso
+   * link: `compitoApribile` non lo trova più iscritto, il lavoro già fatto
+   * resta nel tentativo vecchio (mai più ripreso, perché la ricerca del
+   * tentativo IN_PROGRESS ora filtra su `compitoId: null`) e quello nuovo
+   * non conterà mai come consegna. La pagina non mostrava nulla che
+   * permettesse allo studente di accorgersene. */
+  richiestaCompitoRifiutata: boolean;
 }
 
 /** Restituisce il tentativo in corso dello studente su quell'esercizio, o ne
- * apre uno nuovo sull'ultima versione. `null` se l'esercizio non esiste. */
-export async function avviaORiprendi(studentId: string, esercizioId: string): Promise<TentativoAperto | null> {
+ * apre uno nuovo sull'ultima versione. `null` se l'esercizio non esiste.
+ *
+ * `compitoId`, se passato, viene VALIDATO da `compitoApribile` (dominio,
+ * compiti.ts) prima di essere scritto o anche solo usato per cercare il
+ * tentativo in corso — mai fidandosi del valore ricevuto. Il link nella home
+ * dello studente è letteralmente `?compitoId=...`: senza questo controllo
+ * qualunque studente autenticato può scriverci un id qualunque (di un'altra
+ * classe, di un compito non ancora aperto, o abbinato a un esercizio che
+ * quel compito non ha mai pescato) e farlo contare come lavoro consegnato
+ * per quel compito. Il committente lo ha dimostrato: uno studente che non
+ * aveva risolto NESSUNO degli esercizi assegnati compariva come 5/3 nella
+ * tabella del docente, sopra chi ne aveva fatto davvero uno.
+ *
+ * Scelta esplicita (Fix round finale, item 1): un `compitoId` che fallisce
+ * la validazione non fa fallire la pagina — l'esercizio è comunque
+ * accessibile dal link libero, indipendentemente dal compito — ma lo apre
+ * COME libero, silenziosamente ignorando l'id ricevuto (`compitoIdEffettivo`
+ * sotto). Rifiutare la pagina intera sarebbe eccessivo per il caso più
+ * comune e meno malizioso (un compito non ancora aperto, o uno studente
+ * appena uscito dalla classe che vuole comunque esercitarsi): l'esercizio
+ * resta comunque nel bacino libero. Quel che NON deve succedere in nessun
+ * caso è che un `compitoId` non valido venga scritto sul tentativo — questo
+ * sì, senza eccezioni.
+ *
+ * Una volta risolto, `compitoIdEffettivo` gioca lo stesso ruolo che
+ * `compitoId` giocava prima: viene scritto sul tentativo e usato anche per
+ * TROVARLO, così un esercizio aperto dentro e fuori da un compito produce
+ * sempre due tentativi distinti (vedi il commento gemello più sotto, ora
+ * sul valore validato). */
+export async function avviaORiprendi(
+  studentId: string,
+  esercizioId: string,
+  compitoId?: string,
+): Promise<TentativoAperto | null> {
   const versione = await prisma.esercizioVersione.findFirst({
     where: { esercizioId },
     orderBy: { version: "desc" },
   });
   if (!versione) return null;
+
+  const compitoValido = compitoId ? await compitoApribile(compitoId, studentId, esercizioId) : false;
+  const compitoIdEffettivo = compitoValido ? compitoId : undefined;
+  // Vero solo se qualcosa era stato DAVVERO richiesto e quel qualcosa è
+  // stato respinto — mai per un esercizio libero vero (`compitoId`
+  // assente fin dall'inizio, `compitoValido` resta `false` ma non c'è
+  // nessuna richiesta da segnalare come rifiutata).
+  const richiestaCompitoRifiutata = !!compitoId && !compitoValido;
 
   // Conservazione pigra, come per PracticeRun: un tentativo fermo da più della
   // finestra non si riprende, se ne apre uno nuovo. Nessun lavoro pianificato
@@ -36,13 +94,14 @@ export async function avviaORiprendi(studentId: string, esercizioId: string): Pr
   const inCorso = await prisma.tentativo.findFirst({
     where: {
       studentId, esercizioVersioneId: versione.id, status: "IN_PROGRESS",
+      compitoId: compitoIdEffettivo ?? null,
       lastActivityAt: { gte: sogliaAttivita },
     },
     orderBy: { startedAt: "desc" },
   });
 
   const t = inCorso ?? (await prisma.tentativo.create({
-    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID() },
+    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID(), compitoId: compitoIdEffettivo ?? null },
   }));
 
   return {
@@ -54,6 +113,7 @@ export async function avviaORiprendi(studentId: string, esercizioId: string): Pr
     maxScore: t.maxScore,
     status: t.status,
     lastActivityAt: t.lastActivityAt,
+    richiestaCompitoRifiutata,
   };
 }
 

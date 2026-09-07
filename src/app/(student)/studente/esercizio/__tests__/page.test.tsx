@@ -21,6 +21,7 @@ describe("pagina dell'esercizio", () => {
     vi.mocked(avviaORiprendi).mockResolvedValue({
       tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
       score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: ultimaAttivita,
+      richiestaCompitoRifiutata: false,
     });
     const albero = await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
     const props = (albero as { props: Record<string, unknown> }).props;
@@ -39,8 +40,54 @@ describe("pagina dell'esercizio", () => {
     vi.mocked(avviaORiprendi).mockResolvedValue({
       tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
       score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+      richiestaCompitoRifiutata: false,
     });
     const albero = await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
     expect((albero as { key: string | null }).key).toBe("t1");
+  });
+
+  // Task 7: un esercizio aperto da un compito (link con ?compitoId=...) deve
+  // registrare quel compito sul tentativo — altrimenti `avviaORiprendi`
+  // riprenderebbe/creerebbe sempre il tentativo "libero", vedi il commento
+  // gemello nel dominio (tentativo.ts).
+  it("inoltra il compitoId dai searchParams ad avviaORiprendi", async () => {
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+      richiestaCompitoRifiutata: false,
+    });
+    await Page({
+      params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }),
+      searchParams: Promise.resolve({ compitoId: "compito-1" }),
+    });
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", "compito-1");
+  });
+
+  it("senza compitoId nei searchParams, avviaORiprendi si comporta come per un esercizio libero", async () => {
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+      richiestaCompitoRifiutata: false,
+    });
+    await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", undefined);
+  });
+
+  // Secondo giro, item 2: la pagina deve inoltrare al player il segnale che
+  // il compito richiesto è stato respinto, non limitarsi a leggerlo dal
+  // dominio e buttarlo via — senza questo, il player non avrebbe modo di
+  // sapere che deve mostrare la riga di pratica libera.
+  it("inoltra richiestaCompitoRifiutata al player", async () => {
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+      richiestaCompitoRifiutata: true,
+    });
+    const albero = await Page({
+      params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }),
+      searchParams: Promise.resolve({ compitoId: "compito-caduto" }),
+    });
+    const props = (albero as { props: Record<string, unknown> }).props;
+    expect(props.richiestaCompitoRifiutata).toBe(true);
   });
 });

@@ -655,6 +655,32 @@ describe("PlayerEsercizio — banner di ripresa", () => {
   });
 });
 
+// Secondo giro, item 2: senza questa riga il player non diceva NULLA che
+// permettesse allo studente di distinguere un tentativo che conta per un
+// compito assegnato da uno aperto come pratica libera — silenzio identico
+// nei due casi, anche quando lo studente aveva chiesto esplicitamente il
+// primo (link `?compitoId=...`) e la validazione lo aveva silenziosamente
+// declassato al secondo.
+describe("PlayerEsercizio — pratica libera dopo un compito respinto", () => {
+  it("non compare quando richiestaCompitoRifiutata e' assente (esercizio libero vero)", async () => {
+    montaggio();
+    await waitFor(() => screen.getByRole("textbox"));
+    expect(screen.queryByText(messaggiIt.esercizi.praticaLiberaAvviso)).toBeNull();
+  });
+
+  it("non compare quando richiestaCompitoRifiutata e' false (compito valido)", async () => {
+    montaggio({ richiestaCompitoRifiutata: false });
+    await waitFor(() => screen.getByRole("textbox"));
+    expect(screen.queryByText(messaggiIt.esercizi.praticaLiberaAvviso)).toBeNull();
+  });
+
+  it("compare quando il compito richiesto e' stato respinto", async () => {
+    montaggio({ richiestaCompitoRifiutata: true });
+    const riga = await screen.findByText(messaggiIt.esercizi.praticaLiberaAvviso);
+    expect(riga).toBeInTheDocument();
+  });
+});
+
 // "Let them start over": una via per abbandonare il tentativo in corso e
 // aprirne uno nuovo, dietro conferma esplicita — mai un bottone che distrugge
 // risposte al primo clic, accanto a "Invia".

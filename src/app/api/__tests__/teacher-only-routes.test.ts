@@ -45,6 +45,13 @@ const routes: Entry[] = [
   { name: "hub/oauth/link", load: () => import("@/app/api/hub/oauth/link/route"), methods: ["DELETE"] },
   { name: "hub/quiz/[id]/publish", load: () => import("@/app/api/hub/quiz/[id]/publish/route"), methods: ["POST", "DELETE"] },
   { name: "installation/hub/connect", load: () => import("@/app/api/installation/hub/connect/route"), methods: ["POST"] },
+  { name: "esercizi/classi/insegnate", load: () => import("@/app/api/esercizi/classi/insegnate/route"), methods: ["POST"] },
+  { name: "esercizi/contenitori", load: () => import("@/app/api/esercizi/contenitori/route"), methods: ["POST"] },
+  { name: "esercizi/contenitori/[id]", load: () => import("@/app/api/esercizi/contenitori/[id]/route"), methods: ["DELETE"] },
+  { name: "esercizi/contenitori/[id]/esercizi", load: () => import("@/app/api/esercizi/contenitori/[id]/esercizi/route"), methods: ["POST", "DELETE"] },
+  { name: "esercizi/batterie", load: () => import("@/app/api/esercizi/batterie/route"), methods: ["POST"] },
+  { name: "esercizi/batterie/[id]", load: () => import("@/app/api/esercizi/batterie/[id]/route"), methods: ["DELETE"] },
+  { name: "esercizi/compiti", load: () => import("@/app/api/esercizi/compiti/route"), methods: ["POST"] },
 ];
 
 function requestFor(r: Entry, m: string): NextRequest {

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/client";
 import { BASE_PATH } from "@/lib/base-path";
 import { isStudentGateEnabled } from "@/lib/config/student-gate";
 import { evaluateLogin, takeDecision } from "@/lib/auth/student-gate";
+import { allineaClassi } from "@/lib/esercizi/classi";
 
 function loginError(reason: "NotAllowed" | "GroupCheckFailed"): string {
   return `${BASE_PATH}/login?error=${reason}`;
@@ -43,6 +44,9 @@ export async function signInWithGate(args: {
           : {}),
       },
     });
+    if (decision.role === "STUDENT" && decision.classGroups !== undefined) {
+      await allineaClassi(existing.id, decision.classGroups);
+    }
   }
   return true;
 }
@@ -62,4 +66,7 @@ export async function onUserCreated(args: { id: string; email: string | null | u
         : {}),
     },
   });
+  if (decision.role === "STUDENT" && decision.classGroups !== undefined) {
+    await allineaClassi(args.id, decision.classGroups);
+  }
 }
