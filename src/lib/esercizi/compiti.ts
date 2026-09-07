@@ -233,14 +233,27 @@ export async function compitiDelloStudente(studentId: string): Promise<
     // quell'assegnazione. Senza intersecare con `drawnVersionIds`, quelle
     // righe continuerebbero a contare come consegne di un compito a cui non
     // appartengono, anche dopo che l'ingresso è stato chiuso.
-    const fatti = await prisma.tentativo.count({
+    //
+    // `distinct: ["esercizioVersioneId"]` (Secondo giro, item 1): completare
+    // un esercizio non ne consuma la possibilità di riaprirlo —
+    // `avviaORiprendi` cerca solo un tentativo IN_PROGRESS da riprendere, mai
+    // uno COMPLETED, quindi riaprire il link di un esercizio già consegnato
+    // apre sempre un tentativo NUOVO. Completarlo una seconda volta scrive
+    // una seconda riga COMPLETED per lo stesso esercizio — comportamento del
+    // tutto ordinario, non un dato forgiato. Un `count` grezzo sulle righe
+    // conterebbe entrambe: lo stesso esercizio due volte, `fatti` che supera
+    // `totali`. Qui conta gli ESERCIZI distinti completati, non le righe.
+    const completati = await prisma.tentativo.findMany({
       where: {
         studentId,
         compitoId: c.id,
         status: "COMPLETED",
         esercizioVersioneId: { in: c.drawnVersionIds },
       },
+      select: { esercizioVersioneId: true },
+      distinct: ["esercizioVersioneId"],
     });
+    const fatti = completati.length;
 
     risultati.push({ id: c.id, batteria: c.batteria.name, dueAt: c.dueAt, esercizi, fatti });
   }
@@ -319,9 +332,41 @@ export async function consegneDelCompito(
     const tentativi = await prisma.tentativo.findMany({
       where: { studentId: i.studentId, compitoId, esercizioVersioneId: { in: compito.drawnVersionIds } },
     });
-    const fatti = tentativi.filter((t) => t.status === "COMPLETED").length;
-    const punteggio = tentativi.reduce((s, t) => s + t.score, 0);
-    const massimo = tentativi.reduce((s, t) => s + t.maxScore, 0);
+
+    // Raggruppa per esercizio (Secondo giro, item 1): `avviaORiprendi` non
+    // riprende mai un tentativo COMPLETED, solo uno IN_PROGRESS — riaprire
+    // il link di un esercizio già consegnato apre sempre un tentativo
+    // nuovo, con un seme nuovo. Comportamento ordinario, non un caso raro:
+    // uno studente che torna sul compito già svolto. Sommare `score` e
+    // `maxScore` di TUTTE le righe (come faceva prima) conta lo stesso
+    // esercizio più volte — la stessa patologia del "5/3" dimostrato dal
+    // committente, raggiunta qui senza nessun id forgiato. Un solo
+    // rappresentante per esercizio, quindi: il migliore fra i tentativi
+    // COMPLETED se ce n'è almeno uno (rifare un esercizio è pratica, non va
+    // penalizzato — il punteggio più alto vince), altrimenti il tentativo
+    // più recente (per mostrare comunque un progresso in corso). `score` e
+    // `maxScore` vengono SEMPRE dallo stesso tentativo: `punteggio` non può
+    // mai superare `massimo`, esercizio per esercizio e quindi in totale.
+    const perEsercizio = new Map<string, typeof tentativi>();
+    for (const t of tentativi) {
+      const gruppo = perEsercizio.get(t.esercizioVersioneId);
+      if (gruppo) gruppo.push(t);
+      else perEsercizio.set(t.esercizioVersioneId, [t]);
+    }
+
+    let fatti = 0;
+    let punteggio = 0;
+    let massimo = 0;
+    for (const gruppo of perEsercizio.values()) {
+      const completati = gruppo.filter((t) => t.status === "COMPLETED");
+      const rappresentante = completati.length > 0
+        ? completati.reduce((migliore, t) => (t.score > migliore.score ? t : migliore))
+        : gruppo.reduce((piuRecente, t) => (t.startedAt > piuRecente.startedAt ? t : piuRecente));
+      if (completati.length > 0) fatti++;
+      punteggio += rappresentante.score;
+      massimo += rappresentante.maxScore;
+    }
+
     righe.push({
       studentId: i.studentId,
       nome: i.studente.name ?? i.studente.email,

@@ -3,11 +3,11 @@ import { mkdtempSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { prisma } from "@/lib/db/client";
-import { avviaORiprendi } from "../tentativo";
+import { avviaORiprendi, completa } from "../tentativo";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
-import { assegna } from "../compiti";
+import { assegna, consegneDelCompito, compitiDelloStudente } from "../compiti";
 
 // Stesso schema del file gemello `tentativo.test.ts`: prefisso proprio per
 // non toccare le righe seminate da altri file di test eseguiti in parallelo
@@ -36,7 +36,6 @@ async function pulisci() {
   await prisma.batteria.deleteMany({ where: { name: { startsWith: PREFIX } } });
   await prisma.contenitoreEsercizio.deleteMany({ where: { contenitore: { name: { startsWith: PREFIX } } } });
   await prisma.contenitore.deleteMany({ where: { name: { startsWith: PREFIX } } });
-  await prisma.classeStudente.deleteMany({ where: { classe: { googleGroupEmail: { startsWith: PREFIX } } } });
   await prisma.classeDocente.deleteMany({ where: { classe: { googleGroupEmail: { startsWith: PREFIX } } } });
   await prisma.classe.deleteMany({ where: { googleGroupEmail: { startsWith: PREFIX } } });
   await prisma.esercizio.deleteMany({ where: { id: { startsWith: PREFIX } } });
@@ -194,5 +193,69 @@ describe("avviaORiprendi con un compito", () => {
       expect(t).not.toBeNull();
       expect(t!.content).toBeTruthy();
     });
+  });
+});
+
+// Secondo giro, item 1: `avviaORiprendi` riprende solo un tentativo
+// IN_PROGRESS, mai uno COMPLETED — riaprire il link di un esercizio già
+// consegnato apre SEMPRE un tentativo nuovo, con un seme nuovo. Comportamento
+// ordinario (uno studente che torna sul compito già svolto), non un dato
+// forgiato: eppure produce la stessa patologia del "5/3" dimostrato nel giro
+// precedente, se i due lettori si limitano a sommare le righe.
+describe("rifare un esercizio già consegnato non gonfia i conteggi", () => {
+  it("consegneDelCompito conta l'esercizio una sola volta, col punteggio migliore, e non supera mai il proprio massimo", async () => {
+    const primo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    const esitoPrimo = await completa(primo!.tentativoId, studentId, "it");
+    if (!esitoPrimo.ok) throw new Error("completamento fallito nel setup del test");
+
+    // Nessun IN_PROGRESS da riprendere (il primo è COMPLETED): un tentativo
+    // nuovo, seme nuovo, stesso esercizio, stesso compito.
+    const secondo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    expect(secondo!.tentativoId).not.toBe(primo!.tentativoId);
+    const esitoSecondo = await completa(secondo!.tentativoId, studentId, "it");
+    if (!esitoSecondo.ok) throw new Error("completamento fallito nel setup del test");
+
+    // Due righe Tentativo COMPLETED per lo stesso esercizio, lo stesso
+    // compito, lo stesso studente — raggiunte senza scrivere nessun id a
+    // mano, con la sola sequenza ordinaria avviaORiprendi → completa, due
+    // volte.
+    const righeGrezze = await prisma.tentativo.findMany({ where: { studentId, compitoId, status: "COMPLETED" } });
+    expect(righeGrezze).toHaveLength(2);
+
+    const esito = await consegneDelCompito(compitoId, teacherId);
+    if (!esito.ok) throw new Error("consegneDelCompito rifiutato inaspettatamente");
+    const riga = esito.righe.find((r) => r.studentId === studentId)!;
+
+    // Prima del fix: `riga.fatti` valeva 2 su un `totali` di 1 — esattamente
+    // la forma dimostrata dal revisore, raggiunta con dati del tutto
+    // ordinari. `riga.massimo` valeva la SOMMA dei due `maxScore` (il
+    // doppio del massimo vero di un solo esercizio), e `riga.punteggio`
+    // poteva quindi restare sotto quella soglia gonfiata pur avendo già
+    // superato il massimo reale di un esercizio.
+    expect(riga.fatti).toBe(1);
+    expect(riga.totali).toBe(1);
+    // Lo stesso esercizio, stesso seme di marcatura salvo il seed casuale:
+    // il massimo teorico non cambia da un tentativo all'altro.
+    expect(esitoSecondo.maxScore).toBe(esitoPrimo.maxScore);
+    expect(riga.massimo).toBe(esitoPrimo.maxScore);
+    // La garanzia che conta di più: qualunque sia la regola scelta per
+    // decidere quale tentativo rappresenta l'esercizio, il punteggio non
+    // può mai superare il proprio massimo.
+    expect(riga.punteggio).toBeLessThanOrEqual(riga.massimo);
+  });
+
+  it("compitiDelloStudente conta l'esercizio una sola volta anche lui", async () => {
+    const primo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    const esitoPrimo = await completa(primo!.tentativoId, studentId, "it");
+    if (!esitoPrimo.ok) throw new Error("completamento fallito nel setup del test");
+    const secondo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    const esitoSecondo = await completa(secondo!.tentativoId, studentId, "it");
+    if (!esitoSecondo.ok) throw new Error("completamento fallito nel setup del test");
+
+    const suoi = await compitiDelloStudente(studentId);
+    const suo = suoi.find((c) => c.id === compitoId)!;
+    // Prima del fix: `suo.fatti` valeva 2 su un `suo.esercizi.length` di 1.
+    expect(suo.fatti).toBe(1);
+    expect(suo.esercizi).toHaveLength(1);
   });
 });
