@@ -1243,6 +1243,65 @@
         "nessuna": "Nessuna variabile: l'esercizio proporrà sempre la stessa domanda.",
         "condizione": "Condizione (opzionale)",
         "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
+      },
+      "parti": {
+        "titolo": "Parti",
+        "aggiungi": "Aggiungi parte",
+        "rimuovi": "Rimuovi parte",
+        "numeroParte": "Parte {numero}",
+        "consegna": "Consegna",
+        "punti": "Punti",
+        "tipo": "Tipo",
+        "tipoNumerica": "Numerica",
+        "tipoScelta": "Scelta multipla",
+        "tipoEspressione": "Formula",
+        "numerica": {
+          "valore": "Valore corretto",
+          "tolleranza": "Tolleranza",
+          "tolleranzaEsatta": "Esatta",
+          "tolleranzaMargine": "Margine",
+          "tolleranzaDecimali": "Cifre decimali",
+          "margine": "Margine accettato",
+          "cifreDecimali": "Numero di cifre decimali"
+        },
+        "scelta": {
+          "risposte": "Risposte",
+          "rispostaN": "Risposta {numero}",
+          "aggiungiRisposta": "Aggiungi risposta",
+          "rimuoviRisposta": "Rimuovi risposta",
+          "corretta": "Corretta",
+          "spiegazione": "Spiegazione se scelta per errore (facoltativa)"
+        },
+        "espressione": {
+          "risposta": "Risposta corretta",
+          "spiegazioneConfronto": "Il motore confronta le risposte in modo simbolico: 2x, x*2 e x+x sono considerate la stessa risposta. Non serve chiedere allo studente di semplificare il risultato."
+        }
+      },
+      "anteprima": {
+        "titolo": "Anteprima",
+        "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi, come lo vedrebbero tre studenti diversi seduti vicini. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "seme": "Seme: {seme}",
+        "rigenera": "Nuovi numeri"
+      },
+      "salva": "Salva",
+      "salvataggioInCorso": "Salvataggio…",
+      "salvato": "Esercizio salvato.",
+      "verifica": "Controlla",
+      "verificaInCorso": "Controllo…",
+      "verificaOk": "Nessun problema nei venti semi di prova.",
+      "erroreVerifica": {
+        "titolo": "Verifica non superata",
+        "seme": "Seme",
+        "fase": "Fase",
+        "faseTesto": "testo",
+        "faseCaricamento": "caricamento",
+        "faseRisposta": "risposta"
+      },
+      "erroreSalvataggio": {
+        "nonTrovato": "Questo esercizio non esiste più.",
+        "nonRappresentabile": "Questo esercizio non può essere aperto in questo editor.",
+        "versioneInConflitto": "Qualcun altro ha salvato questo esercizio nel frattempo: ricarica la pagina e riprova.",
+        "generico": "Salvataggio non riuscito. Riprova."
       }
     }
   }

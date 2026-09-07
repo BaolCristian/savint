@@ -49,6 +49,21 @@ export interface PlayerEsercizioProps {
    * da segnalare (Secondo giro, item 2). */
   richiestaCompitoRifiutata?: boolean;
   locale: "it" | "en";
+  /** Task 7 (editor di redazione): l'anteprima del docente monta questo
+   * stesso componente — non una riproduzione — ma dev'essere inerte, senza
+   * creare un tentativo né scrivere nulla (un docente che prova il proprio
+   * esercizio non deve comparire fra le consegne). Vero, disattiva le tre
+   * chiamate di rete (`inviaRisposta`, `completaTentativo`,
+   * `abbandonaTentativo`): la correzione resta lo STESSO calcolo locale del
+   * motore che il percorso normale già usa come anteprima ottimistica prima
+   * della conferma del server (`inviaParte`), qui trattato come definitivo
+   * invece di essere sostituito da quella conferma. Il bottone "ricomincia"
+   * (che vive di quella terza chiamata, più `router.refresh()`) non compare
+   * affatto in questa modalità: l'anteprima ha un proprio modo di
+   * rigenerare i semi, fuori da questo componente. Assente (o `false`) per
+   * il percorso dello studente: comportamento invariato, fissato da un test
+   * dedicato in player-esercizio.test.tsx. */
+  soloLocale?: boolean;
 }
 
 /** Un tentativo conta come "ripreso" solo se lo stato salvato contiene
@@ -388,6 +403,7 @@ function SpiegazioneParte({
 
 export function PlayerEsercizio({
   tentativoId, esercizioId, seed, content, statoIniziale, lastActivityAt, richiestaCompitoRifiutata, locale,
+  soloLocale = false,
 }: PlayerEsercizioProps) {
   const t = useTranslations("esercizi");
   const router = useRouter();
@@ -556,6 +572,14 @@ export function PlayerEsercizio({
       setFeedbackPerParte((f) => ({ ...f, [path]: risultatoLocale.feedback }));
       setPunteggio({ score: totaleLocale.score, maxScore: totaleLocale.marks });
 
+      if (soloLocale) {
+        // Nessuna conferma del server ad attendere: il calcolo appena fatto
+        // (sopra) è definitivo qui, non un'anteprima ottimistica in attesa
+        // di essere sostituita — è l'intero punto della modalità locale.
+        setRispostoConSuccesso((s) => ({ ...s, [path]: parteRisposta }));
+        return;
+      }
+
       const esito = await inviaRisposta(tentativoId, path, valoreGrezzo, q.toState(), locale);
 
       // Il server sostituisce sempre punteggio e feedback locali: è lui
@@ -606,6 +630,14 @@ export function PlayerEsercizio({
   }
 
   async function completaEsercizio() {
+    if (soloLocale) {
+      // Nessun tentativo da chiudere sul server: il punteggio finale è
+      // quello già confermato localmente da `inviaParte` sopra, non un
+      // ricalcolo separato — un solo posto (il motore) decide il punteggio
+      // in questa modalità.
+      setFase("riepilogo");
+      return;
+    }
     setCompletando(true);
     setErroreCompletamento(false);
     try {
@@ -665,18 +697,24 @@ export function PlayerEsercizio({
             {t("punteggio")}: {punteggio.score} / {punteggio.maxScore}
           </p>
         )}
-        <div className="flex flex-wrap gap-3">
-          <Link href="/studente" className={buttonVariants({ variant: "outline" })}>
-            {t("tornaAgliEsercizi")}
-          </Link>
-          {/* Un'ancora vera, non un `Link`: aprire un nuovo tentativo è un
-              giro dal server (`avviaORiprendi` ne crea uno con un seme
-              nuovo, visto che questo è ormai chiuso), e una navigazione
-              client verso la rotta su cui siamo già non lo farebbe. */}
-          <a href={withBasePath(`/studente/esercizio/${esercizioId}`)} className={buttonVariants()}>
-            {t("riprovaEsercizio")}
-          </a>
-        </div>
+        {/* In modalità locale (anteprima del docente) queste due uscite non
+            hanno senso: non portano a un vero esercizio dello studente, e
+            l'anteprima ha un proprio modo di ripartire (il bottone "nuovi
+            numeri" dell'anteprima, fuori da questo componente). */}
+        {!soloLocale && (
+          <div className="flex flex-wrap gap-3">
+            <Link href="/studente" className={buttonVariants({ variant: "outline" })}>
+              {t("tornaAgliEsercizi")}
+            </Link>
+            {/* Un'ancora vera, non un `Link`: aprire un nuovo tentativo è un
+                giro dal server (`avviaORiprendi` ne crea uno con un seme
+                nuovo, visto che questo è ormai chiuso), e una navigazione
+                client verso la rotta su cui siamo già non lo farebbe. */}
+            <a href={withBasePath(`/studente/esercizio/${esercizioId}`)} className={buttonVariants()}>
+              {t("riprovaEsercizio")}
+            </a>
+          </div>
+        )}
       </section>
     );
   }
@@ -719,6 +757,12 @@ export function PlayerEsercizio({
           {t("punteggio")}: {punteggio.score} / {punteggio.maxScore}
         </p>
       )}
+      {/* In modalità locale non c'è un tentativo da abbandonare (la terza
+          chiamata di rete che questo bottone innesca, via `confermaRicomincio`
+          -> `abbandonaTentativo`), e `router.refresh()` non avrebbe nemmeno
+          senso fuori dalla pagina dello studente: l'anteprima rigenera i
+          semi a modo suo, fuori da questo componente. */}
+      {!soloLocale && (
       <div>
         <Button
           type="button"
@@ -764,6 +808,7 @@ export function PlayerEsercizio({
           </div>
         )}
       </div>
+      )}
       {parti.map((parte) => (
         <div key={parte.path} className="space-y-2 rounded-lg border p-4">
           <InputParte

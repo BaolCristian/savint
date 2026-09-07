@@ -718,6 +718,12 @@ describe("PlayerEsercizio — ricomincia", () => {
   // arrivare a distruggere qualcosa. La rotta è `.../abbandona`, mai
   // `.../completa` — un tentativo abbandonato non deve mai poter sembrare
   // consegnato (vedi il dominio).
+  it("«ricomincia» non compare in modalità locale (Task 7, anteprima): niente tentativo da abbandonare", async () => {
+    montaggio({ soloLocale: true });
+    await waitFor(() => screen.getByRole("textbox"));
+    expect(screen.queryByRole("button", { name: messaggiIt.esercizi.ricomincia })).toBeNull();
+  });
+
   it("confermare abbandona il tentativo e aggiorna la pagina", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
       expect(String(input)).toContain("/api/esercizi/tentativi/t1/abbandona");
@@ -748,5 +754,81 @@ describe("PlayerEsercizio — ricomincia", () => {
     await waitFor(() => expect(screen.getByText(messaggiIt.esercizi.erroreRicomincio)).toBeInTheDocument());
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
+});
+
+// Task 7 (editor di redazione): l'anteprima del docente monta questo stesso
+// componente, in modalità locale — nessun tentativo creato, nessuna
+// scrittura, mai (vedi il brief: "un teacher che prova il proprio esercizio
+// non deve comparire fra le consegne"). `soloLocale` è la sola differenza:
+// disattiva le TRE chiamate di rete (`inviaRisposta`, `completaTentativo`,
+// `abbandonaTentativo` — quest'ultima già coperta sopra, dove il bottone
+// "ricomincia" stesso non compare in modalità locale) senza cambiare come il
+// motore corregge, che resta lo stesso identico calcolo locale che il
+// percorso normale usa già come anteprima ottimistica prima della conferma
+// del server (vedi `inviaParte`).
+describe("PlayerEsercizio — modalità locale (soloLocale, anteprima del docente)", () => {
+  it("senza soloLocale (il percorso dello studente) inviare una risposta chiama il server: fissa che il percorso normale continua a scrivere", async () => {
+    const fetchMock: (...args: [string | URL | Request, RequestInit?]) => Promise<Response> = vi.fn(async () => new Response(
+      JSON.stringify({ score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }] }),
+      { status: 200 },
+    ));
+    global.fetch = fetchMock as never;
+    montaggio();
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "3");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(String(vi.mocked(fetchMock).mock.calls[0]![0])).toContain("/api/esercizi/tentativi/t1/risposta");
+  });
+
+  it("in modalità locale, inviare una risposta corregge e mostra il feedback senza chiamare il server", async () => {
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as never;
+    montaggio({ soloLocale: true });
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "5");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+
+    // "5" è la risposta corretta di 01-equazione-primo-grado con questo seme
+    // (vedi il test sul ripasso più sopra): il motore locale la marca giusta
+    // da solo, senza bisogno del server.
+    await waitFor(() => expect(screen.getByText(/2\s*\/\s*2/)).toBeInTheDocument());
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("in modalità locale, completare il tentativo mostra il riepilogo senza chiamare il server", async () => {
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as never;
+    montaggio({ soloLocale: true });
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "5");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+    await userEvent.click(await screen.findByRole("button", { name: messaggiIt.esercizi.completa }));
+
+    await waitFor(() =>
+      expect(screen.getByText(messaggiIt.esercizi.tentativoCompletato)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/2\s*\/\s*2/)).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("in modalità locale una risposta sbagliata mostra comunque il ripasso, calcolato in locale", async () => {
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as never;
+    montaggio({ soloLocale: true });
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "1");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+
+    // 01-equazione-primo-grado ha un suggerimento scritto: il primo passo del
+    // ripasso è quindi "Come si risolve" (vedi il blocco di test dedicato più
+    // sopra), calcolato dallo stesso `parteConfermataSbagliata` che in
+    // modalità locale legge `rispostoConSuccesso`/`result.correct` impostati
+    // da `inviaParte` senza alcuna conferma dal server.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: messaggiIt.esercizi.comeSiRisolve })).toBeInTheDocument(),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

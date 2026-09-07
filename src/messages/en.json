@@ -1243,6 +1243,65 @@
         "nessuna": "No variables: the exercise will always ask the same question.",
         "condizione": "Condition (optional)",
         "condizioneAiuto": "An expression that must be true for a combination of variables to be accepted, for example \"a <> b\". Leave it empty if you don't need one."
+      },
+      "parti": {
+        "titolo": "Parts",
+        "aggiungi": "Add part",
+        "rimuovi": "Remove part",
+        "numeroParte": "Part {numero}",
+        "consegna": "Prompt",
+        "punti": "Marks",
+        "tipo": "Type",
+        "tipoNumerica": "Numeric",
+        "tipoScelta": "Multiple choice",
+        "tipoEspressione": "Formula",
+        "numerica": {
+          "valore": "Correct value",
+          "tolleranza": "Tolerance",
+          "tolleranzaEsatta": "Exact",
+          "tolleranzaMargine": "Margin",
+          "tolleranzaDecimali": "Decimal places",
+          "margine": "Accepted margin",
+          "cifreDecimali": "Number of decimal places"
+        },
+        "scelta": {
+          "risposte": "Answers",
+          "rispostaN": "Answer {numero}",
+          "aggiungiRisposta": "Add answer",
+          "rimuoviRisposta": "Remove answer",
+          "corretta": "Correct",
+          "spiegazione": "Explanation if chosen by mistake (optional)"
+        },
+        "espressione": {
+          "risposta": "Correct answer",
+          "spiegazioneConfronto": "The engine compares answers symbolically: 2x, x*2 and x+x are treated as the same answer. There's no need to ask the student to simplify the result."
+        }
+      },
+      "anteprima": {
+        "titolo": "Preview",
+        "spiegazione": "The same exercise with three different random numbers, as three different students sitting next to each other would see it. Answers given here don't create any attempt and aren't saved anywhere.",
+        "seme": "Seed: {seme}",
+        "rigenera": "New numbers"
+      },
+      "salva": "Save",
+      "salvataggioInCorso": "Saving…",
+      "salvato": "Exercise saved.",
+      "verifica": "Check",
+      "verificaInCorso": "Checking…",
+      "verificaOk": "No problems found across the twenty test seeds.",
+      "erroreVerifica": {
+        "titolo": "Check failed",
+        "seme": "Seed",
+        "fase": "Stage",
+        "faseTesto": "text",
+        "faseCaricamento": "loading",
+        "faseRisposta": "answer"
+      },
+      "erroreSalvataggio": {
+        "nonTrovato": "This exercise no longer exists.",
+        "nonRappresentabile": "This exercise can't be opened in this editor.",
+        "versioneInConflitto": "Someone else saved this exercise in the meantime: reload the page and try again.",
+        "generico": "Couldn't save. Please try again."
       }
     }
   }
