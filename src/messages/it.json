@@ -1208,6 +1208,42 @@
       "fattiCol": "Esercizi svolti",
       "punteggioCol": "Punteggio",
       "nessunoIscritto": "Nessuno studente iscritto a questa classe."
+    },
+    "redazione": {
+      "titolo": "Redazione esercizio",
+      "meta": {
+        "titolo": "Titolo",
+        "descrizione": "Descrizione",
+        "anno": "Anno",
+        "argomento": "Argomento",
+        "tag": "Etichette",
+        "tagAiuto": "Separale con una virgola.",
+        "difficolta": "Difficoltà",
+        "difficolta1": "Facile",
+        "difficolta2": "Media",
+        "difficolta3": "Difficile"
+      },
+      "testo": "Testo dell'esercizio",
+      "suggerimento": "Suggerimento",
+      "suggerimentoAiuto": "Mostrato allo studente dopo una risposta sbagliata.",
+      "variabili": {
+        "titolo": "Variabili",
+        "spiegazioneVar": "Per mostrare il valore di una variabile scrivi \\var seguito dal nome fra parentesi graffe, come nell'esempio qui sotto; dentro un comando simplify le variabili si scrivono invece da sole fra parentesi graffe, senza \\var davanti.",
+        "fuoriSimplify": "Fuori da simplify",
+        "dentroSimplify": "Dentro simplify",
+        "spiegazioneOrdine": "L'ordine con cui scrivi le variabili qui sotto non conta: il motore calcola da solo quali dipendono da quali.",
+        "nome": "Nome",
+        "definizione": "Definizione",
+        "descrizione": "Descrizione (facoltativa)",
+        "erroreNome": "Deve essere un nome valido: lettere, cifre e underscore, senza iniziare con una cifra.",
+        "erroreDefinizione": "Manca la definizione di questa variabile.",
+        "rigaAriaLabel": "Variabile {numero}",
+        "aggiungi": "Aggiungi variabile",
+        "rimuovi": "Rimuovi variabile",
+        "nessuna": "Nessuna variabile: l'esercizio proporrà sempre la stessa domanda.",
+        "condizione": "Condizione (opzionale)",
+        "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
+      }
     }
   }
 }

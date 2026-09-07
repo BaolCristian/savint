@@ -1208,6 +1208,42 @@
       "fattiCol": "Exercises done",
       "punteggioCol": "Score",
       "nessunoIscritto": "No students are enrolled in this class."
+    },
+    "redazione": {
+      "titolo": "Exercise editor",
+      "meta": {
+        "titolo": "Title",
+        "descrizione": "Description",
+        "anno": "Year",
+        "argomento": "Topic",
+        "tag": "Tags",
+        "tagAiuto": "Separate them with a comma.",
+        "difficolta": "Difficulty",
+        "difficolta1": "Easy",
+        "difficolta2": "Medium",
+        "difficolta3": "Hard"
+      },
+      "testo": "Exercise text",
+      "suggerimento": "Hint",
+      "suggerimentoAiuto": "Shown to the student after a wrong answer.",
+      "variabili": {
+        "titolo": "Variables",
+        "spiegazioneVar": "To show a variable's value, write \\var followed by the name in curly braces, as in the example below; inside a simplify command, variables are instead written on their own in curly braces, without \\var in front.",
+        "fuoriSimplify": "Outside simplify",
+        "dentroSimplify": "Inside simplify",
+        "spiegazioneOrdine": "The order you write the variables in below doesn't matter: the engine works out on its own which ones depend on which.",
+        "nome": "Name",
+        "definizione": "Definition",
+        "descrizione": "Description (optional)",
+        "erroreNome": "Must be a valid name: letters, digits and underscores, not starting with a digit.",
+        "erroreDefinizione": "This variable is missing its definition.",
+        "rigaAriaLabel": "Variable {numero}",
+        "aggiungi": "Add variable",
+        "rimuovi": "Remove variable",
+        "nessuna": "No variables: the exercise will always ask the same question.",
+        "condizione": "Condition (optional)",
+        "condizioneAiuto": "An expression that must be true for a combination of variables to be accepted, for example \"a <> b\". Leave it empty if you don't need one."
+      }
     }
   }
 }
