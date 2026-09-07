@@ -1109,6 +1109,7 @@
     "navContenitori": "Contenitori",
     "navBatterie": "Batterie",
     "navCompiti": "Compiti",
+    "navRedazione": "Redazione",
     "titoloStudente": "I tuoi esercizi",
     "annoArgomento": "Classe {anno} · {argomento}",
     "difficolta": "Difficoltà {livello}",
@@ -1208,6 +1209,122 @@
       "fattiCol": "Esercizi svolti",
       "punteggioCol": "Punteggio",
       "nessunoIscritto": "Nessuno studente iscritto a questa classe."
+    },
+    "redazione": {
+      "titolo": "Redazione esercizio",
+      "meta": {
+        "titolo": "Titolo",
+        "descrizione": "Descrizione",
+        "anno": "Anno",
+        "argomento": "Argomento",
+        "tag": "Etichette",
+        "tagAiuto": "Separale con una virgola.",
+        "difficolta": "Difficoltà",
+        "difficolta1": "Facile",
+        "difficolta2": "Media",
+        "difficolta3": "Difficile"
+      },
+      "testo": "Testo dell'esercizio",
+      "suggerimento": "Suggerimento",
+      "suggerimentoAiuto": "Mostrato allo studente dopo una risposta sbagliata.",
+      "variabili": {
+        "titolo": "Variabili",
+        "spiegazioneVar": "Per mostrare il valore di una variabile scrivi \\var seguito dal nome fra parentesi graffe, come nell'esempio qui sotto; dentro un comando simplify le variabili si scrivono invece da sole fra parentesi graffe, senza \\var davanti.",
+        "fuoriSimplify": "Fuori da simplify",
+        "dentroSimplify": "Dentro simplify",
+        "spiegazioneOrdine": "L'ordine con cui scrivi le variabili qui sotto non conta: il motore calcola da solo quali dipendono da quali.",
+        "nome": "Nome",
+        "definizione": "Definizione",
+        "descrizione": "Descrizione (facoltativa)",
+        "erroreNome": "Deve essere un nome valido: lettere, cifre e underscore, senza iniziare con una cifra.",
+        "erroreDefinizione": "Manca la definizione di questa variabile.",
+        "rigaAriaLabel": "Variabile {numero}",
+        "aggiungi": "Aggiungi variabile",
+        "rimuovi": "Rimuovi variabile",
+        "nessuna": "Nessuna variabile: l'esercizio proporrà sempre la stessa domanda.",
+        "condizione": "Condizione (opzionale)",
+        "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
+      },
+      "parti": {
+        "titolo": "Parti",
+        "aggiungi": "Aggiungi parte",
+        "rimuovi": "Rimuovi parte",
+        "numeroParte": "Parte {numero}",
+        "consegna": "Consegna",
+        "punti": "Punti",
+        "tipo": "Tipo",
+        "tipoNumerica": "Numerica",
+        "tipoScelta": "Scelta multipla",
+        "tipoEspressione": "Formula",
+        "numerica": {
+          "valore": "Valore corretto",
+          "tolleranza": "Tolleranza",
+          "tolleranzaEsatta": "Esatta",
+          "tolleranzaMargine": "Margine",
+          "tolleranzaDecimali": "Cifre decimali",
+          "margine": "Margine accettato",
+          "cifreDecimali": "Numero di cifre decimali"
+        },
+        "scelta": {
+          "risposte": "Risposte",
+          "rispostaN": "Risposta {numero}",
+          "aggiungiRisposta": "Aggiungi risposta",
+          "rimuoviRisposta": "Rimuovi risposta",
+          "corretta": "Corretta",
+          "spiegazione": "Spiegazione se scelta per errore (facoltativa)",
+          "correttaRimossa": "Hai rimosso la risposta segnata come corretta: scegline una nuova prima di salvare."
+        },
+        "espressione": {
+          "risposta": "Risposta corretta",
+          "spiegazioneConfronto": "Il motore confronta le risposte in modo simbolico: 2x, x*2 e x+x sono considerate la stessa risposta. Non serve chiedere allo studente di semplificare il risultato."
+        }
+      },
+      "anteprima": {
+        "titolo": "Anteprima",
+        "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi, come lo vedrebbero tre studenti diversi seduti vicini. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "seme": "Seme: {seme}",
+        "semeRifiuto": "Seme del rifiuto: {seme} — il sorteggio che ha rotto l'esercizio",
+        "rigenera": "Nuovi numeri"
+      },
+      "confermaUscita": "Ci sono modifiche non salvate. Vuoi davvero uscire senza salvare?",
+      "salva": "Salva",
+      "salvataggioInCorso": "Salvataggio…",
+      "salvato": "Esercizio salvato.",
+      "verifica": "Controlla",
+      "verificaInCorso": "Controllo…",
+      "verificaOk": "Nessun problema nei venti semi di prova.",
+      "salvataggioBloccatoScelta": "Il salvataggio è bloccato: una o più parti a scelta multipla non hanno ancora una risposta corretta scelta.",
+      "erroreVerifica": {
+        "titolo": "Verifica non superata",
+        "seme": "Seme",
+        "fase": "Fase",
+        "faseTesto": "testo",
+        "faseCaricamento": "caricamento",
+        "faseRisposta": "risposta"
+      },
+      "erroreSalvataggio": {
+        "nonTrovato": "Questo esercizio non esiste più.",
+        "nonRappresentabile": "Questo esercizio non può essere aperto in questo editor.",
+        "versioneInConflitto": "Qualcun altro ha salvato questo esercizio nel frattempo: ricarica la pagina e riprova.",
+        "generico": "Salvataggio non riuscito. Riprova."
+      },
+      "elenco": {
+        "titolo": "Redazione degli esercizi",
+        "chiunquePuoModificare": "Qualunque docente può modificare qualunque esercizio: chi salva per ultimo sovrascrive chi aveva salvato prima.",
+        "nuovo": "Nuovo esercizio",
+        "torna": "Torna alla redazione",
+        "modificabile": "Modificabile",
+        "soloLettura": "Sola lettura",
+        "apri": "Apri",
+        "duplica": "Duplica",
+        "duplicaInCorso": "Duplicazione…",
+        "duplicaErrore": "Duplicazione non riuscita. Riprova.",
+        "ultimaVersioneDa": "Ultima versione di {autore}, il {data}",
+        "autoreSconosciuto": "autore sconosciuto",
+        "motivoGenerico": "Questo esercizio non può essere aperto in questo editor.",
+        "nonModificabileTitolo": "Non modificabile in questo editor",
+        "nessunEsercizio": "Nessun esercizio ancora."
+      }
     }
   }
 }

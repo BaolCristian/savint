@@ -19,8 +19,10 @@ export const esercizioFileSchema = z.object({
 export type EsercizioFile = z.infer<typeof esercizioFileSchema>;
 
 /** Serializzazione stabile: le chiavi in ordine, così l'hash non cambia se
- * cambia solo l'ordine con cui sono scritte nel file. */
-function stabile(v: unknown): string {
+ * cambia solo l'ordine con cui sono scritte nel file. Esportata perché è
+ * anche la base del confronto strutturale in editor/da-numbas.ts: la stessa
+ * nozione di uguaglianza usata per l'hash, non una seconda scritta a mano. */
+export function stabile(v: unknown): string {
   if (v === null || typeof v !== "object") return JSON.stringify(v) ?? "null";
   if (Array.isArray(v)) return `[${v.map(stabile).join(",")}]`;
   const o = v as Record<string, unknown>;

@@ -1109,6 +1109,7 @@
     "navContenitori": "Containers",
     "navBatterie": "Batteries",
     "navCompiti": "Assignments",
+    "navRedazione": "Editing",
     "titoloStudente": "Your exercises",
     "annoArgomento": "Year {anno} · {argomento}",
     "difficolta": "Difficulty {livello}",
@@ -1208,6 +1209,122 @@
       "fattiCol": "Exercises done",
       "punteggioCol": "Score",
       "nessunoIscritto": "No students are enrolled in this class."
+    },
+    "redazione": {
+      "titolo": "Exercise editor",
+      "meta": {
+        "titolo": "Title",
+        "descrizione": "Description",
+        "anno": "Year",
+        "argomento": "Topic",
+        "tag": "Tags",
+        "tagAiuto": "Separate them with a comma.",
+        "difficolta": "Difficulty",
+        "difficolta1": "Easy",
+        "difficolta2": "Medium",
+        "difficolta3": "Hard"
+      },
+      "testo": "Exercise text",
+      "suggerimento": "Hint",
+      "suggerimentoAiuto": "Shown to the student after a wrong answer.",
+      "variabili": {
+        "titolo": "Variables",
+        "spiegazioneVar": "To show a variable's value, write \\var followed by the name in curly braces, as in the example below; inside a simplify command, variables are instead written on their own in curly braces, without \\var in front.",
+        "fuoriSimplify": "Outside simplify",
+        "dentroSimplify": "Inside simplify",
+        "spiegazioneOrdine": "The order you write the variables in below doesn't matter: the engine works out on its own which ones depend on which.",
+        "nome": "Name",
+        "definizione": "Definition",
+        "descrizione": "Description (optional)",
+        "erroreNome": "Must be a valid name: letters, digits and underscores, not starting with a digit.",
+        "erroreDefinizione": "This variable is missing its definition.",
+        "rigaAriaLabel": "Variable {numero}",
+        "aggiungi": "Add variable",
+        "rimuovi": "Remove variable",
+        "nessuna": "No variables: the exercise will always ask the same question.",
+        "condizione": "Condition (optional)",
+        "condizioneAiuto": "An expression that must be true for a combination of variables to be accepted, for example \"a <> b\". Leave it empty if you don't need one."
+      },
+      "parti": {
+        "titolo": "Parts",
+        "aggiungi": "Add part",
+        "rimuovi": "Remove part",
+        "numeroParte": "Part {numero}",
+        "consegna": "Prompt",
+        "punti": "Marks",
+        "tipo": "Type",
+        "tipoNumerica": "Numeric",
+        "tipoScelta": "Multiple choice",
+        "tipoEspressione": "Formula",
+        "numerica": {
+          "valore": "Correct value",
+          "tolleranza": "Tolerance",
+          "tolleranzaEsatta": "Exact",
+          "tolleranzaMargine": "Margin",
+          "tolleranzaDecimali": "Decimal places",
+          "margine": "Accepted margin",
+          "cifreDecimali": "Number of decimal places"
+        },
+        "scelta": {
+          "risposte": "Answers",
+          "rispostaN": "Answer {numero}",
+          "aggiungiRisposta": "Add answer",
+          "rimuoviRisposta": "Remove answer",
+          "corretta": "Correct",
+          "spiegazione": "Explanation if chosen by mistake (optional)",
+          "correttaRimossa": "You removed the answer marked correct: choose a new one before saving."
+        },
+        "espressione": {
+          "risposta": "Correct answer",
+          "spiegazioneConfronto": "The engine compares answers symbolically: 2x, x*2 and x+x are treated as the same answer. There's no need to ask the student to simplify the result."
+        }
+      },
+      "anteprima": {
+        "titolo": "Preview",
+        "spiegazione": "The same exercise with three different random numbers, as three different students sitting next to each other would see it. Answers given here don't create any attempt and aren't saved anywhere.",
+        "seme": "Seed: {seme}",
+        "semeRifiuto": "Rejected seed: {seme} — the draw that broke the exercise",
+        "rigenera": "New numbers"
+      },
+      "confermaUscita": "There are unsaved changes. Are you sure you want to leave without saving?",
+      "salva": "Save",
+      "salvataggioInCorso": "Saving…",
+      "salvato": "Exercise saved.",
+      "verifica": "Check",
+      "verificaInCorso": "Checking…",
+      "verificaOk": "No problems found across the twenty test seeds.",
+      "salvataggioBloccatoScelta": "Saving is blocked: one or more multiple-choice parts don't have a correct answer chosen yet.",
+      "erroreVerifica": {
+        "titolo": "Check failed",
+        "seme": "Seed",
+        "fase": "Stage",
+        "faseTesto": "text",
+        "faseCaricamento": "loading",
+        "faseRisposta": "answer"
+      },
+      "erroreSalvataggio": {
+        "nonTrovato": "This exercise no longer exists.",
+        "nonRappresentabile": "This exercise can't be opened in this editor.",
+        "versioneInConflitto": "Someone else saved this exercise in the meantime: reload the page and try again.",
+        "generico": "Couldn't save. Please try again."
+      },
+      "elenco": {
+        "titolo": "Exercise editing",
+        "chiunquePuoModificare": "Any teacher can edit any exercise: whoever saves last overwrites whoever saved before.",
+        "nuovo": "New exercise",
+        "torna": "Back to exercise editing",
+        "modificabile": "Editable",
+        "soloLettura": "Read-only",
+        "apri": "Open",
+        "duplica": "Duplicate",
+        "duplicaInCorso": "Duplicating…",
+        "duplicaErrore": "Couldn't duplicate. Please try again.",
+        "ultimaVersioneDa": "Last version by {autore}, on {data}",
+        "autoreSconosciuto": "unknown author",
+        "motivoGenerico": "This exercise can't be opened in this editor.",
+        "nonModificabileTitolo": "Not editable in this editor",
+        "nessunEsercizio": "No exercises yet."
+      }
     }
   }
 }
