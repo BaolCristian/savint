@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerEditor } from "@/lib/esercizi/redazione";
-import { DuplicaButton } from "../duplica-button";
 import { ModificaEsercizioClient } from "./modifica-esercizio-client";
 
 /** La modifica di un esercizio esistente. Chi arriva dall'elenco (Task 8)
@@ -29,10 +28,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </Link>
         <h1 className="text-xl font-semibold">{t("nonModificabileTitolo")}</h1>
         <p className="text-sm text-muted-foreground">{esito.dettaglio}</p>
-        <DuplicaButton
-          esercizioId={id}
-          testi={{ duplica: t("duplica"), duplicaInCorso: t("duplicaInCorso"), duplicaErrore: t("duplicaErrore") }}
-        />
+        {/* I4 dell'onda di correzioni: qui, come nell'elenco, "duplica" non
+            porta più da nessuna parte (il duplicato eredita esattamente lo
+            stesso verdetto di `daNumbas`, il contenuto è identico) — dirlo
+            chiaramente, invece di offrire un pulsante che promette un
+            editor Numbas che non esiste in questo prodotto. */}
+        <p className="text-sm text-muted-foreground">{t("soloRepository")}</p>
       </div>
     );
   }

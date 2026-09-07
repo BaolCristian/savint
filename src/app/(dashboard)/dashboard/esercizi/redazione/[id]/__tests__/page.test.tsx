@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({ caricaPerEditor: vi.fn() }));
@@ -69,29 +69,21 @@ describe("pagina di modifica di un esercizio esistente", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("un esercizio non rappresentabile mostra il motivo del dominio invece dell'editor, e offre duplica", async () => {
+  // Item I4 dell'onda di correzioni: "duplica" è sparito anche da qui. Il
+  // duplicato di un esercizio non rappresentabile eredita esattamente lo
+  // stesso verdetto (contenuto grezzo identico, vedi `duplicaEsercizio` in
+  // redazione.ts) — offrirlo prometteva un'uscita che non esisteva mai.
+  it("un esercizio non rappresentabile mostra il motivo del dominio invece dell'editor, e non offre più duplica", async () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({
       ok: false,
       motivo: "non_rappresentabile",
-      dettaglio: 'Contiene un tipo di parte che l\'editor non sa ricostruire. Usa "duplica" per continuare a modificarlo direttamente in Numbas.',
+      dettaglio: "Contiene un tipo di parte che l'editor non sa ricostruire.",
     });
     await rendi("e2");
 
     expect(screen.queryByTestId("editor-stub")).toBeNull();
     expect(screen.getByText(/non sa ricostruire/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "duplica" })).toBeInTheDocument();
-  });
-
-  it("duplicare un esercizio non rappresentabile chiama la rotta dedicata e naviga sul duplicato", async () => {
-    vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "non_rappresentabile", dettaglio: "non rappresentabile" });
-    global.fetch = vi.fn(async () => new Response(JSON.stringify({ esercizioId: "dup1", versione: 1 }), { status: 201 })) as typeof fetch;
-
-    await rendi("e2");
-    fireEvent.click(screen.getByRole("button", { name: "duplica" }));
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/esercizi/redazione/e2/duplica", expect.objectContaining({ method: "POST" }));
-    });
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard/esercizi/redazione/dup1"));
+    expect(screen.queryByRole("button", { name: "duplica" })).toBeNull();
+    expect(screen.getByText("soloRepository")).toBeInTheDocument();
   });
 });

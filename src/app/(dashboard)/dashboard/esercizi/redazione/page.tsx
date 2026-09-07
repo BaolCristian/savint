@@ -16,7 +16,24 @@ import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-clien
  *
  * Nessuna modifica a src/lib/esercizi/ è consentita da questo task: questo
  * doppio giro (invece di allargare `VoceRedazione` con un campo motivo) è
- * il modo di rispettare quel vincolo restando nel dominio così com'è. */
+ * il modo di rispettare quel vincolo restando nel dominio così com'è.
+ *
+ * Item I5 dell'onda di correzioni finale (interfaccia) segnala che questo
+ * doppio giro è esattamente il difetto da correggere — tre query in più
+ * per ogni riga non modificabile (`caricaPerEditor` rilegge riga, versione
+ * e autore), ~68 query e 864 ms misurati su 24 esercizi — e chiede di
+ * "portare il motivo fuori da `elencoRedazione`" invece di riderivarlo.
+ * Resta NON corretto qui: `elencoRedazione` vive in
+ * src/lib/esercizi/redazione.ts, fuori dal perimetro di questo stesso
+ * task (un secondo agente lavora in parallelo sui file di dominio). La
+ * correzione minima, per chi ha il permesso di toccare quel file: in
+ * `elencoRedazione`, `daNumbas(...)` viene già chiamato per ogni esercizio
+ * per calcolare `modificabile` — basta conservarne anche il `dettaglio`
+ * (quando `!ok`) in un campo nuovo `motivo: string | null` di
+ * `VoceRedazione`, invece di scartarlo. Fatto quello, questa pagina si
+ * riduce a `motivo: v.modificabile ? null : (v.motivo ?? t("motivoGenerico"))`,
+ * senza più il secondo giro su `caricaPerEditor` sopra. Vedi il rapporto:
+ * .superpowers/sdd/2026-09-07-esercizi-05-editor/onda-finale-interfaccia.md */
 export default async function Page() {
   await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.redazione.elenco");
@@ -70,9 +87,7 @@ export default async function Page() {
             modificabile: t("modificabile"),
             soloLettura: t("soloLettura"),
             apri: t("apri"),
-            duplica: t("duplica"),
-            duplicaInCorso: t("duplicaInCorso"),
-            duplicaErrore: t("duplicaErrore"),
+            soloRepository: t("soloRepository"),
           }}
         />
       )}

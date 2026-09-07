@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DuplicaButton } from "./duplica-button";
 
 export interface VoceElenco {
   id: string;
@@ -23,15 +22,25 @@ interface Testi {
   modificabile: string;
   soloLettura: string;
   apri: string;
-  duplica: string;
-  duplicaInCorso: string;
-  duplicaErrore: string;
+  /** Item I4 dell'onda di correzioni: "duplica" è sparito da qui. Prima
+   * offriva una via d'uscita che non esisteva davvero — `duplicaEsercizio`
+   * copia il contenuto GREZZO dell'ultima versione, quindi il duplicato di
+   * un esercizio non rappresentabile eredita esattamente lo stesso verdetto
+   * (`daNumbas` lo rifiuta identico, perché il contenuto è identico): ogni
+   * clic lasciava un'altra riga di sola lettura, mai una diventata
+   * modificabile. Il messaggio diceva anche di continuare a modificarlo "in
+   * Numbas", un editor che in questo prodotto non esiste. Restava quindi
+   * solo l'altra strada che la specifica offriva fin dall'inizio: dirlo
+   * chiaramente, invece di far inseguire un pulsante che non porta da
+   * nessuna parte. */
+  soloRepository: string;
 }
 
 /** L'elenco della redazione: per ogni esercizio, se è modificabile un link
- * diretto all'editor; se non lo è, il motivo per cui `daNumbas` lo rifiuta
- * e "duplica" come via d'uscita — mai una riga "non modificabile" senza
- * spiegazione (vedi il brief del Task 8). */
+ * diretto all'editor; se non lo è, il motivo per cui `daNumbas` lo rifiuta e
+ * che può essere cambiato solo intervenendo nel repository dei contenuti —
+ * mai una riga "non modificabile" senza spiegazione (vedi il brief del Task
+ * 8), e mai più un "duplica" che promette un editor che non esiste (I4). */
 export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; testi: Testi }) {
   return (
     <ul className="grid gap-3">
@@ -57,10 +66,7 @@ export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; tes
             ) : (
               <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 p-2">
                 <p className="text-sm text-muted-foreground">{v.motivo}</p>
-                <DuplicaButton
-                  esercizioId={v.id}
-                  testi={{ duplica: testi.duplica, duplicaInCorso: testi.duplicaInCorso, duplicaErrore: testi.duplicaErrore }}
-                />
+                <p className="text-sm text-muted-foreground">{testi.soloRepository}</p>
               </div>
             )}
           </Card>

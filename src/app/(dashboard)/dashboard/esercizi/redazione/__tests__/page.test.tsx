@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({
   elencoRedazione: vi.fn(),
   caricaPerEditor: vi.fn(),
 }));
-const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -21,7 +19,6 @@ beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(elencoRedazione).mockReset();
   vi.mocked(caricaPerEditor).mockReset();
-  push.mockReset();
 });
 
 async function rendi() {
@@ -29,9 +26,10 @@ async function rendi() {
 }
 
 // Task 8: l'elenco della redazione. Deve distinguere a vista modificabile
-// da sola lettura, dire il perché per i secondi, offrire "duplica", e
-// mostrare autore + data dell'ultima versione — perché qualunque docente
-// può modificare qualunque esercizio, e quel rischio va reso visibile.
+// da sola lettura, dire il perché per i secondi, e mostrare autore + data
+// dell'ultima versione — perché qualunque docente può modificare qualunque
+// esercizio, e quel rischio va reso visibile. Non offre più "duplica" per i
+// non modificabili (Item I4 dell'onda di correzioni, vedi sotto).
 describe("elenco della redazione", () => {
   it("chiama redirectUnlessTeacher", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
@@ -66,7 +64,15 @@ describe("elenco della redazione", () => {
     expect(screen.getByText(/Mario Rossi/)).toBeInTheDocument();
   });
 
-  it("un esercizio non modificabile mostra il motivo del dominio, non un link all'editor, e offre duplica", async () => {
+  // Item I4 dell'onda di correzioni: "duplica" è sparito da qui. Un
+  // duplicato copia il contenuto GREZZO dell'ultima versione (vedi
+  // `duplicaEsercizio`, redazione.ts): per un esercizio non rappresentabile
+  // il duplicato ha lo stesso identico contenuto, quindi `daNumbas` lo
+  // rifiuta allo stesso identico modo — mai un duplicato diventato
+  // modificabile. Offrire "duplica" prometteva quindi un'uscita che non
+  // esisteva mai; qui si dice chiaramente che l'unica strada è il
+  // repository dei contenuti (vedi il test più sotto).
+  it("un esercizio non modificabile mostra il motivo del dominio, non un link all'editor, e non offre più duplica", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([
       {
         id: "e2",
@@ -82,7 +88,7 @@ describe("elenco della redazione", () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({
       ok: false,
       motivo: "non_rappresentabile",
-      dettaglio: 'Contiene un tipo di parte (gapfill) che l\'editor non sa ricostruire. Usa "duplica" per continuare a modificarlo direttamente in Numbas.',
+      dettaglio: "Contiene un tipo di parte (gapfill) che l'editor non sa ricostruire.",
     });
 
     await rendi();
@@ -92,32 +98,8 @@ describe("elenco della redazione", () => {
     expect(
       screen.queryAllByRole("link").find((a) => a.getAttribute("href") === "/dashboard/esercizi/redazione/e2"),
     ).toBeUndefined();
-    expect(screen.getByRole("button", { name: "duplica" })).toBeInTheDocument();
-  });
-
-  it("duplicare chiama la rotta dedicata e naviga sul nuovo esercizio", async () => {
-    vi.mocked(elencoRedazione).mockResolvedValue([
-      {
-        id: "e2",
-        titolo: "Griglia complessa",
-        argomento: "geometria",
-        anno: 3,
-        ultimaVersione: 2,
-        modificabile: false,
-        autoreNome: null,
-        aggiornatoIl: new Date("2026-02-01T08:00:00Z"),
-      },
-    ]);
-    vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "non_rappresentabile", dettaglio: "non rappresentabile" });
-    global.fetch = vi.fn(async () => new Response(JSON.stringify({ esercizioId: "nuovo1", versione: 1 }), { status: 201 })) as typeof fetch;
-
-    await rendi();
-    fireEvent.click(screen.getByRole("button", { name: "duplica" }));
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/esercizi/redazione/e2/duplica", expect.objectContaining({ method: "POST" }));
-    });
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard/esercizi/redazione/nuovo1"));
+    expect(screen.queryByRole("button", { name: "duplica" })).toBeNull();
+    expect(screen.getByText("soloRepository")).toBeInTheDocument();
   });
 
   it("senza esercizi mostra il messaggio vuoto", async () => {
