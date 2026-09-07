@@ -59,8 +59,11 @@ describe("GET /api/esercizi/redazione", () => {
   });
 
   it("200 con l'elenco della redazione", async () => {
+    // `motivo` è null perché questa voce è modificabile: lo porta solo chi
+    // non lo è, ed è la ragione che la pagina mostra al docente senza più
+    // rileggere l'esercizio (Onda finale, I5).
     const voce = { id: "e1", titolo: "T", argomento: "algebra", anno: 1, ultimaVersione: 2,
-      modificabile: true, autoreNome: "Prof", aggiornatoIl: new Date("2026-01-01") };
+      modificabile: true, motivo: null, autoreNome: "Prof", aggiornatoIl: new Date("2026-01-01") };
     vi.mocked(elencoRedazione).mockResolvedValue([voce]);
     const r = await GET();
     expect(r.status).toBe(200);

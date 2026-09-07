@@ -4,7 +4,6 @@ import { render, screen } from "@testing-library/react";
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({
   elencoRedazione: vi.fn(),
-  caricaPerEditor: vi.fn(),
 }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
@@ -12,13 +11,12 @@ vi.mock("next-intl/server", () => ({
 }));
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
-import { elencoRedazione, caricaPerEditor } from "@/lib/esercizi/redazione";
+import { elencoRedazione } from "@/lib/esercizi/redazione";
 import Page from "../page";
 
 beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(elencoRedazione).mockReset();
-  vi.mocked(caricaPerEditor).mockReset();
 });
 
 async function rendi() {
@@ -52,6 +50,7 @@ describe("elenco della redazione", () => {
         anno: 1,
         ultimaVersione: 3,
         modificabile: true,
+        motivo: null,
         autoreNome: "Mario Rossi",
         aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
       },
@@ -60,7 +59,6 @@ describe("elenco della redazione", () => {
 
     expect(screen.getByText("Equazione di primo grado")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "apri" })).toHaveAttribute("href", "/dashboard/esercizi/redazione/e1");
-    expect(caricaPerEditor).not.toHaveBeenCalledWith("e1");
     expect(screen.getByText(/Mario Rossi/)).toBeInTheDocument();
   });
 
@@ -72,6 +70,11 @@ describe("elenco della redazione", () => {
   // modificabile. Offrire "duplica" prometteva quindi un'uscita che non
   // esisteva mai; qui si dice chiaramente che l'unica strada è il
   // repository dei contenuti (vedi il test più sotto).
+  //
+  // Item I5 (chiuso lato dominio): il motivo viene ora direttamente da
+  // `elencoRedazione` (campo `motivo`), non più da una rilettura con
+  // `caricaPerEditor` per ogni riga non modificabile — questa pagina non
+  // chiama più quella funzione affatto.
   it("un esercizio non modificabile mostra il motivo del dominio, non un link all'editor, e non offre più duplica", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([
       {
@@ -81,25 +84,40 @@ describe("elenco della redazione", () => {
         anno: 3,
         ultimaVersione: 2,
         modificabile: false,
+        motivo: "Contiene un tipo di parte (gapfill) che l'editor non sa ricostruire.",
         autoreNome: null,
         aggiornatoIl: new Date("2026-02-01T08:00:00Z"),
       },
     ]);
-    vi.mocked(caricaPerEditor).mockResolvedValue({
-      ok: false,
-      motivo: "non_rappresentabile",
-      dettaglio: "Contiene un tipo di parte (gapfill) che l'editor non sa ricostruire.",
-    });
 
     await rendi();
 
-    expect(caricaPerEditor).toHaveBeenCalledWith("e2");
     expect(screen.getByText(/non sa ricostruire/)).toBeInTheDocument();
     expect(
       screen.queryAllByRole("link").find((a) => a.getAttribute("href") === "/dashboard/esercizi/redazione/e2"),
     ).toBeUndefined();
     expect(screen.queryByRole("button", { name: "duplica" })).toBeNull();
     expect(screen.getByText("soloRepository")).toBeInTheDocument();
+  });
+
+  it("un esercizio non modificabile senza un motivo dal dominio mostra il motivo generico", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([
+      {
+        id: "e3",
+        titolo: "Esercizio senza versione",
+        argomento: "geometria",
+        anno: 3,
+        ultimaVersione: 0,
+        modificabile: false,
+        motivo: null,
+        autoreNome: null,
+        aggiornatoIl: new Date("2026-02-01T08:00:00Z"),
+      },
+    ]);
+
+    await rendi();
+
+    expect(screen.getByText("motivoGenerico")).toBeInTheDocument();
   });
 
   it("senza esercizi mostra il messaggio vuoto", async () => {

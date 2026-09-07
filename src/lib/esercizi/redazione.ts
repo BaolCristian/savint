@@ -24,6 +24,16 @@ export type VoceRedazione = {
   modificabile: boolean;
   autoreNome: string | null;
   aggiornatoIl: Date;
+  /** Il `dettaglio` di `daNumbas` per un esercizio non modificabile,
+   * `null` per uno modificabile. Onda finale, I5: `daNumbas(...)` viene
+   * già chiamato qui sotto per calcolare `modificabile` — prima questo
+   * campo veniva scartato, e `redazione/page.tsx` doveva rileggere ogni
+   * esercizio non modificabile con `caricaPerEditor` (riga, versione,
+   * autore: tre query) solo per riavere lo stesso motivo che questa
+   * funzione aveva già calcolato e buttato via — ~68 query e 864 ms in
+   * più misurati su 24 esercizi. Conservarlo qui elimina quel secondo
+   * giro senza cambiare cosa il docente vede. */
+  motivo: string | null;
 };
 
 /** I campi della colonna `Esercizio` necessari per ricostruire il blocco
@@ -279,7 +289,14 @@ export async function duplicaEsercizio(esercizioId: string, authorId: string): P
  * marcato modificabile eseguendo `daNumbas` (Task 2) su di essa. Il
  * `savint` passato a `daNumbas` viene SEMPRE dalla riga, mai da un campo
  * dentro `content` (che non ne porta uno): coerente con la regola "la riga
- * è autorevole" applicata anche qui, non solo in `caricaPerEditor`. */
+ * è autorevole" applicata anche qui, non solo in `caricaPerEditor`.
+ *
+ * `motivo` (Onda finale, I5) è lo stesso `dettaglio` che `daNumbas`
+ * restituisce insieme al rifiuto usato per calcolare `modificabile`: prima
+ * veniva scartato qui e ricalcolato dal chiamante rileggendo ogni
+ * esercizio non modificabile con `caricaPerEditor` — la stessa chiamata a
+ * `daNumbas`, sugli stessi dati, una seconda volta. Non c'è nessun motivo
+ * per un esercizio modificabile (`ok: true` non ne porta uno). */
 export async function elencoRedazione(): Promise<VoceRedazione[]> {
   const esercizi = await prisma.esercizio.findMany({
     orderBy: { title: "asc" },
@@ -294,14 +311,15 @@ export async function elencoRedazione(): Promise<VoceRedazione[]> {
 
   return esercizi.map((e) => {
     const ultima = e.versions[0];
-    const modificabile = ultima ? daNumbas({ savint: savintPerLettura(e, ultima.content), question: ultima.content }).ok : false;
+    const lettura = ultima ? daNumbas({ savint: savintPerLettura(e, ultima.content), question: ultima.content }) : null;
     return {
       id: e.id,
       titolo: e.title,
       argomento: e.topic,
       anno: e.yearLevel,
       ultimaVersione: ultima?.version ?? 0,
-      modificabile,
+      modificabile: lettura?.ok ?? false,
+      motivo: lettura && !lettura.ok ? lettura.dettaglio : null,
       autoreNome: e.authorId ? (nomePerId.get(e.authorId) ?? null) : null,
       aggiornatoIl: e.updatedAt,
     };
