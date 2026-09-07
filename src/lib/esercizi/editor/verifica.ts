@@ -254,6 +254,112 @@ function estremiFiniti(question: NumbasQuestionJSON, parte: parts.PartBase, scop
   return true;
 }
 
+/** Il numero, di un'impostazione della parte (`parte.settings`, campi
+ * come `vsetRangeStart`), o il valore predefinito se manca o non è un
+ * numero. `settings` è tipizzato largo (`BasePartSettings &
+ * Record<string, unknown>`, perché i campi specifici del tipo — questi
+ * compresi — vivono nell'indice generico), quindi va controllato a
+ * runtime invece che assunto — stessa cautela di `soloStringhe`. */
+function numeroImpostazione(settings: Record<string, unknown>, chiave: string, difetto: number): number {
+  const valore = settings[chiave];
+  return typeof valore === "number" ? valore : difetto;
+}
+
+/** Le variabili libere di un'espressione JME che NON sono variabili della
+ * domanda — cioè non compaiono, con un valore, in `caricata.variables`.
+ * Sono le variabili DELLO STUDENTE: una parte "espressione" (Numbas
+ * `jme`) può lasciarne apposta indeterminate nella risposta corretta —
+ * l'esercizio 06 del corpus reale, la derivata di `a*x^n`, ha risposta
+ * `{a}*{n}*x^({n-1})`: dopo che `correctAnswer()` sostituisce `{a}`/`{n}`
+ * con i loro valori resta `x`, libera e non vincolata, la variabile su
+ * cui lo studente risponde — non un difetto dell'esercizio.
+ *
+ * `jme.findvars` (il motore) non sa distinguerle da sola: è un'analisi
+ * puramente SINTATTICA dell'albero, e non consulta le variabili della
+ * domanda per risolvere un nome — anche un nome come "a", scritto
+ * direttamente in un'espressione come "1/a" invece che sostituito con
+ * `{a}`, risulta "libero" per `findvars` pur essendo vincolato nello
+ * scope caricato. Il filtro qui è quel che manca: un nome libero secondo
+ * `findvars` MA presente in `caricata.variables` è una variabile della
+ * domanda usata direttamente nell'espressione, non dello studente. */
+function variabiliDelloStudente(albero: jme.Tree, caricata: Question): string[] {
+  return jme.findvars(albero, [], caricata.scope).filter((nome) => !(nome in caricata.variables));
+}
+
+/** La risposta di una parte "espressione" (Numbas `jme`) valuta a un
+ * numero finito? `correctAnswer()` restituisce un'espressione JME NON
+ * valutata (per una parte con variabili libere, non potrebbe esserlo: non
+ * ha un unico valore) — "1/a" con `a` variabile della domanda resta la
+ * stringa "1/a", non il numero che ne risulterebbe. Va quindi valutata
+ * qui, non solo letta.
+ *
+ * Se non ci sono variabili libere dello studente, si valuta l'albero
+ * direttamente nello SCOPE CARICATO: le variabili della domanda (`a` in
+ * "1/a") si risolvono da sole, ed è esattamente il caso — divisione per
+ * zero quando `a` vale 0 — che il controllo cattura.
+ *
+ * Se ce ne sono (la "x" dell'esercizio 06), si campiona: le STESSE
+ * primitive che il motore usa per confrontare risposta dello studente e
+ * risposta corretta a tempo di correzione (`jme.compare`,
+ * `jme/compare.ts`) — `jme.randoms` pesca valori casuali per le variabili
+ * libere nell'intervallo `vsetRange`/`vsetRangePoints` DELLA PARTE (letti
+ * da `parte.settings`, non da un default fisso: un docente potrebbe
+ * averli cambiati), e si valuta l'albero in uno scope esteso con quei
+ * valori — non un campionamento riscritto da zero, lo stesso approccio di
+ * `compare()`, applicato a UNA sola espressione invece di confrontarne
+ * due. Un confronto contro se stessa non basterebbe: le funzioni di
+ * confronto del motore trattano un estremo infinito come un valore
+ * legittimo da eguagliare (`r1 === Infinity: return r1 === r2`), non da
+ * rifiutare — `compare(albero, albero, ...)` darebbe "uguale" anche se
+ * ogni valutazione fosse infinita.
+ *
+ * Si fallisce se ANCHE UN SOLO campione non è finito (o lancia): è lo
+ * stesso comportamento di `compare()`, che avvolge l'intero ciclo di
+ * campionamento in un unico `try` — un solo punto che lancia rompe l'INTERO
+ * confronto, non solo quel punto, quindi la risposta corretta risulterebbe
+ * non correggibile per uno studente che scrivesse la stessa identica
+ * espressione. Non è un rischio di falso rifiuto per una risposta con
+ * variabili libere genuine: `vsetRange` pesca valori continui, e
+ * un'espressione come `a*n*x^(n-1)` non ha singolarità da colpire. */
+function rispostaJmeFinita(rispostaTesto: string, caricata: Question, parte: parts.PartBase): boolean {
+  let albero: jme.Tree | null;
+  try {
+    albero = jme.compile(rispostaTesto);
+  } catch {
+    // sintassi già verificata da correctAnswer(): non dovrebbe succedere,
+    // ma se succede non è un problema di finitezza, se ne occupa un altro
+    // controllo (o il caricamento vero, la prossima volta).
+    return true;
+  }
+  if (!albero) {
+    return true;
+  }
+
+  const liberi = variabiliDelloStudente(albero, caricata);
+  if (liberi.length === 0) {
+    const token = caricata.scope.evaluate(albero);
+    return token !== null && comeNumeroFinito(jme.unwrapValue(token));
+  }
+
+  const settings = parte.settings as Record<string, unknown>;
+  const inizio = numeroImpostazione(settings, "vsetRangeStart", 0);
+  const fine = numeroImpostazione(settings, "vsetRangeEnd", 1);
+  const punti = numeroImpostazione(settings, "vsetRangePoints", 5);
+  const campioni = jme.randoms(liberi, inizio, fine, punti, caricata.scope.rng);
+  for (const valori of campioni) {
+    const scopeEsteso = new jme.Scope([caricata.scope, { variables: valori }]);
+    try {
+      const token = scopeEsteso.evaluate(albero);
+      if (token === null || !comeNumeroFinito(jme.unwrapValue(token))) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 export type EsitoVerifica =
   | { ok: true }
   | {
@@ -397,6 +503,23 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
             seme,
             fase: "risposta",
             messaggio: `la parte "${parte.path}" rende una risposta con "undefined": ${latex}`,
+          };
+        }
+
+        // "1/a" con `a` variabile della domanda che vale 0: `correctAnswer()`
+        // restituisce la stringa simbolica "1/a" senza valutarla (nessuno
+        // dei due controlli sopra scatta: la risposta esiste, e
+        // renderLatex("1/a") rende "\frac{1}{a}", validissimo). A tempo di
+        // correzione quella parte non è correggibile per questo seme — vedi
+        // `rispostaJmeFinita` per come si distingue questo caso da una
+        // risposta con variabili libere GENUINE dello studente (l'esercizio
+        // 06 del corpus, {a}*{n}*x^({n-1})), che deve restare accettata.
+        if (!rispostaJmeFinita(risposta, caricata, parte)) {
+          return {
+            ok: false,
+            seme,
+            fase: "risposta",
+            messaggio: `la parte "${parte.path}" ha come risposta "${risposta}", che non valuta a un numero finito`,
           };
         }
       }
