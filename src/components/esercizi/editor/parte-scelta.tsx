@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,16 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
   const t = useTranslations("esercizi.redazione.parti");
   const nomeGruppo = "parte-scelta-corretta";
 
+  // Correzione riportata dalla revisione del task precedente: rimuovere la
+  // risposta segnata come corretta faceva tornare `indiceGiusta` a 0 in
+  // silenzio, e l'esercizio poteva essere salvato così — contenuto diverso
+  // da quello che il docente credeva di aver scritto, senza nessun avviso.
+  // Qui si richiede una scelta nuova: mentre questo flag è vero, nessun
+  // radio è mostrato segnato (anche se `parte.indiceGiusta` punta già a una
+  // risposta valida, per lo schema) finché il docente non ne clicca uno —
+  // quel click aggiorna `indiceGiusta` come sempre e riabbassa il flag.
+  const [correttaDaRiscegliere, setCorrettaDaRiscegliere] = useState(false);
+
   // `spiegazioni` è opzionale nel modello (assente = nessuna spiegazione per
   // nessuna risposta, vedi modello.ts): qui, per scrivere, si allinea sempre
   // alla lunghezza di `risposte` ("" dove manca), e si ricollassa a
@@ -44,6 +55,7 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
   }
 
   function segnaCorretta(indice: number) {
+    setCorrettaDaRiscegliere(false);
     onChange({ ...parte, indiceGiusta: indice });
   }
 
@@ -60,9 +72,11 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
     if (parte.risposte.length <= MIN_RISPOSTE) return;
     const risposte = parte.risposte.filter((_, i) => i !== indice);
     let indiceGiusta = parte.indiceGiusta;
-    if (indice === parte.indiceGiusta) indiceGiusta = 0;
+    const correttaRimossa = indice === parte.indiceGiusta;
+    if (correttaRimossa) indiceGiusta = 0;
     else if (indice < parte.indiceGiusta) indiceGiusta -= 1;
     const spiegazioni = parte.spiegazioni?.filter((_, i) => i !== indice);
+    if (correttaRimossa) setCorrettaDaRiscegliere(true);
     onChange({ ...parte, risposte, indiceGiusta, spiegazioni });
   }
 
@@ -85,6 +99,11 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{t("scelta.risposte")}</legend>
+        {correttaDaRiscegliere && (
+          <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm text-destructive">
+            {t("scelta.correttaRimossa")}
+          </p>
+        )}
         <ul className="space-y-2">
           {parte.risposte.map((risposta, i) => (
             <li key={i} className="space-y-1 rounded-md border border-transparent p-1 has-[:focus]:border-input">
@@ -93,7 +112,7 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
                   <input
                     type="radio"
                     name={nomeGruppo}
-                    checked={parte.indiceGiusta === i}
+                    checked={!correttaDaRiscegliere && parte.indiceGiusta === i}
                     onChange={() => segnaCorretta(i)}
                     aria-label={t("scelta.corretta")}
                   />

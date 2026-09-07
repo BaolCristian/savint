@@ -65,6 +65,20 @@ describe("EditorEsercizio — le parti", () => {
     await userEvent.click(screen.getByRole("button", { name: R.parti.rimuovi }));
     expect(screen.queryByText(R.parti.espressione.risposta)).toBeNull();
   });
+
+  // Correzione riportata dalla revisione precedente: `numeroParte` era
+  // tradotto in entrambe le lingue ma non renderizzato da nessuna parte, e
+  // un esercizio con più parti non mostrava nessuna etichetta "Parte N" oltre
+  // all'ordine nel DOM.
+  it("numera le parti nell'ordine in cui sono state aggiunte", async () => {
+    montaggio();
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi })); // numerica
+    await userEvent.selectOptions(screen.getByLabelText(R.parti.tipo), "espressione");
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi }));
+
+    expect(screen.getByText(R.parti.numeroParte.replace("{numero}", "1"))).toBeInTheDocument();
+    expect(screen.getByText(R.parti.numeroParte.replace("{numero}", "2"))).toBeInTheDocument();
+  });
 });
 
 describe("EditorEsercizio — l'anteprima", () => {

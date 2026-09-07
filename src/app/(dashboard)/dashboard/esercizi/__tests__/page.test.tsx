@@ -39,4 +39,13 @@ describe("hub della sezione esercizi del docente", () => {
       "href", "/dashboard/esercizi/compiti",
     );
   });
+
+  // Task 8: la redazione (le tre pagine dell'editor) ha la sua voce qui,
+  // come ogni altra sotto-sezione.
+  it("collega la redazione", async () => {
+    await rendi();
+    expect(screen.getByRole("link", { name: /redazione/i })).toHaveAttribute(
+      "href", "/dashboard/esercizi/redazione",
+    );
+  });
 });

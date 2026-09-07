@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Users, FolderOpen, Layers, ClipboardCheck } from "lucide-react";
+import { Users, FolderOpen, Layers, ClipboardCheck, Pencil } from "lucide-react";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { prisma } from "@/lib/db/client";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export default async function Page() {
     { href: "/dashboard/esercizi/contenitori", label: t("navContenitori"), icon: FolderOpen },
     { href: "/dashboard/esercizi/batterie", label: t("navBatterie"), icon: Layers },
     { href: "/dashboard/esercizi/compiti", label: t("navCompiti"), icon: ClipboardCheck },
+    { href: "/dashboard/esercizi/redazione", label: t("navRedazione"), icon: Pencil },
   ];
 
   return (

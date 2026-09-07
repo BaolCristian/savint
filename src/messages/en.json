@@ -1109,6 +1109,7 @@
     "navContenitori": "Containers",
     "navBatterie": "Batteries",
     "navCompiti": "Assignments",
+    "navRedazione": "Editing",
     "titoloStudente": "Your exercises",
     "annoArgomento": "Year {anno} · {argomento}",
     "difficolta": "Difficulty {livello}",
@@ -1270,7 +1271,8 @@
           "aggiungiRisposta": "Add answer",
           "rimuoviRisposta": "Remove answer",
           "corretta": "Correct",
-          "spiegazione": "Explanation if chosen by mistake (optional)"
+          "spiegazione": "Explanation if chosen by mistake (optional)",
+          "correttaRimossa": "You removed the answer marked correct: choose a new one before saving."
         },
         "espressione": {
           "risposta": "Correct answer",
@@ -1302,6 +1304,23 @@
         "nonRappresentabile": "This exercise can't be opened in this editor.",
         "versioneInConflitto": "Someone else saved this exercise in the meantime: reload the page and try again.",
         "generico": "Couldn't save. Please try again."
+      },
+      "elenco": {
+        "titolo": "Exercise editing",
+        "chiunquePuoModificare": "Any teacher can edit any exercise: whoever saves last overwrites whoever saved before.",
+        "nuovo": "New exercise",
+        "torna": "Back to exercise editing",
+        "modificabile": "Editable",
+        "soloLettura": "Read-only",
+        "apri": "Open",
+        "duplica": "Duplicate",
+        "duplicaInCorso": "Duplicating…",
+        "duplicaErrore": "Couldn't duplicate. Please try again.",
+        "ultimaVersioneDa": "Last version by {autore}, on {data}",
+        "autoreSconosciuto": "unknown author",
+        "motivoGenerico": "This exercise can't be opened in this editor.",
+        "nonModificabileTitolo": "Not editable in this editor",
+        "nessunEsercizio": "No exercises yet."
       }
     }
   }

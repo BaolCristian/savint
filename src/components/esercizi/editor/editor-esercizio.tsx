@@ -312,21 +312,22 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
         <h2 className="text-lg font-semibold">{t("parti.titolo")}</h2>
 
         <div className="space-y-4">
-          {editor.parti.map((parte, i) => {
-            if (parte.tipo === "numerica") {
-              return (
-                <ParteNumerica key={i} parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-              );
-            }
-            if (parte.tipo === "scelta") {
-              return (
-                <ParteScelta key={i} parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-              );
-            }
-            return (
-              <ParteEspressione key={i} parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-            );
-          })}
+          {editor.parti.map((parte, i) => (
+            // `numeroParte` (Task 6/7): tradotto in entrambe le lingue ma
+            // rimasto inutilizzato — un esercizio con più parti non mostrava
+            // nessuna etichetta "Parte N" oltre all'ordine nel DOM
+            // (correzione riportata dalla revisione del task precedente).
+            <div key={i} className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">{t("parti.numeroParte", { numero: i + 1 })}</h3>
+              {parte.tipo === "numerica" ? (
+                <ParteNumerica parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+              ) : parte.tipo === "scelta" ? (
+                <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+              ) : (
+                <ParteEspressione parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">

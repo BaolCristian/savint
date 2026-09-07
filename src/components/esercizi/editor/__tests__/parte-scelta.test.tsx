@@ -123,4 +123,32 @@ describe("ParteScelta", () => {
     const ultima = onChange.mock.calls.at(-1)![0] as ParteSceltaEditor;
     expect(ultima.spiegazioni).toEqual(["no", "", ""]);
   });
+
+  // Correzione riportata dalla revisione precedente: rimuovere la risposta
+  // segnata come corretta faceva tornare `indiceGiusta` a 0 senza che nulla
+  // sullo schermo lo dicesse, e l'esercizio poteva essere salvato così —
+  // contenuto sbagliato salvato senza avviso. Qui si richiede una scelta
+  // nuova: nessun radio resta segnato finché il docente non ne sceglie uno,
+  // e un avviso visibile spiega perché.
+  it("rimuovere la risposta corretta mostra un avviso e non lascia nessuna risposta segnata, finché non se ne sceglie una nuova", async () => {
+    const { onChange } = montaggio();
+    const bottoniRimuovi = screen.getAllByRole("button", {
+      name: messaggiIt.esercizi.redazione.parti.scelta.rimuoviRisposta,
+    });
+    // PARTE.indiceGiusta = 2 ("7"): lo rimuovo.
+    await userEvent.click(bottoniRimuovi[2]!);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      messaggiIt.esercizi.redazione.parti.scelta.correttaRimossa,
+    );
+    for (const radio of screen.getAllByRole("radio")) {
+      expect(radio).not.toBeChecked();
+    }
+
+    await userEvent.click(screen.getAllByRole("radio")[0]!);
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    const ultima = onChange.mock.calls.at(-1)![0] as ParteSceltaEditor;
+    expect(ultima.indiceGiusta).toBe(0);
+  });
 });

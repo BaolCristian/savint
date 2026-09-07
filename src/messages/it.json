@@ -1109,6 +1109,7 @@
     "navContenitori": "Contenitori",
     "navBatterie": "Batterie",
     "navCompiti": "Compiti",
+    "navRedazione": "Redazione",
     "titoloStudente": "I tuoi esercizi",
     "annoArgomento": "Classe {anno} · {argomento}",
     "difficolta": "Difficoltà {livello}",
@@ -1270,7 +1271,8 @@
           "aggiungiRisposta": "Aggiungi risposta",
           "rimuoviRisposta": "Rimuovi risposta",
           "corretta": "Corretta",
-          "spiegazione": "Spiegazione se scelta per errore (facoltativa)"
+          "spiegazione": "Spiegazione se scelta per errore (facoltativa)",
+          "correttaRimossa": "Hai rimosso la risposta segnata come corretta: scegline una nuova prima di salvare."
         },
         "espressione": {
           "risposta": "Risposta corretta",
@@ -1302,6 +1304,23 @@
         "nonRappresentabile": "Questo esercizio non può essere aperto in questo editor.",
         "versioneInConflitto": "Qualcun altro ha salvato questo esercizio nel frattempo: ricarica la pagina e riprova.",
         "generico": "Salvataggio non riuscito. Riprova."
+      },
+      "elenco": {
+        "titolo": "Redazione degli esercizi",
+        "chiunquePuoModificare": "Qualunque docente può modificare qualunque esercizio: chi salva per ultimo sovrascrive chi aveva salvato prima.",
+        "nuovo": "Nuovo esercizio",
+        "torna": "Torna alla redazione",
+        "modificabile": "Modificabile",
+        "soloLettura": "Sola lettura",
+        "apri": "Apri",
+        "duplica": "Duplica",
+        "duplicaInCorso": "Duplicazione…",
+        "duplicaErrore": "Duplicazione non riuscita. Riprova.",
+        "ultimaVersioneDa": "Ultima versione di {autore}, il {data}",
+        "autoreSconosciuto": "autore sconosciuto",
+        "motivoGenerico": "Questo esercizio non può essere aperto in questo editor.",
+        "nonModificabileTitolo": "Non modificabile in questo editor",
+        "nessunEsercizio": "Nessun esercizio ancora."
       }
     }
   }
