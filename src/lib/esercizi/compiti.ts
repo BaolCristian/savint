@@ -180,12 +180,32 @@ export async function compitiDelloStudente(studentId: string): Promise<
 /** Le consegne di un compito: parte dagli iscritti ATTUALI alla classe, non
  * dai tentativi, così chi non ha ancora iniziato compare comunque con zero.
  * Chi è uscito dalla classe sparisce da qui, ma i suoi tentativi restano nel
- * database (il compito li referenzia comunque). */
+ * database (il compito li referenzia comunque).
+ *
+ * `teacherId` è chi sta guardando, non chi ha assegnato il compito: senza
+ * questo controllo (Fix round 1) qualunque docente o admin autenticato che
+ * conoscesse un `compitoId` — un link condiviso, una schermata, una macchina
+ * in comune — leggeva nomi, consegne e punteggi di una classe che non
+ * insegna, in un hub multi-scuola dove questo attraversa anche il confine
+ * fra scuole diverse. Lo stesso identico controllo (`classeDocente`) che
+ * `assegna` già fa sulla scrittura qui sopra; questa era l'asimmetria — la
+ * regola esisteva, solo il percorso di lettura non la riusava. Nessuna
+ * eccezione per ADMIN: qui vale la stessa regola di `assegna`, per
+ * chiunque guardi. */
 export async function consegneDelCompito(
   compitoId: string,
-): Promise<{ studentId: string; nome: string; fatti: number; totali: number; punteggio: number; massimo: number }[]> {
+  teacherId: string,
+): Promise<
+  | { ok: true; righe: { studentId: string; nome: string; fatti: number; totali: number; punteggio: number; massimo: number }[] }
+  | { ok: false; motivo: "non_insegni_questa_classe" }
+> {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
-  if (!compito) return [];
+  if (!compito) return { ok: true, righe: [] };
+
+  const insegna = await prisma.classeDocente.findUnique({
+    where: { classeId_teacherId: { classeId: compito.classeId, teacherId } },
+  });
+  if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
 
   const iscritti = await prisma.classeStudente.findMany({
     where: { classeId: compito.classeId },
@@ -210,5 +230,5 @@ export async function consegneDelCompito(
       massimo,
     });
   }
-  return righe;
+  return { ok: true, righe };
 }

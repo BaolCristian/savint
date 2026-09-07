@@ -8,6 +8,8 @@ import {
 
 const P = "compititest-";
 let teacherId: string;
+let teacherAltro: string;
+let adminId: string;
 let studentId: string;
 let studentId2: string;
 let classeId: string;
@@ -27,6 +29,15 @@ async function creaEsercizioConVersione(id: string, title: string) {
   return e.id;
 }
 
+// Scorciatoia per i test che non riguardano il rifiuto: la maggior parte
+// chiama `consegneDelCompito` aspettandosi di vedere le righe, non di
+// gestire un `ok: false` che qui non ci si aspetta.
+async function righeDi(compitoId: string, chi: string = teacherId) {
+  const esito = await consegneDelCompito(compitoId, chi);
+  if (!esito.ok) throw new Error(`consegneDelCompito rifiutato inaspettatamente: ${esito.motivo}`);
+  return esito.righe;
+}
+
 beforeEach(async () => {
   await prisma.tentativo.deleteMany({ where: { student: { email: { startsWith: P } } } });
   await prisma.compito.deleteMany({ where: { batteria: { name: { startsWith: P } } } });
@@ -42,6 +53,8 @@ beforeEach(async () => {
   await prisma.user.deleteMany({ where: { email: { startsWith: P } } });
 
   teacherId = (await prisma.user.create({ data: { email: `${P}d@test.it`, name: "D", role: "TEACHER" } })).id;
+  teacherAltro = (await prisma.user.create({ data: { email: `${P}d2@test.it`, name: "D2", role: "TEACHER" } })).id;
+  adminId = (await prisma.user.create({ data: { email: `${P}admin@test.it`, name: "Admin", role: "ADMIN" } })).id;
   studentId = (await prisma.user.create({ data: { email: `${P}s1@test.it`, name: "S1", role: "STUDENT" } })).id;
   studentId2 = (await prisma.user.create({ data: { email: `${P}s2@test.it`, name: "S2", role: "STUDENT" } })).id;
 
@@ -53,10 +66,13 @@ beforeEach(async () => {
     data: [{ classeId, studentId }, { classeId, studentId: studentId2 }],
   });
 
-  // Una classe che esiste ma che il docente non insegna.
+  // Una classe che esiste ma che il docente principale non insegna — la
+  // insegna invece `teacherAltro`, per i test di `consegneDelCompito` che
+  // devono rifiutare un occhio esterno pur avendo un compito vero da mostrare.
   classeAltrui = (await prisma.classe.create({
     data: { googleGroupEmail: `${P}altrui@scuola.it`, name: "Altrui", yearLevel: 2 },
   })).id;
+  await prisma.classeDocente.create({ data: { classeId: classeAltrui, teacherId: teacherAltro } });
 
   contenitoreId = (await prisma.contenitore.create({ data: { name: `${P}Equazioni`, createdById: teacherId } })).id;
   const es = await Promise.all([
@@ -188,9 +204,61 @@ describe("assegna", () => {
   it("le consegne elencano tutti gli studenti, anche chi non ha iniziato", async () => {
     const r = await assegna(batteriaId, classeId, teacherId);
     if (!r.ok) throw new Error("assegnazione fallita");
-    const righe = await consegneDelCompito(r.compitoId);
+    const righe = await righeDi(r.compitoId);
     expect(righe).toHaveLength(2);
     expect(righe.every((x) => x.fatti === 0)).toBe(true);
+  });
+
+  // Fix round 1: `consegneDelCompito` non controllava affatto chi guardava.
+  // `assegna` qui sopra fa già esattamente il controllo che serve sulla
+  // scrittura (`classeDocente.findUnique`); questi test lo pretendono anche
+  // sulla lettura — la stessa asimmetria che il committente ha segnalato.
+  describe("chi può vedere le consegne", () => {
+    // Uno studente vero, iscritto SOLO a `classeAltrui`: senza di lui un
+    // rifiuto e un "vede solo righe vuote" sarebbero indistinguibili. Con
+    // lui, il test sul docente esterno dimostra che il buco espone un nome e
+    // un punteggio veri, non un array vuoto senza interesse.
+    let studentAltrui: string;
+
+    beforeEach(async () => {
+      studentAltrui = (await prisma.user.create({
+        data: { email: `${P}saltrui@test.it`, name: "Studente Altrui", role: "STUDENT" },
+      })).id;
+      await prisma.classeStudente.create({ data: { classeId: classeAltrui, studentId: studentAltrui } });
+    });
+
+    it("il docente della classe vede le consegne, col nome dello studente vero", async () => {
+      const r = await assegna(batteriaId, classeAltrui, teacherAltro);
+      if (!r.ok) throw new Error("assegnazione fallita");
+      const esito = await consegneDelCompito(r.compitoId, teacherAltro);
+      expect(esito.ok).toBe(true);
+      if (!esito.ok) return;
+      expect(esito.righe).toHaveLength(1);
+      expect(esito.righe[0]!.nome).toBe("Studente Altrui");
+    });
+
+    // Il test che conta di più: prima del fix, questa chiamata restituiva le
+    // righe vere (nome incluso) a un docente che non insegna quella classe —
+    // in un hub multi-scuola, dati di minori attraverso il confine di
+    // un'altra scuola. Ora deve essere rifiutata, con lo stesso motivo che
+    // `assegna` usa già per lo stesso identico controllo sulla scrittura.
+    it("un docente che non insegna quella classe viene rifiutato, con lo stesso motivo di `assegna`", async () => {
+      const r = await assegna(batteriaId, classeAltrui, teacherAltro);
+      if (!r.ok) throw new Error("assegnazione fallita");
+      const esito = await consegneDelCompito(r.compitoId, teacherId);
+      expect(esito).toEqual({ ok: false, motivo: "non_insegni_questa_classe" });
+    });
+
+    // Decisione deliberata (vedi il report): un ADMIN non ha, in questo
+    // dominio, un accesso privilegiato alle classi altrui — esattamente come
+    // `assegna` non gli concede di assegnare a una classe che non insegna.
+    // Nessuna eccezione di ruolo qui: la stessa regola, per chiunque guardi.
+    it("un ADMIN che non insegna quella classe viene rifiutato allo stesso modo", async () => {
+      const r = await assegna(batteriaId, classeAltrui, teacherAltro);
+      if (!r.ok) throw new Error("assegnazione fallita");
+      const esito = await consegneDelCompito(r.compitoId, adminId);
+      expect(esito).toEqual({ ok: false, motivo: "non_insegni_questa_classe" });
+    });
   });
 
   it("compitiDellaClasse riporta il nome della batteria e il numero di esercizi", async () => {
@@ -211,7 +279,7 @@ describe("assegna", () => {
     await prisma.classeStudente.create({ data: { classeId, studentId: tardivo.id } });
     const suoi = await compitiDelloStudente(tardivo.id);
     expect(suoi.map((c) => c.id)).toContain(r.compitoId);
-    expect(await consegneDelCompito(r.compitoId)).toHaveLength(3);
+    expect(await righeDi(r.compitoId)).toHaveLength(3);
   });
 
   it("chi esce dalla classe sparisce dalle consegne ma i suoi tentativi restano", async () => {
@@ -222,7 +290,7 @@ describe("assegna", () => {
       data: { studentId, esercizioVersioneId: versione, compitoId: r.compitoId, seed: "x" },
     });
     await prisma.classeStudente.delete({ where: { classeId_studentId: { classeId, studentId } } });
-    expect((await consegneDelCompito(r.compitoId)).map((x) => x.studentId)).not.toContain(studentId);
+    expect((await righeDi(r.compitoId)).map((x) => x.studentId)).not.toContain(studentId);
     expect(await prisma.tentativo.findUnique({ where: { id: t.id } })).not.toBeNull();
   });
 
@@ -234,7 +302,7 @@ describe("assegna", () => {
     const r = await assegna(batteriaId, vuota.id, teacherId);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(await consegneDelCompito(r.compitoId)).toEqual([]);
+    expect(await righeDi(r.compitoId)).toEqual([]);
   });
 
   // Fix round 1: verificaBatteria applica la stessa esclusione incrociata

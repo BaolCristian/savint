@@ -6,20 +6,34 @@ import { consegneDelCompito } from "@/lib/esercizi/compiti";
 import { prisma } from "@/lib/db/client";
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.compiti");
 
   const { id } = await params;
+
+  // `consegneDelCompito` è anche il controllo di autorizzazione (Fix round
+  // 1: prima leggeva le consegne di QUALUNQUE compito, per QUALUNQUE docente
+  // autenticato — lo stesso controllo che `assegna` fa già sulla scrittura,
+  // qui mancava sulla lettura). Va chiamato PRIMA di toccare i metadati del
+  // compito: un rifiuto deve fermare la pagina prima ancora di interrogare
+  // nome della batteria/classe, non solo prima di mostrarli — altrimenti
+  // un docente che sonda un id altrui imparerebbe comunque qualcosa dai
+  // tempi/errori di una query in più. Il rifiuto si traduce in 404, non
+  // 403: un 403 confermerebbe che quel compito esiste.
+  const esito = await consegneDelCompito(id, session.user.id);
+  if (!esito.ok) notFound();
+
   // `consegneDelCompito` non porta il nome della batteria o della classe
   // (non è nel suo contratto, guarda solo le consegne): li si legge qui,
-  // solo per l'intestazione della pagina.
+  // solo per l'intestazione della pagina — e solo ora che l'autorizzazione
+  // è già confermata.
   const compito = await prisma.compito.findUnique({
     where: { id },
     include: { classe: true, batteria: true },
   });
   if (!compito) notFound();
 
-  const consegne = await consegneDelCompito(id);
+  const consegne = esito.righe;
 
   return (
     <div className="space-y-6">
