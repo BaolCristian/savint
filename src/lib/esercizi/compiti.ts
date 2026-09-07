@@ -122,6 +122,47 @@ export async function assegna(
   return { ok: true, compitoId: compito.id };
 }
 
+/** Controlla che un `compitoId` arrivato dalla query string (il link nella
+ * home dello studente è letteralmente `?compitoId=...`, niente da
+ * indovinare) sia davvero legittimo per QUESTO studente e QUESTO esercizio,
+ * PRIMA che venga scritto su un `Tentativo` — l'unico punto che lo scrive è
+ * `avviaORiprendi` (tentativo.ts), che chiama questa funzione e non fida mai
+ * del valore ricevuto.
+ *
+ * Quattro condizioni, tutte necessarie: il compito esiste; è già aperto
+ * (`opensAt` assente o passato); lo studente è iscritto ORA alla sua classe;
+ * l'esercizio che sta aprendo è fra quelli che l'assegnazione ha davvero
+ * pescato (`drawnVersionIds`), non uno qualunque. Senza l'ultimo controllo
+ * uno studente potrebbe abbinare un `compitoId` vero a un esercizio mai
+ * assegnato da quel compito e farlo contare come consegna sua — la stessa
+ * famiglia di scorciatoia che le funzioni sotto (Fix round finale) chiudono
+ * dal lato della lettura.
+ *
+ * Stessa forma delle funzioni gemelle di questo file (`assegna`): tutti i
+ * controlli avvengono qui, in un solo posto, prima di qualunque scrittura —
+ * non sparsi fra chiamante e dominio. */
+export async function compitoApribile(
+  compitoId: string,
+  studentId: string,
+  esercizioId: string,
+): Promise<boolean> {
+  const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
+  if (!compito) return false;
+  if (compito.opensAt && compito.opensAt > new Date()) return false;
+  if (compito.drawnVersionIds.length === 0) return false;
+
+  const iscritto = await prisma.classeStudente.findUnique({
+    where: { classeId_studentId: { classeId: compito.classeId, studentId } },
+  });
+  if (!iscritto) return false;
+
+  const versionePescata = await prisma.esercizioVersione.findFirst({
+    where: { id: { in: compito.drawnVersionIds }, esercizioId },
+    select: { id: true },
+  });
+  return versionePescata != null;
+}
+
 /** I compiti assegnati a una classe, per la vista del docente. */
 export async function compitiDellaClasse(
   classeId: string,
@@ -168,8 +209,22 @@ export async function compitiDelloStudente(studentId: string): Promise<
       .filter((v): v is NonNullable<typeof v> => v != null)
       .map((v) => ({ esercizioId: v.esercizioId, title: v.esercizio.title }));
 
+    // `esercizioVersioneId: { in: c.drawnVersionIds }` (Fix round finale,
+    // item 1) non è ridondante col filtro su `compitoId`: quest'ultimo da
+    // solo si fida di qualunque valore scritto sul tentativo, compresi
+    // quelli scritti PRIMA che `avviaORiprendi` validasse `compitoId in
+    // ingresso (vedi `compitoApribile` più sopra) — righe già nel database
+    // che portano un `compitoId` vero ma un esercizio mai pescato da
+    // quell'assegnazione. Senza intersecare con `drawnVersionIds`, quelle
+    // righe continuerebbero a contare come consegne di un compito a cui non
+    // appartengono, anche dopo che l'ingresso è stato chiuso.
     const fatti = await prisma.tentativo.count({
-      where: { studentId, compitoId: c.id, status: "COMPLETED" },
+      where: {
+        studentId,
+        compitoId: c.id,
+        status: "COMPLETED",
+        esercizioVersioneId: { in: c.drawnVersionIds },
+      },
     });
 
     risultati.push({ id: c.id, batteria: c.batteria.name, dueAt: c.dueAt, esercizi, fatti });
@@ -213,11 +268,34 @@ export async function consegneDelCompito(
     orderBy: { studente: { name: "asc" } },
   });
 
-  const totali = compito.drawnVersionIds.length;
+  // Autoritativo sul numero totale: quante delle versioni pescate esistono
+  // ANCORA (Fix round finale, item 3), non quante ne furono pescate allora
+  // (`drawnVersionIds.length`, crudo). `compitiDelloStudente` filtra già le
+  // versioni risolvibili per costruire l'elenco esercizi dello studente; le
+  // due letture devono concordare sullo stesso numero, non una contare 3 e
+  // l'altra 2 per lo stesso compito — altrimenti lo studente resta bloccato
+  // a "2 su 3" per sempre, senza modo di sapere che il terzo non esiste più.
+  // Non raggiungibile oggi (niente cancella un Esercizio), ma corretto fin
+  // da ora costa poco ed evita di doverci tornare quando l'editor degli
+  // esercizi aprirà quella strada.
+  const totali = await prisma.esercizioVersione.count({
+    where: { id: { in: compito.drawnVersionIds } },
+  });
 
   const righe = [];
   for (const i of iscritti) {
-    const tentativi = await prisma.tentativo.findMany({ where: { studentId: i.studentId, compitoId } });
+    // `esercizioVersioneId: { in: compito.drawnVersionIds } }` (Fix round
+    // finale, item 1): senza intersecare con ciò che l'assegnazione ha
+    // DAVVERO pescato, questa query conta qualunque tentativo che porti
+    // questo `compitoId` — compresi quelli scritti prima che
+    // `avviaORiprendi` validasse l'ingresso (`compitoApribile`), su un
+    // esercizio mai assegnato da questo compito. Il committente ha
+    // dimostrato l'esito: uno studente che non aveva risolto NESSUNO degli
+    // esercizi assegnati compariva come 5/3, sopra chi ne aveva fatto
+    // davvero uno.
+    const tentativi = await prisma.tentativo.findMany({
+      where: { studentId: i.studentId, compitoId, esercizioVersioneId: { in: compito.drawnVersionIds } },
+    });
     const fatti = tentativi.filter((t) => t.status === "COMPLETED").length;
     const punteggio = tentativi.reduce((s, t) => s + t.score, 0);
     const massimo = tentativi.reduce((s, t) => s + t.maxScore, 0);

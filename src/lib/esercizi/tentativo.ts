@@ -3,6 +3,7 @@ import type { TentativoStatus } from "@prisma/client";
 import type { Answer, QuestionState, MarkingResult, Locale } from "@savint/engine";
 import { prisma } from "@/lib/db/client";
 import { ricalcola } from "./marking";
+import { compitoApribile } from "./compiti";
 
 export interface TentativoAperto {
   tentativoId: string;
@@ -21,14 +22,33 @@ export interface TentativoAperto {
 /** Restituisce il tentativo in corso dello studente su quell'esercizio, o ne
  * apre uno nuovo sull'ultima versione. `null` se l'esercizio non esiste.
  *
- * `compitoId`, se passato, viene scritto sul tentativo e usato anche per
- * TROVARLO: senza filtrare su di esso la ricerca del tentativo in corso
- * riprenderebbe quello aperto dal link libero (che ha `compitoId` nullo),
- * attribuendo al compito un lavoro che era già iniziato fuori da esso.
- * Aprire lo stesso esercizio dentro e fuori da un compito produce quindi
- * sempre due tentativi distinti: uno con `compitoId` valorizzato, uno con
- * `compitoId` nullo, esattamente come un esercizio aperto dal link libero
- * si è sempre comportato. */
+ * `compitoId`, se passato, viene VALIDATO da `compitoApribile` (dominio,
+ * compiti.ts) prima di essere scritto o anche solo usato per cercare il
+ * tentativo in corso — mai fidandosi del valore ricevuto. Il link nella home
+ * dello studente è letteralmente `?compitoId=...`: senza questo controllo
+ * qualunque studente autenticato può scriverci un id qualunque (di un'altra
+ * classe, di un compito non ancora aperto, o abbinato a un esercizio che
+ * quel compito non ha mai pescato) e farlo contare come lavoro consegnato
+ * per quel compito. Il committente lo ha dimostrato: uno studente che non
+ * aveva risolto NESSUNO degli esercizi assegnati compariva come 5/3 nella
+ * tabella del docente, sopra chi ne aveva fatto davvero uno.
+ *
+ * Scelta esplicita (Fix round finale, item 1): un `compitoId` che fallisce
+ * la validazione non fa fallire la pagina — l'esercizio è comunque
+ * accessibile dal link libero, indipendentemente dal compito — ma lo apre
+ * COME libero, silenziosamente ignorando l'id ricevuto (`compitoIdEffettivo`
+ * sotto). Rifiutare la pagina intera sarebbe eccessivo per il caso più
+ * comune e meno malizioso (un compito non ancora aperto, o uno studente
+ * appena uscito dalla classe che vuole comunque esercitarsi): l'esercizio
+ * resta comunque nel bacino libero. Quel che NON deve succedere in nessun
+ * caso è che un `compitoId` non valido venga scritto sul tentativo — questo
+ * sì, senza eccezioni.
+ *
+ * Una volta risolto, `compitoIdEffettivo` gioca lo stesso ruolo che
+ * `compitoId` giocava prima: viene scritto sul tentativo e usato anche per
+ * TROVARLO, così un esercizio aperto dentro e fuori da un compito produce
+ * sempre due tentativi distinti (vedi il commento gemello più sotto, ora
+ * sul valore validato). */
 export async function avviaORiprendi(
   studentId: string,
   esercizioId: string,
@@ -40,6 +60,10 @@ export async function avviaORiprendi(
   });
   if (!versione) return null;
 
+  const compitoIdEffettivo = compitoId && (await compitoApribile(compitoId, studentId, esercizioId))
+    ? compitoId
+    : undefined;
+
   // Conservazione pigra, come per PracticeRun: un tentativo fermo da più della
   // finestra non si riprende, se ne apre uno nuovo. Nessun lavoro pianificato
   // in questo sotto-progetto.
@@ -49,14 +73,14 @@ export async function avviaORiprendi(
   const inCorso = await prisma.tentativo.findFirst({
     where: {
       studentId, esercizioVersioneId: versione.id, status: "IN_PROGRESS",
-      compitoId: compitoId ?? null,
+      compitoId: compitoIdEffettivo ?? null,
       lastActivityAt: { gte: sogliaAttivita },
     },
     orderBy: { startedAt: "desc" },
   });
 
   const t = inCorso ?? (await prisma.tentativo.create({
-    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID(), compitoId: compitoId ?? null },
+    data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID(), compitoId: compitoIdEffettivo ?? null },
   }));
 
   return {

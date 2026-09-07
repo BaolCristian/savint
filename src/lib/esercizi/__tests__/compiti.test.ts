@@ -425,4 +425,104 @@ describe("assegna", () => {
     expect(primaMeta.every((eid) => inContA.has(eid))).toBe(true);
     expect(secondaMeta.every((eid) => inContB.has(eid))).toBe(true);
   });
+
+  // Fix round finale, item 1 (seconda metà — "conta solo ciò che è stato
+  // pescato"): il committente ha dimostrato uno studente che non aveva
+  // risolto NESSUNO degli esercizi assegnati comparire come 5/3 nella
+  // tabella del docente, sopra chi ne aveva fatto davvero uno. Qui si scrive
+  // direttamente (bypassando `avviaORiprendi`, già validato altrove — vedi
+  // `tentativo-compito.test.ts`) la stessa forma di dato che l'assenza di
+  // validazione lasciava scrivere PRIMA del fix, o che può restare nel
+  // database da prima del fix: righe `Tentativo` che portano il `compitoId`
+  // vero ma un `esercizioVersioneId` mai pescato da quel compito.
+  describe("i conteggi contano solo ciò che il compito ha davvero pescato", () => {
+    it("consegneDelCompito non conta tentativi completati su un esercizio mai pescato da questo compito", async () => {
+      const r = await assegna(batteriaId, classeId, teacherId); // pesca 3 da contenitoreId
+      if (!r.ok) throw new Error("assegnazione fallita");
+
+      const versioneEstranea = await prisma.esercizioVersione.findFirstOrThrow({
+        where: { esercizioId: esercizioExtra },
+      });
+      // Cinque tentativi COMPLETED, tutti col compitoId vero ma su un
+      // esercizio che quella batteria non ha mai potuto pescare (non sta
+      // nel contenitore di batteriaId): la riproduzione esatta del "5/3"
+      // dimostrato dal committente.
+      await prisma.tentativo.createMany({
+        data: Array.from({ length: 5 }, (_, i) => ({
+          studentId,
+          esercizioVersioneId: versioneEstranea.id,
+          compitoId: r.compitoId,
+          seed: `estraneo-${i}`,
+          status: "COMPLETED" as const,
+          score: 1,
+          maxScore: 1,
+        })),
+      });
+
+      const righe = await righeDi(r.compitoId);
+      const riga = righe.find((x) => x.studentId === studentId)!;
+      // Prima del fix: `fatti` valeva 5 (su `totali` 3) e `punteggio` 5 —
+      // uno studente che non aveva mai aperto un esercizio DAVVERO
+      // assegnato compariva come se ne avesse consegnati più del totale.
+      expect(riga.fatti).toBe(0);
+      expect(riga.punteggio).toBe(0);
+      expect(riga.massimo).toBe(0);
+      expect(riga.totali).toBe(3);
+    });
+
+    it("compitiDelloStudente non conta tentativi completati su un esercizio mai pescato da questo compito", async () => {
+      const r = await assegna(batteriaId, classeId, teacherId);
+      if (!r.ok) throw new Error("assegnazione fallita");
+
+      const versioneEstranea = await prisma.esercizioVersione.findFirstOrThrow({
+        where: { esercizioId: esercizioExtra },
+      });
+      await prisma.tentativo.create({
+        data: {
+          studentId, esercizioVersioneId: versioneEstranea.id, compitoId: r.compitoId,
+          seed: "estraneo", status: "COMPLETED", score: 1, maxScore: 1,
+        },
+      });
+
+      const suoi = await compitiDelloStudente(studentId);
+      const suo = suoi.find((c) => c.id === r.compitoId)!;
+      // Prima del fix: `fatti` valeva 1 nonostante lo studente non avesse
+      // mai toccato nessuno dei 3 esercizi che il compito ha davvero
+      // assegnato (`suo.esercizi`).
+      expect(suo.fatti).toBe(0);
+      expect(suo.esercizi).toHaveLength(3);
+    });
+  });
+
+  // Fix round finale, item 3: i due lettori di `drawnVersionIds` devono
+  // concordare sullo stesso numero. Qui si simula (a mano, con Prisma
+  // diretto — nessuna funzione del dominio cancella oggi un Esercizio o una
+  // EsercizioVersione) l'unico modo in cui oggi la disaccordanza potrebbe
+  // comunque presentarsi: una `EsercizioVersione` pescata che sparisce dal
+  // database dopo l'assegnazione, con `drawnVersionIds` (colonna senza
+  // vincolo di chiave esterna) che continua a nominarla.
+  describe("i due lettori di drawnVersionIds concordano sullo stesso numero", () => {
+    it("consegneDelCompito e compitiDelloStudente contano lo stesso numero di esercizi dopo che uno sparisce", async () => {
+      const r = await assegna(batteriaId, classeId, teacherId); // 3 pescati
+      if (!r.ok) throw new Error("assegnazione fallita");
+
+      const compito = await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } });
+      // Cancella UNA delle tre versioni pescate: cascata su Tentativo
+      // (nessuno ne esiste ancora qui), non tocca la colonna
+      // `drawnVersionIds`, che resta un array di stringhe senza vincolo.
+      await prisma.esercizioVersione.delete({ where: { id: compito.drawnVersionIds[0]! } });
+
+      const suoi = await compitiDelloStudente(studentId);
+      const suo = suoi.find((c) => c.id === r.compitoId)!;
+      const righe = await righeDi(r.compitoId);
+
+      // Prima del fix: `suo.esercizi.length` valeva 2 (filtra le versioni
+      // risolvibili) mentre `righe[0].totali` valeva ancora 3
+      // (`drawnVersionIds.length`, crudo) — lo stesso compito, due numeri
+      // diversi per lo stesso denominatore.
+      expect(suo.esercizi).toHaveLength(2);
+      expect(righe[0]!.totali).toBe(2);
+      expect(righe[0]!.totali).toBe(suo.esercizi.length);
+    });
+  });
 });
