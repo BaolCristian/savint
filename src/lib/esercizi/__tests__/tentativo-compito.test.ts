@@ -3,11 +3,14 @@ import { mkdtempSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { prisma } from "@/lib/db/client";
-import { avviaORiprendi, completa } from "../tentativo";
+import { loadQuestion } from "@savint/engine";
+import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
 import { assegna, consegneDelCompito, compitiDelloStudente } from "../compiti";
+import { salvaNuovaVersione } from "../redazione";
+import type { EsercizioEditor } from "../editor/modello";
 
 // Stesso schema del file gemello `tentativo.test.ts`: prefisso proprio per
 // non toccare le righe seminate da altri file di test eseguiti in parallelo
@@ -299,5 +302,96 @@ describe("rifare un esercizio già consegnato non gonfia i conteggi", () => {
     // Prima del fix: `suo.fatti` valeva 2 su un `suo.esercizi.length` di 1.
     expect(suo.fatti).toBe(1);
     expect(suo.esercizi).toHaveLength(1);
+  });
+});
+
+// Onda di correzioni finale, C2 — la peggiore delle tre: `avviaORiprendi`
+// apriva SEMPRE l'ultima versione di un esercizio (`orderBy: { version:
+// "desc" }`), mai quella che `compito.drawnVersionIds` ha davvero pescato.
+// `compitoApribile` si limitava a controllare che ESISTESSE una versione
+// pescata, senza mai dire QUALE. Finché solo il seed creava versioni,
+// l'ultima e quella pescata coincidevano sempre — questo task è il primo a
+// poter creare una seconda versione mentre un compito è già assegnato.
+//
+// La riproduzione qui è deliberatamente l'esperienza dello STUDENTE, non le
+// righe del database: apre l'esercizio assegnato, il docente lo corregge,
+// lui torna sullo stesso link, lo finisce, e il docente deve vederlo
+// consegnato.
+describe("C2 — editare un esercizio dentro un compito assegnato non deve toccare il tentativo dello studente", () => {
+  const nuovoInput: EsercizioEditor = {
+    meta: { titolo: `${PREFIX}corretto`, descrizione: "", anno: 1, argomento: "equazioni", tag: [], difficolta: 1 },
+    testo: "Risolvi \\(\\simplify{ {a}x+{b} }=0\\)",
+    suggerimento: "",
+    variabili: [
+      { nome: "a", definizione: "random(2..9)", descrizione: "" },
+      { nome: "b", definizione: "random(-9..9 except 0)", descrizione: "" },
+    ],
+    condizione: "",
+    parti: [{ tipo: "numerica", consegna: "\\(x=\\)", punti: 2, valore: "-b/a", tolleranza: { tipo: "esatta" } }],
+  };
+
+  it("lo studente riprende lo stesso tentativo, sullo stesso seme e sulla stessa versione pescata, dopo che il docente ha salvato una versione nuova", async () => {
+    const compitoPrima = await prisma.compito.findUniqueOrThrow({ where: { id: compitoId } });
+    const versionePescata = compitoPrima.drawnVersionIds[0]!;
+
+    const primo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    const rigaPrima = await prisma.tentativo.findUniqueOrThrow({ where: { id: primo!.tentativoId } });
+    // Il tentativo aperto dallo studente è sulla versione che il compito ha
+    // davvero pescato — non necessariamente l'unica che esiste ancora, ma
+    // qui, prima che il docente corregga nulla, sono la stessa cosa.
+    expect(rigaPrima.esercizioVersioneId).toBe(versionePescata);
+
+    const esitoSalvataggio = await salvaNuovaVersione(ESERCIZIO_ID, nuovoInput);
+    if (!esitoSalvataggio.ok) throw new Error("salvataggio della nuova versione fallito nel setup del test");
+    expect(esitoSalvataggio.versione).toBe(2);
+
+    // Il compito continua a puntare alla versione pescata all'assegnazione:
+    // salvare una versione nuova non la tocca (garantito dallo schema, non
+    // da questo task — vedi il commento gemello in redazione.ts).
+    const compitoDopo = await prisma.compito.findUniqueOrThrow({ where: { id: compitoId } });
+    expect(compitoDopo.drawnVersionIds).toEqual([versionePescata]);
+
+    const secondo = await avviaORiprendi(studentId, ESERCIZIO_ID, compitoId);
+    // Prima della correzione: `secondo!.tentativoId` era DIVERSO da
+    // `primo!.tentativoId` (un tentativo nuovo, con un seme nuovo, sulla
+    // versione appena salvata — quella "desc", non quella pescata) — il
+    // lavoro in corso dello studente sul tentativo vecchio restava
+    // orfano, mai più ripreso da questo punto in poi.
+    expect(secondo!.tentativoId).toBe(primo!.tentativoId);
+    expect(secondo!.seed).toBe(primo!.seed);
+    const rigaSeconda = await prisma.tentativo.findUniqueOrThrow({ where: { id: secondo!.tentativoId } });
+    expect(rigaSeconda.esercizioVersioneId).toBe(versionePescata);
+
+    // Lo studente risponde correttamente a entrambe le parti (qui una
+    // sola, "p0") e completa: il risultato deve essere il punteggio
+    // pieno, non zero e non "tentativo introvabile".
+    const q = loadQuestion(secondo!.content as never, { seed: secondo!.seed, locale: "it" });
+    const p = q.getPart("p0")!;
+    const giusta = p.correctAnswer();
+    p.submit(giusta);
+    q.updateScore();
+    const rispostaOk = await applicaRisposta(secondo!.tentativoId, studentId, "p0", giusta, q.toState(), "it");
+    expect(rispostaOk.ok).toBe(true);
+
+    const completamento = await completa(secondo!.tentativoId, studentId, "it");
+    expect(completamento.ok).toBe(true);
+    if (completamento.ok) {
+      // "2 su 2": punteggio pieno, non zero.
+      expect(completamento.score).toBe(completamento.maxScore);
+      expect(completamento.score).toBeGreaterThan(0);
+    }
+
+    // E il docente lo vede: prima della correzione la tabella del docente
+    // non mostrava NESSUNA consegna per questo studente (il tentativo
+    // completato viveva sulla versione "desc", scartata dal filtro
+    // `esercizioVersioneId: { in: compito.drawnVersionIds } }` che
+    // `consegneDelCompito` applica — vedi compiti.ts), pur avendo lo
+    // studente finito l'esercizio davvero.
+    const esitoConsegne = await consegneDelCompito(compitoId, teacherId);
+    if (!esitoConsegne.ok) throw new Error("consegneDelCompito rifiutato inaspettatamente");
+    const rigaConsegna = esitoConsegne.righe.find((r) => r.studentId === studentId)!;
+    expect(rigaConsegna.fatti).toBe(1);
+    expect(rigaConsegna.punteggio).toBe(rigaConsegna.massimo);
+    expect(rigaConsegna.punteggio).toBeGreaterThan(0);
   });
 });

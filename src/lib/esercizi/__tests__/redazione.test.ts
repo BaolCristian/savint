@@ -3,13 +3,15 @@ import { mkdtempSync, writeFileSync, readdirSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { prisma } from "@/lib/db/client";
+import { loadQuestion } from "@savint/engine";
 import {
   creaEsercizio, salvaNuovaVersione, duplicaEsercizio, elencoRedazione, caricaPerEditor,
 } from "../redazione";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { creaContenitore, aggiungiEsercizi } from "../contenitori";
-import { assegna } from "../compiti";
+import { assegna, consegneDelCompito } from "../compiti";
+import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import type { EsercizioEditor } from "../editor/modello";
 
 // Prefisso unico di questo file: Vitest esegue i file di test in parallelo
@@ -177,8 +179,31 @@ describe("salvaNuovaVersione", () => {
   // EsercizioVersione precisa (drawnVersionIds). Un docente deve poter
   // correggere l'esercizio mentre trenta studenti lo stanno gia' facendo,
   // senza spostare sotto i loro piedi la versione a cui il compito punta.
-  it("salvare una versione nuova non tocca quella con cui un compito e' stato assegnato", async () => {
-    const creato = await creaEsercizio(base, docenteId);
+  //
+  // Riscritto nell'Onda di correzioni finale (C2): la versione precedente
+  // di questo test asseriva solo che la riga `Compito` e il CONTENUTO della
+  // vecchia versione restassero immutati — vero per costruzione (niente in
+  // questo modulo li tocca mai: `salvaNuovaVersione` crea sempre una riga
+  // NUOVA, non aggiorna quella vecchia), quindi il test passava anche col
+  // difetto C2 ancora presente. Il difetto vero non era nella scrittura,
+  // era nella LETTURA: `avviaORiprendi` apriva sempre l'ULTIMA versione,
+  // mai quella pescata dal compito. Qui si verifica cosa ottiene DAVVERO lo
+  // studente, end-to-end: stesso tentativo, stesso seme, stessa versione
+  // pescata, e un completamento che il docente vede ancora contare dopo che
+  // ha salvato una correzione.
+  it("un docente puo' correggere un esercizio gia' assegnato senza distruggere il tentativo in corso dello studente", async () => {
+    // Risposta un intero puro ("k", non "-b/a"): stesso schema del corpus
+    // reale (01-equazione-primo-grado.json). Evita due fonti di rumore
+    // estranee a C2 — un decimale periodico con tolleranza esatta, e una
+    // stringa come "-1,125" che lo spacchettamento delle notazioni (la
+    // virgola italiana letta come separatore delle migliaia inglese)
+    // potrebbe interpretare in modo ambiguo — cosi' un fallimento del
+    // punteggio pieno qui puo' significare solo una cosa: la versione
+    // sbagliata, non un artefatto della marcatura.
+    const esercizio: EsercizioEditor = { ...base, testo: "x",
+      variabili: [{ nome: "k", definizione: "random(-9..9 except 0)", descrizione: "" }],
+      parti: [{ tipo: "numerica", consegna: "\\(x=\\)", punti: 2, valore: "k", tolleranza: { tipo: "esatta" } }] };
+    const creato = await creaEsercizio(esercizio, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
     const contenitoreId = (await creaContenitore(docenteId, `${PREFIX}Contenitore`)).id;
@@ -192,6 +217,16 @@ describe("salvaNuovaVersione", () => {
     const prima = compitoPrima.drawnVersionIds;
     expect(prima).toHaveLength(1);
 
+    // Lo studente apre l'esercizio assegnato PRIMA che il docente lo
+    // corregga: un tentativo, un seme, sulla versione pescata.
+    const studenteId = (await prisma.user.create({
+      data: { email: `${PREFIX}studente@test.it`, name: "Studente", role: "STUDENT" },
+    })).id;
+    await prisma.classeStudente.create({ data: { classeId, studentId: studenteId } });
+    const primoTentativo = await avviaORiprendi(studenteId, creato.esercizioId, assegnazione.compitoId);
+    const rigaPrima = await prisma.tentativo.findUniqueOrThrow({ where: { id: primoTentativo!.tentativoId } });
+    expect(rigaPrima.esercizioVersioneId).toBe(prima[0]);
+
     const esito = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "cambiato" });
     expect(esito.ok).toBe(true);
 
@@ -201,6 +236,37 @@ describe("salvaNuovaVersione", () => {
     const v1 = await prisma.esercizioVersione.findUniqueOrThrow({ where: { id: prima[0]! } });
     expect((v1.content as { statement: string }).statement).not.toContain("cambiato");
     expect(v1.version).toBe(1);
+
+    // Lo studente torna sullo stesso link: deve ritrovare LO STESSO
+    // tentativo, non uno nuovo sulla versione appena corretta.
+    const secondoTentativo = await avviaORiprendi(studenteId, creato.esercizioId, assegnazione.compitoId);
+    expect(secondoTentativo!.tentativoId).toBe(primoTentativo!.tentativoId);
+    expect(secondoTentativo!.seed).toBe(primoTentativo!.seed);
+    const rigaSeconda = await prisma.tentativo.findUniqueOrThrow({ where: { id: secondoTentativo!.tentativoId } });
+    expect(rigaSeconda.esercizioVersioneId).toBe(prima[0]);
+
+    // Lo finisce, con la risposta giusta: il completamento va a buon fine e
+    // il docente lo vede contare come consegna, non zero su tre.
+    const q = loadQuestion(secondoTentativo!.content as never, { seed: secondoTentativo!.seed, locale: "it" });
+    const p = q.getPart("p0")!;
+    const giusta = p.correctAnswer();
+    p.submit(giusta);
+    q.updateScore();
+    const rispostaOk = await applicaRisposta(secondoTentativo!.tentativoId, studenteId, "p0", giusta, q.toState(), "it");
+    expect(rispostaOk.ok).toBe(true);
+
+    const completamento = await completa(secondoTentativo!.tentativoId, studenteId, "it");
+    expect(completamento.ok).toBe(true);
+    if (completamento.ok) {
+      expect(completamento.score).toBe(completamento.maxScore);
+      expect(completamento.score).toBeGreaterThan(0);
+    }
+
+    const consegne = await consegneDelCompito(assegnazione.compitoId, docenteId);
+    if (!consegne.ok) throw new Error("consegneDelCompito rifiutato inaspettatamente");
+    const rigaConsegna = consegne.righe.find((r) => r.studentId === studenteId)!;
+    expect(rigaConsegna.fatti).toBe(1);
+    expect(rigaConsegna.punteggio).toBe(rigaConsegna.massimo);
   });
 });
 
@@ -329,9 +395,15 @@ describe("elencoRedazione", () => {
     expect(voce!.ultimaVersione).toBe(1);
     expect(voce!.modificabile).toBe(true);
     expect(voce!.autoreNome).toBe("Docente");
+    // Onda finale, I5: nessun motivo per un esercizio modificabile.
+    expect(voce!.motivo).toBeNull();
   });
 
-  it("marca non modificabile un esercizio che daNumbas rifiuta", async () => {
+  // Onda finale, I5: `motivo` viene ora da `elencoRedazione` stessa (lo
+  // stesso `dettaglio` di `daNumbas` usato per calcolare `modificabile`),
+  // non più da una rilettura separata con `caricaPerEditor` — vedi il
+  // commento su `VoceRedazione.motivo`.
+  it("marca non modificabile un esercizio che daNumbas rifiuta e ne porta il motivo", async () => {
     const esercizio = await prisma.esercizio.create({
       data: { title: `${PREFIX}Elenco non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
     });
@@ -347,6 +419,8 @@ describe("elencoRedazione", () => {
     const voce = elenco.find((v) => v.id === esercizio.id);
     expect(voce).toBeDefined();
     expect(voce!.modificabile).toBe(false);
+    expect(typeof voce!.motivo).toBe("string");
+    expect(voce!.motivo!.length).toBeGreaterThan(0);
   });
 
   // Il corpus reale seminato da `content/esercizi/`: la tabella di

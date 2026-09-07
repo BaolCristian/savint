@@ -65,23 +65,33 @@ export interface TentativoAperto {
  * `compitoId` giocava prima: viene scritto sul tentativo e usato anche per
  * TROVARLO, così un esercizio aperto dentro e fuori da un compito produce
  * sempre due tentativi distinti (vedi il commento gemello più sotto, ora
- * sul valore validato). */
+ * sul valore validato).
+ *
+ * **Quale versione si apre (Onda di correzioni finale, C2)**: quando
+ * `compitoId` è valido, si apre SEMPRE la versione che `compitoApribile`
+ * dice essere stata pescata da quel compito per questo esercizio — mai
+ * l'ultima. Prima di questa correzione qui sotto c'era un solo
+ * `findFirst({orderBy: {version: "desc"}})`, eseguito PRIMA ancora di
+ * sapere se un compito fosse coinvolto: un esercizio assegnato e poi
+ * corretto dal docente faceva risolvere un secondo tentativo, con un seme
+ * nuovo, sulla versione appena salvata — non su quella che il compito
+ * aveva pescato — lasciando orfano il lavoro dello studente sul tentativo
+ * vecchio (mai più trovato: la ricerca sotto filtra per
+ * `esercizioVersioneId`) e producendo un completamento che
+ * `consegneDelCompito` non contava (filtra su `drawnVersionIds`). Il
+ * percorso libero (nessun `compitoId`, o uno respinto) continua a
+ * prendere l'ultima versione, come sempre: non assegnato a nessun compito,
+ * non c'è una versione "giusta" da preferire all'ultima. */
 export async function avviaORiprendi(
   studentId: string,
   esercizioId: string,
   compitoId?: string,
 ): Promise<TentativoAperto | null> {
-  const versione = await prisma.esercizioVersione.findFirst({
-    where: { esercizioId },
-    orderBy: { version: "desc" },
-  });
-  if (!versione) return null;
-
-  const compitoValido = compitoId ? await compitoApribile(compitoId, studentId, esercizioId) : false;
-  const compitoIdEffettivo = compitoValido ? compitoId : undefined;
+  const versionePescata = compitoId ? await compitoApribile(compitoId, studentId, esercizioId) : null;
+  const compitoIdEffettivo = versionePescata ? compitoId : undefined;
   // Vero solo se qualcosa era stato DAVVERO richiesto e quel qualcosa è
   // stato respinto — mai per un esercizio libero vero (`compitoId`
-  // assente fin dall'inizio, `compitoValido` resta `false` ma non c'è
+  // assente fin dall'inizio, `versionePescata` resta `null` ma non c'è
   // nessuna richiesta da segnalare come rifiutata).
   // ATTENZIONE per chi aggiungerà un altro punto che costruisce questo
   // indirizzo. `!!compitoId` rende indistinguibili "parametro assente" e
@@ -92,7 +102,15 @@ export async function avviaORiprendi(
   // prende l'id da una chiave primaria che vuota non può essere. Un
   // collegamento da condividere, una notifica o un "copia indirizzo" che
   // inoltrasse un id eventualmente vuoto lo renderebbe raggiungibile.
-  const richiestaCompitoRifiutata = !!compitoId && !compitoValido;
+  const richiestaCompitoRifiutata = !!compitoId && !versionePescata;
+
+  const versione = versionePescata
+    ? await prisma.esercizioVersione.findUnique({ where: { id: versionePescata } })
+    : await prisma.esercizioVersione.findFirst({
+        where: { esercizioId },
+        orderBy: { version: "desc" },
+      });
+  if (!versione) return null;
 
   // Conservazione pigra, come per PracticeRun: un tentativo fermo da più della
   // finestra non si riprende, se ne apre uno nuovo. Nessun lavoro pianificato

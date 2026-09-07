@@ -155,27 +155,44 @@ export async function assegna(
  *
  * Stessa forma delle funzioni gemelle di questo file (`assegna`): tutti i
  * controlli avvengono qui, in un solo posto, prima di qualunque scrittura —
- * non sparsi fra chiamante e dominio. */
+ * non sparsi fra chiamante e dominio.
+ *
+ * **Restituisce l'id della `EsercizioVersione` pescata da questo compito
+ * per questo esercizio, non solo `true`/`false` (Onda di correzioni
+ * finale, C2)**: prima di questa correzione la firma diceva solo SE un
+ * `compitoId` fosse valido, mai QUALE versione l'assegnazione avesse
+ * davvero pescato — il chiamante (`avviaORiprendi`) non aveva altra scelta
+ * che aprire sempre l'ULTIMA versione dell'esercizio (`orderBy: {version:
+ * "desc"}`), la stessa per un esercizio libero e per uno assegnato. Finché
+ * solo il seed creava versioni "ultima" e "pescata" coincidevano sempre;
+ * appena un docente corregge un esercizio già assegnato (questo task lo
+ * rende possibile per la prima volta), non più — uno studente che riapre
+ * il link del compito otteneva un tentativo NUOVO su un seme nuovo e una
+ * versione MAI pescata da quel compito: lavoro in corso perso, e anche un
+ * completamento successivo non contava come consegna (`consegneDelCompito`
+ * filtra su `esercizioVersioneId: { in: drawnVersionIds }`). Il valore
+ * `null` copre sia "non valido" sia "non trovato", esattamente come prima
+ * il booleano `false` — il chiamante non ha bisogno di distinguerli. */
 export async function compitoApribile(
   compitoId: string,
   studentId: string,
   esercizioId: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
-  if (!compito) return false;
-  if (compito.opensAt && compito.opensAt > new Date()) return false;
-  if (compito.drawnVersionIds.length === 0) return false;
+  if (!compito) return null;
+  if (compito.opensAt && compito.opensAt > new Date()) return null;
+  if (compito.drawnVersionIds.length === 0) return null;
 
   const iscritto = await prisma.classeStudente.findUnique({
     where: { classeId_studentId: { classeId: compito.classeId, studentId } },
   });
-  if (!iscritto) return false;
+  if (!iscritto) return null;
 
   const versionePescata = await prisma.esercizioVersione.findFirst({
     where: { id: { in: compito.drawnVersionIds }, esercizioId },
     select: { id: true },
   });
-  return versionePescata != null;
+  return versionePescata?.id ?? null;
 }
 
 /** I compiti assegnati a una classe, per la vista del docente. */
