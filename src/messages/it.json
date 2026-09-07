@@ -1132,10 +1132,15 @@
     "classi": {
       "titolo": "Le tue classi",
       "descrizione": "Scegli le classi che insegni: potrai assegnare compiti solo a queste.",
+      "significato": "Dichiarare di insegnare una classe ti dà accesso alle consegne e ai punteggi dei suoi studenti.",
       "nessunaClasse": "Non ci sono ancora classi disponibili.",
       "salva": "Salva",
       "salvato": "Salvato.",
-      "erroreSalvataggio": "Non è stato possibile salvare. Riprova."
+      "erroreSalvataggio": "Non è stato possibile salvare. Riprova.",
+      "confermaRimozioneTitolo": "Togliere la spunta a \"{classe}\"?",
+      "confermaRimozioneDescrizione": "Questa classe ha già dei compiti assegnati ({elenco}): gli studenti continueranno a vederli e a lavorarci, ma un docente che non li ha assegnati potrebbe non riuscire più a leggerne le consegne.",
+      "confermaRimozioneAzione": "Togli comunque",
+      "annulla": "Annulla"
     },
     "contenitori": {
       "titolo": "Contenitori",

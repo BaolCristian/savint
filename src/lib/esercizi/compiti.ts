@@ -237,15 +237,22 @@ export async function compitiDelloStudente(studentId: string): Promise<
  * Chi è uscito dalla classe sparisce da qui, ma i suoi tentativi restano nel
  * database (il compito li referenzia comunque).
  *
- * `teacherId` è chi sta guardando, non chi ha assegnato il compito: senza
- * questo controllo (Fix round 1) qualunque docente o admin autenticato che
- * conoscesse un `compitoId` — un link condiviso, una schermata, una macchina
- * in comune — leggeva nomi, consegne e punteggi di una classe che non
- * insegna, in un hub multi-scuola dove questo attraversa anche il confine
- * fra scuole diverse. Lo stesso identico controllo (`classeDocente`) che
- * `assegna` già fa sulla scrittura qui sopra; questa era l'asimmetria — la
- * regola esisteva, solo il percorso di lettura non la riusava. Nessuna
- * eccezione per ADMIN: qui vale la stessa regola di `assegna`, per
+ * `teacherId` è chi sta guardando: autorizzato se insegna OGGI la classe del
+ * compito (`classeDocente`, lo stesso controllo che `assegna` fa già sulla
+ * scrittura — Fix round 1) OPPURE se è stato lui ad assegnarlo
+ * (`assignedById`, Fix round finale, item 2). La seconda clausola non
+ * sostituisce la prima, la allarga: `dichiaraInsegnamento` è una
+ * sostituzione integrale dell'elenco (vedi il dominio in classi.ts), e con
+ * due schede aperte salvare quella vecchia fa sparire silenziosamente una
+ * classe dall'elenco insegnato di un docente — il compito che ci aveva
+ * assegnato resta, gli studenti continuano a vederlo e a lavorarci, ma senza
+ * questa seconda clausola NESSUNO potrebbe più leggerne le consegne: non il
+ * docente che l'ha creato (non insegna più quella classe secondo
+ * `classeDocente`), non un altro docente (non l'ha mai insegnata), non un
+ * admin (nessuna eccezione di ruolo qui, invariato dal Fix round 1). Chi ha
+ * assegnato un compito deve sempre poter vedere come è andato.
+ *
+ * Nessuna eccezione per ADMIN: qui vale la stessa regola di `assegna`, per
  * chiunque guardi. */
 export async function consegneDelCompito(
   compitoId: string,
@@ -260,7 +267,8 @@ export async function consegneDelCompito(
   const insegna = await prisma.classeDocente.findUnique({
     where: { classeId_teacherId: { classeId: compito.classeId, teacherId } },
   });
-  if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
+  const autorizzato = insegna != null || compito.assignedById === teacherId;
+  if (!autorizzato) return { ok: false, motivo: "non_insegni_questa_classe" };
 
   const iscritti = await prisma.classeStudente.findMany({
     where: { classeId: compito.classeId },

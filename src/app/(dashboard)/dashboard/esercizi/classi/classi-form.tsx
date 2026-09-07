@@ -17,25 +17,54 @@ interface Classe {
 export function ClassiForm({
   classi,
   selezionateIniziali,
+  confermeRimozione,
   testi,
 }: {
   classi: Classe[];
   selezionateIniziali: string[];
-  testi: { salva: string; salvato: string; errore: string };
+  // Solo le classi che hanno già dei compiti: togliere la spunta a una di
+  // queste (Fix round finale, item 2) deve avvisare PRIMA, nominando quei
+  // compiti, invece di farla sparire in silenzio con un salvataggio da una
+  // scheda rimasta indietro. Titolo e descrizione arrivano già tradotti dal
+  // server (vedi il commento nella pagina): questo componente non li
+  // ricalcola, li mostra soltanto.
+  confermeRimozione: Record<string, { titolo: string; descrizione: string }>;
+  testi: { salva: string; salvato: string; errore: string; confermaRimozioneAzione: string; annulla: string };
 }) {
   const router = useRouter();
   const [selezionate, setSelezionate] = useState<Set<string>>(new Set(selezionateIniziali));
   const [busy, setBusy] = useState(false);
   const [esito, setEsito] = useState<"ok" | "errore" | null>(null);
+  // Id della classe per cui è aperta la conferma di rimozione, o `null` se
+  // nessuna. Un solo dialogo alla volta: la casella resta spuntata finché la
+  // conferma non arriva.
+  const [classeDaConfermare, setClasseDaConfermare] = useState<string | null>(null);
 
-  function toggle(id: string) {
-    setEsito(null);
+  function applicaToggle(id: string) {
     setSelezionate((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  }
+
+  function toggle(id: string) {
+    setEsito(null);
+    const staDeselezionando = selezionate.has(id);
+    // Solo togliere la spunta a una classe con compiti già assegnati chiede
+    // conferma: rispuntarla, o cambiare una classe senza compiti, resta
+    // immediato come prima.
+    if (staDeselezionando && confermeRimozione[id]) {
+      setClasseDaConfermare(id);
+      return;
+    }
+    applicaToggle(id);
+  }
+
+  function confermaTogliSpunta() {
+    if (classeDaConfermare) applicaToggle(classeDaConfermare);
+    setClasseDaConfermare(null);
   }
 
   async function salva() {
@@ -75,6 +104,29 @@ export function ClassiForm({
           </li>
         ))}
       </ul>
+      {classeDaConfermare && confermeRimozione[classeDaConfermare] && (
+        // Stesso pattern di conferma inline di "ricomincia" nel player
+        // (role="alertdialog": interrompe per un sì/no immediato, non un
+        // annuncio passivo). Nominare i compiti (già nel testo tradotto
+        // server-side, vedi la pagina) è il punto: la spunta non deve
+        // sparire senza che il docente sappia cosa c'è già assegnato lì.
+        <div
+          role="alertdialog"
+          aria-label={confermeRimozione[classeDaConfermare]!.titolo}
+          className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+        >
+          <p className="font-medium">{confermeRimozione[classeDaConfermare]!.titolo}</p>
+          <p className="text-sm text-muted-foreground">{confermeRimozione[classeDaConfermare]!.descrizione}</p>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setClasseDaConfermare(null)}>
+              {testi.annulla}
+            </Button>
+            <Button type="button" variant="destructive" onClick={confermaTogliSpunta}>
+              {testi.confermaRimozioneAzione}
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <Button onClick={salva} disabled={busy}>
           {testi.salva}

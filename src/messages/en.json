@@ -1132,10 +1132,15 @@
     "classi": {
       "titolo": "Your classes",
       "descrizione": "Choose the classes you teach: you'll only be able to assign work to these.",
+      "significato": "Declaring that you teach a class gives you access to its students' submissions and scores.",
       "nessunaClasse": "No classes are available yet.",
       "salva": "Save",
       "salvato": "Saved.",
-      "erroreSalvataggio": "Could not save. Please try again."
+      "erroreSalvataggio": "Could not save. Please try again.",
+      "confermaRimozioneTitolo": "Remove \"{classe}\"?",
+      "confermaRimozioneDescrizione": "This class already has assigned work ({elenco}): students will still see it and keep working on it, but a teacher who didn't assign it may no longer be able to read its submissions.",
+      "confermaRimozioneAzione": "Remove anyway",
+      "annulla": "Cancel"
     },
     "contenitori": {
       "titolo": "Containers",
