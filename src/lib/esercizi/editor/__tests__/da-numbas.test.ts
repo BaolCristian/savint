@@ -225,3 +225,52 @@ describe("il rifiuto prudente", () => {
     expect(daNumbas(file).ok).toBe(false);
   });
 });
+
+// Giro di correzioni 3: la review ha dimostrato che il confronto strutturale
+// era tautologico per i sei campi di testo (statement, advice, ogni prompt,
+// choices, distractors, description) — normalizzava l'originale
+// RICALCOLANDO `escapaTesto(valore-gia-estratto)`, lo stesso valore che
+// `versoNumbas` avrebbe scritto, invece di confrontarlo con i byte grezzi
+// del file. Risultato: un `<em>` vero dentro lo statement veniva accettato,
+// e il salvataggio successivo lo trasformava in testo scappato visibile
+// ("&lt;em&gt;..."), perdendo la formattazione in silenzio — esattamente
+// il danno che questo modulo esiste per evitare.
+describe("markup HTML vero non e' rappresentabile (giro di correzioni 3)", () => {
+  it("un <em> vero nello statement viene rifiutato, non accettato e poi distrutto", () => {
+    const file = versoFile(base) as FileMutabile;
+    file.question.statement = "<p><em>Importante</em>: risolvi</p>";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("un <a href> vero in una spiegazione (distractors) viene rifiutato", () => {
+    const conScelta: EsercizioEditor = { ...base, parti: [
+      { tipo: "scelta", consegna: "Quale?", punti: 1,
+        risposte: ["uno", "due"], indiceGiusta: 0,
+        spiegazioni: ["", "sbagliata"] },
+    ] };
+    const file = versoFile(conScelta) as FileMutabile;
+    file.question.parts[0].distractors = ["", "guarda <a href=\"http://evil\">qui</a>"];
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("markup vero in una scelta (choices) viene rifiutato", () => {
+    const conScelta: EsercizioEditor = { ...base, parti: [
+      { tipo: "scelta", consegna: "Quale?", punti: 1,
+        risposte: ["uno", "due"], indiceGiusta: 0 },
+    ] };
+    const file = versoFile(conScelta) as FileMutabile;
+    file.question.parts[0].choices = ["<p><strong>uno</strong></p>", "<p>due</p>"];
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+
+  it("markup vero nella descrizione di una variabile viene rifiutato", () => {
+    const file = versoFile(base) as FileMutabile;
+    (file.question.variables as Record<string, Record<string, unknown>>).a.description =
+      "vale sempre <b>almeno</b> due";
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(false);
+  });
+});
