@@ -265,63 +265,71 @@ function numeroImpostazione(settings: Record<string, unknown>, chiave: string, d
   return typeof valore === "number" ? valore : difetto;
 }
 
-/** Le variabili libere di un'espressione JME che NON sono variabili della
- * domanda — cioè non compaiono, con un valore, in `caricata.variables`.
- * Sono le variabili DELLO STUDENTE: una parte "espressione" (Numbas
- * `jme`) può lasciarne apposta indeterminate nella risposta corretta —
- * l'esercizio 06 del corpus reale, la derivata di `a*x^n`, ha risposta
- * `{a}*{n}*x^({n-1})`: dopo che `correctAnswer()` sostituisce `{a}`/`{n}`
- * con i loro valori resta `x`, libera e non vincolata, la variabile su
- * cui lo studente risponde — non un difetto dell'esercizio.
- *
- * `jme.findvars` (il motore) non sa distinguerle da sola: è un'analisi
- * puramente SINTATTICA dell'albero, e non consulta le variabili della
- * domanda per risolvere un nome — anche un nome come "a", scritto
- * direttamente in un'espressione come "1/a" invece che sostituito con
- * `{a}`, risulta "libero" per `findvars` pur essendo vincolato nello
- * scope caricato. Il filtro qui è quel che manca: un nome libero secondo
- * `findvars` MA presente in `caricata.variables` è una variabile della
- * domanda usata direttamente nell'espressione, non dello studente. */
-function variabiliDelloStudente(albero: jme.Tree, caricata: Question): string[] {
-  return jme.findvars(albero, [], caricata.scope).filter((nome) => !(nome in caricata.variables));
+/** Gli identificatori liberi rimasti in un'albero JME compilato: quelli
+ * che `jme.findvars` (il motore) trova ancora, dopo che la sostituzione
+ * `{nome}` — quella che `correctAnswer()` applica PRIMA di restituire la
+ * stringa — ha già rimpiazzato ogni riferimento fra graffe col suo valore
+ * letterale. Chi resta è, sintatticamente, un nome scritto NUDO
+ * nell'espressione: `x` nell'esercizio 06 del corpus reale
+ * (`{a}*{n}*x^({n-1})`, dove solo `x` non ha mai avuto le graffe), ma
+ * anche `a` in una risposta scritta come "1/a" invece che come "{a}" con
+ * `a` variabile della domanda — quel secondo caso è quello che il giro 4
+ * di questo task ha trattato in modo sbagliato (vedi il rapporto, "giro
+ * 5"): non conta se `nome` coincide con una variabile della domanda, non
+ * è quello il confine giusto. */
+function identificatoriLiberi(albero: jme.Tree, scope: jme.Scope): string[] {
+  return jme.findvars(albero, [], scope);
 }
 
 /** La risposta di una parte "espressione" (Numbas `jme`) valuta a un
- * numero finito? `correctAnswer()` restituisce un'espressione JME NON
- * valutata (per una parte con variabili libere, non potrebbe esserlo: non
- * ha un unico valore) — "1/a" con `a` variabile della domanda resta la
- * stringa "1/a", non il numero che ne risulterebbe. Va quindi valutata
- * qui, non solo letta.
+ * numero finito?
  *
- * Se non ci sono variabili libere dello studente, si valuta l'albero
- * direttamente nello SCOPE CARICATO: le variabili della domanda (`a` in
- * "1/a") si risolvono da sole, ed è esattamente il caso — divisione per
- * zero quando `a` vale 0 — che il controllo cattura.
+ * **Corretto nel giro 5 di questo task**: il giro 4 valutava un
+ * identificatore nudo (tipo `a` in "1/a") direttamente nello scope
+ * caricato, assumendo che restasse legato al valore del seme. È FALSO per
+ * una parte jme: lo script di correzione incorporato
+ * (`marking/scripts/jme.jme`, la nota `vset`) chiama `make_variables` su
+ * OGNI identificatore trovato da `findvars` nella risposta corretta o in
+ * quella dello studente — e `make_variables`
+ * (`variables/builtins.ts:registerVariablesBuiltins`) CANCELLA il legame
+ * ereditato dallo scope (`s.deleteVariable(k)`) e ne pesca uno nuovo,
+ * casuale, su `vsetRange`, per OGNI punto di confronto. Un nome nudo in
+ * una risposta jme non è mai valutato contro il valore del seme a tempo
+ * di correzione — solo la sostituzione `{nome}`, già risolta prima che
+ * `correctAnswer()` restituisca la stringa, produce un numero fisso per
+ * seme. Verificato non per lettura ma facendo girare la correzione vera:
+ * la risposta "1/a" (con `a` variabile della domanda, valore 0 al seme
+ * 14) ottiene credito 1/1 su tutti e venti i semi, e una risposta
+ * SBAGLIATA allo stesso seme ottiene credito 0 — non è un timbro che
+ * passa tutto, l'esercizio funziona davvero (vedi il rapporto, "giro 5").
  *
- * Se ce ne sono (la "x" dell'esercizio 06), si campiona: le STESSE
- * primitive che il motore usa per confrontare risposta dello studente e
- * risposta corretta a tempo di correzione (`jme.compare`,
- * `jme/compare.ts`) — `jme.randoms` pesca valori casuali per le variabili
- * libere nell'intervallo `vsetRange`/`vsetRangePoints` DELLA PARTE (letti
- * da `parte.settings`, non da un default fisso: un docente potrebbe
- * averli cambiati), e si valuta l'albero in uno scope esteso con quei
- * valori — non un campionamento riscritto da zero, lo stesso approccio di
- * `compare()`, applicato a UNA sola espressione invece di confrontarne
- * due. Un confronto contro se stessa non basterebbe: le funzioni di
- * confronto del motore trattano un estremo infinito come un valore
- * legittimo da eguagliare (`r1 === Infinity: return r1 === r2`), non da
- * rifiutare — `compare(albero, albero, ...)` darebbe "uguale" anche se
- * ogni valutazione fosse infinita.
+ * Il controllo qui rispecchia quindi cosa fa DAVVERO la correzione:
+ * - **nessun identificatore libero** (dopo la sostituzione `{nome}` non
+ *   ne resta nessuno: la risposta è un'espressione ormai tutta di
+ *   letterali, es. `{a}/{b}` con `b` sostituito da 0 diventerebbe ".../0")
+ *   — si valuta l'albero direttamente, e questo intercetta un vero
+ *   letterale come `1/0`, l'unico caso genuinamente rilevabile qui;
+ * - **almeno un identificatore libero** (`a` in "1/a", o `x`
+ *   nell'esercizio 06) — si campiona OGNI identificatore trovato, non
+ *   solo quelli che non coincidono con una variabile della domanda: le
+ *   STESSE primitive che il motore usa (`jme.randoms`, sull'intervallo
+ *   `vsetRange`/`vsetRangePoints` DELLA PARTE, letti da `parte.settings`,
+ *   non un default fisso), applicate a UNA sola espressione invece di
+ *   confrontarne due contro lo studente. Un confronto contro se stessa
+ *   non basterebbe: le funzioni di confronto del motore trattano un
+ *   estremo infinito come un valore legittimo da eguagliare
+ *   (`r1 === Infinity: return r1 === r2`), non da rifiutare —
+ *   `compare(albero, albero, ...)` darebbe "uguale" anche se ogni
+ *   valutazione fosse infinita.
  *
  * Si fallisce se ANCHE UN SOLO campione non è finito (o lancia): è lo
  * stesso comportamento di `compare()`, che avvolge l'intero ciclo di
- * campionamento in un unico `try` — un solo punto che lancia rompe l'INTERO
- * confronto, non solo quel punto, quindi la risposta corretta risulterebbe
- * non correggibile per uno studente che scrivesse la stessa identica
- * espressione. Non è un rischio di falso rifiuto per una risposta con
- * variabili libere genuine: `vsetRange` pesca valori continui, e
- * un'espressione come `a*n*x^(n-1)` non ha singolarità da colpire. */
-function rispostaJmeFinita(rispostaTesto: string, caricata: Question, parte: parts.PartBase): boolean {
+ * campionamento in un unico `try` — un solo punto che lancia rompe
+ * l'INTERO confronto. Nella pratica questo ramo non troverà quasi mai un
+ * problema (`vsetRange` pesca valori continui, la probabilità di colpire
+ * esattamente una singolarità è nulla): resta per rispecchiare fedelmente
+ * cosa fa la correzione, non perché ci si aspetti che scatti spesso. */
+function rispostaJmeFinita(rispostaTesto: string, scope: jme.Scope, parte: parts.PartBase): boolean {
   let albero: jme.Tree | null;
   try {
     albero = jme.compile(rispostaTesto);
@@ -335,9 +343,9 @@ function rispostaJmeFinita(rispostaTesto: string, caricata: Question, parte: par
     return true;
   }
 
-  const liberi = variabiliDelloStudente(albero, caricata);
+  const liberi = identificatoriLiberi(albero, scope);
   if (liberi.length === 0) {
-    const token = caricata.scope.evaluate(albero);
+    const token = scope.evaluate(albero);
     return token !== null && comeNumeroFinito(jme.unwrapValue(token));
   }
 
@@ -345,9 +353,9 @@ function rispostaJmeFinita(rispostaTesto: string, caricata: Question, parte: par
   const inizio = numeroImpostazione(settings, "vsetRangeStart", 0);
   const fine = numeroImpostazione(settings, "vsetRangeEnd", 1);
   const punti = numeroImpostazione(settings, "vsetRangePoints", 5);
-  const campioni = jme.randoms(liberi, inizio, fine, punti, caricata.scope.rng);
+  const campioni = jme.randoms(liberi, inizio, fine, punti, scope.rng);
   for (const valori of campioni) {
-    const scopeEsteso = new jme.Scope([caricata.scope, { variables: valori }]);
+    const scopeEsteso = new jme.Scope([scope, { variables: valori }]);
     try {
       const token = scopeEsteso.evaluate(albero);
       if (token === null || !comeNumeroFinito(jme.unwrapValue(token))) {
@@ -506,15 +514,18 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
           };
         }
 
-        // "1/a" con `a` variabile della domanda che vale 0: `correctAnswer()`
-        // restituisce la stringa simbolica "1/a" senza valutarla (nessuno
-        // dei due controlli sopra scatta: la risposta esiste, e
-        // renderLatex("1/a") rende "\frac{1}{a}", validissimo). A tempo di
-        // correzione quella parte non è correggibile per questo seme — vedi
-        // `rispostaJmeFinita` per come si distingue questo caso da una
-        // risposta con variabili libere GENUINE dello studente (l'esercizio
-        // 06 del corpus, {a}*{n}*x^({n-1})), che deve restare accettata.
-        if (!rispostaJmeFinita(risposta, caricata, parte)) {
+        // Cattura una risposta che, dopo che la sostituzione `{nome}` ha
+        // già rimpiazzato ogni riferimento fra graffe, resta comunque
+        // un'espressione tutta di letterali che non valuta a un numero
+        // finito (es. una divisione per zero scritta fra graffe che si
+        // riduce a un letterale). NON cattura — e non deve — un
+        // identificatore nudo come `a` in "1/a": una parte jme non lo
+        // valuta mai contro il valore del seme a tempo di correzione, lo
+        // ricampiona sempre da `vsetRange` (`marking/scripts/jme.jme`,
+        // `make_variables`) — vedi `rispostaJmeFinita` per la spiegazione
+        // completa e il rapporto del task ("giro 5") per come è stata
+        // verificata facendo girare la correzione vera.
+        if (!rispostaJmeFinita(risposta, caricata.scope, parte)) {
           return {
             ok: false,
             seme,

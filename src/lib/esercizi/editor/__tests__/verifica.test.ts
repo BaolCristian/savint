@@ -321,27 +321,32 @@ describe("verificaSuSemi", () => {
     }
   });
 
-  it("una parte espressione la cui risposta divide per zero viene intercettata (giro 4)", () => {
-    // "1/a" con a = random(-3..3), ma stavolta come risposta di una parte
-    // ESPRESSIONE (Numbas jme), non numerica. correctAnswer() qui NON
-    // fallisce nessuno dei tre controlli esistenti: restituisce la
-    // stringa simbolica "1/a" (senza valutarla) cosi' il controllo
-    // "risposta esiste" non scatta; renderLatex("1/a") produce
-    // "\\frac{1}{a}", perfettamente valido, senza "undefined", cosi' il
-    // controllo LaTeX non scatta; estremiFiniti e' ristretto alle parti
-    // "numberentry", quindi una parte jme non lo raggiunge affatto. A
-    // tempo di correzione quella parte e' non correggibile per il seme in
-    // cui a vale 0 — lo stesso seme (14) del test analogo sulle parti
-    // numeriche, perche' e' lo stesso generatore di "a".
+  it("una parte espressione con un identificatore nudo che coincide con una variabile della domanda resta accettata (giro 5)", () => {
+    // "1/a" con a = random(-3..3), come risposta di una parte ESPRESSIONE
+    // (Numbas jme). Il giro 4 di questo task rifiutava questo esercizio,
+    // convinto che "a" restasse legata al valore del seme (0 al seme 14)
+    // a tempo di correzione — un'assunzione MAI verificata contro il
+    // motore, e SBAGLIATA: lo script di correzione incorporato per le
+    // parti jme (marking/scripts/jme.jme, la nota "vset") chiama
+    // make_variables su OGNI identificatore che findvars trova nella
+    // risposta, e make_variables (variables/builtins.ts) CANCELLA il
+    // legame ereditato dallo scope e ne pesca uno nuovo su vsetRange per
+    // ogni punto di confronto — un identificatore nudo in una risposta
+    // jme non e' MAI valutato contro il valore del seme. Solo la
+    // sostituzione {nome} (gia' risolta prima che correctAnswer()
+    // restituisca la stringa) produce un numero fisso per seme.
+    //
+    // Verificato facendo girare la correzione vera, non per lettura:
+    // q.getPart("p0").storeAnswer("1/a"); submit() da' credito 1/1 su
+    // TUTTI i venti semi, incluso il 14 e il 17 (a=0) — e una risposta
+    // sbagliata allo stesso seme da' credito 0, quindi non e' un timbro
+    // che passa tutto: l'esercizio funziona davvero. Un test che
+    // affermasse il rifiuto qui fisserebbe una convinzione sbagliata
+    // invece di verificare qualcosa — peggio di nessun test.
     const e: EsercizioEditor = { ...base, testo: "x",
       variabili: [{ nome: "a", definizione: "random(-3..3)", descrizione: "" }],
       parti: [{ tipo: "espressione", consegna: "x", punti: 2, risposta: "1/a" }] };
-    const esito = verificaSuSemi(versoNumbas(e));
-    expect(esito.ok).toBe(false);
-    if (!esito.ok) {
-      expect(esito.fase).toBe("risposta");
-      expect(esito.seme).toBe(14);
-    }
+    expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
   });
 
   it("una risposta con una vera variabile libera dello studente resta accettata (giro 4)", () => {
@@ -349,11 +354,12 @@ describe("verificaSuSemi", () => {
     // a*x^n): risposta "{a}*{n}*x^({n-1})", dove {a} e {n} sono variabili
     // della domanda (sostituite col loro valore da correctAnswer() prima
     // di restituire la stringa) e "x" e' la variabile LIBERA dello
-    // studente — non vincolata a nessun valore, apposta. Se il controllo
-    // del giro 4 valutasse questa risposta come se "x" dovesse avere un
-    // valore, fallirebbe SEMPRE, rompendo ogni esercizio di questo tipo:
-    // e' esattamente il rischio di falso rifiuto che il coordinatore ha
-    // segnalato. Il test prova il contrario: deve restare accettata.
+    // studente — non vincolata a nessun valore, apposta. Dopo il giro 5,
+    // "x" non e' piu' trattata diversamente da "a" nel test sopra:
+    // ENTRAMBE vengono campionate su vsetRange, perche' e' cosi' che la
+    // correzione le tratta davvero. Questo test resta comunque utile come
+    // guardia di regressione contro un futuro controllo che tornasse a
+    // valutare un identificatore nudo contro un valore fisso.
     const e: EsercizioEditor = { ...base, testo: "Deriva",
       variabili: [
         { nome: "a", definizione: "random(2..9)", descrizione: "" },
