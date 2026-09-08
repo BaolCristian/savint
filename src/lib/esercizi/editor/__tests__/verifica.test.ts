@@ -216,37 +216,44 @@ describe("verificaSuSemi", () => {
     // con la stringa "undefined"): ora `\simplify{sqrt()}` fa LANCIARE
     // `loadQuestion` stesso, con l'arita' sbagliata come vero motivo — il
     // difetto emerge prima, e la fase diventa "caricamento".
+    //
+    // Giro di correzioni 1: `question.ts` avvolge ora `substituteHtml`
+    // dell'enunciato con `Question#error("question.error in statement",
+    // ...)` (come gia' fa per le variabili, `variable.error in variable
+    // definition`): il messaggio nomina di nuovo il campo ("nel testo
+    // dell'esercizio"), non piu' la causa profonda ("sqrt e' chiamata con
+    // ...") — che resta comunque nella catena delle chiavi dell'errore,
+    // non nel testo piatto che `errorMessageIn` estrae qui (lo stesso
+    // compromesso che l'errore di definizione di una variabile fa gia').
     const e: EsercizioEditor = { ...base, testo: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
       expect(esito.fase).toBe("caricamento");
-      expect(esito.messaggio).toContain("sqrt");
+      expect(esito.messaggio).toContain("testo dell'esercizio");
       expect(esito.messaggio).not.toContain("undefined");
     }
   });
 
-  it("lo stesso difetto e' intercettato anche nel suggerimento, non solo nel testo (giro 3, motore corretto)", () => {
+  it("lo stesso difetto e' intercettato anche nel suggerimento, con lo stesso campo nominato (giro 3, motore corretto)", () => {
     // Come sopra: `\simplify{sqrt()}` nel suggerimento (il campo piu'
     // denso di riferimenti a variabili nel corpus reale) fa fallire
     // `loadQuestion` prima ancora che `testiSostituiti` legga
-    // `adviceHtml` — fase "caricamento", non piu' "testo". Nota per un
-    // futuro lettore: a differenza della fase "testo" (che nomina il
-    // campo, "il suggerimento contiene..."), il messaggio di
-    // "caricamento" e' la traduzione grezza dell'errore del motore e non
-    // dice PIU' in quale campo si trovi il difetto — un dettaglio di
-    // qualita' del messaggio perso da questa correzione, non una
-    // regressione di correttezza (l'esito resta `ok:false`).
+    // `adviceHtml` — fase "caricamento", non piu' "testo". Il campo resta
+    // nominato (giro di correzioni 1: `question.error in advice`).
     const e: EsercizioEditor = { ...base, suggerimento: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
       expect(esito.fase).toBe("caricamento");
-      expect(esito.messaggio).toContain("sqrt");
+      expect(esito.messaggio).toContain("suggerimento");
     }
   });
 
-  it("lo stesso difetto e' intercettato anche nella consegna di una parte (giro 3, motore corretto)", () => {
+  it("lo stesso difetto e' intercettato anche nella consegna di una parte, col percorso nominato (giro 3, motore corretto)", () => {
+    // Giro di correzioni 1: `question.error in part prompt` nomina il
+    // percorso della parte (`p0`), come fa gia' `campiSceltaGrezzi` in
+    // fase "testo" per le scelte a risposta multipla, sotto.
     const e: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
       consegna: "\\(\\simplify{sqrt()}\\)", punti: 2,
       valore: "a", tolleranza: { tipo: "esatta" } }] };
@@ -254,7 +261,8 @@ describe("verificaSuSemi", () => {
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
       expect(esito.fase).toBe("caricamento");
-      expect(esito.messaggio).toContain("sqrt");
+      expect(esito.messaggio).toContain("consegna");
+      expect(esito.messaggio).toContain("p0");
     }
   });
 

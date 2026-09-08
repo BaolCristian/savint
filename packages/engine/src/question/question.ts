@@ -154,13 +154,31 @@ export class Question {
     // il tema mentre costruisce l'HTML. Decisione 8 del brief: qui passano per
     // `substituteHtml` una volta sola, e le formule restano LaTeX dentro
     // `\(...\)`/`\[...\]`, senza MathJax. Vedi DIVERGENCES.md.
-    this.statementHtml = substituteHtml(parsed.statement, this.scope);
-    this.adviceHtml = substituteHtml(parsed.advice, this.scope);
+    //
+    // Giro di correzioni 1: `substituteHtml` può lanciare (un `\simplify{}`
+    // che non compila, o — dal fix di `jme.display.wrong number of
+    // arguments` — un'arità sbagliata dentro un blocco matematico). Senza
+    // l'avvolgimento in `this.error(...)`, come già fa `buildVariablesTodo`
+    // due righe sopra per le definizioni di variabile (`variable.error in
+    // variable definition`), l'errore arriva senza dire in quale campo si
+    // trova: qui lo dice, mantenendo la catena intera (`this.error` non
+    // sostituisce la causa, la avvolge — la chiave originale resta
+    // raggiungibile da `engineErrorKeys`).
+    try {
+      this.statementHtml = substituteHtml(parsed.statement, this.scope);
+    } catch (e) {
+      this.error("question.error in statement", undefined, e);
+    }
+    try {
+      this.adviceHtml = substituteHtml(parsed.advice, this.scope);
+    } catch (e) {
+      this.error("question.error in advice", undefined, e);
+    }
 
     // question.js:628-644 (il ramo `case 'all'`), poi 893-898 e 690-698.
     this.parts = createParts(parsed.parts, this.partContext());
     assignPartNames(this.parts);
-    substitutePartPrompts(this.parts);
+    substitutePartPrompts(this.parts, (m, a, c) => this.error(m, a, c));
     setErrorCarriedForwardBackReferences(this.parts, (path) => this.getPart(path));
 
     // question.js:912-914 — il signal `ready` chiama `updateScore`.

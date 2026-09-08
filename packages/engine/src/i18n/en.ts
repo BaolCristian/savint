@@ -247,6 +247,9 @@ export const en: Record<string, string> = {
   // equivalent: they reject out-of-scope features (decisions 1-4 of the Task 9
   // brief).
   "question.error": "Question {number}: {message}",
+  "question.error in advice": "Error in the hint", // ours, fix round 1
+  "question.error in part prompt": "Error in the prompt of part {path}", // ours, fix round 1
+  "question.error in statement": "Error in the exercise's statement", // ours, fix round 1
   "question.function.async not supported":
     "The function {name} is asynchronous (type: \"promise\"): this engine is synchronous and does not support it", // ours
   "question.no such part": "Can't find the part {path}",

@@ -613,6 +613,54 @@ describe("Display", () => {
     expect(tex("set()"), "set() resta valido (variadico)").toBe("\\left\\{  \\right\\}");
   });
 
+  // Giro di correzioni 1: il guardiano dell'arità (round 1) deduceva il
+  // minimo dalla funzione REGISTRATA nello scope con lo stesso nome — un
+  // nome di visualizzazione (`diff`, `int`) può coincidere per puro caso con
+  // una funzione VALUTABILE senza relazione (il cast `int(x)` a intero,
+  // arità 1; `diff` registrata solo a 2 argomenti perché il terzo — il
+  // grado di derivazione — è una convenzione di sola visualizzazione, senza
+  // valutatore). Quel guardiano rifiutava `diff(y,x,2)`/`int(x,y)`, validi,
+  // e lasciava passare `int(x)`/`defint(...)` con meno argomenti del
+  // dovuto, perché `defint` non è nemmeno registrata nello scope. Valori
+  // confrontati byte per byte con l'oracolo (v. display.diff.test.ts).
+  it("l'arità è una tabella esplicita per voce di texOps, non dedotta dallo scope (giro di correzioni 1)", () => {
+    // `diff`/`partialdiff`: il grado (terzo argomento) è facoltativo, di
+    // sola visualizzazione — non registrato come funzione valutabile.
+    expect(tex("diff(y,x,2)"), "diff con grado esplicito, valido").toBe("\\frac{\\mathrm{d}^{2}y}{\\mathrm{d}x^{2}}");
+    expect(tex("diff(y,x,1)"), "diff con grado 1, valido").toBe("\\frac{\\mathrm{d}y}{\\mathrm{d}x}");
+    expect(tex("partialdiff(y,x,2)"), "partialdiff con grado esplicito, valido").toBe(
+      "\\frac{\\partial ^{2}y}{\\partial x^{2}}",
+    );
+    raisesJmeError(() => tex("diff(y)"), "jme.display.wrong number of arguments", "diff(y), un solo argomento");
+    raisesJmeError(
+      () => tex("partialdiff(y)"),
+      "jme.display.wrong number of arguments",
+      "partialdiff(y), un solo argomento",
+    );
+
+    // `int`: il nome collide con il cast a intero (un argomento, arità
+    // diversa); l'integrale indefinito ne vuole due, nessun grado facoltativo.
+    expect(tex("int(x,y)"), "int con l'espressione e la variabile, valido").toBe("\\int \\! x \\, \\mathrm{d}y");
+    expect(tex("int(x^2,x)"), "int(x^2,x), valido").toBe("\\int \\! x^{ 2 } \\, \\mathrm{d}x");
+    raisesJmeError(() => tex("int(x)"), "jme.display.wrong number of arguments", "int(x), un solo argomento");
+
+    // `defint`: non registrata affatto nello scope (nessun valutatore) — il
+    // vecchio guardiano, dedotto dallo scope, la lasciava sempre passare.
+    expect(tex("defint(x^2,x,0,1)"), "defint con i quattro argomenti, valido").toBe(
+      "\\int_{0}^{1} \\! x^{ 2 } \\, \\mathrm{d}x",
+    );
+    raisesJmeError(
+      () => tex("defint(x^2,x,0)"),
+      "jme.display.wrong number of arguments",
+      "defint con tre argomenti",
+    );
+
+    // `log`: la base (secondo argomento) è facoltativa, di sola
+    // visualizzazione (default 10) — un solo argomento resta valido.
+    expect(tex("log(x)"), "log(x), un solo argomento, valido").toBe("\\log_{10} \\left ( x \\right )");
+    expect(tex("log(x,2)"), "log(x,2), valido").toBe("\\log_{2} \\left ( x \\right )");
+  });
+
   // jme-tests.mjs:2826-2830
   it("Tree to LaTeX", () => {
     const tree = compile("2*x") as Tree;

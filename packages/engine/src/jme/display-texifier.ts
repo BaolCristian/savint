@@ -22,7 +22,6 @@ import * as math from "../math";
 import { builtinScope } from "./builtins";
 import { castToType, isComplex as isComplexTok, isOp, isType, unwrapSubexpression } from "./evaluate";
 import { eq as eqTokens } from "./equality";
-import { enumerate_signatures } from "./infer";
 import type { Ruleset } from "./rules-ruleset";
 import { JmeError } from "./errors";
 import type { ConstantDefinition, Scope } from "./scope";
@@ -236,20 +235,96 @@ export function eqMaybeUntyped(): boolean {
   return false;
 }
 
-// Non upstream (v. `texFunction`): riusa `enumerate_signatures` (jme.js:5291,
-// già portato per `makeFast`/l'inferenza di tipo in `infer.ts`) per sapere se
-// almeno una definizione registrata di `name` accetta `argCount` argomenti,
-// senza bisogno dei VALORI degli argomenti (che il display non ha: `texArgs`
-// sono già stringhe rese, non token) — solo della loro quantità. Un nome
-// assente dallo scope (nessun `FuncObj` con quel nome) non è un'arità
-// sbagliata nota: si lascia passare, come upstream.
-/** Un overload di `name`, nello scope dato, accetta `argCount` argomenti? */
-function hasValidArity(scope: Scope, name: string, argCount: number): boolean {
-  const fns = scope.getFunction(name);
-  if (fns.length === 0) {
+// Non upstream (v. `texFunction`). Giro di correzioni 1: la prima versione
+// deduceva il minimo dalla funzione REGISTRATA nello scope con lo stesso
+// nome (`enumerate_signatures` su `scope.getFunction(name)`) — un'inferenza
+// sbagliata, non solo imprecisa: un NOME di visualizzazione può coincidere
+// per puro caso con una funzione VALUTABILE senza alcuna relazione. `int`
+// registra un cast a intero (`[TNum] → TInt`, un argomento, `builtins/
+// type-casting.ts`), che non ha niente a che vedere con la notazione
+// dell'integrale indefinito `int(espressione, variabile)`; `diff` registra
+// SOLO la firma a due argomenti (`[TExpression, TString]`,
+// `builtins/differentiation.ts`), perché il terzo — il grado di
+// derivazione — è una convenzione di sola VISUALIZZAZIONE, senza
+// valutatore: nessuna definizione a tre argomenti esiste da dedurre.
+// Quell'inferenza rifiutava `diff(y,x,2)`/`int(x,y)`, entrambi validi (resi
+// identici all'oracolo — verificato, `display.diff.test.ts`), e lasciava
+// passare `int(x)`/`defint(...)` con meno argomenti del dovuto, perché
+// `defint` non è nemmeno una funzione registrata (`scope.getFunction`
+// ritornava `[]`, e il ramo "nome sconosciuto" del vecchio codice si
+// arrendeva lasciandolo passare).
+//
+// Qui l'arità voluta è una TABELLA ESPLICITA, per voce di `texOps`, scritta
+// leggendo il renderer di ciascuna e verificata chiamandolo direttamente con
+// `texArgs` di lunghezza crescente (non dedotta da nessuna funzione dello
+// scope): il minimo è quello sotto cui il renderer indicizza `texArgs`/
+// `tree.args` per posizione senza controllo, producendo la stringa
+// "undefined" (o, per alcune — `abs`, `fact`, `decimal`, `transpose`, `ln`,
+// `root` — un `TypeError` grezzo dereferenziando `.tok` su un elemento
+// assente: stesso meccanismo, un'indicizzazione fuori raggio, un sintomo
+// diverso; vedi DIVERGENCES.md). Un argomento facoltativo/di sola
+// visualizzazione (il grado di `diff`/`partialdiff`, la base di `log`) non
+// abbassa il minimo sopra quello: resta valido in più, non necessario.
+//
+// Non ci sono `dot`/`cross`: la loro arità valida non è "almeno N" ma
+// "esattamente 1 o 2" — `infixTex` (display-tex.ts) non rende nient'altro,
+// ritornando `undefined` per qualunque altra arità (upstream jme-display.js
+// non ha un `return` per quel ramo); gestite a parte, sotto.
+const TEX_FUNCTION_MIN_ARITY: Readonly<Record<string, number>> = {
+  sqrt: 1,
+  exp: 1,
+  fact: 1,
+  abs: 1,
+  transpose: 1,
+  decimal: 1,
+  ln: 1,
+  log: 1,
+  ceil: 1,
+  floor: 1,
+  int: 2,
+  sub: 2,
+  sup: 2,
+  mod: 2,
+  perm: 2,
+  comb: 2,
+  root: 2,
+  diff: 2,
+  partialdiff: 2,
+  listval: 2,
+  limit: 3,
+  if: 3,
+  defint: 4,
+  m_exactly: 1,
+  m_commutative: 1,
+  m_noncommutative: 1,
+  m_associative: 1,
+  m_nonassociative: 1,
+  m_strictplus: 1,
+  m_gather: 1,
+  m_nogather: 1,
+  m_numeric: 1,
+};
+
+/** `dot`/`cross`: le uniche arità che il renderer (`infixTex`) rende sono 1
+ * (applicazione a un solo argomento) e 2 (il prodotto vero e proprio). */
+const DOT_CROSS_VALID_ARITY = new Set([1, 2]);
+
+/** Questa chiamata di funzione ha un'arità che il suo renderer (`texOps`)
+ * sa gestire? `false` solo per un nome della tabella sopra chiamato con
+ * meno argomenti del minimo, o per `dot`/`cross` fuori da {1, 2}. Un nome
+ * NON elencato qui non ha un'arità nota da controllare: passa, come fa
+ * qualunque voce di `texOps` che non indicizza per posizione (`switch`,
+ * `sin`, `matrix`, ...) — la lista è la premessa del controllo, non uno
+ * scope da consultare. */
+function hasKnownGoodArity(name: string, argCount: number): boolean {
+  if (DOT_CROSS_VALID_ARITY.has(argCount) && (name === "dot" || name === "cross")) {
     return true;
   }
-  return fns.some((fn) => enumerate_signatures(fn.intype, argCount).length > 0);
+  if (name === "dot" || name === "cross") {
+    return false;
+  }
+  const min = TEX_FUNCTION_MIN_ARITY[name];
+  return min === undefined || argCount >= min;
 }
 
 // jme-display.js:1048-1630
@@ -696,17 +771,22 @@ export class Texifier extends Displayer<string> {
     const fn = this.texOps[normalisedName];
     if (fn) {
       // Divergenza dal comportamento upstream, registrata in DIVERGENCES.md:
-      // `texOps.sqrt`/`abs`/`mod`/... indicizzano `texArgs` per posizione
-      // senza controllare che ci sia davvero un argomento in quella
-      // posizione; con un'arità sbagliata (es. `sqrt()`) l'indice mancante è
-      // `undefined`, concatenato senza errore nella stringa resa
-      // (`"\\sqrt{ undefined }"`) — verificato che upstream fa lo stesso
-      // (`packages/engine/oracle`, commit 0f0ea33). A differenza degli
-      // operatori (la sintassi shunting-yard fissa la loro arità a tempo di
-      // analisi: `12*x^` lancia già `jme.shunt.not enough arguments`), la
-      // chiamata di funzione `nome(...)` accetta sintatticamente qualunque
-      // numero di argomenti: il controllo va fatto qui, non nel parser.
-      if (!hasValidArity(this.scope, normalisedName, texArgs.length)) {
+      // alcune voci di `texOps` (`sqrt`, `int`, `mod`, ...) indicizzano
+      // `texArgs`/`tree.args` per posizione senza controllare che ci sia
+      // davvero un argomento in quella posizione; con un'arità sbagliata
+      // (es. `sqrt()`) l'indice mancante è `undefined`, concatenato senza
+      // errore nella stringa resa (`"\\sqrt{ undefined }"`) — verificato che
+      // upstream fa lo stesso (`packages/engine/oracle`, commit 0f0ea33). A
+      // differenza degli operatori (la sintassi shunting-yard fissa la loro
+      // arità a tempo di analisi: `12*x^` lancia già `jme.shunt.not enough
+      // arguments`), la chiamata di funzione `nome(...)` accetta
+      // sintatticamente qualunque numero di argomenti: il controllo va
+      // fatto qui, non nel parser — e solo per i nomi della tabella
+      // esplicita `TEX_FUNCTION_MIN_ARITY` sopra, non per tutti (v. il suo
+      // commento: dedurlo da una funzione REGISTRATA nello scope con lo
+      // stesso nome è l'errore del giro di correzioni precedente, non la
+      // correzione).
+      if (!hasKnownGoodArity(normalisedName, texArgs.length)) {
         throw new JmeError("jme.display.wrong number of arguments", {
           name: normalisedName,
           count: texArgs.length,
