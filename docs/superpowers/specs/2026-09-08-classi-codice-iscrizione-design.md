@@ -84,7 +84,17 @@ e nessuno che sappia perché.
 
 - **Rimuovere uno studente da una classe.** Serve, ma è un'altra cosa: tocca
   cosa succede ai suoi tentativi e alle sue consegne, e merita la propria
-  decisione. Oggi lo si può ancora fare solo cambiando i gruppi Google.
+  decisione. Per un'iscrizione GRUPPO resta possibile togliendo lo studente
+  dal gruppo Google: la sincronizzazione lo disiscrive al suo prossimo
+  accesso, come sempre. Per un'iscrizione CODICE non è più vero da questa
+  feature in poi: la sincronizzazione non tocca mai un'iscrizione con
+  quell'origine — è la garanzia da cui dipende tutto («La trappola», sopra)
+  — quindi non esiste **nessuna** via, oggi, per rimuovere uno studente
+  iscritto col codice: non cambiando i gruppi Google (quella classe non ne
+  corrisponde a nessuno), non in nessun altro modo. Dimostrato con uno
+  studente trasferito fra due classi che è rimasto iscritto a entrambe.
+  Rimuovere uno studente da una classe non è più un'opzione rimandabile:
+  è la prossima cosa di cui questa feature ha bisogno.
 - **Un codice per il docente.** I docenti si dichiarano già da sé le classi
   che insegnano, ed è la governance scelta nel sotto-progetto 4.
 - **Limiti di frequenza per indovinare un codice.** Le rotte hanno già il
@@ -113,3 +123,32 @@ perché è ciò che gli spiega perché un ragazzo c'è o non c'è.
   se le ha chiamate allo stesso modo. In una scuola sola è più probabile che
   sia la stessa classe; e unire è recuperabile, mentre lasciarle divise
   produce due elenchi di consegne che nessuno riconcilia.
+
+## Punti aperti
+
+- **Un gruppo *rinominato* sullo stesso nome di una classe creata a mano
+  produce comunque due classi.** L'adozione (vedi «I doppioni») gira solo
+  quando `risolviClasse` non trova ancora una riga con quel
+  `googleGroupEmail` — cioè al **primo avvistamento** del gruppo. Se il
+  gruppo esisteva già (con un nome diverso, magari da mesi) e viene
+  rinominato in modo da coincidere con una classe creata a mano,
+  `risolviClasse` lo trova subito al primo passo (la classe che ha già il
+  suo indirizzo) e si limita ad aggiornarne il nome: il passo
+  dell'adozione — riservato ai candidati SENZA indirizzo — non scatta mai,
+  perché quella classe un indirizzo ce l'ha già, solo di un gruppo
+  diverso. Il risultato è lo stesso doppione di sempre: due classi con lo
+  stesso nome, studenti divisi fra le due, senza modo per il docente di
+  saperlo se non notando l'elenco doppio.
+
+  **Non si chiude in questo giro, deliberatamente.** Chiuderlo davvero
+  significa fondere due classi ESISTENTI — spostare le iscrizioni
+  dall'una all'altra, riassegnare i compiti già dati — ed è esattamente
+  ciò che questa feature esclude (vedi «Cosa NON copre»: rimuovere/spostare
+  uno studente da una classe è la prossima cosa di cui c'è bisogno, non
+  questa). Un correttivo parziale — per esempio far scattare l'adozione
+  anche quando la classe trovata al primo passo ha già un `googleGroupEmail`
+  diverso — sposterebbe silenziosamente iscrizioni e compiti sotto un nome
+  che nessun docente ha deciso di fondere, che è peggio del doppione
+  onesto lasciato oggi: quello almeno si vede. Resta un doppione da
+  risolvere a mano (chi insegna può accorgersene e avvisare) finché
+  «rimuovere/spostare uno studente da una classe» non esiste.

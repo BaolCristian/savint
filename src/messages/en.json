@@ -1165,6 +1165,7 @@
       "origineGruppo": "Google group",
       "origineCodice": "Code",
       "iscrizione": {
+        "titolo": "Join with a code",
         "campo": "Class code",
         "segnaposto": "e.g. AB3XQ7",
         "submit": "Join",

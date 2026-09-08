@@ -97,7 +97,16 @@ const STUDENT_EMAIL = "studente@scuola.it";
 const ESERCIZIO = { id: "01-equazione-primo-grado", title: "Equazione di primo grado" };
 
 const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-const CLASSE_NOME = `E2E Codice Classe ${RUN_ID}`;
+// Onda finale, CRITICO: creaClasse normalizza il nome (trim + maiuscolo,
+// classi.ts) prima di scriverlo — se questa costante restasse a cassa
+// mista (RUN_ID è base36, minuscolo), il valore digitato nel form
+// smetterebbe di corrispondere esattamente a quello che finisce in
+// colonna, e la query finale (`prisma.classe.findFirstOrThrow({ where: {
+// name: CLASSE_NOME } })`, sotto) e la selectOption per label non
+// troverebbero più la classe. Maiuscolo fin dall'inizio: è anche la forma
+// che questa classe avrebbe davvero se un giorno la adottasse un gruppo
+// Google (classifyGroups la maiuscola sempre).
+const CLASSE_NOME = `E2E Codice Classe ${RUN_ID}`.toUpperCase();
 const CONTENITORE_NOME = `E2E Codice Contenitore ${RUN_ID}`;
 const BATTERIA_NOME = `E2E Codice Batteria ${RUN_ID}`;
 

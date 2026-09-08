@@ -55,28 +55,35 @@ export function IscrizioneClasseForm() {
   }
 
   return (
-    <form
-      onSubmit={iscriviti}
-      className="flex flex-wrap items-end gap-3 rounded-3xl border border-white/80 bg-white/70 p-4 shadow-xl shadow-slate-200/50 backdrop-blur-xl"
-    >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="iscrizione-codice" className="text-sm font-medium text-slate-700">
-          {t("campo")}
-        </label>
-        <Input
-          id="iscrizione-codice"
-          value={codice}
-          onChange={(e) => setCodice(e.target.value)}
-          placeholder={t("segnaposto")}
-          required
-          className="w-40 uppercase tracking-widest"
-        />
-      </div>
-      <Button type="submit" disabled={busy || !codice.trim()}>
-        {t("submit")}
-      </Button>
-      {successo && <span className="text-sm text-brand-green">{successo}</span>}
-      {errore && <span className="text-sm text-destructive">{errore}</span>}
-    </form>
+    <div className="space-y-2">
+      {/* Onda finale, punto 4 (terzo fix): senza un titolo proprio il box
+       * si leggeva come parte della sezione degli esercizi, subito sopra
+       * (nessun heading intermedio) — un h2 separato lo stacca, sia
+       * visivamente sia nella struttura ad heading della pagina. */}
+      <h2 className="text-lg font-bold text-slate-900">{t("titolo")}</h2>
+      <form
+        onSubmit={iscriviti}
+        className="flex flex-wrap items-end gap-3 rounded-3xl border border-white/80 bg-white/70 p-4 shadow-xl shadow-slate-200/50 backdrop-blur-xl"
+      >
+        <div className="flex flex-col gap-1">
+          <label htmlFor="iscrizione-codice" className="text-sm font-medium text-slate-700">
+            {t("campo")}
+          </label>
+          <Input
+            id="iscrizione-codice"
+            value={codice}
+            onChange={(e) => setCodice(e.target.value)}
+            placeholder={t("segnaposto")}
+            required
+            className="w-40 uppercase tracking-widest"
+          />
+        </div>
+        <Button type="submit" disabled={busy || !codice.trim()}>
+          {t("submit")}
+        </Button>
+        {successo && <span className="text-sm text-brand-green">{successo}</span>}
+        {errore && <span className="text-sm text-destructive">{errore}</span>}
+      </form>
+    </div>
   );
 }

@@ -3,6 +3,37 @@ import { Prisma, type Classe } from "@prisma/client";
 import type { ClassGroup } from "@/lib/auth/resolve-role";
 import { prisma } from "@/lib/db/client";
 
+/** Come si confronta e si scrive un nome di classe, ovunque nel dominio:
+ * senza spazi ai bordi, in maiuscolo. È la stessa normalizzazione che il
+ * lato Google applica già da sempre (`classifyGroups`, resolve-role.ts:
+ * `raw.toUpperCase()`) — allinearla qui, su OGNI scrittura e OGNI
+ * confronto di `Classe.name` in questo file, è ciò che fa incontrare un
+ * gruppo "2A" con una classe creata a mano digitata "2a", "2A " o " 2a ":
+ * senza, sono stringhe diverse per Postgres (case-sensitive di default), e
+ * l'adozione (risolviClasse) — che confronta sul nome esatto — non trova
+ * mai il candidato. Il risultato, dimostrato in revisione: due classi per
+ * la stessa classe reale, metà studenti iscritti col codice nell'una, metà
+ * sincronizzati nell'altra, senza modo di fonderle poi (vedi il commento
+ * di creaClasse su perché un doppione così non ha rimedio nel dominio
+ * attuale). Non toglie nulla che sarebbe sopravvissuto: dopo un'adozione
+ * la sincronizzazione successiva riscrive comunque il nome uguale a
+ * quello del gruppo — già maiuscolo — quindi il nome finisce maiuscolo da
+ * solo anche senza questa funzione, solo più tardi e non per le classi
+ * create a mano che un gruppo non adotta mai.
+ *
+ * Applicata qui, non in `classifyGroups` (che già maiuscola ma non fa
+ * trim): un `name` di gruppo arriva da una porzione di un indirizzo email
+ * (l'espressione regolare non cattura spazi), quindi non ne servirebbe
+ * uno; ripeterla comunque su ogni scrittura di `Classe.name` — anche
+ * quella che risolviClasse fa per un gruppo — è ciò che rende l'indice
+ * unico parziale su `Classe.name` (creaClasse, sotto) fedele al confronto
+ * applicativo: la colonna non contiene mai altro che nomi già
+ * normalizzati, quindi l'uguaglianza grezza a livello SQL coincide sempre
+ * con l'uguaglianza normalizzata, e l'indice non ha bisogno di cambiare. */
+function normalizzaNomeClasse(nome: string): string {
+  return nome.trim().toUpperCase();
+}
+
 /** Trova o crea la classe che corrisponde a un gruppo Google. Tre casi:
  *  1. un gruppo con questo indirizzo esiste già → aggiorna nome e anno.
  *  2. nessun indirizzo così, ma una classe creata a mano (senza indirizzo),
@@ -23,16 +54,22 @@ import { prisma } from "@/lib/db/client";
  *     secondo trova già scritta la riga del primo invece di scontrarcisi
  *     con un P2002 non gestito. */
 async function risolviClasse(g: ClassGroup): Promise<Classe> {
+  // Normalizzato una sola volta qui: lo stesso valore serve sia per
+  // scrivere (rami 1 e 3) sia per confrontare (ramo 2, l'adozione) — vedi
+  // normalizzaNomeClasse sopra sul perché serve anche sul lato Google, che
+  // arriva già maiuscolo da classifyGroups ma non ripete mai il trim.
+  const nome = normalizzaNomeClasse(g.name);
+
   const esistente = await prisma.classe.findUnique({ where: { googleGroupEmail: g.email } });
   if (esistente) {
     return prisma.classe.update({
       where: { id: esistente.id },
-      data: { name: g.name, yearLevel: g.yearLevel },
+      data: { name: nome, yearLevel: g.yearLevel },
     });
   }
 
   const daAdottare = await prisma.classe.findFirst({
-    where: { googleGroupEmail: null, name: g.name, archivedAt: null },
+    where: { googleGroupEmail: null, name: nome, archivedAt: null },
     orderBy: { createdAt: "asc" },
   });
   if (daAdottare) {
@@ -44,8 +81,8 @@ async function risolviClasse(g: ClassGroup): Promise<Classe> {
 
   return prisma.classe.upsert({
     where: { googleGroupEmail: g.email },
-    create: { googleGroupEmail: g.email, name: g.name, yearLevel: g.yearLevel },
-    update: { name: g.name, yearLevel: g.yearLevel },
+    create: { googleGroupEmail: g.email, name: nome, yearLevel: g.yearLevel },
+    update: { name: nome, yearLevel: g.yearLevel },
   });
 }
 
@@ -61,19 +98,34 @@ async function risolviClasse(g: ClassGroup): Promise<Classe> {
  * guardano tutte le iscrizioni esistenti (qualunque origine): se lo
  * studente è già iscritto per codice a una classe che viene poi adottata da
  * un gruppo, non deve ricomparire come una nuova iscrizione né perdere la
- * sua origine CODICE. */
+ * sua origine CODICE.
+ *
+ * Le entrate NUOVE, in più, escludono le classi archiviate. risolviClasse
+ * può restituirne una: se il gruppo Google che la trova era già legato a
+ * lei (ramo 1, `findUnique` su `googleGroupEmail`), non c'è modo di
+ * evitarla lì — l'`upsert` del ramo 3 (nessuna classe nuova) punterebbe
+ * comunque sulla stessa riga tramite lo stesso vincolo unico, quindi
+ * filtrare la SELECT del ramo 1 non cambierebbe nulla. Il gate giusto è
+ * qui: una classe archiviata non accetta nuovi iscritti, dallo stesso
+ * principio già applicato a `iscrivitiConCodice` (una classe archiviata
+ * "non si trova" per codice). Non si tocca invece chi è già iscritto
+ * (origine GRUPPO) a una classe che viene archiviata dopo: `volute` resta
+ * il set completo per il calcolo delle uscite, quindi restare nel gruppo
+ * la mantiene iscritta — archiviare chiude una porta, non sfratta la
+ * classe, la stessa disciplina di `rigeneraCodice`. */
 export async function allineaClassi(
   studentId: string,
   gruppi: ClassGroup[],
 ): Promise<{ entrate: string[]; uscite: string[] }> {
   const classi = await Promise.all(gruppi.map(risolviClasse));
   const volute = new Set(classi.map((c) => c.id));
+  const voluteAttive = new Set(classi.filter((c) => c.archivedAt === null).map((c) => c.id));
 
   const attuali = await prisma.classeStudente.findMany({ where: { studentId } });
   const presenti = new Set(attuali.map((i) => i.classeId));
   const presentiDaGruppo = new Set(attuali.filter((i) => i.origine === "GRUPPO").map((i) => i.classeId));
 
-  const entrate = [...volute].filter((id) => !presenti.has(id));
+  const entrate = [...voluteAttive].filter((id) => !presenti.has(id));
   const uscite = [...presentiDaGruppo].filter((id) => !volute.has(id));
 
   if (entrate.length) {
@@ -168,7 +220,24 @@ export function generaCodice(): string {
  * venire solo dal codice, quindi si ritenta con uno nuovo (rarissimo,
  * spazio di 30^6 combinazioni) — vedi classi-collisione-codice.test.ts,
  * che forza entrambi i percorsi deterministicamente mockando prisma
- * invece di sperare in una vera corsa. */
+ * invece di sperare in una vera corsa.
+ *
+ * Onda finale, CRITICO: `dati.nome` passa da `normalizzaNomeClasse`
+ * (sopra) prima di qualunque controllo o scrittura — sia il pre-check qui
+ * sotto, sia il nuovo controllo dopo un P2002, sia la colonna scritta.
+ * Prima di questa correzione il nome finiva in colonna esattamente come
+ * il docente l'aveva digitato: "2a", "2A" e "2A " (uno spazio in coda)
+ * erano tre stringhe diverse per l'indice unico parziale qui sopra, quindi
+ * "nome_gia_usato" non le vedeva mai come lo stesso nome —
+ * `creaClasse("2a")` seguito da `creaClasse("2A")` veniva accettato due
+ * volte — e quando il gruppo Google arrivava già maiuscolo (classifyGroups
+ * lo maiuscola da sempre, resolve-role.ts) l'adozione (risolviClasse, ramo
+ * 2) cercava un candidato con nome ESATTAMENTE uguale al suo e non
+ * trovava mai quello scritto in minuscolo: due classi per la stessa classe
+ * reale, senza modo di fonderle (vedi sopra). La normalizzazione rende la
+ * colonna `Classe.name` — per le sole righe che questo indice copre,
+ * quelle create a mano — sempre già nella forma con cui viene confrontata:
+ * l'indice esistente basta, non serve cambiarlo. */
 export async function creaClasse(
   teacherId: string,
   dati: { nome: string; anno: number | null },
@@ -176,7 +245,9 @@ export async function creaClasse(
   | { ok: true; classe: { id: string; nome: string; codice: string } }
   | { ok: false; motivo: "nome_gia_usato" }
 > {
-  const doppione = await prisma.classe.findFirst({ where: { name: dati.nome, archivedAt: null } });
+  const nome = normalizzaNomeClasse(dati.nome);
+
+  const doppione = await prisma.classe.findFirst({ where: { name: nome, archivedAt: null } });
   if (doppione) return { ok: false, motivo: "nome_gia_usato" };
 
   const TENTATIVI_MASSIMI = 5;
@@ -184,7 +255,7 @@ export async function creaClasse(
     try {
       const classe = await prisma.$transaction(async (tx) => {
         const c = await tx.classe.create({
-          data: { name: dati.nome, yearLevel: dati.anno, codice: generaCodice() },
+          data: { name: nome, yearLevel: dati.anno, codice: generaCodice() },
         });
         await tx.classeDocente.create({ data: { classeId: c.id, teacherId } });
         return c;
@@ -194,7 +265,7 @@ export async function creaClasse(
       const violazioneUnica = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
       if (!violazioneUnica) throw e;
 
-      const nomeOraInUso = await prisma.classe.findFirst({ where: { name: dati.nome, archivedAt: null } });
+      const nomeOraInUso = await prisma.classe.findFirst({ where: { name: nome, archivedAt: null } });
       if (nomeOraInUso) return { ok: false, motivo: "nome_gia_usato" };
 
       if (tentativo < TENTATIVI_MASSIMI) continue;
@@ -355,10 +426,30 @@ export async function classiDisponibili() {
   return classi;
 }
 
-/** Sostituisce l'elenco delle classi insegnate da un docente. */
+/** Sostituisce l'elenco delle classi insegnate da un docente.
+ *
+ * Onda finale, punto 4: la cancellazione (`notIn: classeIds`) è ristretta
+ * alle classi ATTIVE (`classe: { archivedAt: null }`). Senza questo
+ * filtro, ogni riga `ClasseDocente` su una classe archiviata era sempre
+ * dentro l'insieme da cancellare — non perché il docente l'avesse tolta,
+ * ma perché non poteva nemmeno vederla: il form che alimenta questa
+ * funzione (pagina classi, `ClassiForm`) elenca solo `classiDisponibili`,
+ * che filtra già `archivedAt: null`, quindi una classe archiviata non
+ * compare MAI in `classeIds`. Ogni salvataggio, qualunque cosa il docente
+ * selezionasse, cancellava in silenzio il suo insegnamento su ogni classe
+ * archiviata che aveva mai insegnato. Restringendo la cancellazione alle
+ * sole classi attive, una riga su una classe archiviata sopravvive a
+ * qualunque salvataggio — non è mai in gioco, né per restare né per
+ * sparire, esattamente come la classe stessa non lo è più per il docente. */
 export async function dichiaraInsegnamento(teacherId: string, classeIds: string[]): Promise<void> {
   await prisma.$transaction([
-    prisma.classeDocente.deleteMany({ where: { teacherId, classeId: { notIn: classeIds.length ? classeIds : ["-"] } } }),
+    prisma.classeDocente.deleteMany({
+      where: {
+        teacherId,
+        classeId: { notIn: classeIds.length ? classeIds : ["-"] },
+        classe: { archivedAt: null },
+      },
+    }),
     prisma.classeDocente.createMany({
       data: classeIds.map((classeId) => ({ classeId, teacherId })),
       skipDuplicates: true,

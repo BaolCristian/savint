@@ -1165,6 +1165,7 @@
       "origineGruppo": "Gruppo Google",
       "origineCodice": "Codice",
       "iscrizione": {
+        "titolo": "Iscriviti con un codice",
         "campo": "Codice della classe",
         "segnaposto": "Es. AB3XQ7",
         "submit": "Iscriviti",

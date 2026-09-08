@@ -180,6 +180,16 @@ describe("iscrizione a una classe con un codice", () => {
     expect(screen.getByLabelText("campo")).toBeInTheDocument();
   });
 
+  // Onda finale, punto 4 (terzo fix): il box del codice non aveva un
+  // titolo suo, e si leggeva come parte della sezione degli esercizi
+  // (nessun heading fra "I tuoi esercizi" e il campo del codice). Un
+  // titolo proprio lo separa visivamente e per la struttura ad heading
+  // della pagina (screen reader inclusi).
+  it("il box del codice ha un titolo proprio", async () => {
+    await rendi();
+    expect(screen.getByRole("heading", { name: "titolo" })).toBeInTheDocument();
+  });
+
   it("un codice inesistente e uno di un'altra scuola dicono la stessa cosa: non valido", async () => {
     global.fetch = vi.fn(async () =>
       new Response(JSON.stringify({ error: "codice_sconosciuto" }), { status: 404 }),

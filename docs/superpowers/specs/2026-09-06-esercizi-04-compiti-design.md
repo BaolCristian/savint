@@ -301,6 +301,24 @@ entrambi `src/messages/it.json` e `en.json`.
   dichiarata a mano e niente la verifica: un docente può dichiarare una classe
   che non insegna. Accettabile in una scuola, da rivedere se il prodotto uscirà
   da lì.
+
+  **Aggiornamento (feature classi-e-codice-d'iscrizione).** La decisione qui
+  sopra resta invariata, ma la superficie a cui si applica è cresciuta da
+  quando è stata presa, e va scritta esplicitamente invece di ereditarla in
+  silenzio: prima, la pagina del docente mostrava solo il **conteggio**
+  degli iscritti di una classe dichiarata; ora mostra i loro **nomi**
+  (`iscrittiDellaClasse`), e aggiunge un'azione che un docente può compiere
+  su una classe di un altro docente — **rigenerare il codice**
+  (`rigeneraCodice`), che chiude l'iscrizione col vecchio codice per
+  chiunque non l'abbia ancora usata. Entrambe raggiungibili dichiarando una
+  classe che non si insegna davvero, esattamente come già accadeva per
+  assegnare un compito. La decisione resta comunque quella giusta: un
+  docente che vede i nominativi dei ragazzi della propria scuola è
+  ordinario, non un'esposizione di dati sensibili verso l'esterno — e
+  un'installazione serve una scuola sola, quindi "un altro docente" è
+  sempre un collega dello stesso istituto. Da rivedere insieme al resto di
+  questo rischio, se il prodotto smetterà di essere un'installazione per
+  scuola.
 - **I contenitori sono della scuola e chiunque li modifica.** Due docenti che
   lavorano sullo stesso contenitore possono pestarsi i piedi senza accorgersene.
   È il prezzo di non avere permessi, ed è la scelta giusta per un dipartimento;

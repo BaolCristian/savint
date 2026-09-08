@@ -26,7 +26,30 @@ const g = (slug: string, nome: string, anno: number | null) => ({ email: `${P}${
 // Le classi create a mano non hanno un googleGroupEmail da filtrare: la
 // pulizia deve prendere anche loro, per nome, restando comunque scoped al
 // prefisso di questo file (mai un deleteMany su tutta la tabella).
-const filtroClassiTest = { OR: [{ googleGroupEmail: { startsWith: P } }, { name: { startsWith: P } }] };
+//
+// Onda finale, CRITICO: creaClasse normalizza il nome in maiuscolo (trim +
+// toUpperCase) prima di scriverlo, quindi una classe creata a mano con
+// nome `${P}...` finisce in colonna come `CLASSITEST-...` — il confronto
+// per prefisso deve restare senza distinzione di maiuscole/minuscole
+// (`mode: "insensitive"`, stesso schema già in uso in gate-callbacks.ts e
+// hub/search.ts), altrimenti la pulizia smette di trovare esattamente le
+// righe che questo file crea, e continua silenziosamente a intercettare
+// solo le classi da gruppo (googleGroupEmail, mai normalizzato da questo
+// task) — lasciando le classi manuali di test nel database condiviso.
+//
+// `contains`, non `startsWith`: i test sugli spazi ai bordi (proprio
+// quelli che questa correzione esiste per coprire) creano, PRIMA del
+// fix, righe il cui nome comincia con uno spazio — `startsWith` non le
+// avrebbe mai trovate, lasciandole nel database condiviso esattamente
+// come è successo scrivendo questo giro (due righe recuperate a mano).
+// `contains` resta scoped al prefisso di questo file tanto quanto
+// `startsWith`, solo tollerante alla posizione.
+const filtroClassiTest = {
+  OR: [
+    { googleGroupEmail: { startsWith: P } },
+    { name: { contains: P, mode: "insensitive" as const } },
+  ],
+};
 
 async function pulisci(): Promise<void> {
   await prisma.classeStudente.deleteMany({ where: { classe: filtroClassiTest } });
@@ -89,7 +112,12 @@ describe("allineamento delle classi", () => {
     await allineaClassi(studentId, [g("2a", "2A Nuova", 2)]);
     expect(await prisma.classe.count({ where: { googleGroupEmail: { startsWith: P } } })).toBe(1);
     const c = await prisma.classe.findUnique({ where: { googleGroupEmail: `${P}2a@scuola.it` } });
-    expect(c?.name).toBe("2A Nuova");
+    // Onda finale, CRITICO: risolviClasse normalizza (trim + maiuscolo)
+    // anche il nome che scrive per un gruppo — "2A Nuova" (come lo
+    // scriverebbe questo test) diventa "2A NUOVA" in colonna, la stessa
+    // forma che classifyGroups produrrebbe davvero (resolve-role.ts la
+    // maiuscola sempre per intero, mai solo in parte).
+    expect(c?.name).toBe("2A NUOVA");
   });
 
   it("il docente dichiara le classi che insegna e le rivede col conteggio degli studenti", async () => {
@@ -108,6 +136,86 @@ describe("allineamento delle classi", () => {
     await dichiaraInsegnamento(teacherId, tutte.map((c) => c.id));
     await dichiaraInsegnamento(teacherId, [tutte[0]!.id]);
     expect(await classiDelDocente(teacherId)).toHaveLength(1);
+  });
+
+  // Onda finale, punto 4 (secondo bug): dichiaraInsegnamento è una
+  // sostituzione integrale dell'elenco (`notIn: classeIds`), ma il form
+  // che la alimenta (pagina classi, ClassiForm) elenca solo classiDisponibili
+  // — sempre e solo attive (archivedAt: null). Una riga ClasseDocente su
+  // una classe archiviata non compare quindi MAI in classeIds, ed era
+  // sempre dentro l'insieme da cancellare: ogni salvataggio del docente,
+  // qualunque cosa selezionasse, cancellava in silenzio il suo
+  // insegnamento su ogni classe archiviata. Latente finché non esiste un
+  // modo per archiviare (nessuna rotta oggi), ma il test lo dimostra
+  // scrivendo archivedAt a mano, come già fa il resto del file.
+  it("dichiaraInsegnamento non cancella l'insegnamento di una classe archiviata, anche se non è nell'elenco", async () => {
+    const archiviata = await creaClasse(teacherId, { nome: `${P}Da archiviare docente`, anno: null });
+    await prisma.classe.update({ where: { id: archiviata.id }, data: { archivedAt: new Date() } });
+    const attiva = await creaClasse(teacherId, { nome: `${P}Attiva docente`, anno: null });
+
+    // Simula esattamente il salvataggio reale: il form manda solo le
+    // classi attive selezionate, non nomina mai quella archiviata.
+    await dichiaraInsegnamento(teacherId, [attiva.id]);
+
+    const insegnaAncora = await prisma.classeDocente.findUnique({
+      where: { classeId_teacherId: { classeId: archiviata.id, teacherId } },
+    });
+    expect(insegnaAncora).not.toBeNull();
+  });
+
+  // Onda finale, punto 4 (primo bug): il ramo "gruppo già noto" di
+  // risolviClasse (findUnique su googleGroupEmail + update) non filtra
+  // archivedAt, a differenza del ramo "adozione" subito sotto (che l'ha
+  // preso in un giro precedente). Una classe archiviata ma già legata a un
+  // gruppo veniva comunque restituita come "voluta": un accesso Google
+  // successivo di un NUOVO studente di quel gruppo lo iscriveva in una
+  // classe che il docente ha smesso di seguire — la stessa disattenzione
+  // silenziosa che questa feature esiste per evitare, sul lato opposto
+  // (qui non è l'adozione a resuscitare la classe, è direttamente il sync
+  // di chi la insegna già).
+  it("il sync non iscrive nuovi studenti in una classe archiviata già legata a un gruppo", async () => {
+    const emailGruppo = `${P}allievi.archiviata-legata@scuola.it`;
+    const classe = await prisma.classe.create({
+      data: { googleGroupEmail: emailGruppo, name: `${P}Vecchia Legata`, yearLevel: 2, archivedAt: new Date() },
+    });
+
+    const r = await allineaClassi(studentId, [{ email: emailGruppo, name: `${P}Vecchia Legata`, yearLevel: 2 }]);
+
+    expect(r.entrate).toHaveLength(0);
+    const iscrizione = await prisma.classeStudente.findUnique({
+      where: { classeId_studentId: { classeId: classe.id, studentId } },
+    });
+    expect(iscrizione).toBeNull();
+  });
+
+  // Onda finale, CRITICO: un docente digita "2a", un gruppo Google arriva
+  // "2A" — classifyGroups (resolve-role.ts) lo maiuscola da sempre, quindi
+  // qui si simula esattamente quel valore (l'uppercase del nome digitato),
+  // non se ne inventa uno che classifyGroups non produrrebbe mai. Prima
+  // della normalizzazione in creaClasse, "classitest-2a" (quello che il
+  // docente ha scritto, mai toccato) e "CLASSITEST-2A" (quello che arriva
+  // dal gruppo) sono stringhe diverse per Postgres: l'adozione
+  // (risolviClasse, ramo 2) cerca un candidato con name ESATTAMENTE uguale
+  // a quello del gruppo e non lo trova, quindi il gruppo si crea una
+  // classe tutta sua — due classi per la stessa classe reale, metà
+  // studenti iscritti col codice nell'una, metà sincronizzati nell'altra,
+  // senza modo di fonderle poi (vedi il commento di creaClasse su perché
+  // un doppione così non ha rimedio).
+  it("CRITICO — un docente che digita '2a' e un gruppo che arriva '2A' restano una sola classe", async () => {
+    const nomeDigitato = `${P}2a`;
+    const aMano = await creaClasse(teacherId, { nome: nomeDigitato, anno: 2 });
+    const nomeGruppo = nomeDigitato.toUpperCase();
+    const emailGruppo = `${P}allievi.2a-critico@scuola.it`;
+
+    await allineaClassi(studentId, [{ email: emailGruppo, name: nomeGruppo, yearLevel: 2 }]);
+
+    // Prima del fix: due righe (una per cassa). Dopo: una sola, adottata,
+    // con l'indirizzo del gruppo — qualunque sia la cassa con cui è
+    // rimasta scritta in colonna.
+    const tutte = await prisma.classe.findMany({ where: { OR: [{ name: nomeDigitato }, { name: nomeGruppo }] } });
+    expect(tutte).toHaveLength(1);
+    expect(tutte[0]!.id).toBe(aMano.id);
+    expect(tutte[0]!.googleGroupEmail).toBe(emailGruppo);
   });
 
   // la regressione da non introdurre: le iscrizioni da gruppo restano quelle
@@ -173,7 +281,12 @@ describe("allineamento delle classi", () => {
   });
 
   it("un gruppo che ha lo stesso nome di una classe creata a mano la adotta", async () => {
-    const nome = `${P}2A`;
+    // Onda finale, CRITICO: maiuscolo fin dall'inizio, come lo manderebbe
+    // davvero classifyGroups (resolve-role.ts la maiuscola sempre) — non
+    // "classitest-2A" (prefisso minuscolo + suffisso maiuscolo), che ora
+    // creaClasse normalizzerebbe comunque prima di scriverlo, rendendo
+    // questa variabile diversa da ciò che finisce davvero in colonna.
+    const nome = `${P}2A`.toUpperCase();
     const emailGruppo = `${P}allievi.2a@scuola.it`;
     const aMano = await creaClasse(teacherId, { nome, anno: 2 });
 
@@ -188,8 +301,10 @@ describe("allineamento delle classi", () => {
   it("l'adozione non tocca una classe già legata a un gruppo, anche se il nome coincide", async () => {
     // Due gruppi diversi che finiscono per condividere il nome "2A" (caso
     // limite, ma il divieto è esplicito nella spec): il secondo non deve
-    // rubare l'indirizzo né fondersi con il primo.
-    const nome = `${P}2A`;
+    // rubare l'indirizzo né fondersi con il primo. Maiuscolo fin
+    // dall'inizio (Onda finale, CRITICO): risolviClasse normalizza anche
+    // il nome che scrive, come lo manderebbe davvero classifyGroups.
+    const nome = `${P}2A`.toUpperCase();
     await allineaClassi(studentId, [{ email: `${P}prima@scuola.it`, name: nome, yearLevel: 2 }]);
     const primaClasse = await prisma.classe.findUniqueOrThrow({ where: { googleGroupEmail: `${P}prima@scuola.it` } });
 
@@ -207,8 +322,10 @@ describe("allineamento delle classi", () => {
     // (entrambe filtrano archivedAt: null): se l'adozione le scrivesse dentro
     // l'indirizzo di un gruppo vivo, gli studenti di quel gruppo sparirebbero
     // dall'elenco del docente — la stessa disattenzione silenziosa che
-    // questo task esiste per evitare, un angolo più in là.
-    const nome = `${P}2A archiviata`;
+    // questo task esiste per evitare, un angolo più in là. Maiuscolo fin
+    // dall'inizio (Onda finale, CRITICO), per lo stesso motivo dei due
+    // test gemelli sopra.
+    const nome = `${P}2A archiviata`.toUpperCase();
     const aMano = await creaClasse(teacherId, { nome, anno: 2 });
     await prisma.classe.update({ where: { id: aMano.id }, data: { archivedAt: new Date() } });
 
@@ -313,6 +430,44 @@ describe("creaClasse", () => {
 
     const esito = await creaClasseGrezza(teacherId, { nome, anno: 1 });
     expect(esito.ok).toBe(true);
+  });
+
+  // Onda finale, CRITICO: il nome si normalizza (trim + maiuscolo) prima
+  // di qualunque controllo o scrittura — è la stessa normalizzazione che
+  // il lato Google applica già da sempre (classifyGroups, resolve-role.ts:
+  // `raw.toUpperCase()`). Il nome restituito riflette la forma normalizzata,
+  // non quella digitata: è quella che finisce in colonna, ed è quella che
+  // l'adozione confronterà più avanti.
+  it("il nome si normalizza: spazi ai bordi tolti, maiuscolo applicato", async () => {
+    const c = await creaClasse(teacherId, { nome: `  ${P}spazi ai bordi  `, anno: null });
+    expect(c.nome).toBe(`${P}spazi ai bordi`.toUpperCase());
+  });
+
+  // Gli spazi ai bordi non devono aprire una scappatoia al vincolo
+  // nome_gia_usato: chi scrive "Nome" e chi scrive " Nome " intendono la
+  // stessa classe.
+  it("gli spazi ai bordi non creano un doppione", async () => {
+    const nome = `${P}Bordi Doppione`;
+    await creaClasse(teacherId, { nome, anno: null });
+    const esito = await creaClasseGrezza(teacherId, { nome: `  ${nome}  `, anno: null });
+    expect(esito).toEqual({ ok: false, motivo: "nome_gia_usato" });
+  });
+
+  // Onda finale, CRITICO — il caso esplicito della review: prima della
+  // normalizzazione, creaClasse("2a") seguito da creaClasse("2A") veniva
+  // accettato due volte, perché "classitest-..." minuscolo e
+  // "CLASSITEST-..." maiuscolo sono stringhe diverse sia per il pre-check
+  // sia per l'indice unico parziale (che vive sulla colonna raw). Due
+  // classi manuali attive per una classe reale sola, senza rimedio nel
+  // dominio (non si spostano studenti fra classi).
+  it("CRITICO — creaClasse('2a') seguito da creaClasse('2A') rifiuta il secondo: stesso nome dopo la normalizzazione", async () => {
+    const base = `${P}Doppia Cassa`;
+    await creaClasse(teacherId, { nome: base.toLowerCase(), anno: null });
+    const esito = await creaClasseGrezza(teacherId, { nome: base.toUpperCase(), anno: null });
+    expect(esito).toEqual({ ok: false, motivo: "nome_gia_usato" });
+
+    const tutte = await prisma.classe.findMany({ where: { name: { startsWith: P.toUpperCase() }, archivedAt: null } });
+    expect(tutte.filter((c) => c.name === base.toUpperCase())).toHaveLength(1); // non due
   });
 });
 
