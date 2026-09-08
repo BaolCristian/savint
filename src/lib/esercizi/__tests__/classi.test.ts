@@ -129,7 +129,8 @@ describe("allineamento delle classi", () => {
     const ancora = await prisma.classeStudente.findUnique({
       where: { classeId_studentId: { classeId: classeACodice.id, studentId } },
     });
-    expect(ancora).not.toBeNull(); // fallisce oggi: viene cancellata
+    expect(ancora).not.toBeNull(); // e' cio' che protegge l'iscrizione da codice: senza il filtro
+    // sull'origine in allineaClassi, questa riga verrebbe cancellata
     expect(ancora!.origine).toBe("CODICE");
   });
 
