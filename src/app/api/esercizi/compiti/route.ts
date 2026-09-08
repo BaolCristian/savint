@@ -19,7 +19,12 @@ const bodySchema = z.object({
 const STATI: Record<string, number> = {
   batteria_non_trovata: 404,
   classe_non_trovata: 404,
-  non_insegni_questa_classe: 403,
+  // 404 e non 403, come per rigeneraCodice e per la pagina delle consegne:
+  // un 403 confermerebbe che quella classe esiste a chi non ha motivo di
+  // saperlo. Il classeId arriva dal corpo della richiesta, quindi puo'
+  // essere qualunque cosa. Le tre risposte erano incoerenti fra loro fino
+  // al 2026-09-08 — stessa domanda, stesso motivo, due risposte diverse.
+  non_insegni_questa_classe: 404,
   esercizi_insufficienti: 409,
   scadenza_prima_apertura: 400,
   scadenza_nel_passato: 400,
