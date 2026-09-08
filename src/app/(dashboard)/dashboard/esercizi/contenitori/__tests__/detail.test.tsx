@@ -46,7 +46,7 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("elenca gli esercizi già dentro, ciascuno con un pulsante di rimozione", async () => {
+  it("elenca gli esercizi già dentro, ciascuno con un pulsante di rimozione e un link all'anteprima", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue({
       id: "cont1",
       name: "Equazioni",
@@ -57,6 +57,12 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(screen.getByText("Equazioni")).toBeInTheDocument();
     expect(screen.getByText("Primo grado")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "rimuovi" })).toBeInTheDocument();
+    // Il gap che questo task chiude: dove il docente sceglie alla cieca —
+    // qui, e nella prova gemella sotto per chi è ancora fuori — un link
+    // all'anteprima su ciascun esercizio.
+    expect(screen.getByRole("link", { name: "anteprima" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/anteprima/e1",
+    );
   });
 
   it("rimuovere un esercizio chiama la DELETE dell'API", async () => {
@@ -81,7 +87,7 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(body).toEqual({ esercizioId: "e1" });
   });
 
-  it("offre solo gli esercizi non ancora presenti per l'aggiunta", async () => {
+  it("offre solo gli esercizi non ancora presenti per l'aggiunta, ciascuno con un link all'anteprima", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue({
       id: "cont1",
       name: "Equazioni",
@@ -95,6 +101,13 @@ describe("pagina di dettaglio di un contenitore", () => {
     await rendi();
     expect(screen.getByText("Fuori")).toBeInTheDocument();
     expect(screen.queryAllByText("Dentro")).toHaveLength(1); // solo nell'elenco di chi c'è già
+    // Il posto dove il docente sceglie alla cieca oggi: un esercizio ancora
+    // fuori dal contenitore deve poter essere visto prima di essere spuntato
+    // per l'aggiunta, non solo dopo — sia lui (e2) sia chi è già dentro (e1)
+    // portano il link, quindi qui si cerca quello giusto per href.
+    expect(
+      screen.getAllByRole("link", { name: "anteprima" }).map((a) => a.getAttribute("href")),
+    ).toEqual(expect.arrayContaining(["/dashboard/esercizi/anteprima/e1", "/dashboard/esercizi/anteprima/e2"]));
   });
 
   it("aggiungere esercizi selezionati chiama la POST dell'API", async () => {

@@ -391,3 +391,39 @@ export async function caricaPerEditor(esercizioId: string): Promise<
     aggiornatoIl: esercizio.updatedAt,
   };
 }
+
+export type EsitoAnteprima =
+  | { ok: true; titolo: string; versione: number; content: unknown }
+  | { ok: false; motivo: "non_trovato" | "senza_versione" };
+
+/** Carica un esercizio per l'anteprima del docente: SEMPRE il contenuto
+ * grezzo dell'ultima versione, mai passato da `daNumbas` come
+ * `caricaPerEditor` sopra — questa anteprima non deve saper RICOSTRUIRE
+ * l'esercizio nell'editor, solo mostrarlo esattamente com'è, lo stesso
+ * `content` che `avviaORiprendi` (tentativo.ts) passa al player dello
+ * studente. È per questo che un esercizio che l'editor rifiuta — sei degli
+ * otto esercizi seminati, vedi il brief del task — è comunque `ok: true`
+ * qui: è precisamente per quei sei che questa funzione esiste.
+ *
+ * L'unico rifiuto possibile è quindi l'esercizio mancante, o privo di
+ * qualunque versione salvata: capita nel bacino seminato (righe create a
+ * mano, mai passate da `creaEsercizio`) — un player montato su
+ * `content: undefined` sarebbe uno schermo muto travestito da anteprima,
+ * mai la scelta giusta quando si può dire chiaramente che non c'è niente
+ * da mostrare. */
+export async function caricaPerAnteprima(esercizioId: string): Promise<EsitoAnteprima> {
+  const esercizio = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
+  if (!esercizio) {
+    return { ok: false, motivo: "non_trovato" };
+  }
+
+  const versione = await prisma.esercizioVersione.findFirst({
+    where: { esercizioId },
+    orderBy: { version: "desc" },
+  });
+  if (!versione) {
+    return { ok: false, motivo: "senza_versione" };
+  }
+
+  return { ok: true, titolo: esercizio.title, versione: versione.version, content: versione.content };
+}

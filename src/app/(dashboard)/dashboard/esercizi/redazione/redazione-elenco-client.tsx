@@ -28,6 +28,12 @@ interface Testi extends DuplicaButtonTesti {
   modificabile: string;
   soloLettura: string;
   apri: string;
+  /** Il link all'anteprima del docente (`/dashboard/esercizi/anteprima/[id]`):
+   * compare su OGNI riga, modificabile o no — è precisamente sulle righe di
+   * sola lettura che conta di più, perché prima di questo link non c'era
+   * nessun altro modo per un docente di vedere quell'esercizio (vedi il
+   * brief del task). */
+  anteprima: string;
 }
 
 /** L'elenco della redazione: per ogni esercizio, se è modificabile un link
@@ -63,14 +69,21 @@ export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; tes
 
             <p className="text-xs text-muted-foreground">{v.ultimaVersione}</p>
 
-            {v.modificabile ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
-                  {testi.apri}
-                </Link>
-                <DuplicaButton esercizioId={v.id} testi={testi} />
-              </div>
-            ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href={`/dashboard/esercizi/anteprima/${v.id}`} className="text-sm text-brand-blue hover:underline">
+                {testi.anteprima}
+              </Link>
+              {v.modificabile && (
+                <>
+                  <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
+                    {testi.apri}
+                  </Link>
+                  <DuplicaButton esercizioId={v.id} testi={testi} />
+                </>
+              )}
+            </div>
+
+            {!v.modificabile && (
               <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 p-2">
                 <p className="text-sm text-muted-foreground">{v.motivo}</p>
               </div>

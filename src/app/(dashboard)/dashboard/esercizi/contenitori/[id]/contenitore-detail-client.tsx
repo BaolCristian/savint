@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +31,11 @@ export function ContenitoreDetailClient({
     nessunoFuori: string;
     aggiungi: string;
     erroreGenerico: string;
+    /** Il link all'anteprima del docente (`/dashboard/esercizi/anteprima/[id]`),
+     * su ciascun esercizio in entrambe le liste: qui è dove il docente
+     * sceglie alla cieca oggi — dal solo titolo — sia per un esercizio già
+     * dentro sia per uno ancora da aggiungere (vedi il brief del task). */
+    anteprima: string;
   };
 }) {
   const router = useRouter();
@@ -97,14 +103,19 @@ export function ContenitoreDetailClient({
                   <p className="font-medium">{e.title}</p>
                   <p className="text-sm text-muted-foreground">{e.subtitle}</p>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => rimuovi(e.id)}
-                  disabled={rimuovendo === e.id}
-                >
-                  {testi.rimuovi}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} className="text-sm text-brand-blue hover:underline">
+                    {testi.anteprima}
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => rimuovi(e.id)}
+                    disabled={rimuovendo === e.id}
+                  >
+                    {testi.rimuovi}
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -120,8 +131,19 @@ export function ContenitoreDetailClient({
           <>
             <ul className="grid gap-2">
               {fuori.map((e) => (
-                <li key={e.id}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-input p-3 text-sm hover:bg-muted/50">
+                <li
+                  key={e.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-input p-3 text-sm hover:bg-muted/50"
+                >
+                  {/* Il link all'anteprima vive FUORI dal `label`: un `<a>`
+                      annidato dentro un `label` sarebbe comunque un
+                      bersaglio di clic valido, ma un clic lì rischierebbe di
+                      spuntare anche la casella associata (il comportamento
+                      di inoltro di `label` verso il proprio controllo) prima
+                      ancora che la navigazione parta — un docente che vuole
+                      solo guardare l'esercizio lo selezionerebbe per sbaglio
+                      per l'aggiunta. */}
+                  <label className="flex flex-1 cursor-pointer items-center gap-2">
                     <input
                       type="checkbox"
                       checked={selezionati.has(e.id)}
@@ -133,6 +155,9 @@ export function ContenitoreDetailClient({
                       <span className="ml-2 text-muted-foreground">{e.subtitle}</span>
                     </span>
                   </label>
+                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} className="text-brand-blue hover:underline">
+                    {testi.anteprima}
+                  </Link>
                 </li>
               ))}
             </ul>

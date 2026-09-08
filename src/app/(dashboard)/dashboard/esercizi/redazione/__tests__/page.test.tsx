@@ -76,6 +76,13 @@ describe("elenco della redazione", () => {
     expect(screen.getByRole("link", { name: "apri" })).toHaveAttribute("href", "/dashboard/esercizi/redazione/e1");
     expect(screen.getByText(/Mario Rossi/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "duplica" })).toBeInTheDocument();
+    // Il gap che questo task chiude: anche una riga già modificabile deve
+    // portare il link all'anteprima, non solo un link diretto all'editor —
+    // sono due cose diverse (vedere l'esercizio coi propri occhi contro
+    // modificarlo).
+    expect(screen.getByRole("link", { name: "anteprima" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/anteprima/e1",
+    );
   });
 
   // Il motivo del dominio (`daNumbas`, SUGGERIMENTO_REPOSITORIO) chiude già
@@ -120,6 +127,13 @@ describe("elenco della redazione", () => {
     // c'era anche in un secondo paragrafo statico (`soloRepository`), ora
     // rimosso.
     expect(screen.getAllByText(/repository dei contenuti/)).toHaveLength(1);
+    // Il gap che questo task chiude: è precisamente su QUESTE righe — quelle
+    // che l'editor rifiuta — che il link all'anteprima conta di più, perché
+    // prima di questo task non c'era nessun altro modo per un docente di
+    // vedere questo esercizio.
+    expect(screen.getByRole("link", { name: "anteprima" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/anteprima/e2",
+    );
   });
 
   it("un esercizio non modificabile senza un motivo dal dominio mostra il motivo generico", async () => {

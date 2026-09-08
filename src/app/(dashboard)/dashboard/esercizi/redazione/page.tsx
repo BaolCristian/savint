@@ -69,6 +69,7 @@ export default async function Page() {
             modificabile: t("modificabile"),
             soloLettura: t("soloLettura"),
             apri: t("apri"),
+            anteprima: t("anteprima"),
             duplica: t("duplica"),
             duplicaInCorso: t("duplicaInCorso"),
             duplicaErrore: t("duplicaErrore"),
