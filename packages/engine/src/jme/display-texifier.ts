@@ -22,6 +22,7 @@ import * as math from "../math";
 import { builtinScope } from "./builtins";
 import { castToType, isComplex as isComplexTok, isOp, isType, unwrapSubexpression } from "./evaluate";
 import { eq as eqTokens } from "./equality";
+import { enumerate_signatures } from "./infer";
 import type { Ruleset } from "./rules-ruleset";
 import { JmeError } from "./errors";
 import type { ConstantDefinition, Scope } from "./scope";
@@ -233,6 +234,22 @@ function numberValueOf(tok: Token): math.NumbasNumber {
  * dove `texify(-e)` dà `-2.7182818285` e non `-e`. */
 export function eqMaybeUntyped(): boolean {
   return false;
+}
+
+// Non upstream (v. `texFunction`): riusa `enumerate_signatures` (jme.js:5291,
+// già portato per `makeFast`/l'inferenza di tipo in `infer.ts`) per sapere se
+// almeno una definizione registrata di `name` accetta `argCount` argomenti,
+// senza bisogno dei VALORI degli argomenti (che il display non ha: `texArgs`
+// sono già stringhe rese, non token) — solo della loro quantità. Un nome
+// assente dallo scope (nessun `FuncObj` con quel nome) non è un'arità
+// sbagliata nota: si lascia passare, come upstream.
+/** Un overload di `name`, nello scope dato, accetta `argCount` argomenti? */
+function hasValidArity(scope: Scope, name: string, argCount: number): boolean {
+  const fns = scope.getFunction(name);
+  if (fns.length === 0) {
+    return true;
+  }
+  return fns.some((fn) => enumerate_signatures(fn.intype, argCount).length > 0);
 }
 
 // jme-display.js:1048-1630
@@ -678,6 +695,23 @@ export class Texifier extends Displayer<string> {
     const normalisedName = normaliseName(tok.name, this.scope);
     const fn = this.texOps[normalisedName];
     if (fn) {
+      // Divergenza dal comportamento upstream, registrata in DIVERGENCES.md:
+      // `texOps.sqrt`/`abs`/`mod`/... indicizzano `texArgs` per posizione
+      // senza controllare che ci sia davvero un argomento in quella
+      // posizione; con un'arità sbagliata (es. `sqrt()`) l'indice mancante è
+      // `undefined`, concatenato senza errore nella stringa resa
+      // (`"\\sqrt{ undefined }"`) — verificato che upstream fa lo stesso
+      // (`packages/engine/oracle`, commit 0f0ea33). A differenza degli
+      // operatori (la sintassi shunting-yard fissa la loro arità a tempo di
+      // analisi: `12*x^` lancia già `jme.shunt.not enough arguments`), la
+      // chiamata di funzione `nome(...)` accetta sintatticamente qualunque
+      // numero di argomenti: il controllo va fatto qui, non nel parser.
+      if (!hasValidArity(this.scope, normalisedName, texArgs.length)) {
+        throw new JmeError("jme.display.wrong number of arguments", {
+          name: normalisedName,
+          count: texArgs.length,
+        });
+      }
       return fn.call(this, tree, texArgs);
     } else {
       /** I nomi lunghi di operatore vanno in `\operatorname`. */

@@ -187,71 +187,74 @@ describe("verificaSuSemi", () => {
     }
   });
 
-  it("un comando LaTeX che condivide il prefisso \\var (\\varphi) non manda in eccezione la verifica (giro 3)", () => {
+  it("un comando LaTeX che condivide il prefisso \\var (\\varphi) non e' piu' un difetto: il motore e' stato corretto", () => {
     // \varphi, \vartheta, \varepsilon... condividono il prefisso letterale
-    // "\var" col marcatore di sostituzione: texsplit (il motore) cerca
-    // solo quel prefisso, senza un confine di parola, e senza una graffa
-    // subito dopo lancia "manca il parametro" — loadQuestion incontra lo
-    // STESSO errore piu' avanti (fase caricamento), quindi un esercizio
-    // di trigonometria con \varphi nel testo e' genuinamente rotto. Prima
-    // di questa correzione pero' il controllo statico (che gira PRIMA di
-    // loadQuestion) non intercettava quel lancio: scappava non gestito da
-    // verificaSuSemi invece di diventare un esito normale — un problema
-    // suo, non dell'esercizio.
+    // "\var" col marcatore di sostituzione: prima della correzione del
+    // motore (packages/engine/src/jme/subvars.ts, `texsplit`) questo
+    // mandava in errore sia il controllo statico sia loadQuestion, perche'
+    // texsplit cercava solo quel prefisso, senza un confine di parola.
+    // `texsplit` riconosce ora \var/\simplify solo quando il nome del
+    // comando non prosegue in altre lettere (lookahead negativo): \varphi
+    // passa intatto, e un esercizio di trigonometria che lo usa nel testo
+    // valida come qualunque altro — questo test, che prima pinnava
+    // l'esito difettoso, ora pinna che non lo e' piu'.
     const e: EsercizioEditor = { ...base, testo: "L'angolo \\(\\varphi\\) e' acuto" };
     let esito: ReturnType<typeof verificaSuSemi> | undefined;
     expect(() => {
       esito = verificaSuSemi(versoNumbas(e));
     }).not.toThrow();
-    expect(esito?.ok).toBe(false);
-    if (esito && !esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("varphi");
-    }
+    expect(esito).toEqual({ ok: true });
   });
 
-  it("il difetto sqrt() reso con 'undefined' viene intercettato nel testo dell'esercizio (giro 3)", () => {
+  it("il difetto sqrt() reso con 'undefined' e' intercettato al caricamento, non piu' nel testo (giro 3, motore corretto)", () => {
     // \simplify{sqrt()} senza graffe di sostituzione interne: il
     // controllo statico non lo vede (non c'e' nessun identificatore da
     // estrarre — "sqrt()" non ha un {...} dentro, vedi identificatoriTesto
-    // in verifica.ts), quindi e' il controllo a runtime sul testo GIA'
-    // sostituito a doverlo intercettare. Pin di quel controllo: prima di
-    // questa correzione nessun test lo raggiungeva piu', perche' ogni caso
-    // a forma di \var{} viene ora intercettato prima dal controllo
-    // statico.
+    // in verifica.ts). Prima della correzione del motore
+    // (display-texifier.ts, `texFunction`) il controllo a runtime sul
+    // testo GIA' sostituito doveva intercettarlo (fase "testo", messaggio
+    // con la stringa "undefined"): ora `\simplify{sqrt()}` fa LANCIARE
+    // `loadQuestion` stesso, con l'arita' sbagliata come vero motivo — il
+    // difetto emerge prima, e la fase diventa "caricamento".
     const e: EsercizioEditor = { ...base, testo: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("undefined");
+      expect(esito.fase).toBe("caricamento");
+      expect(esito.messaggio).toContain("sqrt");
+      expect(esito.messaggio).not.toContain("undefined");
     }
   });
 
-  it("lo stesso difetto viene intercettato anche nel suggerimento, non solo nel testo (giro 3)", () => {
-    // Prima di questa correzione il controllo a runtime guardava solo
-    // statementHtml: lo stesso \simplify{sqrt()} scritto nel suggerimento
-    // (il campo piu' denso di riferimenti a variabili nel corpus reale)
-    // restituiva ok:true — il difetto per cui la fase "testo" esiste
-    // proprio non veniva visto, nel campo che il corpus usa di piu'.
+  it("lo stesso difetto e' intercettato anche nel suggerimento, non solo nel testo (giro 3, motore corretto)", () => {
+    // Come sopra: `\simplify{sqrt()}` nel suggerimento (il campo piu'
+    // denso di riferimenti a variabili nel corpus reale) fa fallire
+    // `loadQuestion` prima ancora che `testiSostituiti` legga
+    // `adviceHtml` — fase "caricamento", non piu' "testo". Nota per un
+    // futuro lettore: a differenza della fase "testo" (che nomina il
+    // campo, "il suggerimento contiene..."), il messaggio di
+    // "caricamento" e' la traduzione grezza dell'errore del motore e non
+    // dice PIU' in quale campo si trovi il difetto — un dettaglio di
+    // qualita' del messaggio perso da questa correzione, non una
+    // regressione di correttezza (l'esito resta `ok:false`).
     const e: EsercizioEditor = { ...base, suggerimento: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("suggerimento");
+      expect(esito.fase).toBe("caricamento");
+      expect(esito.messaggio).toContain("sqrt");
     }
   });
 
-  it("lo stesso difetto viene intercettato anche nella consegna sostituita di una parte (giro 3)", () => {
+  it("lo stesso difetto e' intercettato anche nella consegna di una parte (giro 3, motore corretto)", () => {
     const e: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
       consegna: "\\(\\simplify{sqrt()}\\)", punti: 2,
       valore: "a", tolleranza: { tipo: "esatta" } }] };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("consegna");
+      expect(esito.fase).toBe("caricamento");
+      expect(esito.messaggio).toContain("sqrt");
     }
   });
 
@@ -452,9 +455,11 @@ describe("verificaSuSemi", () => {
     // `variables.substituteHtml` sullo scope della parte) — lo stesso
     // meccanismo, non un secondo. Lo stesso identico \simplify{sqrt()} che
     // nello statement viene gia' rifiutato ("il difetto sqrt() reso con
-    // 'undefined' viene intercettato nel testo dell'esercizio", sopra) qui
-    // passava indenne quando scritto in una risposta proposta o nella sua
-    // spiegazione.
+    // 'undefined' e' intercettato al caricamento...", sopra — oggi in fase
+    // "caricamento", non piu' "testo") qui passava indenne quando scritto
+    // in una risposta proposta o nella sua spiegazione: qui la fase resta
+    // "testo", perche' `campiSceltaGrezzi` la sostituisce e cattura
+    // l'errore da sola, con lo stesso `try`/`catch` di sempre.
     it("\\simplify{sqrt()} in una risposta proposta (choices) viene intercettato", () => {
       const e: EsercizioEditor = { ...base, testo: "x",
         parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
@@ -463,7 +468,11 @@ describe("verificaSuSemi", () => {
       expect(esito.ok).toBe(false);
       if (!esito.ok) {
         expect(esito.fase).toBe("testo");
-        expect(esito.messaggio).toContain("undefined");
+        // Prima della correzione del motore (display-texifier.ts) questo
+        // renderizzava "undefined"; ora `variables.substituteHtml` lancia
+        // con l'arita' sbagliata come vero motivo.
+        expect(esito.messaggio).toContain("sqrt");
+        expect(esito.messaggio).not.toContain("undefined");
         expect(esito.messaggio).toContain("risposta");
       }
     });
@@ -477,7 +486,8 @@ describe("verificaSuSemi", () => {
       expect(esito.ok).toBe(false);
       if (!esito.ok) {
         expect(esito.fase).toBe("testo");
-        expect(esito.messaggio).toContain("undefined");
+        expect(esito.messaggio).toContain("sqrt");
+        expect(esito.messaggio).not.toContain("undefined");
         expect(esito.messaggio).toContain("spiegazione");
       }
     });

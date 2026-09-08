@@ -49,6 +49,7 @@ import {
   type DisplaySettings,
 } from "../../src/jme/display";
 import { JMEifier, treeToJME } from "../../src/jme/display-jme";
+import { raisesJmeError } from "./jme-helpers";
 
 /** `Numbas.jme.builtinScope.evaluate(expr)`, con l'asserzione che non sia nullo. */
 function ev(expr: string, scope: Scope = builtinScope): Token {
@@ -594,6 +595,22 @@ describe("Display", () => {
     expect(tex("root(x,2)"), "root(x,2) equivale a sqrt(x)").toBe(tex("sqrt(x)"));
     expect(tex("root(x,3)"), "root(x,3)").toBe("\\sqrt[3]{ x }");
     expect(tex("root(x,z)"), "root(x,z)").toBe("\\sqrt[z]{ x }");
+  });
+
+  // Divergenza dal comportamento upstream, registrata in DIVERGENCES.md:
+  // verificato sul runtime upstream (`packages/engine/oracle`, commit
+  // 0f0ea33) che `exprToLaTeX("sqrt()", ...)` rende anche lì
+  // `"\\sqrt{ undefined }"` invece di lanciare — `texOps.sqrt` (jme-display.js
+  // e qui `display-tex.ts`) indicizza `texArgs[0]` senza controllare che ci
+  // sia davvero un argomento. Qui `texFunction` verifica prima che almeno un
+  // overload registrato di quel nome accetti il numero di argomenti dato.
+  it("una funzione chiamata con troppi pochi argomenti lancia invece di rendere \"undefined\"", () => {
+    raisesJmeError(() => tex("sqrt()"), "jme.display.wrong number of arguments", "sqrt()");
+    raisesJmeError(() => tex("abs()"), "jme.display.wrong number of arguments", "abs()");
+    raisesJmeError(() => tex("mod(1)"), "jme.display.wrong number of arguments", "mod(1)");
+    // gli usi validi non sono toccati: `set()` è variadico (0 o più elementi).
+    expect(tex("sqrt(4)"), "sqrt(4) continua a rendere").toBe("\\sqrt{ 4 }");
+    expect(tex("set()"), "set() resta valido (variadico)").toBe("\\left\\{  \\right\\}");
   });
 
   // jme-tests.mjs:2826-2830

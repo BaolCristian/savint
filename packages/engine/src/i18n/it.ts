@@ -59,6 +59,7 @@ export const it: Record<string, string> = {
   "jme.display.collectRuleset.no sets": "Per comporre un insieme di regole serve la lista degli insiemi definiti",
   "jme.display.collectRuleset.set not defined": "L'insieme di regole {name} non è definito",
   "jme.display.unknown token type": "Non so rendere un token di tipo {type}",
+  "jme.display.wrong number of arguments": "{name} è chiamata con {count} argomenti, un numero che nessuna definizione accetta",
   "jme.display.simplifyTree.stuck in a loop":
     "La semplificazione di {expr} è entrata in un ciclo: le regole si annullano a vicenda",
   "jme.evaluate.no scope given": "Per valutare un'espressione serve uno scope",

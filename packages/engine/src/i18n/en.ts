@@ -53,6 +53,7 @@ export const en: Record<string, string> = {
   "jme.display.collectRuleset.no sets": "Collecting a ruleset needs the list of the rulesets in scope",
   "jme.display.collectRuleset.set not defined": "The ruleset {name} is not defined",
   "jme.display.unknown token type": "Can't texify token type {type}",
+  "jme.display.wrong number of arguments": "{name} is called with {count} arguments, a number no definition accepts",
   "jme.display.simplifyTree.stuck in a loop": "Simplifying {expr} got stuck in a loop: the rules undo each other",
   "jme.evaluate.no scope given": "Evaluating an expression needs a scope",
   "jme.func.except.continuous range": "Can't use `except` on a continuous range (step 0)",
