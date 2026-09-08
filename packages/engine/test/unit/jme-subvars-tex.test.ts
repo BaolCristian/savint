@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 import { builtinScope } from "../../src/jme/builtins";
 import { Scope } from "../../src/jme/scope";
 import { TNum } from "../../src/jme/tokens";
-import { contentsubvars, displayHooks, subvars } from "../../src/jme/subvars";
+import { contentsubvars, displayHooks, subvars, texsplit } from "../../src/jme/subvars";
 import { raisesJmeError } from "./jme-helpers";
 // riempie `displayHooks`: senza questo import i rami di visualizzazione di
 // `subvars`/`contentsubvars` lanciano `jme.subvars.display not available`.
@@ -83,5 +83,40 @@ describe("Subvars", () => {
       "jme.subvars.null substitution",
       "\\var{} vuoto",
     );
+  });
+
+  // Divergenza dal comportamento upstream, registrata in DIVERGENCES.md:
+  // `cmdre` upstream (jme.js:444) è `/^((?:.|[\n\r])*?)\\(var|simplify)/m`, che
+  // riconosce `\var` come prefisso letterale — verificato sul runtime upstream
+  // (`packages/engine/oracle`, commit 0f0ea33): `texsplit("\\varphi")` lancia
+  // `jme.texsubvars.missing parameter` anche lì, perché `\varphi` (notazione
+  // trigonometrica ordinaria) comincia con quelle quattro lettere. Qui `\var`
+  // e `\simplify` sono riconosciuti solo quando non proseguono in altre
+  // lettere (lookahead negativo `(?![a-zA-Z])`): `\varphi`, `\varepsilon`,
+  // `\vartheta`, `\varsigma`, `\varrho`, `\varpi` passano intatti.
+  it("\\varphi e le altre lettere greche \"var*\" non sono scambiate per \\var", () => {
+    for (const greek of ["\\varphi", "\\varepsilon", "\\vartheta", "\\varsigma", "\\varrho", "\\varpi"]) {
+      expect(texsplit(greek), `texsplit(${greek})`).toEqual([greek]);
+    }
+    const scope = new Scope([builtinScope, { variables: { x: new TNum(2) } }]);
+    expect(
+      contentsubvars("l'angolo $\\varphi$ e $\\vartheta$", scope, true),
+      "\\varphi/\\vartheta passano intatti dentro il TeX",
+    ).toBe("l'angolo $\\varphi$ e $\\vartheta$");
+  });
+
+  // Upstream non tollera spazi fra `\var`/`\simplify` e la graffa (o la
+  // parentesi quadra) che apre l'argomento: verificato sul runtime upstream,
+  // `texsplit("\\var {a}")` lancia `jme.texsubvars.missing parameter` anche
+  // lì. Il lookahead della riga sopra non introduce questa tolleranza: uno
+  // spazio non è una lettera, quindi `\var` è ancora riconosciuto come
+  // comando, e la graffa mancante lancia come prima.
+  it("uno spazio fra \\var e la graffa resta un errore, come upstream", () => {
+    raisesJmeError(() => texsplit("\\var {a}"), "jme.texsubvars.missing parameter", "\\var {a}");
+  });
+
+  it("\\var{} e \\simplify{} continuano a funzionare dopo la correzione", () => {
+    expect(texsplit("\\var{a}")).toEqual(["", "var", "all", "a", ""]);
+    expect(texsplit("\\simplify{a}")).toEqual(["", "simplify", "all", "a", ""]);
   });
 });

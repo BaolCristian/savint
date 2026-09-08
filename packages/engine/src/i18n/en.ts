@@ -53,6 +53,7 @@ export const en: Record<string, string> = {
   "jme.display.collectRuleset.no sets": "Collecting a ruleset needs the list of the rulesets in scope",
   "jme.display.collectRuleset.set not defined": "The ruleset {name} is not defined",
   "jme.display.unknown token type": "Can't texify token type {type}",
+  "jme.display.wrong number of arguments": "{name} is called with {count} arguments, a number no definition accepts",
   "jme.display.simplifyTree.stuck in a loop": "Simplifying {expr} got stuck in a loop: the rules undo each other",
   "jme.evaluate.no scope given": "Evaluating an expression needs a scope",
   "jme.func.except.continuous range": "Can't use `except` on a continuous range (step 0)",
@@ -246,6 +247,9 @@ export const en: Record<string, string> = {
   // equivalent: they reject out-of-scope features (decisions 1-4 of the Task 9
   // brief).
   "question.error": "Question {number}: {message}",
+  "question.error in advice": "Error in the hint", // ours, fix round 1
+  "question.error in part prompt": "Error in the prompt of part {path}", // ours, fix round 1
+  "question.error in statement": "Error in the exercise's statement", // ours, fix round 1
   "question.function.async not supported":
     "The function {name} is asynchronous (type: \"promise\"): this engine is synchronous and does not support it", // ours
   "question.no such part": "Can't find the part {path}",

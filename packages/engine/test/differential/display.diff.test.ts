@@ -116,7 +116,25 @@ const SAVINT_CASES: Case[] = [
   ["x = -3", "all"],
 ];
 
-const CASES: Case[] = [...UPSTREAM_CASES, ...SAVINT_CASES];
+// Giro di correzioni 1 del guardiano d'arità di `texFunction`
+// (display-texifier.ts): la prima versione deduceva il minimo dalla
+// funzione REGISTRATA nello scope con lo stesso nome, e rifiutava
+// `diff(y,x,2)`/`int(x,y)` — validi, con un'arità che nessuna fixture di
+// questo corpus esercitava. La loro assenza è quel che ha lasciato passare
+// la regressione: qui restano, byte per byte contro l'oracolo, così una
+// futura modifica del guardiano non può romperli in silenzio.
+const ARITY_GUARD_CASES: Case[] = [
+  ["diff(y,x,2)", ""],
+  ["diff(y,x,1)", ""],
+  ["partialdiff(y,x,2)", ""],
+  ["int(x,y)", ""],
+  ["int(x^2,x)", ""],
+  ["defint(x^2,x,0,1)", ""],
+  ["log(x)", ""],
+  ["log(x,2)", ""],
+];
+
+const CASES: Case[] = [...UPSTREAM_CASES, ...SAVINT_CASES, ...ARITY_GUARD_CASES];
 
 describe("renderLatex contro exprToLaTeX", () => {
   it("il corpus di espressioni è quello previsto", () => {

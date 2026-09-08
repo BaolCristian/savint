@@ -226,6 +226,41 @@ describe("loadQuestion", () => {
     expect(q.parts[0]?.promptHtml).toBe("<p>vale 7</p>");
   });
 
+  // Giro di correzioni 1: `substituteHtml` va chiamata avvolta da
+  // `Question#error`, come già fa `buildVariablesTodo` per le definizioni di
+  // variabile (`variable.error in variable definition`, sopra) — altrimenti
+  // un difetto di sostituzione (qui `\simplify{sqrt()}`, che l'arità di
+  // `texFunction` ora rifiuta) arriva senza dire in quale campo si trova.
+  // La catena resta intera: la chiave di `jme.display.wrong number of
+  // arguments` (la causa vera) c'è ancora, PIÙ una chiave che nomina il
+  // campo — non una al posto dell'altra.
+  it("un difetto di sostituzione nell'enunciato nomina il campo, senza perdere la causa", () => {
+    const keys = errorKeys(() =>
+      loadQuestion({ name: "n", statement: "\\(\\simplify{sqrt()}\\)" }, { seed: "s1" }),
+    );
+    expect(keys).toContain("question.error in statement");
+    expect(keys).toContain("jme.display.wrong number of arguments");
+  });
+
+  it("un difetto di sostituzione nel suggerimento nomina il campo", () => {
+    const keys = errorKeys(() =>
+      loadQuestion({ name: "n", advice: "\\(\\simplify{sqrt()}\\)" }, { seed: "s1" }),
+    );
+    expect(keys).toContain("question.error in advice");
+    expect(keys).toContain("jme.display.wrong number of arguments");
+  });
+
+  it("un difetto di sostituzione nella consegna di una parte nomina il percorso della parte", () => {
+    const keys = errorKeys(() =>
+      loadQuestion(
+        { name: "n", parts: [{ type: "information", prompt: "\\(\\simplify{sqrt()}\\)" }] },
+        { seed: "s1" },
+      ),
+    );
+    expect(keys).toContain("question.error in part prompt");
+    expect(keys).toContain("jme.display.wrong number of arguments");
+  });
+
   it("i nomi delle parti sono assegnati come upstream", () => {
     const q = loadQuestion(
       {

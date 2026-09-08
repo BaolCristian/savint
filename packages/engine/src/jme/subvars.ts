@@ -44,11 +44,20 @@ function requireHook<K extends keyof typeof displayHooks>(name: K): NonNullable<
   return hook as NonNullable<(typeof displayHooks)[K]>;
 }
 
-// jme.js:443-494
+// jme.js:443-494 — upstream `cmdre` è `/^((?:.|[\n\r])*?)\\(var|simplify)/m`,
+// che riconosce `\var`/`\simplify` come prefisso letterale: `\varphi`,
+// `\varepsilon`, `\vartheta`, `\varsigma`, `\varrho`, `\varpi` (notazione
+// trigonometrica ordinaria) cominciano con quelle quattro lettere e vengono
+// scambiati per un `\var` a cui manca l'argomento — verificato che upstream
+// fa lo stesso (`packages/engine/oracle`, commit 0f0ea33). Divergenza voluta,
+// registrata in DIVERGENCES.md: il lookahead negativo `(?![a-zA-Z])` esclude
+// solo il caso in cui il nome del comando prosegue in altre lettere; uno
+// spazio (o qualunque carattere non alfabetico) fra `\var` e la sua graffa
+// resta un errore, come upstream (`s.charAt(i) !== "{"` qui sotto non cambia).
 /** Spezza un'espressione TeX sui comandi `\var` e `\simplify`, restituendo
  * `[tex, comando, opzioni, argomento, tex, ...]`. */
 export function texsplit(s: string): string[] {
-  const cmdre = /^((?:.|[\n\r])*?)\\(var|simplify)/m;
+  const cmdre = /^((?:.|[\n\r])*?)\\(var|simplify)(?![a-zA-Z])/m;
   const out: string[] = [];
   let m = s.match(cmdre);
   while (m) {

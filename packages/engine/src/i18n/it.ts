@@ -59,6 +59,7 @@ export const it: Record<string, string> = {
   "jme.display.collectRuleset.no sets": "Per comporre un insieme di regole serve la lista degli insiemi definiti",
   "jme.display.collectRuleset.set not defined": "L'insieme di regole {name} non è definito",
   "jme.display.unknown token type": "Non so rendere un token di tipo {type}",
+  "jme.display.wrong number of arguments": "{name} è chiamata con {count} argomenti, un numero che nessuna definizione accetta",
   "jme.display.simplifyTree.stuck in a loop":
     "La semplificazione di {expr} è entrata in un ciclo: le regole si annullano a vicenda",
   "jme.evaluate.no scope given": "Per valutare un'espressione serve uno scope",
@@ -262,6 +263,9 @@ export const it: Record<string, string> = {
   // equivalente upstream: rifiutano funzionalità fuori ambito (decisioni 1-4
   // del brief del Task 9).
   "question.error": "Domanda {number}: {message}",
+  "question.error in advice": "Errore nel suggerimento", // nostra, giro di correzioni 1
+  "question.error in part prompt": "Errore nella consegna della parte {path}", // nostra, giro di correzioni 1
+  "question.error in statement": "Errore nel testo dell'esercizio", // nostra, giro di correzioni 1
   "question.function.async not supported":
     "La funzione {name} è asincrona (type: \"promise\"): il motore è sincrono e non la supporta", // nostra
   "question.no such part": "Non trovo la parte {path}",

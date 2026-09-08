@@ -187,71 +187,82 @@ describe("verificaSuSemi", () => {
     }
   });
 
-  it("un comando LaTeX che condivide il prefisso \\var (\\varphi) non manda in eccezione la verifica (giro 3)", () => {
+  it("un comando LaTeX che condivide il prefisso \\var (\\varphi) non e' piu' un difetto: il motore e' stato corretto", () => {
     // \varphi, \vartheta, \varepsilon... condividono il prefisso letterale
-    // "\var" col marcatore di sostituzione: texsplit (il motore) cerca
-    // solo quel prefisso, senza un confine di parola, e senza una graffa
-    // subito dopo lancia "manca il parametro" — loadQuestion incontra lo
-    // STESSO errore piu' avanti (fase caricamento), quindi un esercizio
-    // di trigonometria con \varphi nel testo e' genuinamente rotto. Prima
-    // di questa correzione pero' il controllo statico (che gira PRIMA di
-    // loadQuestion) non intercettava quel lancio: scappava non gestito da
-    // verificaSuSemi invece di diventare un esito normale — un problema
-    // suo, non dell'esercizio.
+    // "\var" col marcatore di sostituzione: prima della correzione del
+    // motore (packages/engine/src/jme/subvars.ts, `texsplit`) questo
+    // mandava in errore sia il controllo statico sia loadQuestion, perche'
+    // texsplit cercava solo quel prefisso, senza un confine di parola.
+    // `texsplit` riconosce ora \var/\simplify solo quando il nome del
+    // comando non prosegue in altre lettere (lookahead negativo): \varphi
+    // passa intatto, e un esercizio di trigonometria che lo usa nel testo
+    // valida come qualunque altro — questo test, che prima pinnava
+    // l'esito difettoso, ora pinna che non lo e' piu'.
     const e: EsercizioEditor = { ...base, testo: "L'angolo \\(\\varphi\\) e' acuto" };
     let esito: ReturnType<typeof verificaSuSemi> | undefined;
     expect(() => {
       esito = verificaSuSemi(versoNumbas(e));
     }).not.toThrow();
-    expect(esito?.ok).toBe(false);
-    if (esito && !esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("varphi");
-    }
+    expect(esito).toEqual({ ok: true });
   });
 
-  it("il difetto sqrt() reso con 'undefined' viene intercettato nel testo dell'esercizio (giro 3)", () => {
+  it("il difetto sqrt() reso con 'undefined' e' intercettato al caricamento, non piu' nel testo (giro 3, motore corretto)", () => {
     // \simplify{sqrt()} senza graffe di sostituzione interne: il
     // controllo statico non lo vede (non c'e' nessun identificatore da
     // estrarre — "sqrt()" non ha un {...} dentro, vedi identificatoriTesto
-    // in verifica.ts), quindi e' il controllo a runtime sul testo GIA'
-    // sostituito a doverlo intercettare. Pin di quel controllo: prima di
-    // questa correzione nessun test lo raggiungeva piu', perche' ogni caso
-    // a forma di \var{} viene ora intercettato prima dal controllo
-    // statico.
+    // in verifica.ts). Prima della correzione del motore
+    // (display-texifier.ts, `texFunction`) il controllo a runtime sul
+    // testo GIA' sostituito doveva intercettarlo (fase "testo", messaggio
+    // con la stringa "undefined"): ora `\simplify{sqrt()}` fa LANCIARE
+    // `loadQuestion` stesso, con l'arita' sbagliata come vero motivo — il
+    // difetto emerge prima, e la fase diventa "caricamento".
+    //
+    // Giro di correzioni 1: `question.ts` avvolge ora `substituteHtml`
+    // dell'enunciato con `Question#error("question.error in statement",
+    // ...)` (come gia' fa per le variabili, `variable.error in variable
+    // definition`): il messaggio nomina di nuovo il campo ("nel testo
+    // dell'esercizio"), non piu' la causa profonda ("sqrt e' chiamata con
+    // ...") — che resta comunque nella catena delle chiavi dell'errore,
+    // non nel testo piatto che `errorMessageIn` estrae qui (lo stesso
+    // compromesso che l'errore di definizione di una variabile fa gia').
     const e: EsercizioEditor = { ...base, testo: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
-      expect(esito.messaggio).toContain("undefined");
+      expect(esito.fase).toBe("caricamento");
+      expect(esito.messaggio).toContain("testo dell'esercizio");
+      expect(esito.messaggio).not.toContain("undefined");
     }
   });
 
-  it("lo stesso difetto viene intercettato anche nel suggerimento, non solo nel testo (giro 3)", () => {
-    // Prima di questa correzione il controllo a runtime guardava solo
-    // statementHtml: lo stesso \simplify{sqrt()} scritto nel suggerimento
-    // (il campo piu' denso di riferimenti a variabili nel corpus reale)
-    // restituiva ok:true — il difetto per cui la fase "testo" esiste
-    // proprio non veniva visto, nel campo che il corpus usa di piu'.
+  it("lo stesso difetto e' intercettato anche nel suggerimento, con lo stesso campo nominato (giro 3, motore corretto)", () => {
+    // Come sopra: `\simplify{sqrt()}` nel suggerimento (il campo piu'
+    // denso di riferimenti a variabili nel corpus reale) fa fallire
+    // `loadQuestion` prima ancora che `testiSostituiti` legga
+    // `adviceHtml` — fase "caricamento", non piu' "testo". Il campo resta
+    // nominato (giro di correzioni 1: `question.error in advice`).
     const e: EsercizioEditor = { ...base, suggerimento: "\\(\\simplify{sqrt()}\\)" };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
+      expect(esito.fase).toBe("caricamento");
       expect(esito.messaggio).toContain("suggerimento");
     }
   });
 
-  it("lo stesso difetto viene intercettato anche nella consegna sostituita di una parte (giro 3)", () => {
+  it("lo stesso difetto e' intercettato anche nella consegna di una parte, col percorso nominato (giro 3, motore corretto)", () => {
+    // Giro di correzioni 1: `question.error in part prompt` nomina il
+    // percorso della parte (`p0`), come fa gia' `campiSceltaGrezzi` in
+    // fase "testo" per le scelte a risposta multipla, sotto.
     const e: EsercizioEditor = { ...base, parti: [{ tipo: "numerica",
       consegna: "\\(\\simplify{sqrt()}\\)", punti: 2,
       valore: "a", tolleranza: { tipo: "esatta" } }] };
     const esito = verificaSuSemi(versoNumbas(e));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.fase).toBe("testo");
+      expect(esito.fase).toBe("caricamento");
       expect(esito.messaggio).toContain("consegna");
+      expect(esito.messaggio).toContain("p0");
     }
   });
 
@@ -452,9 +463,11 @@ describe("verificaSuSemi", () => {
     // `variables.substituteHtml` sullo scope della parte) — lo stesso
     // meccanismo, non un secondo. Lo stesso identico \simplify{sqrt()} che
     // nello statement viene gia' rifiutato ("il difetto sqrt() reso con
-    // 'undefined' viene intercettato nel testo dell'esercizio", sopra) qui
-    // passava indenne quando scritto in una risposta proposta o nella sua
-    // spiegazione.
+    // 'undefined' e' intercettato al caricamento...", sopra — oggi in fase
+    // "caricamento", non piu' "testo") qui passava indenne quando scritto
+    // in una risposta proposta o nella sua spiegazione: qui la fase resta
+    // "testo", perche' `campiSceltaGrezzi` la sostituisce e cattura
+    // l'errore da sola, con lo stesso `try`/`catch` di sempre.
     it("\\simplify{sqrt()} in una risposta proposta (choices) viene intercettato", () => {
       const e: EsercizioEditor = { ...base, testo: "x",
         parti: [{ tipo: "scelta", consegna: "Quale?", punti: 2,
@@ -463,7 +476,11 @@ describe("verificaSuSemi", () => {
       expect(esito.ok).toBe(false);
       if (!esito.ok) {
         expect(esito.fase).toBe("testo");
-        expect(esito.messaggio).toContain("undefined");
+        // Prima della correzione del motore (display-texifier.ts) questo
+        // renderizzava "undefined"; ora `variables.substituteHtml` lancia
+        // con l'arita' sbagliata come vero motivo.
+        expect(esito.messaggio).toContain("sqrt");
+        expect(esito.messaggio).not.toContain("undefined");
         expect(esito.messaggio).toContain("risposta");
       }
     });
@@ -477,7 +494,8 @@ describe("verificaSuSemi", () => {
       expect(esito.ok).toBe(false);
       if (!esito.ok) {
         expect(esito.fase).toBe("testo");
-        expect(esito.messaggio).toContain("undefined");
+        expect(esito.messaggio).toContain("sqrt");
+        expect(esito.messaggio).not.toContain("undefined");
         expect(esito.messaggio).toContain("spiegazione");
       }
     });
@@ -532,5 +550,35 @@ describe("verificaSuSemi", () => {
         expect(esito.messaggio).toContain("non valuta a un numero finito");
       }
     });
+  });
+});
+
+function questionConStatement(statement: string) {
+  return {
+    name: "T", statement, advice: "", variables: {},
+    variablesTest: { condition: "", maxRuns: 10 },
+    ungrouped_variables: [], variable_groups: [], functions: {}, rulesets: {},
+    parts: [{ type: "numberentry", marks: 1, prompt: "<p>x</p>", minValue: "1", maxValue: "1" }],
+  };
+}
+
+describe("il messaggio di caricamento dice DOVE e PERCHE'", () => {
+  // Correggere il difetto dell'arità nel motore ha spostato l'intercettazione
+  // di `\simplify{sqrt()}` dalla fase "testo" (dopo la sostituzione, con il
+  // campo nominato) alla fase "caricamento" (prima, con la ragione esatta).
+  // Guadagno sul perché, perdita sul dove: `Question` avvolge l'errore per
+  // dire quale campo, ma la causa profonda finiva in `originalError`, che
+  // nessuno in `src/` cammina. Questi due test tengono insieme i due pezzi —
+  // e falliscono se un giorno se ne perde uno.
+  it("nomina il campo", () => {
+    const esito = verificaSuSemi(questionConStatement("<p>\\(\\simplify{ sqrt() }\\)</p>"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) expect(esito.messaggio).toContain("testo dell'esercizio");
+  });
+
+  it("nomina anche la causa, non solo il campo", () => {
+    const esito = verificaSuSemi(questionConStatement("<p>\\(\\simplify{ sqrt() }\\)</p>"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) expect(esito.messaggio).toContain("sqrt");
   });
 });

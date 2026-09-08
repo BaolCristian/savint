@@ -1,4 +1,5 @@
 import {
+  EngineError,
   errorMessageIn,
   jme,
   loadQuestion,
@@ -142,19 +143,19 @@ function erroreTestoStatico(question: NumbasQuestionJSON): EsitoVerifica | undef
     try {
       identificatori = identificatoriTesto(campo.testo);
     } catch (e) {
-      // `texsplit` (il motore) riconosce SOLO il prefisso letterale
-      // "\var" (jme.js:443-494 upstream, non un difetto del port): un
-      // comando LaTeX che comincia con quelle quattro lettere e non è
-      // seguito da `{` — `\varphi`, `\vartheta`, `\varepsilon`, le
-      // varianti greche che un esercizio di trigonometria usa — fa
-      // fallire la ricerca dell'argomento invece di essere riconosciuto
-      // come "non è \var". `loadQuestion` incontrerebbe lo STESSO errore
-      // più avanti (fase caricamento: verificato che il messaggio è
-      // identico) — qui, siccome il controllo statico gira PRIMA del
-      // ciclo sui semi, va intercettato con lo stesso trattamento
-      // educato: un esito da riportare, non un'eccezione che scappa da
-      // `verificaSuSemi`. Limite noto del motore (upstream), non
-      // corretto qui — vedi il rapporto del task.
+      // Qui NON si arriva più per `\varphi` e parenti: `texsplit`
+      // riconosceva il solo prefisso letterale "\var", quindi ogni
+      // comando LaTeX che comincia con quelle quattro lettere senza
+      // essere seguito da `{` — le varianti greche che un esercizio di
+      // trigonometria usa — faceva fallire la ricerca dell'argomento. Era
+      // un difetto condiviso con Numbas originale ed è stato corretto nel
+      // motore, come divergenza deliberata (vedi DIVERGENCES.md).
+      //
+      // Il `try` resta perché `texsplit` può fallire per altre ragioni, e
+      // perché il controllo statico gira PRIMA del ciclo sui semi: un
+      // errore qui deve diventare un esito da riportare, non
+      // un'eccezione che scappa da `verificaSuSemi` — chi chiama si
+      // aspetta un valore su cui decidere.
       return { ok: false, seme: 0, fase: "testo", messaggio: `${campo.descrizione}: ${errorMessageIn(e, "it")}` };
     }
     const nome = identificatori.find((n) => !dichiarati.has(n));
@@ -475,6 +476,27 @@ export type EsitoVerifica =
  * (misurato nel rapporto del task). Non è un limite tecnico del motore, è
  * un compromesso dichiarato fra copertura e costo per ogni salvataggio —
  * va discusso se la misura cambia, non alzato in silenzio. */
+/** Il messaggio di un errore del motore, con la sua causa profonda in coda.
+ *
+ * `Question` avvolge gli errori di sostituzione per dire QUALE campo li ha
+ * causati ("Errore nel testo dell'esercizio"), e il perché finisce dentro
+ * `originalError`. Utile — ma solo per chi cammina la catena, e nessuno in
+ * `src/` lo fa: al docente arrivava il campo senza la ragione.
+ *
+ * Prima della correzione del motore un `\simplify{sqrt()}` veniva
+ * intercettato dopo la sostituzione, e il messaggio diceva sia dove sia,
+ * vagamente, cosa. Ora il motore lancia prima — meglio, perché la ragione è
+ * esatta — ma senza questa funzione si perderebbe. Qui si rimettono insieme
+ * i due pezzi: il campo dall'involucro esterno, la ragione dal nucleo. */
+function messaggioConCausa(e: unknown): string {
+  const esterno = errorMessageIn(e, "it");
+  let cur: unknown = e;
+  while (cur instanceof EngineError && cur.originalError !== undefined) cur = cur.originalError;
+  if (cur === e) return esterno;
+  const interno = errorMessageIn(cur, "it");
+  return interno && interno !== esterno ? `${esterno}: ${interno}` : esterno;
+}
+
 export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFINITI): EsitoVerifica {
   // Controllo statico, non per-seme: quali identificatori i testi
   // referenziano via \var{}/\simplify{} non dipende dal seme (solo i
@@ -505,7 +527,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
     try {
       caricata = loadQuestion(question as NumbasQuestionJSON, { seed: String(seme), locale: "it" });
     } catch (e) {
-      return { ok: false, seme, fase: "caricamento", messaggio: errorMessageIn(e, "it") };
+      return { ok: false, seme, fase: "caricamento", messaggio: messaggioConCausa(e) };
     }
 
     // Nessuno dei testi GIÀ sostituiti (enunciato, suggerimento, consegna

@@ -66,11 +66,25 @@ export function setErrorCarriedForwardBackReferences(
  * dal tema al momento di costruire l'HTML (`display/part.js`), con
  * `jme.contentsubvars` sullo scope della parte. Qui la sostituzione avviene
  * una volta sola al caricamento, perché il motore non ha un display.
- * Vedi DIVERGENCES.md. */
-export function substitutePartPrompts(parts: PartBase[]): void {
+ * Vedi DIVERGENCES.md.
+ *
+ * `error` è `Question#error` del chiamante (giro di correzioni 1): senza
+ * avvolgere `substituteHtml` con esso, un difetto di sostituzione nella
+ * consegna di una parte arriva senza dire QUALE parte — qui la chiave
+ * `question.error in part prompt` nomina il suo percorso (`p.path`), e la
+ * catena resta intera (la causa vera è ancora raggiungibile da
+ * `engineErrorKeys`). */
+export function substitutePartPrompts(
+  parts: PartBase[],
+  error: (message: string, args?: Record<string, string | number>, originalError?: unknown) => never,
+): void {
   const visit = (p: PartBase): void => {
     if (p.promptHtml) {
-      p.promptHtml = substituteHtml(p.promptHtml, p.getScope());
+      try {
+        p.promptHtml = substituteHtml(p.promptHtml, p.getScope());
+      } catch (e) {
+        error("question.error in part prompt", { path: p.path }, e);
+      }
     }
     p.gaps.forEach(visit);
     p.alternatives.forEach(visit);
