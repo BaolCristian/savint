@@ -8,10 +8,12 @@ vi.mock("@/lib/esercizi/classi", () => ({
   iscrittiDellaClasse: vi.fn(),
 }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDellaClasse: vi.fn() }));
-// `page.tsx` legge `codice` direttamente da prisma (come già fa per
+// `page.tsx` prende `codice` da `classiDelDocente`, insieme al resto di
+// "una classe come la vede il suo docente" (rilievo della revisione del
+// Task 4: prima se lo rileggeva con una findMany, e la forma della tabella
+// Classe era conosciuta in due posti). Il vecchio commento diceva (per
 // `compitiDellaClasse`): `classiDelDocente` non lo espone nel suo contratto
 // di dominio, che qui non si tocca (task 4).
-vi.mock("@/lib/db/client", () => ({ prisma: { classe: { findMany: vi.fn() } } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 // Il traduttore restituisce chiave e valori: le asserzioni parlano di quale
 // messaggio è stato scelto, non del testo italiano di quel messaggio.
@@ -30,7 +32,6 @@ vi.mock("next-intl", () => ({
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDisponibili, classiDelDocente, iscrittiDellaClasse } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
-import { prisma } from "@/lib/db/client";
 import Page from "../page";
 
 beforeEach(() => {
@@ -39,7 +40,6 @@ beforeEach(() => {
   vi.mocked(classiDelDocente).mockReset();
   vi.mocked(compitiDellaClasse).mockReset().mockResolvedValue([]);
   vi.mocked(iscrittiDellaClasse).mockReset().mockResolvedValue({ ok: true, righe: [] });
-  vi.mocked(prisma.classe.findMany).mockReset().mockResolvedValue([]);
 });
 
 async function rendi() {
@@ -60,7 +60,7 @@ describe("pagina delle classi del docente", () => {
       { id: "c2", name: "2B", yearLevel: 2 },
     ]);
     vi.mocked(classiDelDocente).mockResolvedValue([
-      { id: "c1", name: "1A", yearLevel: 1, studenti: 20 },
+      { id: "c1", name: "1A", yearLevel: 1, studenti: 20, codice: null },
     ] as never);
 
     await rendi();
@@ -85,7 +85,7 @@ describe("pagina delle classi del docente", () => {
       { id: "c2", name: "2B", yearLevel: 2 },
     ]);
     vi.mocked(classiDelDocente).mockResolvedValue([
-      { id: "c1", name: "1A", yearLevel: 1, studenti: 20 },
+      { id: "c1", name: "1A", yearLevel: 1, studenti: 20, codice: null },
     ] as never);
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })) as typeof fetch;
 
@@ -133,7 +133,7 @@ describe("pagina delle classi del docente", () => {
     beforeEach(() => {
       vi.mocked(classiDisponibili).mockResolvedValue([{ id: "c1", name: "1A", yearLevel: 1 }]);
       vi.mocked(classiDelDocente).mockResolvedValue([
-        { id: "c1", name: "1A", yearLevel: 1, studenti: 20 },
+        { id: "c1", name: "1A", yearLevel: 1, studenti: 20, codice: null },
       ] as never);
     });
 
@@ -258,9 +258,8 @@ describe("pagina delle classi del docente", () => {
     beforeEach(() => {
       vi.mocked(classiDisponibili).mockResolvedValue([{ id: "c1", name: "1A", yearLevel: 1 }]);
       vi.mocked(classiDelDocente).mockResolvedValue([
-        { id: "c1", name: "1A", yearLevel: 1, studenti: 2 },
+        { id: "c1", name: "1A", yearLevel: 1, studenti: 2, codice: "AB3XQ7" },
       ] as never);
-      vi.mocked(prisma.classe.findMany).mockResolvedValue([{ id: "c1", codice: "AB3XQ7" }] as never);
     });
 
     it("mostra il codice, grande e leggibile", async () => {
@@ -270,7 +269,11 @@ describe("pagina delle classi del docente", () => {
     });
 
     it("una classe senza codice (solo da gruppo Google) non mostra rigenerazione", async () => {
-      vi.mocked(prisma.classe.findMany).mockResolvedValue([{ id: "c1", codice: null }] as never);
+      // Una classe nata da un gruppo Google non ha mai avuto un codice:
+      // niente da rigenerare, quindi niente bottone.
+      vi.mocked(classiDelDocente).mockResolvedValue([
+        { id: "c1", name: "1A", yearLevel: 1, studenti: 2, codice: null },
+      ]);
       await rendi();
       expect(screen.queryByRole("button", { name: "rigenera" })).toBeNull();
     });
@@ -342,9 +345,8 @@ describe("pagina delle classi del docente", () => {
     beforeEach(() => {
       vi.mocked(classiDisponibili).mockResolvedValue([{ id: "c1", name: "1A", yearLevel: 1 }]);
       vi.mocked(classiDelDocente).mockResolvedValue([
-        { id: "c1", name: "1A", yearLevel: 1, studenti: 2 },
+        { id: "c1", name: "1A", yearLevel: 1, studenti: 2, codice: "AB3XQ7" },
       ] as never);
-      vi.mocked(prisma.classe.findMany).mockResolvedValue([{ id: "c1", codice: "AB3XQ7" }] as never);
     });
 
     it("mostra ciascuno studente con la sua provenienza, gruppo o codice", async () => {

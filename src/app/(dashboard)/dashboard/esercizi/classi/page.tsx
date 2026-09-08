@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDisponibili, classiDelDocente, iscrittiDellaClasse } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
-import { prisma } from "@/lib/db/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ClassiForm } from "./classi-form";
@@ -48,26 +47,15 @@ export default async function Page() {
     };
   }
 
-  // Task 4: per ciascuna classe insegnata, il codice (se ce l'ha — solo le
-  // classi create a mano o adottate, vedi risolviClasse) e l'elenco degli
-  // iscritti con la loro provenienza. `classiDelDocente` non espone
-  // `codice` nel suo contratto di dominio (che qui non si tocca): si legge
-  // direttamente da prisma, come questa stessa pagina già fa per
-  // `compitiDellaClasse` qui sopra, e come la pagina studente
-  // (`studente/page.tsx`) già fa per `prisma.esercizio`/`prisma.compito`.
-  // `iscrittiDellaClasse` è una lettura (nessuna rotta HTTP la espone,
-  // stessa scelta di `classiDisponibili`/`classiDelDocente` sopra) che
-  // riverifica da sé che il docente insegni la classe: qui è sempre vero,
-  // essendo `insegnate` la stessa fonte, ma è il contratto della funzione.
-  const codici = new Map(
-    (
-      await prisma.classe.findMany({
-        where: { id: { in: insegnateIds.length ? insegnateIds : ["-"] } },
-        select: { id: true, codice: true },
-      })
-    ).map((c) => [c.id, c.codice] as const),
-  );
-
+  // Il codice arriva da `classiDelDocente` insieme al resto: fa parte di
+  // "una classe come la vede il suo docente", e tenerlo li' evita che la
+  // forma della tabella Classe sia conosciuta anche qui. E' nullo per le
+  // classi nate da un gruppo Google, che un codice non l'hanno mai avuto.
+  //
+  // `iscrittiDellaClasse` e' una lettura (nessuna rotta HTTP la espone,
+  // stessa scelta di `classiDisponibili`/`classiDelDocente`) che riverifica
+  // da se' che il docente insegni la classe: qui e' sempre vero, essendo
+  // `insegnate` la stessa fonte, ma e' il contratto della funzione.
   const dettagli = await Promise.all(
     insegnate.map(async (c) => {
       const esito = await iscrittiDellaClasse(c.id, session.user.id);
@@ -75,7 +63,7 @@ export default async function Page() {
       return {
         id: c.id,
         nome: c.name,
-        codice: codici.get(c.id) ?? null,
+        codice: c.codice,
         iscritti: righe.map((r) => ({
           studentId: r.studentId,
           nome: r.nome ?? t("iscrittoSenzaNome"),

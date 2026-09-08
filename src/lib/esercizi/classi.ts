@@ -336,6 +336,12 @@ export async function classiDelDocente(teacherId: string) {
     name: r.classe.name,
     yearLevel: r.classe.yearLevel,
     studenti: r.classe._count.studenti,
+    // Il codice fa parte di "una classe come la vede il suo docente": senza
+    // di qui la pagina se lo rileggeva da sola con una findMany, e la forma
+    // della tabella Classe finiva conosciuta in due posti invece che in uno.
+    // E' nullo per le classi nate da un gruppo Google, che un codice non
+    // l'hanno mai avuto.
+    codice: r.classe.codice,
   }));
 }
 
