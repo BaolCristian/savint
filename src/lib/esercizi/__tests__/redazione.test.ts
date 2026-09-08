@@ -5,7 +5,7 @@ import path from "path";
 import { prisma } from "@/lib/db/client";
 import { loadQuestion } from "@savint/engine";
 import {
-  creaEsercizio, salvaNuovaVersione, duplicaEsercizio, elencoRedazione, caricaPerEditor,
+  creaEsercizio, salvaNuovaVersione, duplicaEsercizio, elencoRedazione, caricaPerEditor, caricaPerAnteprima,
 } from "../redazione";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
@@ -454,5 +454,73 @@ describe("elencoRedazione", () => {
       `${PREFIX}01-equazione-primo-grado`,
       `${PREFIX}02-scomposizione-polinomi`,
     ]);
+  });
+});
+
+// Il gap che questo task chiude: un docente non poteva vedere sei degli
+// otto esercizi seminati, perché l'unico posto dove il player rendeva un
+// esercizio fuori dalla pagina dello studente era l'anteprima dell'editor —
+// che apre solo ciò che `daNumbas` sa ricostruire. `caricaPerAnteprima`
+// prende invece SEMPRE il contenuto grezzo dell'ultima versione, mai
+// passato da `daNumbas`: a differenza di `caricaPerEditor` sopra, un
+// esercizio non rappresentabile qui è comunque `ok: true`.
+describe("caricaPerAnteprima", () => {
+  it("un esercizio inesistente restituisce non_trovato", async () => {
+    const esito = await caricaPerAnteprima("non-esiste");
+    expect(esito).toEqual({ ok: false, motivo: "non_trovato" });
+  });
+
+  it("un esercizio senza nessuna versione salvata restituisce senza_versione, mai un player vuoto", async () => {
+    const esercizio = await prisma.esercizio.create({
+      data: { title: `${PREFIX}Senza versione`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+    });
+
+    const esito = await caricaPerAnteprima(esercizio.id);
+    expect(esito).toEqual({ ok: false, motivo: "senza_versione" });
+  });
+
+  it("un esercizio modificabile restituisce il contenuto grezzo della sua ultima versione", async () => {
+    const creato = await creaEsercizio(base, docenteId);
+    if (!creato.ok) throw new Error("creazione fallita");
+
+    const esito = await caricaPerAnteprima(creato.esercizioId);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.titolo).toBe(base.meta.titolo);
+    expect(esito.versione).toBe(1);
+    expect((esito.content as { statement: string }).statement).toBeDefined();
+  });
+
+  // Il caso che conta di più: `caricaPerEditor` rifiuterebbe questo stesso
+  // esercizio (`m_n_2`, che `daNumbas` non sa ricostruire) con
+  // `non_rappresentabile` — `caricaPerAnteprima` deve invece mostrarlo,
+  // esattamente com'è, perché è precisamente per questi esercizi che
+  // l'anteprima esiste.
+  it("un esercizio che l'editor non sa ricostruire viene comunque restituito, col contenuto grezzo", async () => {
+    const esercizio = await prisma.esercizio.create({
+      data: { title: `${PREFIX}Anteprima non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+    });
+    const contenutoGrezzo = { name: "x", statement: "<p>x</p>", variables: {}, parts: [{ type: "m_n_2", marks: 1 }] };
+    await prisma.esercizioVersione.create({
+      data: { esercizioId: esercizio.id, version: 1, content: contenutoGrezzo, hash: "hash-anteprima-non-modificabile" },
+    });
+
+    const esito = await caricaPerAnteprima(esercizio.id);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.content).toEqual(contenutoGrezzo);
+  });
+
+  it("con più versioni salvate restituisce sempre l'ultima, mai la prima", async () => {
+    const creato = await creaEsercizio(base, docenteId);
+    if (!creato.ok) throw new Error("creazione fallita");
+    const salvato = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "seconda versione" });
+    expect(salvato.ok).toBe(true);
+
+    const esito = await caricaPerAnteprima(creato.esercizioId);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.versione).toBe(2);
+    expect((esito.content as { statement: string }).statement).toContain("seconda versione");
   });
 });

@@ -1161,7 +1161,8 @@
       "rimuovi": "Rimuovi",
       "aggiungiEsercizi": "Aggiungi esercizi",
       "nessunEsercizioDaAggiungere": "Non ci sono altri esercizi da aggiungere.",
-      "aggiungi": "Aggiungi"
+      "aggiungi": "Aggiungi",
+      "anteprima": "Anteprima"
     },
     "batterie": {
       "titolo": "Batterie",
@@ -1323,8 +1324,19 @@
         "autoreSconosciuto": "autore sconosciuto",
         "motivoGenerico": "Questo esercizio non può essere aperto in questo editor.",
         "nonModificabileTitolo": "Non modificabile in questo editor",
-        "nessunEsercizio": "Nessun esercizio ancora."
+        "nessunEsercizio": "Nessun esercizio ancora.",
+        "anteprima": "Anteprima"
       }
+    },
+    "anteprimaDocente": {
+      "titolo": "Anteprima esercizio",
+      "torna": "Torna alla redazione",
+      "versione": "Versione {numero}",
+      "spiegazione": "Quello che vedi qui è esattamente quello che vedrebbe uno studente: le risposte che dai non creano nessun tentativo e non vengono salvate da nessuna parte.",
+      "seme": "Sorteggio: {seme}",
+      "rigenera": "Un altro sorteggio",
+      "senzaVersioneTitolo": "Nessuna versione salvata",
+      "senzaVersioneTesto": "Questo esercizio non ha ancora nessuna versione salvata: non c'è niente da mostrare in anteprima."
     }
   }
 }

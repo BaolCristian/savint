@@ -52,6 +52,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           nessunoFuori: t("nessunEsercizioDaAggiungere"),
           aggiungi: t("aggiungi"),
           erroreGenerico: t("erroreGenerico"),
+          anteprima: t("anteprima"),
         }}
       />
     </div>

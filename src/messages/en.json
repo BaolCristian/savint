@@ -1161,7 +1161,8 @@
       "rimuovi": "Remove",
       "aggiungiEsercizi": "Add exercises",
       "nessunEsercizioDaAggiungere": "There are no other exercises to add.",
-      "aggiungi": "Add"
+      "aggiungi": "Add",
+      "anteprima": "Preview"
     },
     "batterie": {
       "titolo": "Batteries",
@@ -1323,8 +1324,19 @@
         "autoreSconosciuto": "unknown author",
         "motivoGenerico": "This exercise can't be opened in this editor.",
         "nonModificabileTitolo": "Not editable in this editor",
-        "nessunEsercizio": "No exercises yet."
+        "nessunEsercizio": "No exercises yet.",
+        "anteprima": "Preview"
       }
+    },
+    "anteprimaDocente": {
+      "titolo": "Exercise preview",
+      "torna": "Back to exercise editing",
+      "versione": "Version {numero}",
+      "spiegazione": "What you see here is exactly what a student would see: answers you give don't create any attempt and aren't saved anywhere.",
+      "seme": "Draw: {seme}",
+      "rigenera": "Draw again",
+      "senzaVersioneTitolo": "No version saved",
+      "senzaVersioneTesto": "This exercise doesn't have a saved version yet: there's nothing to preview."
     }
   }
 }
