@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/db/client";
 import { allineaClassi, classiDelDocente, creaClasse, dichiaraInsegnamento } from "../classi";
 
@@ -14,13 +14,28 @@ const g = (slug: string, nome: string, anno: number | null) => ({ email: `${P}${
 // prefisso di questo file (mai un deleteMany su tutta la tabella).
 const filtroClassiTest = { OR: [{ googleGroupEmail: { startsWith: P } }, { name: { startsWith: P } }] };
 
-beforeEach(async () => {
+async function pulisci(): Promise<void> {
   await prisma.classeStudente.deleteMany({ where: { classe: filtroClassiTest } });
   await prisma.classeDocente.deleteMany({ where: { classe: filtroClassiTest } });
   await prisma.classe.deleteMany({ where: filtroClassiTest });
   await prisma.user.deleteMany({ where: { email: { startsWith: P } } });
+}
+
+beforeEach(async () => {
+  await pulisci();
   studentId = (await prisma.user.create({ data: { email: email("s"), name: "S", role: "STUDENT" } })).id;
   teacherId = (await prisma.user.create({ data: { email: email("d"), name: "D", role: "TEACHER" } })).id;
+});
+
+// Senza questo, l'ultimo test del file lascia le sue righe (Classe,
+// ClasseStudente, ClasseDocente, User) nel database di sviluppo condiviso
+// per sempre: beforeEach pulisce solo PRIMA di ogni test, mai dopo l'ultimo.
+// ClasseDocente e ClasseStudente non cadono in cascata dalla sola
+// cancellazione di User (cadono da quella di Classe, ma solo se la
+// raggiungiamo), quindi pulisci() li cancella esplicitamente lui stesso,
+// nell'ordine giusto (figli prima dei genitori).
+afterAll(async () => {
+  await pulisci();
 });
 
 describe("allineamento delle classi", () => {
@@ -145,6 +160,55 @@ describe("allineamento delle classi", () => {
     expect(classi).toHaveLength(2);
     const invariata = classi.find((c) => c.id === primaClasse.id);
     expect(invariata?.googleGroupEmail).toBe(`${P}prima@scuola.it`);
+  });
+
+  it("l'adozione non tocca una classe archiviata, anche se il nome coincide", async () => {
+    // Giro di correzioni 1: la query del candidato non escludeva archivedAt.
+    // Una classe archiviata è invisibile a classiDelDocente/classiDisponibili
+    // (entrambe filtrano archivedAt: null): se l'adozione le scrivesse dentro
+    // l'indirizzo di un gruppo vivo, gli studenti di quel gruppo sparirebbero
+    // dall'elenco del docente — la stessa disattenzione silenziosa che
+    // questo task esiste per evitare, un angolo più in là.
+    const nome = `${P}2A archiviata`;
+    const aMano = await creaClasse(teacherId, { nome, anno: 2 });
+    await prisma.classe.update({ where: { id: aMano.id }, data: { archivedAt: new Date() } });
+
+    const emailGruppo = `${P}allievi.archiviata@scuola.it`;
+    await allineaClassi(studentId, [{ email: emailGruppo, name: nome, yearLevel: 2 }]);
+
+    const archiviata = await prisma.classe.findUniqueOrThrow({ where: { id: aMano.id } });
+    expect(archiviata.googleGroupEmail).toBeNull(); // non adottata
+    expect(archiviata.archivedAt).not.toBeNull();
+
+    const classi = await prisma.classe.findMany({ where: { name: nome } });
+    expect(classi).toHaveLength(2); // la vecchia archiviata resta, il gruppo ne crea una nuova
+    const nuova = classi.find((c) => c.id !== aMano.id);
+    expect(nuova?.googleGroupEmail).toBe(emailGruppo);
+  });
+
+  it("due accessi Google concorrenti per un gruppo mai visto prima non si scontrano", async () => {
+    // Giro di correzioni 1: il ramo "classe nuova" era un create() nudo,
+    // non più l'upsert() atomico originale. Sotto una vera corsa (due
+    // studenti della stessa classe nuova che accedono insieme il primo
+    // giorno di scuola — proprio lo scenario che questa feature esiste per
+    // servire) la seconda risolviClasse() falliva con un P2002 non gestito,
+    // propagato grezzo fuori da allineaClassi invece di essere assorbito.
+    const altroStudentId = (await prisma.user.create({ data: { email: email("s2"), name: "S2", role: "STUDENT" } })).id;
+    const gruppo = g("4c", "4C", 4);
+
+    const risultati = await Promise.all([
+      allineaClassi(studentId, [gruppo]),
+      allineaClassi(altroStudentId, [gruppo]),
+    ]);
+
+    expect(risultati[0]!.entrate).toHaveLength(1);
+    expect(risultati[1]!.entrate).toHaveLength(1);
+
+    const classi = await prisma.classe.findMany({ where: { googleGroupEmail: `${P}4c@scuola.it` } });
+    expect(classi).toHaveLength(1); // non due, nonostante la corsa
+
+    const iscritti = await prisma.classeStudente.findMany({ where: { classeId: classi[0]!.id } });
+    expect(iscritti).toHaveLength(2);
   });
 
   it("Postgres ammette più righe con lo stesso valore nullo negli indici unici di googleGroupEmail e codice", async () => {

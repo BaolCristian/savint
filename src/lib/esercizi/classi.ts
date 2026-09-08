@@ -5,14 +5,23 @@ import { prisma } from "@/lib/db/client";
 
 /** Trova o crea la classe che corrisponde a un gruppo Google. Tre casi:
  *  1. un gruppo con questo indirizzo esiste già → aggiorna nome e anno.
- *  2. nessun indirizzo così, ma una classe creata a mano (senza indirizzo)
- *     ha lo stesso nome → l'adotta: le scrive dentro l'indirizzo e nient'altro
- *     (non tocca nome, anno, studenti o iscrizioni). Deliberatamente non
- *     tocca mai una classe che ha già un indirizzo, anche se il nome
- *     coincide: quell'indirizzo appartiene a un altro gruppo, e adottare la
- *     classe sbagliata fonderebbe due gruppi di studenti che devono restare
- *     separati.
- *  3. altrimenti → la classe è nuova. */
+ *  2. nessun indirizzo così, ma una classe creata a mano (senza indirizzo),
+ *     non archiviata, ha lo stesso nome → l'adotta: le scrive dentro
+ *     l'indirizzo e nient'altro (non tocca nome, anno, studenti o
+ *     iscrizioni). Deliberatamente non tocca mai una classe che ha già un
+ *     indirizzo, anche se il nome coincide: quell'indirizzo appartiene a un
+ *     altro gruppo, e adottare la classe sbagliata fonderebbe due gruppi di
+ *     studenti che devono restare separati. Esclude anche le classi
+ *     archiviate per lo stesso motivo, dal lato opposto: classiDelDocente e
+ *     classiDisponibili filtrano già archivedAt: null, quindi una classe
+ *     archiviata adottata sparirebbe dall'elenco del docente insieme al
+ *     gruppo appena legato — gli stessi studenti, invisibili.
+ *  3. altrimenti → la classe è nuova: upsert (non create) perché due
+ *     accessi concorrenti per un gruppo mai visto — più studenti della
+ *     stessa classe nuova che accedono insieme, esattamente il giorno in
+ *     cui questa funzione serve di più — possono arrivare qui insieme; il
+ *     secondo trova già scritta la riga del primo invece di scontrarcisi
+ *     con un P2002 non gestito. */
 async function risolviClasse(g: ClassGroup): Promise<Classe> {
   const esistente = await prisma.classe.findUnique({ where: { googleGroupEmail: g.email } });
   if (esistente) {
@@ -23,7 +32,7 @@ async function risolviClasse(g: ClassGroup): Promise<Classe> {
   }
 
   const daAdottare = await prisma.classe.findFirst({
-    where: { googleGroupEmail: null, name: g.name },
+    where: { googleGroupEmail: null, name: g.name, archivedAt: null },
     orderBy: { createdAt: "asc" },
   });
   if (daAdottare) {
@@ -33,8 +42,10 @@ async function risolviClasse(g: ClassGroup): Promise<Classe> {
     });
   }
 
-  return prisma.classe.create({
-    data: { googleGroupEmail: g.email, name: g.name, yearLevel: g.yearLevel },
+  return prisma.classe.upsert({
+    where: { googleGroupEmail: g.email },
+    create: { googleGroupEmail: g.email, name: g.name, yearLevel: g.yearLevel },
+    update: { name: g.name, yearLevel: g.yearLevel },
   });
 }
 
