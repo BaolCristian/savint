@@ -111,7 +111,7 @@ model User {
 
   // Gruppi Google di classe letti all'ultimo login (vedi spec Esercizi 01).
   // Array di { email, name, yearLevel } — null se il cancello non è attivo.
-  classGroups   Json?
+  classGroups Json?
 
   quizzes         Quiz[]
   hostedSessions  Session[]
@@ -119,8 +119,8 @@ model User {
   accounts        Account[]
   sessions        AuthSession[]
   consents        Consent[]
-  reportsMade     Report[]      @relation("reportsMade")
-  reportsResolved Report[]      @relation("reportsResolved")
+  reportsMade     Report[]         @relation("reportsMade")
+  reportsResolved Report[]         @relation("reportsResolved")
   hubLink         HubLink?
   publishDefaults PublishDefaults?
   tentativi       Tentativo[]
@@ -320,8 +320,8 @@ model HubAccount {
   verificationTokens EmailVerificationToken[]
   quizzes            HubQuiz[]
   accessTokens       HubAccessToken[]
-  hubReportsMade     HubReport[]            @relation("hubReportsMade")
-  hubReportsResolved HubReport[]            @relation("hubReportsResolved")
+  hubReportsMade     HubReport[]              @relation("hubReportsMade")
+  hubReportsResolved HubReport[]              @relation("hubReportsResolved")
 
   @@index([role])
   @@map("hub_account")
@@ -517,19 +517,19 @@ model PracticeRun {
 }
 
 model HubReport {
-  id                  String          @id @default(cuid())
-  hubQuizId           String
-  hubQuiz             HubQuiz         @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
-  reporterAccountId   String?
-  reporterAccount     HubAccount?     @relation("hubReportsMade", fields: [reporterAccountId], references: [id], onDelete: SetNull)
-  reporterIpHash      String
-  reason              HubReportReason
-  description         String?
-  status              HubReportStatus @default(PENDING)
-  resolvedAt          DateTime?
-  resolvedBy          String?
-  resolver            HubAccount?     @relation("hubReportsResolved", fields: [resolvedBy], references: [id], onDelete: SetNull)
-  createdAt           DateTime        @default(now())
+  id                String          @id @default(cuid())
+  hubQuizId         String
+  hubQuiz           HubQuiz         @relation(fields: [hubQuizId], references: [id], onDelete: Cascade)
+  reporterAccountId String?
+  reporterAccount   HubAccount?     @relation("hubReportsMade", fields: [reporterAccountId], references: [id], onDelete: SetNull)
+  reporterIpHash    String
+  reason            HubReportReason
+  description       String?
+  status            HubReportStatus @default(PENDING)
+  resolvedAt        DateTime?
+  resolvedBy        String?
+  resolver          HubAccount?     @relation("hubReportsResolved", fields: [resolvedBy], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
 
   @@index([hubQuizId, reporterIpHash, createdAt])
   @@index([status])
@@ -588,7 +588,7 @@ model HubConfig {
 }
 
 model Esercizio {
-  id          String   @id @default(cuid())
+  id          String                 @id @default(cuid())
   title       String
   description String?
   authorId    String?
@@ -596,8 +596,8 @@ model Esercizio {
   topic       String
   tags        String[]
   difficulty  Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   versions    EsercizioVersione[]
   contenitori ContenitoreEsercizio[]
 
@@ -605,13 +605,13 @@ model Esercizio {
 }
 
 model EsercizioVersione {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   esercizioId String
   version     Int
   content     Json
   hash        String
-  createdAt   DateTime @default(now())
-  esercizio   Esercizio @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  esercizio   Esercizio   @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
   tentativi   Tentativo[]
 
   @@unique([esercizioId, version])
@@ -630,33 +630,33 @@ enum TentativoStatus {
 }
 
 model Tentativo {
-  id                  String   @id @default(cuid())
+  id                  String            @id @default(cuid())
   studentId           String
   esercizioVersioneId String
   compitoId           String?
   seed                String
   state               Json?
-  score               Float    @default(0)
-  maxScore            Float    @default(0)
-  status              TentativoStatus @default(IN_PROGRESS)
-  startedAt           DateTime @default(now())
+  score               Float             @default(0)
+  maxScore            Float             @default(0)
+  status              TentativoStatus   @default(IN_PROGRESS)
+  startedAt           DateTime          @default(now())
   completedAt         DateTime?
-  lastActivityAt      DateTime @updatedAt
-  student             User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lastActivityAt      DateTime          @updatedAt
+  student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
   versione            EsercizioVersione @relation(fields: [esercizioVersioneId], references: [id], onDelete: Cascade)
-  compito             Compito? @relation(fields: [compitoId], references: [id], onDelete: SetNull)
+  compito             Compito?          @relation(fields: [compitoId], references: [id], onDelete: SetNull)
 
   @@index([studentId, esercizioVersioneId])
   @@index([lastActivityAt])
 }
 
 model Classe {
-  id               String    @id @default(cuid())
-  googleGroupEmail String    @unique
+  id               String           @id @default(cuid())
+  googleGroupEmail String           @unique
   name             String
   yearLevel        Int?
   archivedAt       DateTime?
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime         @default(now())
   studenti         ClasseStudente[]
   docenti          ClasseDocente[]
   compiti          Compito[]
@@ -666,8 +666,9 @@ model ClasseStudente {
   classeId  String
   studentId String
   joinedAt  DateTime @default(now())
-  classe    Classe @relation(fields: [classeId], references: [id], onDelete: Cascade)
-  studente  User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classe    Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  studente  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   @@id([classeId, studentId])
 }
 
@@ -675,19 +676,20 @@ model ClasseDocente {
   classeId  String
   teacherId String
   createdAt DateTime @default(now())
-  classe    Classe @relation(fields: [classeId], references: [id], onDelete: Cascade)
-  docente   User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classe    Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  docente   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
   @@id([classeId, teacherId])
 }
 
 model Contenitore {
-  id          String   @id @default(cuid())
+  id          String                 @id @default(cuid())
   name        String
   description String?
   createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   User @relation(fields: [createdById], references: [id])
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  createdBy   User                   @relation(fields: [createdById], references: [id])
   esercizi    ContenitoreEsercizio[]
   regole      BatteriaRegola[]
 }
@@ -695,36 +697,38 @@ model Contenitore {
 model ContenitoreEsercizio {
   contenitoreId String
   esercizioId   String
-  addedAt       DateTime @default(now())
+  addedAt       DateTime    @default(now())
   contenitore   Contenitore @relation(fields: [contenitoreId], references: [id], onDelete: Cascade)
   esercizio     Esercizio   @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
+
   @@id([contenitoreId, esercizioId])
 }
 
 model Batteria {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
   description String?
   createdById String
-  createdAt   DateTime @default(now())
-  createdBy   User @relation(fields: [createdById], references: [id])
+  createdAt   DateTime         @default(now())
+  createdBy   User             @relation(fields: [createdById], references: [id])
   regole      BatteriaRegola[]
   compiti     Compito[]
 }
 
 model BatteriaRegola {
-  id            String @id @default(cuid())
+  id            String      @id @default(cuid())
   batteriaId    String
   contenitoreId String
   order         Int
   count         Int
   batteria      Batteria    @relation(fields: [batteriaId], references: [id], onDelete: Cascade)
   contenitore   Contenitore @relation(fields: [contenitoreId], references: [id], onDelete: Restrict)
+
   @@unique([batteriaId, order])
 }
 
 model Compito {
-  id              String    @id @default(cuid())
+  id              String      @id @default(cuid())
   batteriaId      String
   classeId        String
   assignedById    String
@@ -732,10 +736,11 @@ model Compito {
   drawnVersionIds String[]
   opensAt         DateTime?
   dueAt           DateTime?
-  createdAt       DateTime  @default(now())
-  batteria        Batteria @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
-  classe          Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
-  assignedBy      User     @relation(fields: [assignedById], references: [id])
+  createdAt       DateTime    @default(now())
+  batteria        Batteria    @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
+  classe          Classe      @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  assignedBy      User        @relation(fields: [assignedById], references: [id])
   tentativi       Tentativo[]
+
   @@index([classeId, dueAt])
 }

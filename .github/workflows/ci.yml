@@ -63,14 +63,31 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
-      - name: Lint
-        # The repo currently carries a backlog of pre-existing lint errors in
-        # files unrelated to recent work (measured: 123 errors / 80 warnings
-        # across 11 files, well beyond just this change). Failing the whole
-        # workflow on that backlog would make it red from day one and teach
-        # people to ignore it. The step still runs and its output is still
-        # visible in the log (not deleted, not silenced) — it just doesn't
-        # block the job while that backlog is unaddressed.
+      # Il lint gira DUE volte, di proposito.
+      #
+      # Sulla superficie che manteniamo attivamente blocca: oggi è pulita, e
+      # un lint che non blocca su codice pulito non impedisce niente — la
+      # prima violazione nuova entrerebbe senza che nessuno la veda.
+      - name: Lint (superficie mantenuta — blocca)
+        run: >
+          npx eslint --quiet
+          src/lib/esercizi
+          src/app/api/esercizi
+          src/components/esercizi
+          "src/app/(dashboard)/dashboard/esercizi"
+          "src/app/(student)"
+          packages/engine
+
+      # Sul resto del repository non blocca. L'arretrato misurato al
+      # 2026-09-08 è di 123 errori su 79 file, ereditati e non toccati dal
+      # lavoro recente: 102 sono `no-explicit-any`, e 17 sono errori del
+      # compilatore React (Math.random durante il render nelle viste del
+      # quiz dal vivo, setState sincrono dentro un effetto). Questi ultimi
+      # sono difetti veri e vanno affrontati, ma riscrivere 79 file legacy
+      # per far passare la CI e' molto rumore e rischio in codice che oggi
+      # funziona. Il passo resta visibile nel log: non e' cancellato, non e'
+      # silenziato, semplicemente non blocca finche' l'arretrato c'e'.
+      - name: Lint (tutto il repository — non blocca)
         run: npm run lint
         continue-on-error: true
 
