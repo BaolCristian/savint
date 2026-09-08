@@ -1,0 +1,36 @@
+-- Vincolo di unicità PARZIALE su Classe.name: attivo solo per le classi
+-- non archiviate (archivedAt IS NULL). Chiude la corsa fra due creaClasse
+-- concorrenti con lo stesso nome — scenario reale il primo giorno di
+-- scuola, quando più docenti creano classi nello stesso momento — che il
+-- solo pre-check applicativo (un findFirst prima della scrittura) non
+-- basta a impedire: due richieste possono superare entrambe il pre-check
+-- prima che una delle due scriva. Un doppione con questo nome non ha
+-- rimedio nel dominio attuale (non esiste un modo per spostare o
+-- rimuovere uno studente da una classe, quindi due classi non si possono
+-- fondere dopo il fatto), a differenza della rigenerazione del codice
+-- (chiude una porta, non tocca nessuno) o dell'adozione di un gruppo
+-- Google (riempie un campo nullo): un difetto senza rimedio pesa più di
+-- uno recuperabile, da qui la scelta di un vincolo reale invece di
+-- fidarsi solo del pre-check applicativo.
+--
+-- PARZIALE perché non è mai stato vietato che due classi ARCHIVIATE (o
+-- una archiviata e una attiva) condividano un nome — è il caso ordinario
+-- di "quest'anno c'è di nuovo una 2A" — e perché il DSL di Prisma non sa
+-- esprimere un indice con clausola WHERE (nessun preview feature lo
+-- copre a oggi): questa migrazione non ha una riga corrispondente in
+-- schema.prisma modellata con @unique — il file resta silenzioso su
+-- questo vincolo, che vive solo qui. Verificato a parte, con una query
+-- diretta, che il database di sviluppo condiviso non avesse duplicati fra
+-- le classi attive: l'indice si è creato senza errori.
+--
+-- Generata con `prisma migrate diff` contro uno schema.prisma con
+-- `name String @unique` temporaneo (solo per ottenere il boilerplate
+-- della CREATE UNIQUE INDEX con la sintassi corretta), poi corretta a
+-- mano con la clausola WHERE e un nome più esplicito (Classe_name_key
+-- sarebbe stato lo stesso nome che Prisma userebbe per un vincolo pieno,
+-- fuorviante per chi legge); lo schema.prisma temporaneo non è stato
+-- commesso. Stessa riga estranea ricorrente di PracticeRun.expiresAt
+-- (drift spurio del diffing sul dbgenerated di quella colonna, non
+-- pertinente) tolta a mano, stessa disciplina delle tre migrazioni
+-- precedenti.
+CREATE UNIQUE INDEX "Classe_name_unarchived_key" ON "Classe"("name") WHERE "archivedAt" IS NULL;

@@ -27,7 +27,7 @@ import Page from "../page";
 beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(classiDelDocente).mockReset().mockResolvedValue([
-    { id: "c1", name: "1A", yearLevel: 1, studenti: 20 },
+    { id: "c1", name: "1A", yearLevel: 1, studenti: 20, codice: null },
   ]);
   vi.mocked(elencoBatterie).mockReset().mockResolvedValue([
     { id: "b1", name: "Verifica 1", regole: [{ contenitore: "Equazioni", count: 3 }], compiti: 0 },

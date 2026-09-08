@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
 import { Card } from "@/components/ui/card";
+import { IscrizioneClasseForm } from "./iscrizione-classe-form";
 
 type Traduttore = (chiave: string, valori?: Record<string, string | number>) => string;
 type StatoTentativo = { status: string; score: number; maxScore: number };
@@ -80,6 +81,8 @@ export default async function StudentHomePage() {
         </div>
         <h1 className="text-2xl font-black text-slate-900">{t("titoloStudente")}</h1>
       </div>
+
+      <IscrizioneClasseForm />
 
       {compiti.length > 0 && (
         <div className="space-y-3">

@@ -650,9 +650,17 @@ model Tentativo {
   @@index([lastActivityAt])
 }
 
+// Un docente può creare una classe a mano, prima che Google gliene sappia
+// dire niente: nasce senza googleGroupEmail, con un codice da consegnare
+// agli studenti. Un gruppo Google sincronizzato in seguito con lo stesso
+// nome adotta questa riga (le scrive dentro l'indirizzo) invece di
+// duplicarla — vedi allineaClassi. Postgres ammette più NULL in un indice
+// unico, quindi più classi a mano possono coesistere senza indirizzo, e più
+// classi sincronizzate da Google possono coesistere senza codice.
 model Classe {
   id               String           @id @default(cuid())
-  googleGroupEmail String           @unique
+  googleGroupEmail String?          @unique
+  codice           String?          @unique
   name             String
   yearLevel        Int?
   archivedAt       DateTime?
@@ -662,9 +670,22 @@ model Classe {
   compiti          Compito[]
 }
 
+// GRUPPO = creata da allineaClassi al segno di un gruppo Google; CODICE =
+// lo studente si è iscritto con il codice della classe. allineaClassi
+// disiscrive solo le iscrizioni GRUPPO: un'iscrizione CODICE non sparisce
+// mai per un accesso Google che non la riguarda. Il default è GRUPPO
+// perché ogni riga ClasseStudente esistente prima di questa colonna viene
+// da un gruppo — se il default fosse CODICE, il primo sync dopo la
+// migrazione smetterebbe di togliere le iscrizioni vecchie.
+enum OrigineIscrizione {
+  GRUPPO
+  CODICE
+}
+
 model ClasseStudente {
   classeId  String
   studentId String
+  origine   OrigineIscrizione @default(GRUPPO)
   joinedAt  DateTime @default(now())
   classe    Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
   studente  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)

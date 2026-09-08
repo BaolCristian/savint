@@ -66,10 +66,12 @@ describe("POST /api/esercizi/compiti", () => {
     expect(await r.json()).toEqual({ error: "classe_non_trovata" });
   });
 
-  it("403 se il docente non insegna quella classe", async () => {
+  it("404, non 403, se il docente non insegna quella classe", async () => {
+    // Un 403 direbbe "esiste ma non e' tua", cioe' confermerebbe
+    // l'esistenza della classe a chi tira a indovinare un id.
     vi.mocked(assegna).mockResolvedValue({ ok: false, motivo: "non_insegni_questa_classe" });
     const r = await POST(richiesta(corpoValido));
-    expect(r.status).toBe(403);
+    expect(r.status).toBe(404);
     expect(await r.json()).toEqual({ error: "non_insegni_questa_classe" });
   });
 
