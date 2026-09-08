@@ -552,3 +552,33 @@ describe("verificaSuSemi", () => {
     });
   });
 });
+
+function questionConStatement(statement: string) {
+  return {
+    name: "T", statement, advice: "", variables: {},
+    variablesTest: { condition: "", maxRuns: 10 },
+    ungrouped_variables: [], variable_groups: [], functions: {}, rulesets: {},
+    parts: [{ type: "numberentry", marks: 1, prompt: "<p>x</p>", minValue: "1", maxValue: "1" }],
+  };
+}
+
+describe("il messaggio di caricamento dice DOVE e PERCHE'", () => {
+  // Correggere il difetto dell'arità nel motore ha spostato l'intercettazione
+  // di `\simplify{sqrt()}` dalla fase "testo" (dopo la sostituzione, con il
+  // campo nominato) alla fase "caricamento" (prima, con la ragione esatta).
+  // Guadagno sul perché, perdita sul dove: `Question` avvolge l'errore per
+  // dire quale campo, ma la causa profonda finiva in `originalError`, che
+  // nessuno in `src/` cammina. Questi due test tengono insieme i due pezzi —
+  // e falliscono se un giorno se ne perde uno.
+  it("nomina il campo", () => {
+    const esito = verificaSuSemi(questionConStatement("<p>\\(\\simplify{ sqrt() }\\)</p>"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) expect(esito.messaggio).toContain("testo dell'esercizio");
+  });
+
+  it("nomina anche la causa, non solo il campo", () => {
+    const esito = verificaSuSemi(questionConStatement("<p>\\(\\simplify{ sqrt() }\\)</p>"));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) expect(esito.messaggio).toContain("sqrt");
+  });
+});
