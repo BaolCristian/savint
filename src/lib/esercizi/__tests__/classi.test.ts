@@ -148,6 +148,30 @@ describe("allineamento delle classi", () => {
     expect(ancora!.origine).toBe("CODICE");
   });
 
+  // Giro di correzioni 1: il test sopra prova la sopravvivenza al sync su
+  // una riga inserita a mano (origine: "CODICE" scritta direttamente), e
+  // "iscrive lo studente e l'iscrizione ha origine CODICE" (più sotto, nel
+  // describe di iscrivitiConCodice) prova che iscrivitiConCodice scrive
+  // davvero quell'origine — ma nessun test guidava l'intera catena vera
+  // creaClasse -> iscrivitiConCodice -> allineaClassi nello stesso posto.
+  // È la garanzia su cui poggia tutta la feature (un'iscrizione con
+  // codice non sparisce al prossimo accesso Google dello studente), quindi
+  // qui si percorre il cammino reale end-to-end, non due metà incatenate.
+  it("il percorso reale — creaClasse poi iscrivitiConCodice — sopravvive a un sync Google successivo", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Percorso reale`, anno: null });
+    const iscrizione = await iscrivitiConCodice(studentId, c.codice);
+    expect(iscrizione).toEqual({ ok: true, classe: { id: c.id, nome: c.nome } });
+
+    const r = await allineaClassi(studentId, [g("3b", "3B", 3)]);
+    expect(r.uscite).not.toContain(c.id);
+
+    const ancora = await prisma.classeStudente.findUnique({
+      where: { classeId_studentId: { classeId: c.id, studentId } },
+    });
+    expect(ancora).not.toBeNull();
+    expect(ancora!.origine).toBe("CODICE");
+  });
+
   it("un gruppo che ha lo stesso nome di una classe creata a mano la adotta", async () => {
     const nome = `${P}2A`;
     const emailGruppo = `${P}allievi.2a@scuola.it`;

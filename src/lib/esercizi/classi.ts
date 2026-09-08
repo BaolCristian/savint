@@ -118,19 +118,57 @@ export function generaCodice(): string {
  * archiviata) con lo stesso nome, qualunque sia la sua origine: due classi
  * omonime confonderebbero il docente nell'elenco e gli studenti su quale
  * codice usare. Una classe archiviata con lo stesso nome non blocca — è
- * verosimilmente l'anno scorso. Non c'è un vincolo unico sul nome a
- * livello di schema (il task 1 non lo aggiunge, ed è comunque tollerato
- * altrove: due gruppi Google possono condividere un nome, vedi
- * classi.test.ts), quindi questo controllo resta un pre-check applicativo,
- * non atomico contro una vera corsa fra due creazioni con lo stesso nome —
- * a differenza del codice, il nome non ha un indice unico su cui
- * riprovare.
+ * verosimilmente l'anno scorso.
  *
- * Il codice invece È unico nello schema: in caso di collisione (rarissima,
- * spazio di 30^6 combinazioni) riprova con un codice nuovo invece di
- * fallire — vedi classi-collisione-codice.test.ts, che la forza
- * deterministicamente mockando $transaction invece di sperare in una vera
- * corsa. */
+ * Il pre-check qui sotto (un findFirst prima di scrivere) dà il buon
+ * messaggio nel caso ordinario, ma da solo non basta contro una vera
+ * corsa: due creaClasse concorrenti con lo stesso nome — il primo giorno
+ * di scuola, più docenti che impostano le loro classi nello stesso
+ * momento — possono superarlo entrambe prima che una delle due scriva.
+ * Un doppione così non ha rimedio nel dominio attuale (non c'è modo di
+ * spostare o rimuovere uno studente da una classe: due classi non si
+ * possono fondere dopo il fatto, a differenza della rigenerazione del
+ * codice, che chiude una porta senza toccare nessuno, o dell'adozione di
+ * un gruppo Google, che riempie un campo nullo). Per questo (giro di
+ * correzioni 1) Classe.name ha ora un indice unico PARZIALE a livello di
+ * schema, ristretto alle sole classi create a mano (archivedAt IS NULL E
+ * googleGroupEmail IS NULL — vedi le migrazioni 20260908175355 e la
+ * correzione 20260908180200 che l'ha ristretta) — che rende la corsa fra
+ * due creaClasse concorrenti impossibile invece di solo improbabile. È
+ * un indice che il DSL di Prisma non sa esprimere (nessuna clausola WHERE
+ * sugli attributi @unique), quindi non ha una riga corrispondente in
+ * schema.prisma e vive solo nelle migrazioni.
+ *
+ * Ristretto alle classi create a mano DELIBERATAMENTE: due gruppi Google
+ * diversi possono legittimamente condividere un nome, e risolviClasse li
+ * tiene apposta separati invece di fonderli (vedi "l'adozione non tocca
+ * una classe già legata a un gruppo, anche se il nome coincide" in
+ * classi.test.ts, task 1) — un indice pieno su tutte le classi attive
+ * romperebbe quel comportamento già rivisto, come infatti ha fatto la
+ * prima versione di questa migrazione prima di essere corretta. Quello
+ * che questo indice NON copre: una corsa fra un creaClasse e la prima
+ * sincronizzazione di un gruppo Google con lo stesso nome (il ramo
+ * "adozione" di risolviClasse) resta senza un vincolo a livello di
+ * database — quella riga nasce con googleGroupEmail non nullo, fuori dal
+ * predicato dell'indice. Non è lo scenario per cui la review ha chiesto
+ * questo vincolo (due creazioni manuali concorrenti, non una manuale
+ * contro un sync), e chiuderlo richiederebbe ripensare l'atomicità fra
+ * creaClasse e risolviClasse — fuori da questo giro.
+ *
+ * Una P2002 dentro la transazione può quindi venire da DUE vincoli
+ * diversi — il nome (il nuovo indice parziale) o il codice (l'indice
+ * pieno di task 1) — e il codice d'errore da solo non li distingue.
+ * Anziché fidarsi della forma esatta di meta.target (fragile per un
+ * indice che Prisma non modella nello schema, e dipendente da dettagli
+ * del driver non documentati), si rinterroga esplicitamente il nome: se
+ * nel frattempo è comparsa una classe attiva con questo nome, la
+ * collisione è sul nome ed è definitiva — ritentare con lo stesso nome
+ * colliderebbe di nuovo, quindi si rifiuta subito, senza consumare un
+ * tentativo. Altrimenti il nome è ancora libero e la collisione può
+ * venire solo dal codice, quindi si ritenta con uno nuovo (rarissimo,
+ * spazio di 30^6 combinazioni) — vedi classi-collisione-codice.test.ts,
+ * che forza entrambi i percorsi deterministicamente mockando prisma
+ * invece di sperare in una vera corsa. */
 export async function creaClasse(
   teacherId: string,
   dati: { nome: string; anno: number | null },
@@ -153,8 +191,13 @@ export async function creaClasse(
       });
       return { ok: true, classe: { id: classe.id, nome: classe.name, codice: classe.codice! } };
     } catch (e) {
-      const codiceInUso = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
-      if (codiceInUso && tentativo < TENTATIVI_MASSIMI) continue;
+      const violazioneUnica = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
+      if (!violazioneUnica) throw e;
+
+      const nomeOraInUso = await prisma.classe.findFirst({ where: { name: dati.nome, archivedAt: null } });
+      if (nomeOraInUso) return { ok: false, motivo: "nome_gia_usato" };
+
+      if (tentativo < TENTATIVI_MASSIMI) continue;
       throw e;
     }
   }

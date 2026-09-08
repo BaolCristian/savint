@@ -1,0 +1,35 @@
+-- Corregge la migrazione precedente (20260908175355), applicata solo
+-- pochi minuti prima nello stesso giro di correzioni: quell'indice
+-- copriva TUTTE le classi attive, di qualunque origine, e rompeva un
+-- comportamento del task 1 già rivisto e testato — "l'adozione non tocca
+-- una classe già legata a un gruppo, anche se il nome coincide"
+-- (classi.test.ts): due gruppi Google DIVERSI possono legittimamente
+-- condividere un nome (es. "2A" in due scuole diverse dello stesso
+-- istituto, o semplicemente una coincidenza), e risolviClasse le tiene
+-- deliberatamente separate — fonderle unirebbe due gruppi di studenti che
+-- devono restare distinti. Applicare l'indice pieno faceva fallire il
+-- secondo upsert con lo stesso P2002 che qui si intende prevenire, non
+-- gestire: una regressione scoperta scrivendo il test end-to-end di
+-- questo stesso giro, prima di qualunque review.
+--
+-- Non si edita la migrazione già applicata (regola del branch, vedi le
+-- altre migrazioni): questa la sostituisce con un DROP + CREATE dello
+-- stesso indice, ristretto alle sole classi create a mano
+-- (googleGroupEmail IS NULL oltre a archivedAt IS NULL). È esattamente lo
+-- scenario che la review ha chiesto di chiudere — più docenti che usano
+-- creaClasse nello stesso momento il primo giorno di scuola, con
+-- iscrizioni che poi non si possono fondere — e lascia intatto il
+-- percorso Google, il cui comportamento su nomi duplicati è già
+-- deliberato e testato altrove.
+--
+-- Nota su ciò che questo NON copre: una corsa fra un creaClasse e la
+-- PRIMA sincronizzazione di un gruppo Google con lo stesso nome (il ramo
+-- "adozione" di risolviClasse) resta priva di un vincolo a livello di
+-- database, perché quella riga nasce con googleGroupEmail non nullo e
+-- l'indice qui sotto non la considera. Non è lo scenario nominato dalla
+-- review (che riguarda esplicitamente due creazioni manuali concorrenti),
+-- e chiuderlo richiederebbe ripensare l'atomicità di risolviClasse
+-- rispetto a creaClasse — fuori dall'ambito di questo giro di correzioni.
+DROP INDEX "Classe_name_unarchived_key";
+
+CREATE UNIQUE INDEX "Classe_name_unarchived_key" ON "Classe"("name") WHERE "archivedAt" IS NULL AND "googleGroupEmail" IS NULL;
