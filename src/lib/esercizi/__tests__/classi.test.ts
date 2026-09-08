@@ -1,6 +1,20 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { allineaClassi, classiDelDocente, creaClasse, dichiaraInsegnamento } from "../classi";
+import {
+  ALFABETO_CODICE, allineaClassi, classiDelDocente, creaClasse as creaClasseGrezza,
+  dichiaraInsegnamento, generaCodice, iscrittiDellaClasse, iscrivitiConCodice, rigeneraCodice,
+} from "../classi";
+
+// Scorciatoia per i test (già di task 1) scritti quando creaClasse
+// restituiva la Classe direttamente: ora rifiuta esplicitamente
+// (`nome_gia_usato`), quindi la maggior parte dei chiamanti che non
+// riguarda quel rifiuto vuole solo la classe creata, sullo stesso modello
+// di `creaBatteria`/`righeDi` in compiti.test.ts.
+async function creaClasse(...args: Parameters<typeof creaClasseGrezza>) {
+  const r = await creaClasseGrezza(...args);
+  if (!r.ok) throw new Error(`creaClasse rifiutata inaspettatamente: ${r.motivo}`);
+  return r.classe;
+}
 
 const P = "classitest-";
 const email = (n: string) => `${P}${n}@test.it`;
@@ -224,7 +238,167 @@ describe("allineamento delle classi", () => {
 
     const manoA = await creaClasse(teacherId, { nome: `${P}Mano A`, anno: null });
     const manoB = await creaClasse(teacherId, { nome: `${P}Mano B`, anno: null });
-    expect(manoA.googleGroupEmail).toBeNull();
-    expect(manoB.googleGroupEmail).toBeNull();
+    const [righeA, righeB] = await Promise.all([
+      prisma.classe.findUniqueOrThrow({ where: { id: manoA.id } }),
+      prisma.classe.findUniqueOrThrow({ where: { id: manoB.id } }),
+    ]);
+    expect(righeA.googleGroupEmail).toBeNull();
+    expect(righeB.googleGroupEmail).toBeNull();
+  });
+});
+
+describe("generaCodice", () => {
+  const VIETATI = new Set(["O", "0", "I", "1", "S", "5"]);
+
+  it("l'alfabeto dichiarato non contiene O/0, I/1, S/5: si confondono quando il codice si detta a voce", () => {
+    for (const carattere of ALFABETO_CODICE) {
+      expect(VIETATI.has(carattere)).toBe(false);
+    }
+  });
+
+  it("su molte estrazioni, nessun codice contiene mai O/0/I/1/S/5", () => {
+    for (let i = 0; i < 500; i++) {
+      const codice = generaCodice();
+      expect(codice).toHaveLength(6);
+      for (const carattere of codice) {
+        expect(VIETATI.has(carattere)).toBe(false);
+        expect(ALFABETO_CODICE).toContain(carattere);
+      }
+    }
+  });
+});
+
+describe("creaClasse", () => {
+  it("chi crea la classe la insegna: altrimenti la creerebbe e non la vedrebbe", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Prima creazione`, anno: 1 });
+    const mie = await classiDelDocente(teacherId);
+    expect(mie.map((m) => m.id)).toContain(c.id);
+  });
+
+  it("rifiuta con nome_gia_usato se esiste già una classe attiva con lo stesso nome", async () => {
+    const nome = `${P}Doppione`;
+    await creaClasse(teacherId, { nome, anno: 1 });
+    const esito = await creaClasseGrezza(teacherId, { nome, anno: 1 });
+    expect(esito).toEqual({ ok: false, motivo: "nome_gia_usato" });
+  });
+
+  it("una classe archiviata con lo stesso nome non blocca una nuova creazione", async () => {
+    const nome = `${P}Anno scorso`;
+    const vecchia = await creaClasse(teacherId, { nome, anno: 1 });
+    await prisma.classe.update({ where: { id: vecchia.id }, data: { archivedAt: new Date() } });
+
+    const esito = await creaClasseGrezza(teacherId, { nome, anno: 1 });
+    expect(esito.ok).toBe(true);
+  });
+});
+
+describe("rigeneraCodice", () => {
+  it("non_trovata se la classe non esiste", async () => {
+    const esito = await rigeneraCodice("classe-inesistente", teacherId);
+    expect(esito).toEqual({ ok: false, motivo: "non_trovata" });
+  });
+
+  it("non_insegni_questa_classe se il docente non la insegna", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Non tua`, anno: null });
+    const altroDocenteId = (await prisma.user.create({ data: { email: email("altro-doc"), name: "Altro", role: "TEACHER" } })).id;
+    const esito = await rigeneraCodice(c.id, altroDocenteId);
+    expect(esito).toEqual({ ok: false, motivo: "non_insegni_questa_classe" });
+  });
+
+  it("cambia il codice e non tocca gli iscritti: li conta prima e dopo", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Da rigenerare`, anno: null });
+    const primaIscrizione = await iscrivitiConCodice(studentId, c.codice);
+    if (!primaIscrizione.ok) throw new Error("iscrizione inaspettatamente rifiutata");
+
+    const primaConteggio = await prisma.classeStudente.count({ where: { classeId: c.id } });
+    expect(primaConteggio).toBe(1);
+
+    const esito = await rigeneraCodice(c.id, teacherId);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) throw new Error("rigenerazione inaspettatamente rifiutata");
+    expect(esito.codice).not.toBe(c.codice);
+
+    const dopoConteggio = await prisma.classeStudente.count({ where: { classeId: c.id } });
+    expect(dopoConteggio).toBe(primaConteggio);
+
+    const iscrizioneAncora = await prisma.classeStudente.findUnique({
+      where: { classeId_studentId: { classeId: c.id, studentId } },
+    });
+    expect(iscrizioneAncora).not.toBeNull();
+
+    // il vecchio codice non porta più da nessuna parte, il nuovo sì
+    const conVecchio = await iscrivitiConCodice(
+      (await prisma.user.create({ data: { email: email("s3"), name: "S3", role: "STUDENT" } })).id,
+      c.codice,
+    );
+    expect(conVecchio).toEqual({ ok: false, motivo: "codice_sconosciuto" });
+  });
+});
+
+describe("iscrivitiConCodice", () => {
+  it("codice_sconosciuto se il codice non corrisponde a nessuna classe", async () => {
+    const esito = await iscrivitiConCodice(studentId, "ZZZZZZ");
+    expect(esito).toEqual({ ok: false, motivo: "codice_sconosciuto" });
+  });
+
+  it("iscrive lo studente e l'iscrizione ha origine CODICE: è ciò che la protegge dal sync", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Iscrizione codice`, anno: null });
+    const esito = await iscrivitiConCodice(studentId, c.codice);
+    expect(esito).toEqual({ ok: true, classe: { id: c.id, nome: c.nome } });
+
+    const riga = await prisma.classeStudente.findUniqueOrThrow({
+      where: { classeId_studentId: { classeId: c.id, studentId } },
+    });
+    expect(riga.origine).toBe("CODICE");
+  });
+
+  it("confronta senza distinzione di maiuscole/minuscole e ignora gli spazi ai bordi", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Codice a mano`, anno: null });
+    const digitato = `  ${c.codice.toLowerCase()}  `;
+    const esito = await iscrivitiConCodice(studentId, digitato);
+    expect(esito).toEqual({ ok: true, classe: { id: c.id, nome: c.nome } });
+  });
+
+  it("gia_iscritto se lo studente prova a iscriversi di nuovo con lo stesso codice", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Doppia iscrizione`, anno: null });
+    await iscrivitiConCodice(studentId, c.codice);
+    const esito = await iscrivitiConCodice(studentId, c.codice);
+    expect(esito).toEqual({ ok: false, motivo: "gia_iscritto" });
+
+    const righe = await prisma.classeStudente.count({ where: { classeId: c.id, studentId } });
+    expect(righe).toBe(1); // non due
+  });
+
+  it("una classe archiviata non si trova per codice: non accetta nuove iscrizioni", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Archiviata codice`, anno: null });
+    await prisma.classe.update({ where: { id: c.id }, data: { archivedAt: new Date() } });
+    const esito = await iscrivitiConCodice(studentId, c.codice);
+    expect(esito).toEqual({ ok: false, motivo: "codice_sconosciuto" });
+  });
+});
+
+describe("iscrittiDellaClasse", () => {
+  it("non_trovata se la classe non esiste", async () => {
+    const esito = await iscrittiDellaClasse("classe-inesistente", teacherId);
+    expect(esito).toEqual({ ok: false, motivo: "non_trovata" });
+  });
+
+  it("non_insegni_questa_classe se il docente non la insegna", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Elenco non tuo`, anno: null });
+    const altroDocenteId = (await prisma.user.create({ data: { email: email("altro-doc2"), name: "Altro2", role: "TEACHER" } })).id;
+    const esito = await iscrittiDellaClasse(c.id, altroDocenteId);
+    expect(esito).toEqual({ ok: false, motivo: "non_insegni_questa_classe" });
+  });
+
+  it("elenca gli iscritti con nome, origine e data", async () => {
+    const c = await creaClasse(teacherId, { nome: `${P}Elenco`, anno: null });
+    await iscrivitiConCodice(studentId, c.codice);
+
+    const esito = await iscrittiDellaClasse(c.id, teacherId);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) throw new Error("elenco inaspettatamente rifiutato");
+    expect(esito.righe).toHaveLength(1);
+    expect(esito.righe[0]).toMatchObject({ studentId, nome: "S", origine: "CODICE" });
+    expect(esito.righe[0]!.dal).toBeInstanceOf(Date);
   });
 });
