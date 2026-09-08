@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/auth/config", () => ({ auth: vi.fn(async () => ({ user: { id: "u1", role: "STUDENT" } })) }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: vi.fn(), useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/lib/db/client", () => ({
   prisma: { esercizio: { findMany: vi.fn() }, compito: { findMany: vi.fn() } },
 }));
@@ -11,6 +11,13 @@ vi.mock("@/lib/esercizi/compiti", () => ({ compitiDelloStudente: vi.fn() }));
 // quale messaggio è stato scelto, non del testo italiano di quel messaggio.
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
+    valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
+}));
+// Stesso schema, per il modulo client "next-intl" (usato dal form
+// d'iscrizione con codice, che traduce l'esito solo noto a runtime — stesso
+// motivo di compito-form.tsx).
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
 }));
 
@@ -153,5 +160,71 @@ describe("i compiti dello studente", () => {
 
     const linkLibero = screen.getByRole("link", { name: /Prova/ });
     expect(linkLibero).toHaveAttribute("href", "/studente/esercizio/01-prova");
+  });
+});
+
+// Task 4: un campo per iscriversi con un codice, nell'area studente. La
+// spec (task 4, design doc) chiede che un codice sbagliato dica solo "non
+// valido" — senza distinguere un codice mai esistito da uno di un'altra
+// scuola, perché la distinzione insegnerebbe a un estraneo quali codici
+// esistono davvero. La rotta (`api/esercizi/classi/iscrizione/route.ts`,
+// task 3) appiattisce già i due casi sullo stesso `codice_sconosciuto`: qui
+// si verifica che il form non li separi di nuovo nel testo.
+describe("iscrizione a una classe con un codice", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.esercizio.findMany).mockResolvedValue(esercizioCon([]) as never);
+  });
+
+  it("c'è un campo per il codice", async () => {
+    await rendi();
+    expect(screen.getByLabelText("campo")).toBeInTheDocument();
+  });
+
+  it("un codice inesistente e uno di un'altra scuola dicono la stessa cosa: non valido", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "codice_sconosciuto" }), { status: 404 }),
+    ) as typeof fetch;
+
+    await rendi();
+    fireEvent.change(screen.getByLabelText("campo"), { target: { value: "ZZZZZZ" } });
+    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+    expect(await screen.findByText("erroreNonValido")).toBeInTheDocument();
+    // Nessuna parola diversa per "esisteva ma non per te": la spec vieta
+    // proprio quella distinzione.
+    expect(screen.queryByText(/sconosciuto|inesistente/i)).toBeNull();
+  });
+
+  it("un'iscrizione già esistente ha un messaggio diverso da un codice non valido", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "gia_iscritto" }), { status: 409 }),
+    ) as typeof fetch;
+
+    await rendi();
+    fireEvent.change(screen.getByLabelText("campo"), { target: { value: "AB3XQ7" } });
+    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+    expect(await screen.findByText("erroreGiaIscritto")).toBeInTheDocument();
+    expect(screen.queryByText("erroreNonValido")).toBeNull();
+  });
+
+  it("un codice valido iscrive e lo dice", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ classe: { id: "c1", nome: "1A" } }), { status: 201 }),
+    ) as typeof fetch;
+
+    await rendi();
+    fireEvent.change(screen.getByLabelText("campo"), { target: { value: "AB3XQ7" } });
+    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/esercizi/classi/iscrizione",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0]![1] as RequestInit).body as string);
+    expect(body).toEqual({ codice: "AB3XQ7" });
+    expect(await screen.findByText(`successo:${JSON.stringify({ classe: "1A" })}`)).toBeInTheDocument();
   });
 });
