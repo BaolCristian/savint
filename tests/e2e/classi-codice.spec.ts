@@ -313,6 +313,15 @@ test.describe("Iscrizione con codice — crea, iscriviti, sopravvivi a un access
     // sicuro per il database condiviso: nessuna classe GRUPPO vera (es.
     // "2SIA4.0", seminata) viene tolta, perché ognuna ricompare intatta
     // nell'insieme che le viene ripassato.
+    //
+    // Da non fraintendere (rilievo della revisione): passare i gruppi VERI
+    // non serve a rendere valida l'asserzione qui sotto — un'iscrizione
+    // CODICE non può finire fra le `uscite` con nessun insieme, nemmeno
+    // vuoto, perché `allineaClassi` le calcola SOLO dalle righe GRUPPO.
+    // Serve a non distruggere dati: con un insieme inventato, `uscite`
+    // conterrebbe tutte le iscrizioni GRUPPO vere dello studente e la
+    // sincronizzazione le cancellerebbe davvero dal database condiviso.
+    // Cioè la prova che i dati non si perdono ne perderebbe.
     const iscrizioniDaGruppo = await prisma.classeStudente.findMany({
       where: { studentId, origine: "GRUPPO" },
       include: { classe: true },
