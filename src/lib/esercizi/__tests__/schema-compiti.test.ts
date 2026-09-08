@@ -4,6 +4,7 @@ import path from "path";
 
 const schema = readFileSync(path.resolve(process.cwd(), "prisma/schema.prisma"), "utf8");
 const model = (nome: string) => schema.match(new RegExp(`model ${nome} \\{[\\s\\S]*?\\n\\}`))?.[0] ?? "";
+const enumBlock = (nome: string) => schema.match(new RegExp(`enum ${nome} \\{[\\s\\S]*?\\n\\}`))?.[0] ?? "";
 
 describe("schema di classi, contenitori, batterie e compiti", () => {
   it.each(["Classe", "ClasseStudente", "ClasseDocente", "Contenitore", "ContenitoreEsercizio", "Batteria", "BatteriaRegola", "Compito"])(
@@ -12,8 +13,22 @@ describe("schema di classi, contenitori, batterie e compiti", () => {
     },
   );
 
-  it("la classe e' identificata dal gruppo Google", () => {
-    expect(model("Classe")).toMatch(/googleGroupEmail\s+String\s+@unique/);
+  it("la classe puo' nascere senza un gruppo Google, ma l'indirizzo resta unico quando c'e'", () => {
+    expect(model("Classe")).toMatch(/googleGroupEmail\s+String\?\s+@unique/);
+  });
+
+  it("la classe ha un codice d'iscrizione unico, anch'esso opzionale", () => {
+    expect(model("Classe")).toMatch(/codice\s+String\?\s+@unique/);
+  });
+
+  it("ogni iscrizione porta la sua origine, e di default viene da un gruppo", () => {
+    expect(model("ClasseStudente")).toMatch(/origine\s+OrigineIscrizione\s+@default\(GRUPPO\)/);
+  });
+
+  it("l'origine di un'iscrizione e' o un gruppo o un codice", () => {
+    const e = enumBlock("OrigineIscrizione");
+    expect(e).toMatch(/GRUPPO/);
+    expect(e).toMatch(/CODICE/);
   });
 
   it("un esercizio puo' stare in piu' contenitori", () => {
