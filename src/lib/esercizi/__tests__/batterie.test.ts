@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { creaBatteria as creaBatteriaGrezza, elencoBatterie, verificaBatteria, eliminaBatteria } from "../batterie";
+import {
+  creaBatteria as creaBatteriaGrezza,
+  elencoBatterie,
+  verificaBatteria,
+  eliminaBatteria,
+  bacinoRegola,
+  idsConVersione,
+  candidatiDisponibili,
+} from "../batterie";
 
 // `creaBatteria` (Fix round finale, item 5) restituisce ora un rifiuto
 // esplicito — `{ ok: false, motivo, dettaglio }` — invece di lasciar
@@ -249,5 +257,171 @@ describe("batterie", () => {
     ]);
     expect(r).toMatchObject({ ok: false, motivo: "contenitore_non_trovato" });
     expect(await prisma.batteria.count({ where: { name: `${P}Mista2` } })).toBe(0);
+  });
+});
+
+// Task 1: la regola con due forme — "ha il contenitore, oppure l'argomento,
+// mai entrambi, mai nessuno dei due". Il database non può esprimere questo
+// vincolo (Prisma non modella i CHECK), quindi il dominio lo impone in
+// scrittura (creaBatteria, sotto) e lo riverifica in lettura (bacinoRegola,
+// il punto che TUTTE le letture — verificaBatteria qui, assegna in
+// compiti.ts — attraversano per risolvere una regola in candidati).
+describe("la regola a due forme", () => {
+  it("una regola con contenitore e argomento insieme è rifiutata in scrittura", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}Doppia`, [
+      { contenitoreId: contA, argomento: "equazioni", count: 1 },
+    ]);
+    expect(r).toEqual({ ok: false, motivo: "regola_malformata", dettaglio: { index: 0 } });
+    // Nessuna scrittura parziale, stessa garanzia del rifiuto gemello
+    // (contenitore_non_trovato) più sopra.
+    expect(await prisma.batteria.count({ where: { name: `${P}Doppia` } })).toBe(0);
+  });
+
+  it("una regola senza contenitore né argomento è rifiutata in scrittura", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}Vuota`, [{ count: 1 }]);
+    expect(r).toEqual({ ok: false, motivo: "regola_malformata", dettaglio: { index: 0 } });
+    expect(await prisma.batteria.count({ where: { name: `${P}Vuota` } })).toBe(0);
+  });
+
+  // Il caso che conta di più: anche se creaBatteria rifiuta in scrittura,
+  // bacinoRegola — il punto unico di lettura — non si fida di quel
+  // controllo esterno e riverifica da sé. Una regola malformata deve
+  // FALLIRE, mai restituire un bacino vuoto: un bacino vuoto per una
+  // regola malformata sarebbe indistinguibile da un bacino vuoto per una
+  // regola valida senza corrispondenze, e verrebbe trattato in silenzio
+  // come "zero candidati" — il compito consegnato più corto del promesso,
+  // lo stesso difetto critico già pagato una volta con gli esercizi senza
+  // versione (Fix round 1).
+  it("bacinoRegola lancia per una regola senza contenitore né argomento, invece di dare zero candidati", async () => {
+    await expect(
+      bacinoRegola({ contenitoreId: null, argomento: null, anno: null, difficoltaMax: null }),
+    ).rejects.toThrow();
+  });
+
+  it("bacinoRegola lancia per una regola con contenitore e argomento insieme", async () => {
+    await expect(
+      bacinoRegola({ contenitoreId: contA, argomento: "equazioni", anno: null, difficoltaMax: null }),
+    ).rejects.toThrow();
+  });
+
+  it("una regola a filtro pesca esattamente gli esercizi che corrispondono, versione compresa", async () => {
+    const base = { yearLevel: 2, topic: `${P}filtro-equazioni`, tags: [], difficulty: 1 };
+    const okId = (await prisma.esercizio.create({ data: { id: `${P}filtro-ok`, title: "Ok", ...base } })).id;
+    const troppoDifficileId = (await prisma.esercizio.create({
+      data: { id: `${P}filtro-difficile`, title: "Difficile", ...base, difficulty: 5 },
+    })).id;
+    const annoSbagliatoId = (await prisma.esercizio.create({
+      data: { id: `${P}filtro-anno`, title: "AltroAnno", ...base, yearLevel: 3 },
+    })).id;
+    const argomentoSbagliatoId = (await prisma.esercizio.create({
+      data: { id: `${P}filtro-argomento`, title: "AltroArgomento", ...base, topic: `${P}filtro-sistemi` },
+    })).id;
+    const senzaVersioneId = (await prisma.esercizio.create({
+      data: { id: `${P}filtro-senza-versione`, title: "SenzaVersione", ...base },
+    })).id;
+    await prisma.esercizioVersione.createMany({
+      data: [okId, troppoDifficileId, annoSbagliatoId, argomentoSbagliatoId].map((esercizioId, i) => ({
+        esercizioId, version: 1, content: {}, hash: `filtro-h${i}`,
+      })),
+    });
+    // senzaVersioneId non ha nessuna EsercizioVersione: appartiene comunque
+    // al bacino GREZZO (il filtro di versione è un passo successivo,
+    // condiviso con le regole a contenitore — vedi sotto).
+
+    const regola = { contenitoreId: null, argomento: `${P}filtro-equazioni`, anno: 2, difficoltaMax: 2 };
+    const bacino = await bacinoRegola(regola);
+    expect(new Set(bacino)).toEqual(new Set([okId, senzaVersioneId]));
+
+    const conVersione = await idsConVersione(bacino);
+    const candidati = candidatiDisponibili(bacino, new Set(), conVersione);
+    expect(candidati).toEqual([okId]);
+  });
+
+  it("il filtro senza anno né difficoltaMax pesca da qualunque anno e difficoltà", async () => {
+    const base = { topic: `${P}argomento-libero`, tags: [] };
+    const e1 = (await prisma.esercizio.create({
+      data: { id: `${P}libero-1`, title: "1", yearLevel: 1, difficulty: 1, ...base },
+    })).id;
+    const e2 = (await prisma.esercizio.create({
+      data: { id: `${P}libero-2`, title: "2", yearLevel: 5, difficulty: 9, ...base },
+    })).id;
+    const bacino = await bacinoRegola({
+      contenitoreId: null, argomento: `${P}argomento-libero`, anno: null, difficoltaMax: null,
+    });
+    expect(new Set(bacino)).toEqual(new Set([e1, e2]));
+  });
+
+  it("difficoltaMax è una soglia superiore inclusiva", async () => {
+    const base = { topic: `${P}soglia`, yearLevel: 2, tags: [] };
+    const alSoglia = (await prisma.esercizio.create({
+      data: { id: `${P}soglia-uguale`, title: "=", difficulty: 3, ...base },
+    })).id;
+    await prisma.esercizio.create({ data: { id: `${P}soglia-sopra`, title: ">", difficulty: 4, ...base } });
+    const bacino = await bacinoRegola({ contenitoreId: null, argomento: `${P}soglia`, anno: null, difficoltaMax: 3 });
+    expect(bacino).toEqual([alSoglia]);
+  });
+
+  // Regressione: la stessa stima per-difetto (Fix round 2) applicata a una
+  // batteria con regole di forma DIVERSA deve contare la sovrapposizione
+  // esattamente come farebbe fra due regole a contenitore. `argomento` è
+  // un valore GLOBALE (il filtro interroga tutta la tabella Esercizio, non
+  // solo quelli di questo test) e quindi deliberatamente unico per prefisso
+  // — non il "prova" condiviso dal beforeEach, che nel database di sviluppo
+  // condiviso corrisponde già a decine di righe estranee a questo test.
+  it("verificaBatteria applica la stessa stima peggiore-caso a una batteria con regole miste", async () => {
+    const argomentoMisto = `${P}mista-argomento`;
+    const base = { yearLevel: 2, topic: argomentoMisto, tags: [], difficulty: 1 };
+    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared1`, title: "S1", ...base } })).id;
+    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared2`, title: "S2", ...base } })).id;
+    const soloArgomento = (await prisma.esercizio.create({ data: { id: `${P}mista-solo`, title: "Solo", ...base } })).id;
+    await prisma.esercizioVersione.createMany({
+      data: [shared1, shared2, soloArgomento].map((esercizioId, i) => ({
+        esercizioId, version: 1, content: {}, hash: `mista-h${i}`,
+      })),
+    });
+    const contMista = (await prisma.contenitore.create({ data: { name: `${P}Mista`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [shared1, shared2].map((esercizioId) => ({ contenitoreId: contMista, esercizioId })),
+    });
+
+    // contMista = {shared1, shared2} (2); la regola a filtro risolve a
+    // {shared1, shared2, soloArgomento} (3) — gli stessi due condivisi con
+    // contMista. Caso peggiore: overlap=2, somma precedenti=2,
+    // consumoPeggiore=2, disponibili=3-2=1.
+    const b = await creaBatteria(teacherId, `${P}Mista3`, [
+      { contenitoreId: contMista, count: 2 },
+      { argomento: argomentoMisto, count: 1 },
+    ]);
+    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+
+    const b2 = await creaBatteria(teacherId, `${P}Mista4`, [
+      { contenitoreId: contMista, count: 2 },
+      { argomento: argomentoMisto, count: 2 },
+    ]);
+    expect(await verificaBatteria(b2.id)).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: argomentoMisto, richiesti: 2, disponibili: 1 }],
+    });
+  });
+
+  // La regressione esplicita che il task chiede di scrivere e mantenere:
+  // ogni batteria esistente ha regole SOLO a contenitore — questo test (e
+  // tutti quelli sopra, nel describe "batterie", nessuno dei quali è stato
+  // toccato da questo task) devono continuare a passare identici, stessi
+  // candidati, stessa pesca, stesso ordine.
+  it("una batteria puramente a contenitore si comporta esattamente come prima (regressione)", async () => {
+    const b = await creaBatteria(teacherId, `${P}SoloContenitore`, [
+      { contenitoreId: contA, count: 2 },
+      { contenitoreId: contB, count: 1 },
+    ]);
+    const regole = await prisma.batteriaRegola.findMany({ where: { batteriaId: b.id }, orderBy: { order: "asc" } });
+    expect(regole).toHaveLength(2);
+    expect(regole[0]).toMatchObject({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null, count: 2 });
+    expect(regole[1]).toMatchObject({ contenitoreId: contB, argomento: null, anno: null, difficoltaMax: null, count: 1 });
+    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+    const elenco = (await elencoBatterie()).filter((x) => x.name === `${P}SoloContenitore`);
+    expect(elenco[0]).toMatchObject({
+      regole: [{ contenitore: `${P}Equazioni`, count: 2 }, { contenitore: `${P}Sistemi`, count: 1 }],
+    });
   });
 });

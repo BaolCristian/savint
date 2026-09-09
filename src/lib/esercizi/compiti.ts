@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
-import { candidatiDisponibili, idsConVersione } from "./batterie";
+import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola } from "./batterie";
 
 type MotivoAssegna =
   | "batteria_non_trovata"
@@ -59,7 +59,7 @@ export async function assegna(
     include: {
       regole: {
         orderBy: { order: "asc" },
-        include: { contenitore: { include: { esercizi: true } } },
+        include: { contenitore: true },
       },
     },
   });
@@ -73,7 +73,12 @@ export async function assegna(
   });
   if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
 
-  const tuttiGliId = [...new Set(batteria.regole.flatMap((r) => r.contenitore.esercizi.map((e) => e.esercizioId)))];
+  // Il bacino grezzo di ciascuna regola, quale che sia la sua forma (Task 1:
+  // contenitore o filtro) — bacinoRegola lancia se una regola non rispetta
+  // l'invariante, invece di restituire un bacino vuoto (vedi batterie.ts):
+  // la stessa risoluzione che usa `verificaBatteria`, non una seconda.
+  const bacini = await Promise.all(batteria.regole.map((r) => bacinoRegola(r)));
+  const tuttiGliId = [...new Set(bacini.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 
   const drawSeed = randomUUID();
@@ -86,18 +91,15 @@ export async function assegna(
   // distinti se il sorteggio pesca lo stesso esercizio da entrambi i lati.
   const giaPescati = new Set<string>();
 
-  for (const regola of batteria.regole) {
-    const candidati = candidatiDisponibili(
-      regola.contenitore.esercizi.map((e) => e.esercizioId),
-      giaPescati,
-      conVersione,
-    );
+  for (let i = 0; i < batteria.regole.length; i++) {
+    const regola = batteria.regole[i]!;
+    const candidati = candidatiDisponibili(bacini[i]!, giaPescati, conVersione);
     if (candidati.length < regola.count) {
       return {
         ok: false,
         motivo: "esercizi_insufficienti",
         dettaglio: {
-          contenitore: regola.contenitore.name,
+          contenitore: etichettaRegola(regola),
           richiesti: regola.count,
           disponibili: candidati.length,
         },
