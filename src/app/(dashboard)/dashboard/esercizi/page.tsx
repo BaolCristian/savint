@@ -3,6 +3,9 @@ import { getTranslations } from "next-intl/server";
 import { Users, FolderOpen, ClipboardCheck, Pencil } from "lucide-react";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { Card } from "@/components/ui/card";
+import { classiDelDocente } from "@/lib/esercizi/classi";
+import { elencoRedazione } from "@/lib/esercizi/redazione";
+import { AssegnaForm } from "./assegna-form";
 
 // Task 4 (docente-via-veloce): la pagina non è più cinque riquadri di pari
 // peso. Erano una sequenza obbligata travestita da scelta — dichiarare le
@@ -22,8 +25,20 @@ import { Card } from "@/components/ui/card";
 // indirizzo per chi lo conosce già (i link già in giro non si rompono), ma
 // il docente non deve più saperla nominare per assegnare qualcosa.
 export default async function Page() {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi");
+
+  // Le classi che il docente ha dichiarato di insegnare, e gli esercizi che
+  // hanno almeno una versione salvata: senza versione l'anteprima direbbe
+  // "nessuna versione salvata" invece di mostrare qualcosa, quindi il filtro
+  // sta qui e non nel modulo (che riceve gia' solo candidati validi).
+  const [insegnate, esercizi] = await Promise.all([
+    classiDelDocente(session.user.id),
+    elencoRedazione(),
+  ]);
+  const candidati = esercizi
+    .filter((e) => e.ultimaVersione > 0)
+    .map((e) => ({ id: e.id, argomento: e.argomento, anno: e.anno }));
 
   const sezioni = [
     { href: "/dashboard/esercizi/redazione", label: t("navRedazione"), icon: Pencil },
@@ -44,6 +59,12 @@ export default async function Page() {
           {t("assegnaTitolo")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("assegnaDescrizione")}</p>
+        <div className="mt-4">
+          <AssegnaForm
+            classi={insegnate.map((c) => ({ id: c.id, name: c.name, yearLevel: c.yearLevel }))}
+            candidati={candidati}
+          />
+        </div>
       </section>
 
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

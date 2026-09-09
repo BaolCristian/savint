@@ -2,16 +2,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
+vi.mock("@/lib/esercizi/classi", () => ({ classiDelDocente: vi.fn() }));
+vi.mock("@/lib/esercizi/redazione", () => ({ elencoRedazione: vi.fn() }));
+// Il modulo di assegnazione ha i suoi test (assegna-form.test.tsx): qui
+// interessa che la pagina lo MONTI nel posto giusto, non come si comporta.
+vi.mock("../assegna-form", () => ({ AssegnaForm: () => <div data-testid="assegna-form" /> }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
 }));
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
+import { classiDelDocente } from "@/lib/esercizi/classi";
+import { elencoRedazione } from "@/lib/esercizi/redazione";
 import Page from "../page";
 
 beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
+  vi.mocked(classiDelDocente).mockReset().mockResolvedValue([]);
+  vi.mocked(elencoRedazione).mockReset().mockResolvedValue([]);
 });
 
 async function rendi() {
@@ -29,12 +38,15 @@ describe("hub della sezione esercizi del docente", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
-  it("mostra il blocco per assegnare come intestazione propria, non come link di navigazione — il modulo vero arriva nel prossimo task", async () => {
+  it("mostra il blocco per assegnare, con dentro il modulo vero", async () => {
     await rendi();
     // getTranslations è mockato per restituire la CHIAVE: "assegnaTitolo" e
     // "assegnaDescrizione" sono le chiavi nuove che questo task introduce.
     const titolo = screen.getByText("assegnaTitolo");
     expect(titolo.closest("a")).toBeNull();
+    // Il modulo c'e' davvero: senza questa asserzione la prova passerebbe
+    // anche se la sezione fosse rimasta l'intestazione vuota del Task 4.
+    expect(screen.getByTestId("assegna-form")).toBeInTheDocument();
     expect(screen.getByText("assegnaDescrizione")).toBeInTheDocument();
   });
 
