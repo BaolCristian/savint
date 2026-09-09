@@ -103,43 +103,62 @@ export async function bacinoRegola(regola: {
  * assegnazione diretta (Task 2, docente-via-veloce): un campo a scelta, non
  * libero, così non si può chiedere un argomento che non esiste.
  *
- * NORMALIZZA in lettura (spazi ai bordi, differenza di maiuscole/minuscole):
- * i metadati degli esercizi non sono normalizzati, quindi senza questo passo
- * «equazioni» ed «Equazioni» (o «equazioni » con uno spazio in coda)
- * comparirebbero come due voci distinte nel menu, ciascuna con un conteggio
- * frammentato — esattamente il rischio che la specifica accetta e mitiga qui.
+ * NON fonde grafie diverse («equazioni» ed «Equazioni», o «equazioni » con
+ * uno spazio in coda): ognuna resta la sua voce, col proprio conteggio
+ * ESATTO. Giro di correzioni 1 (Task 2, docente-via-veloce) — la specifica
+ * diceva inizialmente sia "diventa due voci nel menu" sia "si normalizza in
+ * lettura per il menu" (contraddittorio, corretto in cae8f1a): fondere
+ * significa mostrarne una sola con la somma dei conteggi, ma il filtro che
+ * pesca (`bacinoRegola`, via `quantiCorrispondono`) confronta il testo
+ * ESATTO — con 99 esercizi «equazioni» e 1 «Equazioni» il menu fuso direbbe
+ * «Equazioni — 100» e selezionarla ne troverebbe 1, lo stesso contatore che
+ * dovrebbe prevenire la sorpresa a contraddirsi da solo sulla stessa
+ * schermata, e 99 esercizi diventati permanentemente inassegnabili da qui.
+ * Una lista con voci duplicate è più lunga ma sempre raggiungibile; una
+ * fusa è più corta ma mente su quanti esercizi selezionarla raggiunge.
+ *
+ * Ordina ignorando la cassa (non il testo esatto): le grafie diverse dello
+ * stesso argomento finiscono così adiacenti nella lista, visibili a colpo
+ * d'occhio come il segnale che quei metadati vanno sistemati — nasconderle
+ * nasconderebbe il problema. A parità di cassa, l'ordine è quello del testo
+ * originale: deterministico, non "quella arrivata per prima dalla query"
+ * (Prisma non garantisce un ordine senza `orderBy`).
+ *
  * NON tocca la riga salvata (solo `select`, nessuna scrittura): normalizzare
  * sul serio i dati è un lavoro diverso, deliberatamente fuori da questo task.
- * Fra le grafie diverse che finiscono nello stesso gruppo, l'etichetta
- * restituita è la più piccola per ordine di caratteri dopo il trim — una
- * scelta deterministica, non "quella arrivata per prima dalla query" (Prisma
- * non garantisce un ordine senza `orderBy`).
  *
  * `anno`, se passato, filtra per `yearLevel` esatto — lo stesso significato
- * che ha in `FiltroDiretto` (compiti.ts). Il conteggio qui è grezzo
- * (quanti esercizi dichiarano questo argomento), non "quanti sono pescabili
- * ora": quel numero preciso, filtrato anche per versione disponibile, è
- * `quantiCorrispondono` (compiti.ts), chiamata quando il docente ha già
- * scelto un argomento e sta decidendo quanti chiederne. */
+ * che ha in `FiltroDiretto` (compiti.ts). Il conteggio qui è grezzo (quanti
+ * esercizi hanno esattamente questa grafia e, se richiesto, questo anno),
+ * non ancora ristretto per versione disponibile o difficoltà: quel numero
+ * più preciso è `quantiCorrispondono` (compiti.ts), chiamata quando il
+ * docente ha già scelto una voce e sta decidendo quanti esercizi chiederne.
+ * Per costruzione — stesso `topic` esatto, stesso `anno` esatto — il
+ * conteggio qui è sempre un limite superiore a quello di
+ * `quantiCorrispondono` per la stessa voce, mai il contrario: la voce può
+ * sotto-promettere (se filtrata anche per difficoltà o versione), mai
+ * sovra-promettere. */
 export async function argomentiDisponibili(anno?: number): Promise<{ argomento: string; quanti: number }[]> {
   const righe = await prisma.esercizio.findMany({
     where: anno != null ? { yearLevel: anno } : {},
     select: { topic: true },
   });
 
-  const gruppi = new Map<string, { argomento: string; quanti: number }>();
+  const conteggi = new Map<string, number>();
   for (const { topic } of righe) {
-    const normalizzato = topic.trim();
-    const chiave = normalizzato.toLowerCase();
-    const gruppo = gruppi.get(chiave);
-    if (gruppo) {
-      gruppo.quanti++;
-      if (normalizzato < gruppo.argomento) gruppo.argomento = normalizzato;
-    } else {
-      gruppi.set(chiave, { argomento: normalizzato, quanti: 1 });
-    }
+    conteggi.set(topic, (conteggi.get(topic) ?? 0) + 1);
   }
-  return [...gruppi.values()].sort((a, b) => (a.argomento < b.argomento ? -1 : a.argomento > b.argomento ? 1 : 0));
+
+  return [...conteggi.entries()]
+    .map(([argomento, quanti]) => ({ argomento, quanti }))
+    .sort((a, b) => {
+      const ca = a.argomento.toLowerCase();
+      const cb = b.argomento.toLowerCase();
+      if (ca !== cb) return ca < cb ? -1 : 1;
+      // Stessa grafia a meno della cassa: ordine deterministico secondario
+      // sul testo esatto, non "quella arrivata per prima dalla query".
+      return a.argomento < b.argomento ? -1 : a.argomento > b.argomento ? 1 : 0;
+    });
 }
 
 /** L'etichetta con cui una regola compare nei messaggi rivolti al docente:

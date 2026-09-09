@@ -105,14 +105,55 @@ afterAll(async () => {
 });
 
 describe("argomentiDisponibili", () => {
-  it("unisce spazi ai bordi e differenze di maiuscole/minuscole in una sola voce, sommando i conteggi", async () => {
+  // Giro di correzioni 1: la specifica diceva sia "diventa due voci nel
+  // menu" sia "si normalizza in lettura per il menu" — contraddittorio,
+  // corretto in cae8f1a. La fusione (versione precedente di questo test)
+  // nascondeva grafie diverse dietro UNA voce con un conteggio sommato, ma
+  // il filtro che pesca (`bacinoRegola`, via `quantiCorrispondono`)
+  // confronta il testo ESATTO: selezionare quella voce fusa trovava molti
+  // meno esercizi di quanti il menu dichiarava. Ogni grafia resta la sua
+  // voce, col suo conteggio esatto — brutto da vedere, ma raggiungibile.
+  it("NON fonde spazi ai bordi o maiuscole/minuscole: ogni grafia resta una voce a sé, col proprio conteggio esatto", async () => {
     await creaEsercizio(`${P}radici-1`, `${P}Radici`);
     await creaEsercizio(`${P}radici-2`, `${P}radici`);
     await creaEsercizio(`${P}radici-3`, `${P}radici `); // spazio in coda
 
-    const risultati = (await argomentiDisponibili()).filter((x) => x.argomento.startsWith(P));
-    expect(risultati).toHaveLength(1);
-    expect(risultati[0]!.quanti).toBe(3);
+    const risultati = (await argomentiDisponibili()).filter((x) => x.argomento.trim().toLowerCase() === `${P}radici`);
+    expect(risultati).toHaveLength(3);
+    expect(new Set(risultati.map((x) => x.argomento))).toEqual(
+      new Set([`${P}Radici`, `${P}radici`, `${P}radici `]),
+    );
+    expect(risultati.every((x) => x.quanti === 1)).toBe(true);
+  });
+
+  // Il test che il giro di correzioni chiede esplicitamente: la divergenza
+  // che la fusione produceva, resa concreta come un'uguaglianza che deve
+  // valere per OGNI voce del menu, non solo osservata a occhio su un caso.
+  // Con la fusione, la voce rappresentativa (quella scelta come "la più
+  // piccola alfabeticamente" fra le grafie) portava la SOMMA di entrambe,
+  // ma `quantiCorrispondono` — che passa dalla stessa `bacinoRegola` che la
+  // pesca vera userebbe, confronto ESATTO sul testo — ne trovava solo una
+  // frazione: la voce mentiva su quanti esercizi selezionarla avrebbe
+  // davvero raggiunto.
+  it("il conteggio di ogni voce del menu coincide con ciò che quantiCorrispondono trova selezionandola — niente fusione fra grafie diverse", async () => {
+    const suffisso = "fusione-argomento";
+    const grafiaMinuscola = `${P}${suffisso}`;
+    const grafiaMaiuscola = `${P}${suffisso.charAt(0).toUpperCase()}${suffisso.slice(1)}`;
+
+    await creaEsercizio(`${P}fus-1`, grafiaMinuscola, { yearLevel: 2 });
+    await creaEsercizio(`${P}fus-2`, grafiaMinuscola, { yearLevel: 2 });
+    await creaEsercizio(`${P}fus-3`, grafiaMinuscola, { yearLevel: 2 });
+    await creaEsercizio(`${P}fus-4`, grafiaMaiuscola, { yearLevel: 2 });
+
+    const voci = (await argomentiDisponibili(2)).filter((x) => x.argomento.toLowerCase() === grafiaMinuscola.toLowerCase());
+    // Due grafie distinte, non una sola voce fusa: la prima asserzione che
+    // la versione fusa faceva fallire.
+    expect(voci).toHaveLength(2);
+
+    for (const voce of voci) {
+      const trovati = await quantiCorrispondono({ anno: 2, argomento: voce.argomento });
+      expect(trovati).toBe(voce.quanti);
+    }
   });
 
   it("non modifica il dato salvato: la riga resta esattamente come scritta", async () => {
@@ -131,6 +172,25 @@ describe("argomentiDisponibili", () => {
 
     const senzaFiltro = (await argomentiDisponibili()).find((x) => x.argomento === `${P}AnnoFiltro`);
     expect(senzaFiltro).toEqual({ argomento: `${P}AnnoFiltro`, quanti: 2 });
+  });
+
+  // L'ordinamento ignora la cassa (spec corretta, cae8f1a): le grafie
+  // diverse dello stesso argomento devono finire ADIACENTI nella lista,
+  // così la deriva si vede a colpo d'occhio invece di essere sparsa.
+  it("l'ordinamento ignora la cassa: grafie diverse dello stesso argomento sono adiacenti", async () => {
+    const suffisso = "ordine-argomento";
+    const minuscola = `${P}${suffisso}`;
+    const maiuscola = `${P}${suffisso.toUpperCase()}`;
+    await creaEsercizio(`${P}ord-1`, maiuscola, { yearLevel: 2 });
+    await creaEsercizio(`${P}ord-2`, minuscola, { yearLevel: 2 });
+
+    const tutti = (await argomentiDisponibili(2)).filter((x) => x.argomento.toLowerCase() === minuscola.toLowerCase());
+    expect(tutti).toHaveLength(2);
+
+    const tuttiOrdinati = (await argomentiDisponibili(2));
+    const iMin = tuttiOrdinati.findIndex((x) => x.argomento === minuscola);
+    const iMai = tuttiOrdinati.findIndex((x) => x.argomento === maiuscola);
+    expect(Math.abs(iMin - iMai)).toBe(1);
   });
 });
 
