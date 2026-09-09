@@ -98,6 +98,50 @@ export async function bacinoRegola(regola: {
   return righe.map((r) => r.id);
 }
 
+/** L'elenco degli argomenti che gli esercizi dichiarano davvero, con quanti
+ * esercizi ciascuno — la lista da cui il docente sceglie nel modulo di
+ * assegnazione diretta (Task 2, docente-via-veloce): un campo a scelta, non
+ * libero, così non si può chiedere un argomento che non esiste.
+ *
+ * NORMALIZZA in lettura (spazi ai bordi, differenza di maiuscole/minuscole):
+ * i metadati degli esercizi non sono normalizzati, quindi senza questo passo
+ * «equazioni» ed «Equazioni» (o «equazioni » con uno spazio in coda)
+ * comparirebbero come due voci distinte nel menu, ciascuna con un conteggio
+ * frammentato — esattamente il rischio che la specifica accetta e mitiga qui.
+ * NON tocca la riga salvata (solo `select`, nessuna scrittura): normalizzare
+ * sul serio i dati è un lavoro diverso, deliberatamente fuori da questo task.
+ * Fra le grafie diverse che finiscono nello stesso gruppo, l'etichetta
+ * restituita è la più piccola per ordine di caratteri dopo il trim — una
+ * scelta deterministica, non "quella arrivata per prima dalla query" (Prisma
+ * non garantisce un ordine senza `orderBy`).
+ *
+ * `anno`, se passato, filtra per `yearLevel` esatto — lo stesso significato
+ * che ha in `FiltroDiretto` (compiti.ts). Il conteggio qui è grezzo
+ * (quanti esercizi dichiarano questo argomento), non "quanti sono pescabili
+ * ora": quel numero preciso, filtrato anche per versione disponibile, è
+ * `quantiCorrispondono` (compiti.ts), chiamata quando il docente ha già
+ * scelto un argomento e sta decidendo quanti chiederne. */
+export async function argomentiDisponibili(anno?: number): Promise<{ argomento: string; quanti: number }[]> {
+  const righe = await prisma.esercizio.findMany({
+    where: anno != null ? { yearLevel: anno } : {},
+    select: { topic: true },
+  });
+
+  const gruppi = new Map<string, { argomento: string; quanti: number }>();
+  for (const { topic } of righe) {
+    const normalizzato = topic.trim();
+    const chiave = normalizzato.toLowerCase();
+    const gruppo = gruppi.get(chiave);
+    if (gruppo) {
+      gruppo.quanti++;
+      if (normalizzato < gruppo.argomento) gruppo.argomento = normalizzato;
+    } else {
+      gruppi.set(chiave, { argomento: normalizzato, quanti: 1 });
+    }
+  }
+  return [...gruppi.values()].sort((a, b) => (a.argomento < b.argomento ? -1 : a.argomento > b.argomento ? 1 : 0));
+}
+
 /** L'etichetta con cui una regola compare nei messaggi rivolti al docente:
  * il nome del contenitore per una regola a raccolta, l'argomento per una a
  * filtro. Usata da `elencoBatterie` qui sotto e da `assegna` (compiti.ts)
@@ -146,6 +190,15 @@ export async function creaBatteria(
   name: string,
   regole: RegolaInput[],
   description?: string,
+  // Task 2 (docente-via-veloce): `automatica` marca una batteria generata
+  // dal sistema per un'assegnazione diretta (vedi `assegnaDiretto` in
+  // compiti.ts), non composta a mano dal docente. Quinto parametro
+  // opzionale, in coda: ogni chiamata esistente (route comprese) ne passa
+  // al più quattro e riceve `false` di default, lo stesso comportamento di
+  // sempre. Un solo punto di creazione per ENTRAMBE le provenienze — stessa
+  // validazione dell'invariante, stessa transazione — non un secondo percorso
+  // di scrittura per il caso automatico.
+  automatica = false,
 ): Promise<
   | { ok: true; id: string }
   | { ok: false; motivo: "contenitore_non_trovato"; dettaglio: { contenitoreId: string } }
@@ -172,7 +225,7 @@ export async function creaBatteria(
   }
 
   const id = await prisma.$transaction(async (tx) => {
-    const b = await tx.batteria.create({ data: { createdById, name, description } });
+    const b = await tx.batteria.create({ data: { createdById, name, description, automatica } });
     if (regole.length > 0) {
       await tx.batteriaRegola.createMany({
         data: regole.map((r, i) => {

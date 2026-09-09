@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
-import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola } from "./batterie";
+import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
 
 type MotivoAssegna =
   | "batteria_non_trovata"
@@ -10,6 +10,16 @@ type MotivoAssegna =
   | "esercizi_insufficienti"
   | "scadenza_prima_apertura"
   | "scadenza_nel_passato";
+
+/** L'esito di un'assegnazione. Esportato (Task 2, docente-via-veloce) perché
+ * da questo task in poi ha DUE produttori — `assegna` (per raccolta) e
+ * `assegnaDiretto` (per filtro) — e il secondo deve dichiarare di restituire
+ * esattamente lo stesso tipo del primo, a cui delega per intero: un tipo
+ * proprio, anche se strutturalmente identico, potrebbe divergere in silenzio
+ * a una futura modifica di uno solo dei due. */
+export type EsitoAssegna =
+  | { ok: true; compitoId: string }
+  | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown };
 
 /** Assegna una batteria a una classe: pesca UNA volta, con un seme nuovo, e
  * fissa il risultato nel Compito. Da quel momento in poi nessuna modifica al
@@ -37,10 +47,7 @@ export async function assegna(
   classeId: string,
   assignedById: string,
   opzioni?: { opensAt?: Date; dueAt?: Date },
-): Promise<
-  | { ok: true; compitoId: string }
-  | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown }
-> {
+): Promise<EsitoAssegna> {
   // Controllo di forma sulle date, prima di qualunque interrogazione: non
   // richiede il database, quindi è il più economico da fare per primo. Una
   // scadenza prima dell'apertura non ha senso (la finestra sarebbe già
@@ -137,6 +144,101 @@ export async function assegna(
   });
 
   return { ok: true, compitoId: compito.id };
+}
+
+/** I filtri di una regola a "argomento" (Task 1: la seconda forma di
+ * `BatteriaRegola`, alternativa al contenitore) così come li raccoglie il
+ * modulo di assegnazione diretta. `anno` non è mai facoltativo qui: la
+ * specifica lo dice esplicitamente ("l'anno non si chiede") — viene sempre
+ * dalla classe scelta dal docente, mai da un campo che lui compila. */
+export type FiltroDiretto = { anno: number; argomento: string; difficoltaMax?: number };
+
+/** Quanti esercizi risponderebbero a questo filtro **se si assegnasse ora**
+ * — il numero che il docente legge mentre sceglie, prima di impegnarsi
+ * ("quanti esercizi corrispondono", nella specifica). Deve contare
+ * esattamente ciò che la pesca vera potrebbe consegnare, non l'appartenenza
+ * grezza al filtro: passa dalla STESSA risoluzione di `bacinoRegola` —
+ * l'unico punto che tutte le letture attraversano (Task 1) — e dallo STESSO
+ * filtro di disponibilità di versione di `idsConVersione`, non da una nuova
+ * query che potrebbe divergere in silenzio da quella che la pesca userà.
+ *
+ * Nessuna esclusione per "già pescati" da applicare qui, a differenza di
+ * `candidatiDisponibili`: una batteria automatica (`assegnaDiretto` più
+ * sotto) ha sempre e solo UNA regola, quindi non esiste una regola
+ * precedente della stessa batteria con cui accavallarsi — lo stesso motivo
+ * per cui `verificaBatteria` (batterie.ts) non ha bisogno di un `presi`
+ * prima che un'assegnazione sia mai avvenuta.
+ *
+ * "Un conteggio che promette più di quanto la pesca consegni sarebbe peggio
+ * di nessun conteggio" (dal brief): qui non può succedere per costruzione —
+ * non è una stima, è la stessa identica risoluzione che `assegna` userebbe
+ * per questa regola. */
+export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
+  const bacino = await bacinoRegola({
+    contenitoreId: null,
+    argomento: f.argomento,
+    anno: f.anno,
+    difficoltaMax: f.difficoltaMax ?? null,
+  });
+  const conVersione = await idsConVersione(bacino);
+  return conVersione.size;
+}
+
+/** L'assegnazione diretta (Task 2, docente-via-veloce): classe, argomento,
+ * quanti, entro quando — senza che il docente componga prima una raccolta.
+ *
+ * **Non è una seconda strada di pesca.** Crea una `Batteria` marcata
+ * `automatica` con UNA sola regola a filtro (la forma che Task 1 ha aggiunto
+ * a `BatteriaRegola`), e delega interamente ad `assegna`: stessa pesca,
+ * stesso controllo di capienza, stesso congelamento in `drawnVersionIds`,
+ * stessa esclusione fra regole (qui vuota, non essendocene una seconda),
+ * stesso rifiuto col dettaglio — `{ contenitore, richiesti, disponibili }`,
+ * dove `contenitore` porta l'argomento e non un nome di raccolta, perché
+ * `etichettaRegola` risolve così una regola a filtro. Un secondo percorso di
+ * pesca sarebbe un secondo posto dove sbagliare esattamente ciò che
+ * `assegna` ha già pagato per correggere due volte (vedi i suoi commenti).
+ *
+ * La batteria creata qui non compare mai in `elencoBatterie` (che esclude
+ * `automatica: true`, Task 1): è provenienza di questo compito, non
+ * contenuto che il docente componga o gestisca.
+ *
+ * `creaBatteria` può in teoria rifiutare (`regola_malformata` se la regola
+ * non rispettasse l'invariante, `contenitore_non_trovato` se nominasse un
+ * contenitore inesistente) — nessuno dei due può capitare qui: la regola che
+ * costruiamo ha sempre e solo `argomento` (mai `contenitoreId`), quindi è
+ * valida per costruzione. Un rifiuto qui sarebbe un bug di questa funzione,
+ * non un input scorretto del chiamante: si lancia, invece di forzare un
+ * `MotivoAssegna` che non esiste per questo caso in `EsitoAssegna`. */
+export async function assegnaDiretto(input: {
+  classeId: string;
+  teacherId: string;
+  filtro: FiltroDiretto;
+  quanti: number;
+  opensAt?: Date;
+  dueAt?: Date;
+}): Promise<EsitoAssegna> {
+  const creazione = await creaBatteria(
+    input.teacherId,
+    `Assegnazione diretta: ${input.filtro.argomento}`,
+    [{
+      count: input.quanti,
+      argomento: input.filtro.argomento,
+      anno: input.filtro.anno,
+      difficoltaMax: input.filtro.difficoltaMax,
+    }],
+    undefined,
+    true,
+  );
+  if (!creazione.ok) {
+    throw new Error(
+      `creaBatteria (automatica) rifiutata inaspettatamente in assegnaDiretto: ${creazione.motivo}`,
+    );
+  }
+
+  return assegna(creazione.id, input.classeId, input.teacherId, {
+    opensAt: input.opensAt,
+    dueAt: input.dueAt,
+  });
 }
 
 /** Controlla che un `compitoId` arrivato dalla query string (il link nella
