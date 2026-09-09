@@ -116,11 +116,23 @@ nessun elenco: sono provenienza, non contenuto.
 
 ## Rischi accettati
 
-- **Un argomento scritto in due modi** («equazioni» ed «Equazioni») diventa
-  due voci nel menu. I metadati degli esercizi non sono normalizzati. Si
-  normalizza in lettura per il menu; normalizzarli sul serio è un altro
-  lavoro, e il codice classe di ieri ha già mostrato quanto costa scoprirlo
-  tardi.
+- **Un argomento scritto in due modi** («equazioni» ed «Equazioni») resta
+  **due voci nel menu**, ciascuna con il proprio conteggio. Le due voci sono
+  brutte, e vanno bene così: sono il segnale che quei metadati vanno
+  sistemati, e nasconderlo nasconderebbe il problema.
+
+  *Questo paragrafo diceva anche «si normalizza in lettura per il menu», il
+  che lo contraddiceva. Correzione del 2026-09-09, dopo che una revisione ha
+  mostrato il costo della metà sbagliata: unire le due voci significa
+  mostrarne una sola, e il filtro che pesca confronta il testo ESATTO. Con
+  99 esercizi «equazioni» e 1 «Equazioni», il menu avrebbe detto 100 e la
+  selezione ne avrebbe trovato 1 — due numeri che si contraddicono sulla
+  stessa schermata, e 99 esercizi diventati inassegnabili. Non unire le voci
+  costa una lista più lunga; unirle costa esercizi irraggiungibili.*
+
+  L'ordinamento del menu ignora la cassa, così le varianti finiscono
+  adiacenti e la deriva si vede a colpo d'occhio. Normalizzare davvero i
+  dati è un altro lavoro.
 - **Il conteggio dei corrispondenti è una fotografia.** Fra il momento in cui
   il docente lo legge e quello in cui assegna, un altro docente può togliere
   un esercizio. Il rifiuto per capienza insufficiente resta, con il suo
