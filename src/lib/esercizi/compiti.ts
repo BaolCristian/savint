@@ -41,7 +41,23 @@ export type EsitoAssegna =
  *
  * Tutti i controlli (batteria, classe, insegnamento, capienza dei
  * contenitori) avvengono PRIMA di qualunque scrittura: un fallimento non
- * lascia nessun Compito a metà. */
+ * lascia nessun Compito a metà.
+ *
+ * **Una classe archiviata non riceve assegnazioni (Fix round 2, Task 3
+ * docente-via-veloce).** `archivedAt` non cancella la riga `ClasseDocente`
+ * — un docente che insegnava una classe poi archiviata la vede ancora
+ * come "sua" per quella tabella — quindi senza questo controllo
+ * un'assegnazione qui passava comunque. `classiDelDocente` (classi.ts),
+ * che `compiti/diretto/route.ts` usa per il proprio pre-controllo, esclude
+ * già `archivedAt` non nullo dal suo elenco: la stessa classe archiviata
+ * rispondeva già `non_insegni_questa_classe` da quella rotta. Senza
+ * questo controllo QUI, `/api/esercizi/compiti` (che non ha un
+ * pre-controllo proprio, delega interamente a questa funzione) rispondeva
+ * diversamente alla stessa identica domanda — anzi, non rifiutava affatto.
+ * Stesso motivo di "non la insegna" (`non_insegni_questa_classe`), non un
+ * terzo nuovo: dal punto di vista di chi assegna, una classe archiviata e
+ * una mai insegnata meritano la stessa risposta — nessuna delle due è una
+ * classe a cui questo docente possa assegnare lavoro adesso. */
 export async function assegna(
   batteriaId: string,
   classeId: string,
@@ -74,6 +90,10 @@ export async function assegna(
 
   const classe = await prisma.classe.findUnique({ where: { id: classeId } });
   if (!classe) return { ok: false, motivo: "classe_non_trovata" };
+  // Vedi il commento sopra la funzione: stesso motivo di "non la insegna",
+  // controllata prima della query su ClasseDocente perché una classe
+  // archiviata la rifiuta comunque, quale che sia quella riga.
+  if (classe.archivedAt != null) return { ok: false, motivo: "non_insegni_questa_classe" };
 
   const insegna = await prisma.classeDocente.findUnique({
     where: { classeId_teacherId: { classeId, teacherId: assignedById } },
@@ -236,7 +256,28 @@ export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
  * Nessuna validazione duplicata qui per anticipare il rifiuto: sarebbe un
  * secondo posto dove `assegna` potrebbe essere sbagliata — esattamente il
  * rischio che l'intero task è nato per evitare (vedi sopra). Si lascia
- * rifiutare, poi si pulisce. */
+ * rifiutare, poi si pulisce.
+ *
+ * **La pulizia copre anche il caso in cui `assegna` LANCI, non solo quello
+ * in cui rifiuti (Fix round 2).** Un rifiuto (`!esito.ok`) e un'eccezione
+ * sono la stessa situazione vista da due porte diverse — in entrambe la
+ * batteria appena creata non è mai servita a nulla — ma senza un
+ * `try/catch` solo la prima veniva ripulita: un'eccezione (un guasto del
+ * database a metà chiamata, o una futura modifica di `assegna` che lancia
+ * dove oggi rifiuta) avrebbe lasciato lo stesso residuo invisibile che
+ * questo giro di correzioni esiste per togliere, dalla porta rimasta
+ * aperta. Nessun percorso noto lo raggiunge oggi (la regola che
+ * costruiamo qui è valida per costruzione, vedi sopra), ma è esattamente
+ * il tipo di regressione che nessuno nota — la garanzia smette di valere
+ * in silenzio e nessun test lo dice — quindi vale la pena difendersi ora.
+ *
+ * Il fallimento della pulizia stessa (qui: solo se `assegna` lancia PRIMA
+ * di aver mai scritto nulla che referenzi la batteria — l'unico caso in
+ * cui questo ramo viene raggiunto — la cancellazione non dovrebbe mai
+ * incontrare `onDelete: Restrict`, ma un guasto del database potrebbe
+ * comunque colpire anche lei) viene inghiottito, non propagato: l'errore
+ * ORIGINALE è l'unica cosa vera che il chiamante deve vedere — un
+ * fallimento della pulizia non deve mai sostituirlo. */
 export async function assegnaDiretto(input: {
   classeId: string;
   teacherId: string;
@@ -263,10 +304,21 @@ export async function assegnaDiretto(input: {
     );
   }
 
-  const esito = await assegna(creazione.id, input.classeId, input.teacherId, {
-    opensAt: input.opensAt,
-    dueAt: input.dueAt,
-  });
+  let esito: EsitoAssegna;
+  try {
+    esito = await assegna(creazione.id, input.classeId, input.teacherId, {
+      opensAt: input.opensAt,
+      dueAt: input.dueAt,
+    });
+  } catch (erroreOriginale) {
+    try {
+      await prisma.batteria.delete({ where: { id: creazione.id } });
+    } catch {
+      // Inghiottito: un fallimento della pulizia non deve mai sostituire
+      // l'errore vero nella console di chi chiama.
+    }
+    throw erroreOriginale;
+  }
 
   if (!esito.ok) {
     await prisma.batteria.delete({ where: { id: creazione.id } });

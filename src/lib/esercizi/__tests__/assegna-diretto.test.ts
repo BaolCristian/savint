@@ -330,6 +330,37 @@ describe("assegnaDiretto", () => {
     ).resolves.toBeDefined();
   });
 
+  // Fix round 2: la pulizia del Fix round 1 copriva solo il RIFIUTO
+  // (`!esito.ok`), non un'ECCEZIONE di `assegna` — un guasto del database a
+  // metà chiamata lasciava lo stesso residuo invisibile dalla porta rimasta
+  // aperta. Serve un guasto VERO, non un mock sul client prisma condiviso
+  // (un `vi.spyOn` su `prisma.classe.findUnique`, tentato per primo, ha
+  // lasciato il delegate del client rotto per i test successivi dello
+  // stesso file anche dopo `mockRestore()` — troppo rischioso su un client
+  // vivo condiviso con l'intero resto della suite). Un `classeId` con un
+  // byte NUL incorporato produce lo stesso sintomo per una via reale e
+  // isolata: Postgres rifiuta un NUL in un valore `text` con un errore di
+  // codifica genuino (`22021`, verificato con una prova diretta prima di
+  // scrivere questo test), lanciato dalla query vera che `assegna` fa
+  // DOPO aver già scritto la batteria automatica (creaBatteria, dentro
+  // assegnaDiretto) ma prima di scrivere qualunque Compito — lo stesso
+  // punto in cui un'interruzione di rete produrrebbe lo stesso sintomo,
+  // senza toccare il client condiviso.
+  it("se assegna lancia un'eccezione (es. un guasto del database) invece di rifiutare, la batteria appena creata viene comunque pulita e l'errore originale propaga", async () => {
+    const topic = `${P}eccezione-pulizia`;
+    await creaEsercizio(`${P}ecc-1`, topic, { yearLevel: 2, difficulty: 1 });
+
+    const primaDelTentativo = await prisma.batteria.count({ where: { name: { contains: P } } });
+
+    const classeIdCorrotto = `${classeId}${String.fromCharCode(0)}`;
+    await expect(
+      assegnaDiretto({ classeId: classeIdCorrotto, teacherId, filtro: { anno: 2, argomento: topic }, quanti: 1 }),
+    ).rejects.toThrow(/invalid byte sequence|22021/i);
+
+    const dopoIlTentativo = await prisma.batteria.count({ where: { name: { contains: P } } });
+    expect(dopoIlTentativo).toBe(primaDelTentativo);
+  });
+
   // Il test che conta di più (dal brief): la strada è UNA, non due. A
   // parità di seme (mockato in cima al file) e sullo stesso insieme di
   // esercizi — una raccolta che contiene esattamente ciò che il filtro
