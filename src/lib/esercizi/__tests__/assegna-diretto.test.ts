@@ -290,6 +290,46 @@ describe("assegnaDiretto", () => {
     expect(r).toMatchObject({ ok: false, motivo: "scadenza_nel_passato" });
   });
 
+  // Fix round 1: `assegnaDiretto` crea la `Batteria` automatica PRIMA che
+  // `assegna` validi qualunque cosa (date, classe, capienza) — ogni
+  // rifiuto, quale che sia il motivo, lasciava quella riga (e la sua
+  // `BatteriaRegola`) orfana nel database: invisibile in `elencoBatterie`
+  // (che esclude `automatica: true`), mai ripulita. Un docente che sbaglia
+  // tre volte la dimensione della richiesta lasciava tre righe morte.
+  it("un'assegnazione diretta rifiutata non lascia una batteria orfana: il conteggio non cambia", async () => {
+    const topic = `${P}orfana-capienza`;
+    await creaEsercizio(`${P}orf-1`, topic, { yearLevel: 2, difficulty: 1 });
+
+    const primaDelRifiuto = await prisma.batteria.count({ where: { name: { contains: P } } });
+    const r = await assegnaDiretto({ classeId, teacherId, filtro: { anno: 2, argomento: topic }, quanti: 5 });
+    expect(r.ok).toBe(false);
+
+    const dopoIlRifiuto = await prisma.batteria.count({ where: { name: { contains: P } } });
+    expect(dopoIlRifiuto).toBe(primaDelRifiuto);
+  });
+
+  // Il verso opposto, esplicito: la pulizia riguarda SOLO i rifiuti. Una
+  // batteria che ha davvero prodotto un Compito deve restare — è la
+  // provenienza di quel compito, cancellarla romperebbe il vincolo
+  // `onDelete: Restrict` di `Compito.batteria`.
+  it("un'assegnazione diretta riuscita lascia la batteria automatica al suo posto", async () => {
+    const topic = `${P}successo-batteria-resta`;
+    await creaEsercizio(`${P}sbr-1`, topic, { yearLevel: 2, difficulty: 1 });
+
+    const primaDelSuccesso = await prisma.batteria.count({ where: { name: { contains: P } } });
+    const r = await assegnaDiretto({ classeId, teacherId, filtro: { anno: 2, argomento: topic }, quanti: 1 });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    const dopoIlSuccesso = await prisma.batteria.count({ where: { name: { contains: P } } });
+    expect(dopoIlSuccesso).toBe(primaDelSuccesso + 1);
+
+    const compito = await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } });
+    await expect(
+      prisma.batteria.findUniqueOrThrow({ where: { id: compito.batteriaId } }),
+    ).resolves.toBeDefined();
+  });
+
   // Il test che conta di più (dal brief): la strada è UNA, non due. A
   // parità di seme (mockato in cima al file) e sullo stesso insieme di
   // esercizi — una raccolta che contiene esattamente ciò che il filtro

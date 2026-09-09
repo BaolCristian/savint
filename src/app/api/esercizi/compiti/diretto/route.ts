@@ -5,11 +5,16 @@ import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { assegnaDiretto } from "@/lib/esercizi/compiti";
 
+// `anno` è facoltativo qui e SOLO qui: è il ripiego per una classe che non
+// ne porta uno proprio (vedi il commento sopra la sua risoluzione, sotto).
+// Quando la classe ha già un anno, questo campo viene ignorato — non è mai
+// il modo con cui un client dichiara l'anno di una classe che ce l'ha.
 const bodySchema = z.object({
   classeId: z.string().min(1),
   argomento: z.string().min(1).max(200),
   quanti: z.number().int().positive(),
   difficoltaMax: z.number().int().min(1).max(3).optional(),
+  anno: z.number().int().min(1).max(5).optional(),
   opensAt: z.coerce.date().optional(),
   dueAt: z.coerce.date().optional(),
 });
@@ -57,29 +62,34 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
 
-  // `FiltroDiretto.anno` non è mai facoltativo (compiti.ts): viene SEMPRE
-  // dalla classe scelta dal docente, mai da un campo che il corpo della
-  // richiesta potrebbe portare — un client non può mai dichiarare un anno
-  // diverso da quello vero della classe (il campo non è nemmeno nello
-  // schema sopra). `classiDelDocente` è già filtrata per questo docente:
-  // se `classeId` non compare nella lista, o la classe non esiste o non è
-  // sua, e le due cose meritano la stessa risposta di `assegna` per lo
-  // stesso identico motivo.
+  // `FiltroDiretto.anno` non è mai facoltativo (compiti.ts) — si pesca per
+  // anno, mescolare esercizi di anni diversi sarebbe sbagliato — ma la SUA
+  // FONTE è "la classe, o quanto ha detto il docente" (Fix round 1):
+  // `classe.yearLevel` se la classe ce l'ha, altrimenti `parsed.data.anno`.
+  // Quando la classe ha già un anno quello del corpo non viene mai usato:
+  // un client non può dichiarare un anno diverso da quello vero di una
+  // classe che ce l'ha già. `classiDelDocente` è già filtrata per questo
+  // docente: se `classeId` non compare nella lista, o la classe non esiste
+  // o non è sua, e le due cose meritano la stessa risposta di `assegna`
+  // per lo stesso identico motivo.
   const classi = await classiDelDocente(teacherId);
   const classe = classi.find((c) => c.id === parsed.data.classeId);
   if (!classe) return NextResponse.json({ error: "non_insegni_questa_classe" }, { status: 404 });
+  const anno = classe.yearLevel ?? parsed.data.anno;
   // Una classe creata a mano senza anno (creaClasse ammette `anno: null`),
   // o sincronizzata da un gruppo Google il cui nome non porta un anno
   // riconoscibile (yearLevelFromName in resolve-role.ts), non ha un `anno`
-  // da cui costruire il filtro: l'assegnazione diretta non può procedere
-  // per questa classe.
-  if (classe.yearLevel == null) return NextResponse.json({ error: "classe_senza_anno" }, { status: 422 });
+  // proprio: senza un anno nel corpo a fare da ripiego, l'assegnazione
+  // diretta non ha su cosa filtrare. Task 5 (il modulo, non ancora
+  // costruito) chiederà l'anno nel form solo quando la classe non lo
+  // porta — qui il corpo può già mandarlo comunque.
+  if (anno == null) return NextResponse.json({ error: "classe_senza_anno" }, { status: 422 });
 
   const esito = await assegnaDiretto({
     classeId: parsed.data.classeId,
     teacherId,
     filtro: {
-      anno: classe.yearLevel,
+      anno,
       argomento: parsed.data.argomento,
       difficoltaMax: parsed.data.difficoltaMax,
     },

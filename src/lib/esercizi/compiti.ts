@@ -208,7 +208,35 @@ export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
  * costruiamo ha sempre e solo `argomento` (mai `contenitoreId`), quindi è
  * valida per costruzione. Un rifiuto qui sarebbe un bug di questa funzione,
  * non un input scorretto del chiamante: si lancia, invece di forzare un
- * `MotivoAssegna` che non esiste per questo caso in `EsitoAssegna`. */
+ * `MotivoAssegna` che non esiste per questo caso in `EsitoAssegna`.
+ *
+ * **Un rifiuto di `assegna` non lascia una batteria orfana (Fix round 1).**
+ * La `Batteria` automatica viene scritta PRIMA che `assegna` validi
+ * qualunque cosa (date, classe, insegnamento, capienza) — se `assegna`
+ * rifiuta, quella riga non è mai servita a nulla e va cancellata, non
+ * dimenticata: `elencoBatterie` la nasconde comunque (esclude
+ * `automatica: true`), quindi senza questa pulizia resterebbe per sempre
+ * un residuo invisibile, uno per ogni tentativo di assegnazione diretta
+ * mal dimensionato o su una classe/scadenza sbagliata.
+ *
+ * Niente pre-controllo prima di cancellare: il contratto di `assegna`
+ * ("un fallimento non lascia nessun Compito a metà", vedi il suo commento)
+ * garantisce che, nel ramo `!esito.ok`, nessun `Compito` referenzia ancora
+ * questa batteria — cancellarla non può quindi incontrare mai il vincolo
+ * `onDelete: Restrict` di `Compito.batteria`. Se lo incontrasse (un bug
+ * futuro in `assegna` che rifiuta DOPO aver scritto), l'errore di Prisma
+ * esplode qui, rumorosamente, invece di essere pre-intercettato con un
+ * controllo scritto a mano (come farebbe `eliminaBatteria`, che conta i
+ * `Compito` prima di cancellare): "cancella solo ciò che non ha prodotto
+ * nulla" resta vera per costruzione — il vincolo del database — non per
+ * quanto ci si ricorda di controllare qui. `BatteriaRegola` cascata con la
+ * sua `Batteria` (`onDelete: Cascade`), quindi non serve una cancellazione
+ * separata per la regola.
+ *
+ * Nessuna validazione duplicata qui per anticipare il rifiuto: sarebbe un
+ * secondo posto dove `assegna` potrebbe essere sbagliata — esattamente il
+ * rischio che l'intero task è nato per evitare (vedi sopra). Si lascia
+ * rifiutare, poi si pulisce. */
 export async function assegnaDiretto(input: {
   classeId: string;
   teacherId: string;
@@ -235,10 +263,16 @@ export async function assegnaDiretto(input: {
     );
   }
 
-  return assegna(creazione.id, input.classeId, input.teacherId, {
+  const esito = await assegna(creazione.id, input.classeId, input.teacherId, {
     opensAt: input.opensAt,
     dueAt: input.dueAt,
   });
+
+  if (!esito.ok) {
+    await prisma.batteria.delete({ where: { id: creazione.id } });
+  }
+
+  return esito;
 }
 
 /** Controlla che un `compitoId` arrivato dalla query string (il link nella

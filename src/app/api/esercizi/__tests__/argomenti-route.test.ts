@@ -93,11 +93,43 @@ describe("GET /api/esercizi/argomenti", () => {
     expect(await r.json()).toEqual({ error: "non_insegni_questa_classe" });
   });
 
-  it("422 se la classe non ha un anno", async () => {
+  // Fix round 1: `classe_senza_anno` restava anche con l'anno fornito in
+  // query — una classe senza anno diventava permanentemente inassegnabile
+  // da qui. Il rifiuto resta, ma solo quando NESSUNA delle due fonti
+  // (classe, query) porta un anno: qui la query non lo fornisce.
+  it("422 se la classe non ha un anno e la query non lo fornisce", async () => {
     vi.mocked(classiDelDocente).mockResolvedValue([{ ...classeConAnno, yearLevel: null }] as never);
     const r = await GET(richiesta("?classeId=c1"));
     expect(r.status).toBe(422);
     expect(await r.json()).toEqual({ error: "classe_senza_anno" });
+  });
+
+  // Fix round 1: l'anno del docente in query è il ripiego per una classe
+  // che non ne porta uno proprio — resta obbligatorio per il filtro, la
+  // sua fonte diventa "la classe, o quanto ha detto il docente".
+  it("quando la classe non ha un anno, usa l'anno fornito in query (elenco)", async () => {
+    vi.mocked(classiDelDocente).mockResolvedValue([{ ...classeConAnno, yearLevel: null }] as never);
+    vi.mocked(argomentiDisponibili).mockResolvedValue([{ argomento: "Radici", quanti: 2 }]);
+    const r = await GET(richiesta("?classeId=c1&anno=3"));
+    expect(r.status).toBe(200);
+    expect(argomentiDisponibili).toHaveBeenCalledWith(3);
+  });
+
+  it("quando la classe non ha un anno, usa l'anno fornito in query (conteggio)", async () => {
+    vi.mocked(classiDelDocente).mockResolvedValue([{ ...classeConAnno, yearLevel: null }] as never);
+    vi.mocked(quantiCorrispondono).mockResolvedValue(5);
+    const r = await GET(richiesta("?classeId=c1&anno=3&argomento=Equazioni"));
+    expect(r.status).toBe(200);
+    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 3, argomento: "Equazioni", difficoltaMax: undefined });
+  });
+
+  it("quando la classe HA un anno, un anno in query viene ignorato", async () => {
+    vi.mocked(argomentiDisponibili).mockResolvedValue([]);
+    // classeConAnno.yearLevel è 2: la query tenta di dichiarare 4 (valore
+    // comunque valido, 1-5), ma quando la classe porta già un anno quello
+    // della query non viene mai usato.
+    await GET(richiesta("?classeId=c1&anno=4"));
+    expect(argomentiDisponibili).toHaveBeenCalledWith(2);
   });
 
   it("senza argomento restituisce l'elenco, filtrato per l'anno della classe", async () => {

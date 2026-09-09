@@ -75,7 +75,12 @@ describe("POST /api/esercizi/compiti/diretto", () => {
     expect(assegnaDiretto).not.toHaveBeenCalled();
   });
 
-  it("422 se la classe non ha un anno", async () => {
+  // Fix round 1: `classe_senza_anno` restava anche quando il docente aveva
+  // già scritto l'anno nel corpo — una classe senza anno diventava
+  // permanentemente inassegnabile da qui, peggio del problema che il 422
+  // doveva prevenire. Il rifiuto resta, ma solo quando NESSUNA delle due
+  // fonti (classe, corpo) porta un anno: qui il corpo non lo fornisce.
+  it("422 se la classe non ha un anno e il corpo non lo fornisce", async () => {
     vi.mocked(classiDelDocente).mockResolvedValue([{ ...classeConAnno, yearLevel: null }] as never);
     const r = await POST(richiesta(corpoValido));
     expect(r.status).toBe(422);
@@ -83,14 +88,30 @@ describe("POST /api/esercizi/compiti/diretto", () => {
     expect(assegnaDiretto).not.toHaveBeenCalled();
   });
 
-  it("l'anno passato al dominio viene sempre dalla classe, mai dal corpo della richiesta", async () => {
+  // Fix round 1: quando la classe non porta un anno (creata a mano senza,
+  // o sincronizzata da un gruppo Google il cui nome non ne indica uno),
+  // l'anno del docente nel corpo diventa la fonte di ripiego — l'anno
+  // resta obbligatorio per il filtro (si pesca per anno), ma la SUA fonte
+  // è "la classe, o quanto ha detto il docente".
+  it("quando la classe non ha un anno, usa l'anno fornito nel corpo", async () => {
+    vi.mocked(classiDelDocente).mockResolvedValue([{ ...classeConAnno, yearLevel: null }] as never);
     vi.mocked(assegnaDiretto).mockResolvedValue({ ok: true, compitoId: "x" });
-    // Un client che tenta di dichiarare un anno diverso da quello vero
-    // della classe: il campo non esiste nello schema del corpo, quindi
-    // safeParse lo scarta silenziosamente (comportamento normale di zod
-    // senza .strict()) — ciò che conta è che il valore usato sia SEMPRE
-    // quello di classeConAnno.yearLevel (2), mai 99.
-    await POST(richiesta({ ...corpoValido, anno: 99 }));
+
+    const r = await POST(richiesta({ ...corpoValido, anno: 3 }));
+    expect(r.status).toBe(201);
+    expect(assegnaDiretto).toHaveBeenCalledWith(
+      expect.objectContaining({ filtro: expect.objectContaining({ anno: 3 }) }),
+    );
+  });
+
+  it("quando la classe HA un anno, un anno nel corpo viene ignorato: non si può dichiarare un anno diverso da quello vero della classe", async () => {
+    vi.mocked(assegnaDiretto).mockResolvedValue({ ok: true, compitoId: "x" });
+    // classeConAnno.yearLevel è 2: il corpo tenta di dichiarare 4 (un
+    // valore comunque valido per lo schema, 1-5), ma quando la classe
+    // porta già un anno quello del corpo non viene mai usato — solo la
+    // classe, come prima del fix (che riguarda SOLO il caso in cui la
+    // classe non porta alcun anno).
+    await POST(richiesta({ ...corpoValido, anno: 4 }));
     expect(assegnaDiretto).toHaveBeenCalledWith(
       expect.objectContaining({ filtro: expect.objectContaining({ anno: 2 }) }),
     );
