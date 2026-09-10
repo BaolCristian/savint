@@ -115,10 +115,14 @@ senza toccare i componenti di base — si agisce sul contenitore, non sul
 campo.
 
 - [ ] **Passo 1: i test che falliscono.** Tre asserzioni sul
-      comportamento, non sulle classi: (a) l'anteprima è nel DOM **prima**
-      della sezione delle domande — `compareDocumentPosition` fra i due
-      nodi, che è ciò che «l'anteprima non è più ultima» significa
-      davvero; (b) il riassunto della scheda mostra anno, argomento e
+      comportamento, non sulle classi: (a) l'anteprima precede **la barra
+      delle azioni** nel DOM (`compareDocumentPosition` fra i due nodi) e
+      vive in una regione distinta da quella di scrittura. *Non* «prima
+      delle domande»: in due colonne la visione segue la scrittura
+      nell'ordine del documento, ed è giusto così — sotto i 1280 pixel
+      quell'ordine diventa quello a schermo. Ciò che la specifica chiede
+      davvero è che l'anteprima non sia più sepolta sotto i pulsanti;
+      (b) il riassunto della scheda mostra anno, argomento e
       difficoltà correnti mentre è **chiusa**; (c) cambiare l'anno dentro
       la scheda aggiorna il riassunto.
 - [ ] **Passo 2: eseguirli e vederli fallire**
@@ -209,9 +213,10 @@ in console. Se lanciano tutti e tre, il componente rende `null`: c'è già
 l'anteprima che mostra il guasto, e due messaggi d'errore sullo stesso
 guasto sono peggio di uno.
 
-Il valore si mostra con `jme.display.treeToJME` o, per i tipi semplici
-(numero, stringa), la loro forma testuale; niente LaTeX qui — è una
-tabella di controllo, non una formula.
+Il valore si mostra con **`jme.tokenToDisplayString(token, scope)`** —
+verificata in pre-volo: dà `2` per un intero, `[ 1, 2, 3 ]` per una lista,
+`ciao` per una stringa. Niente LaTeX qui: è una tabella di controllo, non
+una formula.
 
 **Costo:** tre `loadQuestion` per ogni cambio del contenuto. Va dentro un
 `useMemo` sulla stessa chiave che l'anteprima già calcola (`contentKey` +
@@ -294,9 +299,10 @@ che sono istruzioni.
 - [ ] **Passo 1: i test che falliscono.** Sette casi su `ecoDi`, come
       tabella: `""` → vuoto; `"2*x"` → reso; `"2*"` → errore; `"sqrt()"` →
       **vuoto**, non reso (la trappola 1); `"sin x"` → reso **come
-      moltiplicazione** (è il caso che motiva tutta la funzione: si
-      asserisce che il LaTeX contiene la moltiplicazione, così se un giorno
-      il motore cambiasse comportamento il test lo dice); `"random(1..5)"`
+      moltiplicazione**: il LaTeX è `\texttt{sin} \times x` (misurato in
+      pre-volo), e si asserisce la presenza di `\times`. È il caso che
+      motiva tutta la funzione, e se un giorno il motore cambiasse
+      comportamento il test lo direbbe; `"random(1..5)"`
       → reso; un errore di sintassi ha un messaggio **senza parole
       inglesi** — si asserisce che il messaggio non contiene «Expected».
       Più due sul componente: l'eco non è rossa mentre il campo ha il
@@ -387,7 +393,10 @@ export interface FinestraFormulaProps {
   /** Il LaTeX di partenza, quando si modifica una formula esistente. */
   iniziale?: string;
   onChiudi: () => void;
-  onConferma: (latex: string) => void;
+  /** Entrambe le forme, non solo il LaTeX: il Task 7 converte verso JME a
+   * partire dall'ASCIIMath, e farglielo richiedere dopo significherebbe
+   * cambiare questa firma a lavoro fatto. */
+  onConferma: (risultato: { latex: string; asciiMath: string }) => void;
 }
 export function FinestraFormula(props: FinestraFormulaProps): JSX.Element | null;
 ```
