@@ -1360,6 +1360,11 @@
         "semeRifiuto": "Seme del rifiuto: {seme} — il sorteggio che ha rotto l'esercizio",
         "rigenera": "Nuovi numeri"
       },
+      "valoriSorteggiati": {
+        "titolo": "Valori sorteggiati",
+        "variabile": "Variabile",
+        "sorteggio": "Sorteggio {numero}"
+      },
       "confermaUscita": "Ci sono modifiche non salvate. Vuoi davvero uscire senza salvare?",
       "salva": "Salva",
       "salvataggioInCorso": "Salvataggio…",

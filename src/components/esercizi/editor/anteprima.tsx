@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
 import { versoNumbas } from "@/lib/esercizi/editor/verso-numbas";
 import { PlayerEsercizioLazy } from "@/components/esercizi/player/player-esercizio-lazy";
+import { ValoriSorteggiati } from "@/components/esercizi/editor/valori-sorteggiati";
+import type { NumbasQuestionJSON } from "@savint/engine";
 
 const NUMERO_SEMI = 3;
 
@@ -209,6 +211,15 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
           {rifiutoAttivo ? t("semeRifiuto", { seme: semeAttivo }) : t("seme", { seme: semeAttivo })}
         </p>
       </div>
+
+      {/* `semiVisibili`, non `semi`: sono gli stessi tre semi che le
+          linguette mostrano davvero, col primo sostituito dal seme del
+          rifiuto quando ce n'è uno in vista. Passare `semi` qui farebbe
+          vedere alla colonna 1 numeri diversi da quelli che il player
+          mostra nella linguetta 1 — due verità contraddittorie sulla stessa
+          schermata, proprio mentre il docente cerca di capire cosa ha rotto
+          l'esercizio. */}
+      <ValoriSorteggiati content={content as NumbasQuestionJSON} semi={semiVisibili} />
     </section>
   );
 }
