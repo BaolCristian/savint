@@ -415,12 +415,22 @@ produzione le formule appaiono senza font — **e nessun test se ne
 accorge**, perché in jsdom i font non si caricano. Il task deve lasciare
 una nota nel file su come si verifica a mano.
 
-**La macro `\var`.** `\var{a}` dentro una formula deve sopravvivere al giro
-attraverso MathLive. Si registra come macro
+**La macro `\var`, e non è facoltativa.** Misurato: senza registrarla,
+`convertLatexToMarkup("x^2-\var{a}^2")` produce **un errore dentro il
+markup** — la formula appare rotta a schermo. `\var{a}` dentro una formula
+deve sopravvivere al giro attraverso MathLive. Si registra come macro
 (`MathfieldElement.macros = { ...MathfieldElement.macros, var: "\\mathit{#1}" }`)
 così che l'editor la mostri come `a` in corsivo e la restituisca
 invariata. **Il test che conta:** una formula con `\var{a}` che entra ed
 esce dalla finestra torna byte per byte identica.
+
+**Attenzione a dove si registra la macro.** `MathfieldElement` è un
+elemento personalizzato: fuori da un DOM **non esiste** (misurato: in Node
+è `undefined`). Scrivere `MathfieldElement.macros = {...}` a livello di
+modulo in un file che la pagina importa lancerebbe durante il rendering
+sul server. Va fatto dentro il componente caricato pigramente, dopo
+l'import dinamico — che è anche l'unico posto in cui i test possono
+verificarlo, perché jsdom un DOM ce l'ha.
 
 `\simplify{}` **non passa di qui**: il pulsante della finestra è
 disabilitato quando il cursore è dentro un `\simplify{}`, perché il suo
