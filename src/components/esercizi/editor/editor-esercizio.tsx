@@ -158,13 +158,19 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       ? rifiutoAttivo.dettaglio.seme
       : undefined;
 
-  // Sempre I6: l'alert del rifiuto è l'ultimo elemento della pagina, sotto i
-  // tre riquadri di anteprima — a 1440×1000 (misurato dalla revisione) resta
-  // fuori dallo schermo dopo "controlla". Porta lo scroll e il focus sul suo
-  // contenitore ogni volta che un rifiuto compare, invece di lasciare che il
-  // docente lo scopra scrollando a caso. `tabIndex={-1}` sul contenitore
-  // (nel JSX più sotto) è ciò che rende `.focus()` valido su un elemento non
-  // interattivo.
+  // Sempre I6: prima del Task 1 (impaginazione a due colonne) l'alert del
+  // rifiuto era l'ultimo elemento della pagina, sotto i tre riquadri di
+  // anteprima — a 1440×1000 (misurato dalla revisione originale) restava
+  // fuori dallo schermo dopo "controlla". Da questo task vive invece nella
+  // colonna di visione, subito sotto <Anteprima> (vedi il JSX più sotto):
+  // più vicino allo schermo, ma lo scroll+focus restano necessari lo stesso,
+  // perché quella colonna può comunque superare l'altezza della finestra (un
+  // esercizio con molte parti, o più riquadri di anteprima) — niente qui
+  // garantisce che il rifiuto compaia già visibile senza scorrere. Porta lo
+  // scroll e il focus sul suo contenitore ogni volta che un rifiuto compare,
+  // invece di lasciare che il docente lo scopra scrollando a caso.
+  // `tabIndex={-1}` sul contenitore (nel JSX più sotto) è ciò che rende
+  // `.focus()` valido su un elemento non interattivo.
   const rifiutoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!rifiutoVerifica && !rifiutoSalvataggio) return;
@@ -301,15 +307,24 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
 
   return (
     <ImpaginazioneEditor
-      // L'intestazione porta il titolo dell'esercizio (l'unico metadato che
-      // si scrive mentre si pensa all'esercizio: resta fuori dalla scheda
-      // di catalogo) e la scheda stessa, ripiegata. Sta sopra le due
-      // colonne, non dentro la scrittura: nell'ordine del documento precede
-      // sia la scrittura sia la visione, in ogni larghezza.
+      // L'intestazione porta l'h1 di pagina («Redazione esercizio») e la
+      // scheda di catalogo, ripiegata. Sta sopra le due colonne, non dentro
+      // la scrittura: nell'ordine del documento precede sia la scrittura
+      // sia la visione, in ogni larghezza. Il campo Titolo dell'esercizio
+      // NON è qui: apre la colonna di scrittura (vedi sotto) — è la prima
+      // istruzione esplicita del brief sull'ordine di quella colonna, ed è
+      // anche l'ordine in cui un docente pensa: prima come si chiama
+      // l'esercizio, poi il testo.
       intestazione={
         <>
           <h1 className="text-xl font-semibold">{t("titolo")}</h1>
-
+          <SchedaCatalogo meta={editor.meta} onChange={aggiornaMeta} />
+        </>
+      }
+      // La colonna sinistra, nell'ordine del brief: titolo, testo,
+      // suggerimento, variabili, domande.
+      scrittura={
+        <>
           <div className="flex flex-col gap-1">
             <label htmlFor="redazione-titolo" className="text-xs font-medium text-muted-foreground">
               {t("meta.titolo")}
@@ -321,16 +336,6 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
             />
           </div>
 
-          <SchedaCatalogo
-            meta={editor.meta}
-            onChange={(campo, valore) => mutaEditor((e) => ({ ...e, meta: { ...e.meta, [campo]: valore } }))}
-          />
-        </>
-      }
-      // La colonna sinistra, nell'ordine del piano: testo, suggerimento,
-      // variabili, domande (il titolo è già nell'intestazione, non qui).
-      scrittura={
-        <>
           <div className="space-y-2 rounded-lg border bg-card p-4">
             <label htmlFor="redazione-testo" className="text-base font-semibold">
               {t("testo")}

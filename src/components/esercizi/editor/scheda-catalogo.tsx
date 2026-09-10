@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
@@ -9,11 +10,16 @@ const ANNI = [1, 2, 3, 4, 5];
 const DIFFICOLTA = [1, 2, 3] as const;
 
 export interface SchedaCatalogoProps {
-  /** Tutti i metadati tranne il titolo, che resta nell'intestazione della
-   * pagina: è l'unico che si scrive mentre si pensa all'esercizio, non un
-   * dato di catalogo da ripiegare via. */
+  /** Tutti i metadati tranne il titolo, che apre invece la colonna di
+   * scrittura: è l'unico che si scrive mentre si pensa all'esercizio, non
+   * un dato di catalogo da ripiegare via. */
   meta: EsercizioEditor["meta"];
-  onChange: (campo: keyof EsercizioEditor["meta"], valore: unknown) => void;
+  /** Generica sul campo, non `unknown`: `onChange("tag", "una stringa")`
+   * deve restare un errore di tipo, non un crash a runtime dentro
+   * `meta.tag.join` più sotto. Firma identica a `aggiornaMeta` in
+   * `editor-esercizio.tsx`, che la implementa: nessuna lambda intermedia
+   * necessaria al callsite. */
+  onChange: <K extends keyof EsercizioEditor["meta"]>(campo: K, valore: EsercizioEditor["meta"][K]) => void;
 }
 
 /** I metadati di catalogo — descrizione, anno, difficoltà, argomento, tag —
@@ -31,10 +37,17 @@ export function SchedaCatalogo({ meta, onChange }: SchedaCatalogoProps) {
   });
 
   return (
-    <details className="rounded-lg border bg-card p-4">
-      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-x-3 gap-y-1">
+    <details className="group rounded-lg border bg-card p-4">
+      {/* `list-none` toglie il triangolino solo su Chrome/Firefox: Safari
+       * (WebKit) ignora `list-style` sui `<summary>` e lo mostra comunque —
+       * va spento esplicitamente. Tolto il marcatore nativo, il chevron qui
+       * sotto (ruotato via `group-open:` quando la scheda è aperta) resta
+       * l'unico segnale — su ogni motore, anche touch, dove `cursor-pointer`
+       * non esiste — che «Catalogo» è qualcosa che si apre. */}
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" aria-hidden="true" />
         <span className="text-base font-semibold">{t("catalogo.titolo")}</span>
-        <span className="text-xs font-medium text-muted-foreground">{riassunto}</span>
+        <span className="ml-auto text-xs font-medium text-muted-foreground">{riassunto}</span>
       </summary>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

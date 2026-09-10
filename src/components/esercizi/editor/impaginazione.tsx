@@ -1,14 +1,21 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 export interface ImpaginazioneEditorProps {
-  /** Titolo dell'esercizio e scheda di catalogo: la fascia in cima alla
-   * pagina, sopra le due colonne. */
+  /** L'h1 di pagina e la scheda di catalogo: la fascia in cima alla pagina,
+   * sopra le due colonne. Il campo Titolo dell'esercizio non è qui — apre
+   * la colonna `scrittura`, come vuole l'ordine esplicito del brief. */
   intestazione: ReactNode;
   /** La colonna sinistra: dove si scrive. */
   scrittura: ReactNode;
   /** La colonna destra: dove si vede. Appiccicata (`sticky`) sotto
-   * l'intestazione sopra i 1280px; sotto quella soglia segue la scrittura
-   * nel flusso normale. */
+   * l'intestazione sopra i 1280px, con un'altezza massima e uno scorrimento
+   * proprio: senza, una colonna più alta della finestra si aggancerebbe e
+   * smetterebbe di muoversi, portandosi via il fondo — compreso il
+   * dettaglio di un eventuale rifiuto (vedi il commento gemello più sotto e
+   * `editor-esercizio.tsx`, dove quel dettaglio vive). Sotto i 1280px segue
+   * la scrittura nel flusso normale, senza altezza massima. */
   visione: ReactNode;
   /** La barra in fondo — Controlla, Salva, lo stato di salvataggio —
    * appiccicata al fondo della finestra, con uno sfondo pieno perché ci
@@ -36,7 +43,18 @@ export function ImpaginazioneEditor({ intestazione, scrittura, visione, azioni }
 
       <div className="grid items-start gap-6 xl:grid-cols-[1fr_420px]">
         <div className="min-w-0 space-y-6">{scrittura}</div>
-        <div className="min-w-0 space-y-4 xl:sticky xl:top-4">{visione}</div>
+        {/* `max-h` + `overflow-y-auto` sono necessari, non decorativi: senza,
+            in un esercizio con più di poche parti la colonna di scrittura
+            supera l'altezza della finestra, `sticky` si aggancia a `top-4` e
+            smette di seguire lo scroll — tutto ciò che sporge sotto il bordo
+            inferiore (compreso il dettaglio di un rifiuto) diventa
+            irraggiungibile. Lo scorrimento proprio della colonna è ciò che
+            lo evita: il porto di scorrimento della pagina (`<main
+            overflow-auto>` nel layout del cruscotto) resta quello esterno,
+            questo è un secondo porto annidato solo per questa colonna. */}
+        <div className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+          {visione}
+        </div>
       </div>
 
       <div className="sticky bottom-0 z-10 border-t bg-background px-4 py-3">{azioni}</div>
