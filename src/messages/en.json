@@ -1354,6 +1354,7 @@
       "anteprima": {
         "titolo": "Preview",
         "spiegazione": "The same exercise with three different random numbers, as three different students sitting next to each other would see it. Answers given here don't create any attempt and aren't saved anywhere.",
+        "sorteggio": "Draw {numero}",
         "seme": "Seed: {seme}",
         "semeRifiuto": "Rejected seed: {seme} — the draw that broke the exercise",
         "rigenera": "New numbers"

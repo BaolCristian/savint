@@ -1354,6 +1354,7 @@
       "anteprima": {
         "titolo": "Anteprima",
         "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi, come lo vedrebbero tre studenti diversi seduti vicini. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "sorteggio": "Sorteggio {numero}",
         "seme": "Seme: {seme}",
         "semeRifiuto": "Seme del rifiuto: {seme} — il sorteggio che ha rotto l'esercizio",
         "rigenera": "Nuovi numeri"
