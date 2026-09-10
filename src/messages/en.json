@@ -1292,6 +1292,10 @@
         "difficolta2": "Medium",
         "difficolta3": "Hard"
       },
+      "catalogo": {
+        "titolo": "Catalog",
+        "riassunto": "Year {anno} · {argomento} · {difficolta}"
+      },
       "testo": "Exercise text",
       "suggerimento": "Hint",
       "suggerimentoAiuto": "Shown to the student after a wrong answer.",

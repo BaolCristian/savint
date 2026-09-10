@@ -1292,6 +1292,10 @@
         "difficolta2": "Media",
         "difficolta3": "Difficile"
       },
+      "catalogo": {
+        "titolo": "Catalogo",
+        "riassunto": "{anno}ª · {argomento} · {difficolta}"
+      },
       "testo": "Testo dell'esercizio",
       "suggerimento": "Suggerimento",
       "suggerimentoAiuto": "Mostrato allo studente dopo una risposta sbagliata.",
