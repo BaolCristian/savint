@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
+import { jme, loadQuestion, type NumbasQuestionJSON } from "@savint/engine";
 import messaggiIt from "@/messages/it.json";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
+import { versoNumbas } from "@/lib/esercizi/editor/verso-numbas";
 
 // L'anteprima usa il vero player dello studente (non una riproduzione): qui
 // lo si sostituisce con uno stub che registra le prop ricevute, per provare
@@ -56,6 +58,19 @@ function montaggio(editor: EsercizioEditor = EDITOR, semeRifiuto?: number) {
     </NextIntlClientProvider>,
   );
 }
+
+// Task 3, giro di correzioni 1, C1: l'unico editor di questo file con una
+// variabile vera — `EDITOR` ne è deliberatamente privo, quindi la tabella
+// dei valori sorteggiati non compare mai sotto di esso (`nomi.length === 0`
+// -> `null`). Serve una definizione che dipenda dal seme (`random`), non una
+// costante: solo così colonne diverse possono, in linea di principio,
+// mostrare valori diversi, il che è la premessa perché la prova sotto possa
+// distinguere "colonna del seme giusto" da "colonna di un sorteggio
+// qualunque".
+const EDITOR_CON_VARIABILE: EsercizioEditor = {
+  ...EDITOR,
+  variabili: [{ nome: "a", definizione: "random(1..1000)", descrizione: "" }],
+};
 
 const R = messaggiIt.esercizi.redazione.anteprima;
 const NOME_LINGUETTA = (numero: number) => R.sorteggio.replace("{numero}", String(numero));
@@ -260,6 +275,33 @@ describe("Anteprima — il seme del rifiuto", () => {
   it("l'etichetta sotto il player, quando la linguetta del rifiuto è aperta, dice esplicitamente che è un rifiuto", () => {
     montaggio(EDITOR, 14);
     expect(screen.getByText(R.semeRifiuto.replace("{seme}", "14"))).toBeInTheDocument();
+  });
+
+  // Task 3, giro di correzioni 1, C1 — il rilievo critico: `<ValoriSorteggiati>`
+  // deve ricevere `semiVisibili`, non lo stato grezzo `semi`, altrimenti la
+  // colonna 1 della tabella mostra i valori di UN sorteggio casuale invece
+  // che del seme che ha rotto l'esercizio — due verità contraddittorie sulla
+  // stessa schermata. Questa prova non guarda l'esistenza della tabella (già
+  // coperta in valori-sorteggiati.test.tsx): calcola il valore ATTESO per il
+  // seme "14" chiamando lo stesso motore (`loadQuestion` +
+  // `tokenToDisplayString`) indipendentemente dal componente, e lo confronta
+  // con quello che la prima colonna mostra davvero. Verificato a mano
+  // (mutazione temporanea `semi={semi}` in anteprima.tsx, poi ripristinata):
+  // con `semi` al posto di `semiVisibili` questa prova diventa rossa — il
+  // valore atteso per "14" non coincide (quasi certamente, su un intervallo
+  // 1..1000) con quello del primo sorteggio casuale mostrato al suo posto.
+  it("la tabella dei valori sorteggiati mostra, in prima colonna, i valori del seme RIFIUTATO — non quelli di un sorteggio casuale", () => {
+    montaggio(EDITOR_CON_VARIABILE, 14);
+
+    const content = versoNumbas(EDITOR_CON_VARIABILE) as NumbasQuestionJSON;
+    const caricata = loadQuestion(content, { seed: "14", locale: "it" });
+    const atteso = jme.tokenToDisplayString(caricata.scope.getVariable("a")!, caricata.scope);
+
+    const righeDati = screen.getAllByRole("row").slice(1); // salta l'intestazione
+    expect(righeDati).toHaveLength(1); // una sola variabile: "a"
+    const celle = within(righeDati[0]!).getAllByRole("cell");
+    // celle[0] è il nome "a", celle[1] è la prima colonna — quella del rifiuto.
+    expect(celle[1]!.textContent).toBe(atteso);
   });
 
   it("«nuovi numeri» non cambia il primo seme quando c'è un rifiuto", async () => {
