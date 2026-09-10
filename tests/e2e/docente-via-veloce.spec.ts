@@ -340,10 +340,13 @@ test.describe("Via veloce — assegnare in una schermata sola", () => {
     await login(page, STUDENT_EMAIL);
     await gotoStabile(page, "/studente");
 
-    // Il nome del compito, per lo studente, è quello della batteria
-    // automatica che `assegnaDiretto` ha generato: "Assegnazione diretta:
-    // {argomento}" (compiti.ts) — non un nome che questa prova sceglie.
-    const compitoCard = page.locator("li", { hasText: `Assegnazione diretta: ${ARGOMENTO}` });
+    // Il nome del compito, per lo studente, è quello che `assegnaDiretto`
+    // genera: argomento e quantità (compiti.ts) — non un nome che questa
+    // prova sceglie. Diceva "Assegnazione diretta: {argomento}" finché quel
+    // gergo interno non è stato tolto dalla vista del docente; se cambia
+    // ancora, è QUI che va aggiornato, e questa prova è ciò che se ne
+    // accorge.
+    const compitoCard = page.locator("li", { hasText: `${ARGOMENTO} (${QUANTI_CREATI})` });
     await expect(compitoCard).toBeVisible({ timeout: 20_000 });
     await expect(compitoCard.getByText(`0 su ${QUANTI_CREATI} esercizi completati`)).toBeVisible();
     // Una scadenza reale, non "Nessuna scadenza": la seconda metà del
@@ -404,7 +407,7 @@ test.describe("Via veloce — assegnare in una schermata sola", () => {
     // trovare più di UNA batteria automatica per questo run (quella del
     // primo test, riuscito).
     const batterieResidue = await prisma.batteria.findMany({
-      where: { name: `Assegnazione diretta: ${ARGOMENTO}` },
+      where: { name: `${ARGOMENTO} (${QUANTI_CREATI})` },
       select: { id: true },
     });
     expect(batterieResidue.length).toBe(1);
