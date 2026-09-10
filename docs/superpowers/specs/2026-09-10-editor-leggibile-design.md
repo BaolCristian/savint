@@ -115,6 +115,13 @@ mai il campo di testo, lo affianca.
   la tabella degli aggiustamenti va tenuta corta, e ciò che non si compila
   viene rifiutato invece che inserito storto. In particolare `\pm` diventa
   in silenzio una sola delle due soluzioni: va rifiutato esplicitamente.
+
+  *Misurato dopo la stesura, ed è peggio di come suonava: `x=+-3` e la
+  formula quadratica **superano `jme.compile`** e valgono la sola radice
+  col meno. Il nostro parser non è il giudice che questa specifica
+  supponeva — accetta ciò che la conversione ha già rovinato. Il cancello
+  vero ha tre strati (rifiuto testuale di `+-`, la tabella, il controllo
+  dei nomi liberi), descritti nel Task 7 del piano.*
 - **I font di MathLive vanno serviti da una cartella dichiarata**, e questa
   installazione ha un prefisso di percorso configurabile: se sbagliato, le
   formule appaiono senza font e nessun test se ne accorge.
