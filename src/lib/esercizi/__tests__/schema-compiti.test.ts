@@ -36,7 +36,10 @@ describe("schema di classi, contenitori, batterie e compiti", () => {
   });
 
   it("un contenitore usato da una regola non si cancella", () => {
-    expect(model("BatteriaRegola")).toMatch(/contenitore\s+Contenitore\s+@relation\([^)]*onDelete:\s*Restrict/);
+    // Contenitore? (Task 1, docente-via-veloce: contenitoreId è nullable,
+    // una regola può avere l'argomento invece del contenitore) — l'onDelete
+    // Restrict resta lo stesso, solo la nullabilità del campo è cambiata.
+    expect(model("BatteriaRegola")).toMatch(/contenitore\s+Contenitore\?\s+@relation\([^)]*onDelete:\s*Restrict/);
   });
 
   it("una batteria con compiti non si cancella", () => {

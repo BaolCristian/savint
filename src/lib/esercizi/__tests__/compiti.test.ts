@@ -205,6 +205,33 @@ describe("assegna", () => {
     expect(r).toMatchObject({ ok: false, motivo: "classe_non_trovata" });
   });
 
+  // Fix round 2 (docente-via-veloce, Task 3): /api/esercizi/compiti/diretto
+  // rifiutava già una classe archiviata (il suo pre-controllo passa da
+  // `classiDelDocente`, che esclude `archivedAt` non nullo) con
+  // `non_insegni_questa_classe`, ma /api/esercizi/compiti — che passa
+  // direttamente da qui, senza pre-controllo proprio — non guardava
+  // affatto `archivedAt` e avrebbe assegnato lo stesso compito anche a una
+  // classe archiviata, se il docente la insegna ancora (la riga
+  // ClasseDocente non sparisce da sola quando una classe viene
+  // archiviata). Stessa domanda, due risposte diverse a seconda della
+  // rotta. Nessuno deve poter assegnare lavoro a una classe archiviata:
+  // stesso motivo di "non la insegna" (non un terzo, nuovo), per restare
+  // coerente con la rotta che già rispondeva così.
+  it("una classe archiviata non si assegna, anche se il docente la insegna ancora", async () => {
+    const classeArchiviata = (await prisma.classe.create({
+      data: {
+        googleGroupEmail: `${P}archiviata@scuola.it`,
+        name: "Archiviata",
+        yearLevel: 2,
+        archivedAt: new Date(),
+      },
+    })).id;
+    await prisma.classeDocente.create({ data: { classeId: classeArchiviata, teacherId } });
+
+    const r = await assegna(batteriaId, classeArchiviata, teacherId);
+    expect(r).toMatchObject({ ok: false, motivo: "non_insegni_questa_classe" });
+  });
+
   it("lo studente vede il compito della sua classe e quanti esercizi ha fatto", async () => {
     const r = await assegna(batteriaId, classeId, teacherId);
     if (!r.ok) throw new Error("assegnazione fallita");

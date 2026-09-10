@@ -730,20 +730,37 @@ model Batteria {
   name        String
   description String?
   createdById String
+  // Task 1 (docente-via-veloce): marca le batterie generate dal sistema per
+  // un'assegnazione diretta (per argomento, non per raccolta). Non
+  // compaiono in elencoBatterie — sono provenienza di un Compito, non
+  // contenuto che un docente componga o gestisca a mano. Default false:
+  // ogni batteria esistente, creata a mano da creaBatteria, resta tale.
+  automatica  Boolean          @default(false)
   createdAt   DateTime         @default(now())
   createdBy   User             @relation(fields: [createdById], references: [id])
   regole      BatteriaRegola[]
   compiti     Compito[]
 }
 
+// Task 1 (docente-via-veloce): una regola ha IL CONTENITORE (pesca da una
+// raccolta a mano) OPPURE L'ARGOMENTO (pesca fra gli esercizi che
+// corrispondono ad argomento/anno/difficoltà) — mai entrambi, mai nessuno
+// dei due. Prisma non modella un vincolo CHECK multi-colonna: l'invariante
+// è imposta dal dominio in scrittura e riverificata in lettura (vedi
+// formaRegola/bacinoRegola in src/lib/esercizi/batterie.ts). contenitoreId
+// diventa nullable (allargamento, non fallisce su nessuna riga esistente:
+// ogni BatteriaRegola di oggi ha già un contenitoreId non nullo).
 model BatteriaRegola {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   batteriaId    String
-  contenitoreId String
+  contenitoreId String?
+  argomento     String?
+  anno          Int?
+  difficoltaMax Int?
   order         Int
   count         Int
-  batteria      Batteria    @relation(fields: [batteriaId], references: [id], onDelete: Cascade)
-  contenitore   Contenitore @relation(fields: [contenitoreId], references: [id], onDelete: Restrict)
+  batteria      Batteria     @relation(fields: [batteriaId], references: [id], onDelete: Cascade)
+  contenitore   Contenitore? @relation(fields: [contenitoreId], references: [id], onDelete: Restrict)
 
   @@unique([batteriaId, order])
 }

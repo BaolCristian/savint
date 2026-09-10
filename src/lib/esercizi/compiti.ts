@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
-import { candidatiDisponibili, idsConVersione } from "./batterie";
+import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
 
 type MotivoAssegna =
   | "batteria_non_trovata"
@@ -9,7 +9,23 @@ type MotivoAssegna =
   | "non_insegni_questa_classe"
   | "esercizi_insufficienti"
   | "scadenza_prima_apertura"
-  | "scadenza_nel_passato";
+  | "scadenza_nel_passato"
+  // Prodotto SOLO da `assegnaDiretto` (Onda di correzioni sui numeri), mai
+  // da `assegna`: la traduzione, nella forma di `EsitoAssegna`, del rifiuto
+  // `conteggio_non_valido` che `creaBatteria` restituisce quando `quanti`
+  // non è un intero positivo — vedi il commento su `assegnaDiretto` più
+  // sotto per il perché la convalida vive in `creaBatteria` e non qui.
+  | "quantita_non_valida";
+
+/** L'esito di un'assegnazione. Esportato (Task 2, docente-via-veloce) perché
+ * da questo task in poi ha DUE produttori — `assegna` (per raccolta) e
+ * `assegnaDiretto` (per filtro) — e il secondo deve dichiarare di restituire
+ * esattamente lo stesso tipo del primo, a cui delega per intero: un tipo
+ * proprio, anche se strutturalmente identico, potrebbe divergere in silenzio
+ * a una futura modifica di uno solo dei due. */
+export type EsitoAssegna =
+  | { ok: true; compitoId: string }
+  | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown };
 
 /** Assegna una batteria a una classe: pesca UNA volta, con un seme nuovo, e
  * fissa il risultato nel Compito. Da quel momento in poi nessuna modifica al
@@ -31,16 +47,29 @@ type MotivoAssegna =
  *
  * Tutti i controlli (batteria, classe, insegnamento, capienza dei
  * contenitori) avvengono PRIMA di qualunque scrittura: un fallimento non
- * lascia nessun Compito a metà. */
+ * lascia nessun Compito a metà.
+ *
+ * **Una classe archiviata non riceve assegnazioni (Fix round 2, Task 3
+ * docente-via-veloce).** `archivedAt` non cancella la riga `ClasseDocente`
+ * — un docente che insegnava una classe poi archiviata la vede ancora
+ * come "sua" per quella tabella — quindi senza questo controllo
+ * un'assegnazione qui passava comunque. `classiDelDocente` (classi.ts),
+ * che `compiti/diretto/route.ts` usa per il proprio pre-controllo, esclude
+ * già `archivedAt` non nullo dal suo elenco: la stessa classe archiviata
+ * rispondeva già `non_insegni_questa_classe` da quella rotta. Senza
+ * questo controllo QUI, `/api/esercizi/compiti` (che non ha un
+ * pre-controllo proprio, delega interamente a questa funzione) rispondeva
+ * diversamente alla stessa identica domanda — anzi, non rifiutava affatto.
+ * Stesso motivo di "non la insegna" (`non_insegni_questa_classe`), non un
+ * terzo nuovo: dal punto di vista di chi assegna, una classe archiviata e
+ * una mai insegnata meritano la stessa risposta — nessuna delle due è una
+ * classe a cui questo docente possa assegnare lavoro adesso. */
 export async function assegna(
   batteriaId: string,
   classeId: string,
   assignedById: string,
   opzioni?: { opensAt?: Date; dueAt?: Date },
-): Promise<
-  | { ok: true; compitoId: string }
-  | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown }
-> {
+): Promise<EsitoAssegna> {
   // Controllo di forma sulle date, prima di qualunque interrogazione: non
   // richiede il database, quindi è il più economico da fare per primo. Una
   // scadenza prima dell'apertura non ha senso (la finestra sarebbe già
@@ -59,7 +88,7 @@ export async function assegna(
     include: {
       regole: {
         orderBy: { order: "asc" },
-        include: { contenitore: { include: { esercizi: true } } },
+        include: { contenitore: true },
       },
     },
   });
@@ -67,13 +96,22 @@ export async function assegna(
 
   const classe = await prisma.classe.findUnique({ where: { id: classeId } });
   if (!classe) return { ok: false, motivo: "classe_non_trovata" };
+  // Vedi il commento sopra la funzione: stesso motivo di "non la insegna",
+  // controllata prima della query su ClasseDocente perché una classe
+  // archiviata la rifiuta comunque, quale che sia quella riga.
+  if (classe.archivedAt != null) return { ok: false, motivo: "non_insegni_questa_classe" };
 
   const insegna = await prisma.classeDocente.findUnique({
     where: { classeId_teacherId: { classeId, teacherId: assignedById } },
   });
   if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
 
-  const tuttiGliId = [...new Set(batteria.regole.flatMap((r) => r.contenitore.esercizi.map((e) => e.esercizioId)))];
+  // Il bacino grezzo di ciascuna regola, quale che sia la sua forma (Task 1:
+  // contenitore o filtro) — bacinoRegola lancia se una regola non rispetta
+  // l'invariante, invece di restituire un bacino vuoto (vedi batterie.ts):
+  // la stessa risoluzione che usa `verificaBatteria`, non una seconda.
+  const bacini = await Promise.all(batteria.regole.map((r) => bacinoRegola(r)));
+  const tuttiGliId = [...new Set(bacini.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 
   const drawSeed = randomUUID();
@@ -86,18 +124,15 @@ export async function assegna(
   // distinti se il sorteggio pesca lo stesso esercizio da entrambi i lati.
   const giaPescati = new Set<string>();
 
-  for (const regola of batteria.regole) {
-    const candidati = candidatiDisponibili(
-      regola.contenitore.esercizi.map((e) => e.esercizioId),
-      giaPescati,
-      conVersione,
-    );
+  for (let i = 0; i < batteria.regole.length; i++) {
+    const regola = batteria.regole[i]!;
+    const candidati = candidatiDisponibili(bacini[i]!, giaPescati, conVersione);
     if (candidati.length < regola.count) {
       return {
         ok: false,
         motivo: "esercizi_insufficienti",
         dettaglio: {
-          contenitore: regola.contenitore.name,
+          contenitore: etichettaRegola(regola),
           richiesti: regola.count,
           disponibili: candidati.length,
         },
@@ -135,6 +170,203 @@ export async function assegna(
   });
 
   return { ok: true, compitoId: compito.id };
+}
+
+/** I filtri di una regola a "argomento" (Task 1: la seconda forma di
+ * `BatteriaRegola`, alternativa al contenitore) così come li raccoglie il
+ * modulo di assegnazione diretta. `anno` non è mai facoltativo qui: la
+ * specifica lo dice esplicitamente ("l'anno non si chiede") — viene sempre
+ * dalla classe scelta dal docente, mai da un campo che lui compila. */
+export type FiltroDiretto = { anno: number; argomento: string; difficoltaMax?: number };
+
+/** Quanti esercizi risponderebbero a questo filtro **se si assegnasse ora**
+ * — il numero che il docente legge mentre sceglie, prima di impegnarsi
+ * ("quanti esercizi corrispondono", nella specifica). Deve contare
+ * esattamente ciò che la pesca vera potrebbe consegnare, non l'appartenenza
+ * grezza al filtro: passa dalla STESSA risoluzione di `bacinoRegola` —
+ * l'unico punto che tutte le letture attraversano (Task 1) — e dallo STESSO
+ * filtro di disponibilità di versione di `idsConVersione`, non da una nuova
+ * query che potrebbe divergere in silenzio da quella che la pesca userà.
+ *
+ * Nessuna esclusione per "già pescati" da applicare qui, a differenza di
+ * `candidatiDisponibili`: una batteria automatica (`assegnaDiretto` più
+ * sotto) ha sempre e solo UNA regola, quindi non esiste una regola
+ * precedente della stessa batteria con cui accavallarsi — lo stesso motivo
+ * per cui `verificaBatteria` (batterie.ts) non ha bisogno di un `presi`
+ * prima che un'assegnazione sia mai avvenuta.
+ *
+ * "Un conteggio che promette più di quanto la pesca consegni sarebbe peggio
+ * di nessun conteggio" (dal brief): qui non può succedere per costruzione —
+ * non è una stima, è la stessa identica risoluzione che `assegna` userebbe
+ * per questa regola. */
+export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
+  const bacino = await bacinoRegola({
+    contenitoreId: null,
+    argomento: f.argomento,
+    anno: f.anno,
+    difficoltaMax: f.difficoltaMax ?? null,
+  });
+  const conVersione = await idsConVersione(bacino);
+  return conVersione.size;
+}
+
+/** L'assegnazione diretta (Task 2, docente-via-veloce): classe, argomento,
+ * quanti, entro quando — senza che il docente componga prima una raccolta.
+ *
+ * **Non è una seconda strada di pesca.** Crea una `Batteria` marcata
+ * `automatica` con UNA sola regola a filtro (la forma che Task 1 ha aggiunto
+ * a `BatteriaRegola`), e delega interamente ad `assegna`: stessa pesca,
+ * stesso controllo di capienza, stesso congelamento in `drawnVersionIds`,
+ * stessa esclusione fra regole (qui vuota, non essendocene una seconda),
+ * stesso rifiuto col dettaglio — `{ contenitore, richiesti, disponibili }`,
+ * dove `contenitore` porta l'argomento e non un nome di raccolta, perché
+ * `etichettaRegola` risolve così una regola a filtro. Un secondo percorso di
+ * pesca sarebbe un secondo posto dove sbagliare esattamente ciò che
+ * `assegna` ha già pagato per correggere due volte (vedi i suoi commenti).
+ *
+ * La batteria creata qui non compare mai in `elencoBatterie` (che esclude
+ * `automatica: true`, Task 1): è provenienza di questo compito, non
+ * contenuto che il docente componga o gestisca.
+ *
+ * `creaBatteria` può rifiutare in tre modi. Due sono impossibili per
+ * costruzione — `regola_malformata` (la regola che costruiamo ha sempre e
+ * solo `argomento`, mai `contenitoreId`) e `contenitore_non_trovato` (non ne
+ * nominiamo mai uno) — un rifiuto lì sarebbe un bug di QUESTA funzione, non
+ * un input scorretto del chiamante: si lancia, invece di forzare un
+ * `MotivoAssegna` che non esiste per quel caso in `EsitoAssegna`.
+ *
+ * **Il terzo — `conteggio_non_valido` — è invece raggiungibile (Onda di
+ * correzioni sui numeri).** `quanti` viene dal chiamante (un docente, una
+ * rotta, uno script) senza che questa funzione lo convalidi prima —
+ * `creaBatteria` è dove quel controllo vive (vedi il suo commento: un solo
+ * punto di scrittura, una sola convalida, per ogni provenienza, non
+ * ripetuta qui). Un `quanti` zero, negativo o non intero non è un bug di
+ * `assegnaDiretto`: è esattamente il genere di input scorretto che questa
+ * funzione esiste per rifiutare con un motivo, non con un'eccezione — si
+ * traduce quindi in `{ ok: false, motivo: "quantita_non_valida", dettaglio:
+ * { quanti } }`. Nessuna pulizia da fare in questo ramo: `creaBatteria`
+ * rifiuta il conteggio PRIMA di scrivere qualunque riga (stesso ordine
+ * della verifica di forma), quindi qui non esiste ancora nessuna batteria
+ * — a differenza del ramo `!esito.ok` più sotto, dove la riga è già stata
+ * scritta.
+ *
+ * Prima di questa convalida, `assegnaDiretto` produceva il difetto
+ * dimostrato dal revisore: `quanti: 0` (o negativo) superava
+ * `creaBatteria` indenne — che verificava la FORMA della regola ma non il
+ * suo conteggio — e arrivava fino ad `assegna`, il cui ciclo sulle regole
+ * (`batteria.regole`) non ha nulla da rifiutare quando `count` è zero o
+ * negativo (`candidati.length < regola.count` è vera per definizione con
+ * zero candidati richiesti, e la pesca di `mescolati.slice(0, regola.count)`
+ * su un conteggio negativo non pesca semplicemente nulla): un `Compito` con
+ * `drawnVersionIds: []` veniva scritto per davvero, mai apribile da nessuno
+ * studente, e — poiché non era un rifiuto di `assegna` — la pulizia più
+ * sotto non scattava mai: l'unico caso, fra tutti quelli che questo file
+ * ripulisce, in cui il tentativo è un SUCCESSO apparente, non un rifiuto né
+ * un'eccezione.
+ *
+ * **Un rifiuto di `assegna` non lascia una batteria orfana (Fix round 1).**
+ * La `Batteria` automatica viene scritta PRIMA che `assegna` validi
+ * qualunque cosa (date, classe, insegnamento, capienza) — se `assegna`
+ * rifiuta, quella riga non è mai servita a nulla e va cancellata, non
+ * dimenticata: `elencoBatterie` la nasconde comunque (esclude
+ * `automatica: true`), quindi senza questa pulizia resterebbe per sempre
+ * un residuo invisibile, uno per ogni tentativo di assegnazione diretta
+ * mal dimensionato o su una classe/scadenza sbagliata.
+ *
+ * Niente pre-controllo prima di cancellare: il contratto di `assegna`
+ * ("un fallimento non lascia nessun Compito a metà", vedi il suo commento)
+ * garantisce che, nel ramo `!esito.ok`, nessun `Compito` referenzia ancora
+ * questa batteria — cancellarla non può quindi incontrare mai il vincolo
+ * `onDelete: Restrict` di `Compito.batteria`. Se lo incontrasse (un bug
+ * futuro in `assegna` che rifiuta DOPO aver scritto), l'errore di Prisma
+ * esplode qui, rumorosamente, invece di essere pre-intercettato con un
+ * controllo scritto a mano (come farebbe `eliminaBatteria`, che conta i
+ * `Compito` prima di cancellare): "cancella solo ciò che non ha prodotto
+ * nulla" resta vera per costruzione — il vincolo del database — non per
+ * quanto ci si ricorda di controllare qui. `BatteriaRegola` cascata con la
+ * sua `Batteria` (`onDelete: Cascade`), quindi non serve una cancellazione
+ * separata per la regola.
+ *
+ * Nessuna validazione duplicata qui per anticipare il rifiuto: sarebbe un
+ * secondo posto dove `assegna` potrebbe essere sbagliata — esattamente il
+ * rischio che l'intero task è nato per evitare (vedi sopra). Si lascia
+ * rifiutare, poi si pulisce.
+ *
+ * **La pulizia copre anche il caso in cui `assegna` LANCI, non solo quello
+ * in cui rifiuti (Fix round 2).** Un rifiuto (`!esito.ok`) e un'eccezione
+ * sono la stessa situazione vista da due porte diverse — in entrambe la
+ * batteria appena creata non è mai servita a nulla — ma senza un
+ * `try/catch` solo la prima veniva ripulita: un'eccezione (un guasto del
+ * database a metà chiamata, o una futura modifica di `assegna` che lancia
+ * dove oggi rifiuta) avrebbe lasciato lo stesso residuo invisibile che
+ * questo giro di correzioni esiste per togliere, dalla porta rimasta
+ * aperta. Nessun percorso noto lo raggiunge oggi (la regola che
+ * costruiamo qui è valida per costruzione, vedi sopra), ma è esattamente
+ * il tipo di regressione che nessuno nota — la garanzia smette di valere
+ * in silenzio e nessun test lo dice — quindi vale la pena difendersi ora.
+ *
+ * Il fallimento della pulizia stessa (qui: solo se `assegna` lancia PRIMA
+ * di aver mai scritto nulla che referenzi la batteria — l'unico caso in
+ * cui questo ramo viene raggiunto — la cancellazione non dovrebbe mai
+ * incontrare `onDelete: Restrict`, ma un guasto del database potrebbe
+ * comunque colpire anche lei) viene inghiottito, non propagato: l'errore
+ * ORIGINALE è l'unica cosa vera che il chiamante deve vedere — un
+ * fallimento della pulizia non deve mai sostituirlo. */
+export async function assegnaDiretto(input: {
+  classeId: string;
+  teacherId: string;
+  filtro: FiltroDiretto;
+  quanti: number;
+  opensAt?: Date;
+  dueAt?: Date;
+}): Promise<EsitoAssegna> {
+  const creazione = await creaBatteria(
+    input.teacherId,
+    // Questo nome finisce SOTTO GLI OCCHI DEL DOCENTE (l'elenco dei compiti
+    // assegnati lo mostra come titolo) e prima diceva "Assegnazione diretta:
+    // polinomi" — cioe' il nostro vocabolario interno, in una funzione che
+    // esiste proprio per togliere dalla vista i concetti del modello. Dice
+    // ora quello che il docente ha scelto: l'argomento e quanti.
+    `${input.filtro.argomento} (${input.quanti})`,
+    [{
+      count: input.quanti,
+      argomento: input.filtro.argomento,
+      anno: input.filtro.anno,
+      difficoltaMax: input.filtro.difficoltaMax,
+    }],
+    undefined,
+    true,
+  );
+  if (!creazione.ok) {
+    if (creazione.motivo === "conteggio_non_valido") {
+      return { ok: false, motivo: "quantita_non_valida", dettaglio: { quanti: input.quanti } };
+    }
+    throw new Error(
+      `creaBatteria (automatica) rifiutata inaspettatamente in assegnaDiretto: ${creazione.motivo}`,
+    );
+  }
+
+  let esito: EsitoAssegna;
+  try {
+    esito = await assegna(creazione.id, input.classeId, input.teacherId, {
+      opensAt: input.opensAt,
+      dueAt: input.dueAt,
+    });
+  } catch (erroreOriginale) {
+    try {
+      await prisma.batteria.delete({ where: { id: creazione.id } });
+    } catch {
+      // Inghiottito: un fallimento della pulizia non deve mai sostituire
+      // l'errore vero nella console di chi chiama.
+    }
+    throw erroreOriginale;
+  }
+
+  if (!esito.ok) {
+    await prisma.batteria.delete({ where: { id: creazione.id } });
+  }
+
+  return esito;
 }
 
 /** Controlla che un `compitoId` arrivato dalla query string (il link nella
