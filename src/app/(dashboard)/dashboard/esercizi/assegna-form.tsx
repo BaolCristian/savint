@@ -241,6 +241,29 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   const opzioniVisibili = classeId === "" || annoRisolto == null ? [] : argomentiOpzioni;
   const corrispondentiVisibili = argomento === "" || annoRisolto == null ? null : corrispondenti;
 
+  // Senza classi dichiarate non c'e' niente da assegnare, e il modulo
+  // diventava un guscio: tendina vuota, bottone spento, un messaggio che
+  // incolpava una classe inesistente, e nemmeno una chiamata di rete —
+  // quindi non si leggeva nemmeno come "sto caricando". E' la prima cosa
+  // che vede una scuola nuova, nel riquadro piu' grande della pagina: alla
+  // lettera la lamentela da cui e' nata questa ristrutturazione. La frase
+  // che lo spiega esisteva in entrambe le lingue e non era collegata a
+  // niente. Qui e' collegata, e porta DOVE si risolve invece di limitarsi a
+  // constatare.
+  if (classi.length === 0) {
+    return (
+      <div className="rounded-xl border border-input p-4 text-sm">
+        <p className="text-muted-foreground">{t("nessunaClasseInsegnata")}</p>
+        <Link
+          href="/dashboard/esercizi/classi"
+          className="mt-2 inline-block font-medium text-brand-blue hover:underline"
+        >
+          {t("vaiAlleClassi")}
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={assegna} className="flex flex-col gap-4 rounded-xl border border-input p-4">
       <div className="flex flex-wrap items-end gap-3">

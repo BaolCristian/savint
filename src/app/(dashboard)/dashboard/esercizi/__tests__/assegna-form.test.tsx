@@ -280,3 +280,19 @@ describe("AssegnaForm", () => {
     expect(chiamate.every((u) => u.includes("/api/esercizi/argomenti"))).toBe(true);
   });
 });
+
+describe("quando il docente non ha ancora dichiarato nessuna classe", () => {
+  // E' la prima cosa che vede una scuola nuova, nel riquadro piu' grande
+  // della pagina. Prima: tendina vuota, bottone spento, un messaggio che
+  // incolpava una classe inesistente, e nessuna chiamata di rete — quindi
+  // non si leggeva nemmeno come "sto caricando".
+  it("spiega cosa manca e porta dove si risolve, invece di mostrare un modulo morto", () => {
+    montaggio({ classi: [] });
+    expect(screen.getByText(t.nessunaClasseInsegnata)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: t.vaiAlleClassi })).toHaveAttribute(
+      "href",
+      "/dashboard/esercizi/classi",
+    );
+    expect(screen.queryByRole("button", { name: t.assegna })).toBeNull();
+  });
+});

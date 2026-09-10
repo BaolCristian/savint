@@ -33,15 +33,30 @@ export default async function Page() {
         <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
       </div>
 
-      {classi.length === 0 || batterie.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {classi.length === 0 ? t("nessunaClasseInsegnata") : t("nessunaBatteriaDisponibile")}
-        </p>
+      {/* Questa pagina e' lo STORICO: e' cio' che la scheda nella pagina
+          d'ingresso promette. Assegnare da una raccolta resta possibile, ma
+          come seconda via — ripiegata, e non come la prima cosa che si
+          incontra. Prima diceva "Assegna una batteria a una classe" e, a
+          una scuola che non ne aveva mai composta una, "Crea prima almeno
+          una batteria": cioe' pretendeva di far costruire il concetto che
+          la specifica aveva tolto, a un clic dalla pagina rinnovata. */}
+      {classi.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("nessunaClasseInsegnata")}</p>
       ) : (
-        <CompitoForm
-          batterie={batterie.map((b) => ({ id: b.id, label: b.name }))}
-          classi={classi.map((c) => ({ id: c.id, label: c.name }))}
-        />
+        <details className="rounded-xl border border-input p-4">
+          <summary className="cursor-pointer text-sm font-medium">{t("daRaccolta")}</summary>
+          <p className="mt-2 text-sm text-muted-foreground">{t("daRaccoltaAiuto")}</p>
+          <div className="mt-3">
+            {batterie.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("nessunaRaccolta")}</p>
+            ) : (
+              <CompitoForm
+                batterie={batterie.map((b) => ({ id: b.id, label: b.name }))}
+                classi={classi.map((c) => ({ id: c.id, label: c.name }))}
+              />
+            )}
+          </div>
+        </details>
       )}
 
       <div className="space-y-2">

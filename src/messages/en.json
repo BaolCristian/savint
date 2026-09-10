@@ -1198,7 +1198,7 @@
     },
     "batterie": {
       "titolo": "Batteries",
-      "descrizione": "Compose a battery by choosing, for each container, how many exercises to draw.",
+      "descrizione": "Compose a set of exercises by choosing, for each source collection, how many to draw. This is the long way: to assign, topic and quantity are enough, from “Assign exercises”.",
       "nome": "Name",
       "contenitore": "Container",
       "quantita": "Quantity",
@@ -1241,12 +1241,13 @@
       "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
       "erroreScadenzaPassata": "The deadline is already in the past.",
       "erroreRateLimited": "Too many attempts in a row: try again shortly.",
-      "erroreGenerico": "Something went wrong. Please try again."
+      "erroreGenerico": "Something went wrong. Please try again.",
+      "vaiAlleClassi": "Go to My classes"
     },
     "compiti": {
-      "titolo": "Assignments",
-      "descrizione": "Assign a battery to a class, with an optional deadline.",
-      "batteria": "Battery",
+      "titolo": "Assigned work",
+      "descrizione": "What you have already given your classes. To assign something new, use “Assign exercises” on the exercises page.",
+      "batteria": "Collection to assign",
       "classe": "Class",
       "apertura": "Opening date (optional)",
       "scadenza": "Deadline (optional)",
@@ -1254,7 +1255,7 @@
       "assegnato": "Assignment created.",
       "erroreCapienza": "The container \"{contenitore}\" isn't enough: requested {richiesti}, available {disponibili}.",
       "erroreNonInsegni": "You don't teach this class.",
-      "erroreBatteriaNonTrovata": "The chosen battery no longer exists.",
+      "erroreBatteriaNonTrovata": "The chosen collection no longer exists.",
       "erroreClasseNonTrovata": "The chosen class no longer exists.",
       "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
       "erroreScadenzaPassata": "The deadline is already in the past.",
@@ -1262,7 +1263,6 @@
       "elencoTitolo": "Assigned work",
       "nessunCompito": "You haven't assigned any work yet.",
       "nessunaClasseInsegnata": "Declare which classes you teach first.",
-      "nessunaBatteriaDisponibile": "Create at least one battery first.",
       "compitoScadenza": "Due on {quando}",
       "nessunaScadenza": "No deadline",
       "eserciziCount": "{n} exercises",
@@ -1271,7 +1271,10 @@
       "nomeCol": "Student",
       "fattiCol": "Exercises done",
       "punteggioCol": "Score",
-      "nessunoIscritto": "No students are enrolled in this class."
+      "nessunoIscritto": "No students are enrolled in this class.",
+      "daRaccolta": "Assign by choosing the exercises yourself",
+      "daRaccoltaAiuto": "If you have prepared a collection, you can assign it instead of choosing by topic.",
+      "nessunaRaccolta": "You have no collections: exercises are assigned by topic, from “Assign exercises” on the exercises page."
     },
     "redazione": {
       "titolo": "Exercise editor",

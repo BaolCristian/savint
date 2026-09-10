@@ -1198,7 +1198,7 @@
     },
     "batterie": {
       "titolo": "Batterie",
-      "descrizione": "Componi una batteria scegliendo, per ciascun contenitore, quanti esercizi pescare.",
+      "descrizione": "Componi una raccolta di esercizi scegliendo, per ciascuna raccolta di partenza, quanti pescarne. È la via lunga: per assegnare bastano argomento e quantità, da «Assegna esercizi».",
       "nome": "Nome",
       "contenitore": "Contenitore",
       "quantita": "Quantità",
@@ -1241,12 +1241,13 @@
       "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
       "erroreScadenzaPassata": "La scadenza è già nel passato.",
       "erroreRateLimited": "Troppi tentativi ravvicinati: riprova tra poco.",
-      "erroreGenerico": "Si è verificato un errore. Riprova."
+      "erroreGenerico": "Si è verificato un errore. Riprova.",
+      "vaiAlleClassi": "Vai a Le mie classi"
     },
     "compiti": {
-      "titolo": "Compiti",
-      "descrizione": "Assegna una batteria a una classe, con una scadenza facoltativa.",
-      "batteria": "Batteria",
+      "titolo": "Compiti assegnati",
+      "descrizione": "Quello che hai già dato alle tue classi. Per darne uno nuovo, usa «Assegna esercizi» nella pagina degli esercizi.",
+      "batteria": "Raccolta da assegnare",
       "classe": "Classe",
       "apertura": "Data di apertura (opzionale)",
       "scadenza": "Scadenza (opzionale)",
@@ -1254,7 +1255,7 @@
       "assegnato": "Compito assegnato.",
       "erroreCapienza": "Il contenitore \"{contenitore}\" non basta: richiesti {richiesti}, disponibili {disponibili}.",
       "erroreNonInsegni": "Non insegni questa classe.",
-      "erroreBatteriaNonTrovata": "La batteria scelta non esiste più.",
+      "erroreBatteriaNonTrovata": "La raccolta scelta non esiste più.",
       "erroreClasseNonTrovata": "La classe scelta non esiste più.",
       "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
       "erroreScadenzaPassata": "La scadenza è già nel passato.",
@@ -1262,7 +1263,6 @@
       "elencoTitolo": "Compiti assegnati",
       "nessunCompito": "Non hai ancora assegnato nessun compito.",
       "nessunaClasseInsegnata": "Dichiara prima le classi che insegni.",
-      "nessunaBatteriaDisponibile": "Crea prima almeno una batteria.",
       "compitoScadenza": "Scade il {quando}",
       "nessunaScadenza": "Nessuna scadenza",
       "eserciziCount": "{n} esercizi",
@@ -1271,7 +1271,10 @@
       "nomeCol": "Studente",
       "fattiCol": "Esercizi svolti",
       "punteggioCol": "Punteggio",
-      "nessunoIscritto": "Nessuno studente iscritto a questa classe."
+      "nessunoIscritto": "Nessuno studente iscritto a questa classe.",
+      "daRaccolta": "Assegnare scegliendo gli esercizi a mano",
+      "daRaccoltaAiuto": "Se hai preparato una raccolta, puoi assegnarla invece di scegliere per argomento.",
+      "nessunaRaccolta": "Non hai raccolte: gli esercizi si assegnano per argomento, da «Assegna esercizi» nella pagina degli esercizi."
     },
     "redazione": {
       "titolo": "Redazione esercizio",
