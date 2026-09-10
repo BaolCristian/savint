@@ -322,7 +322,12 @@ export async function assegnaDiretto(input: {
 }): Promise<EsitoAssegna> {
   const creazione = await creaBatteria(
     input.teacherId,
-    `Assegnazione diretta: ${input.filtro.argomento}`,
+    // Questo nome finisce SOTTO GLI OCCHI DEL DOCENTE (l'elenco dei compiti
+    // assegnati lo mostra come titolo) e prima diceva "Assegnazione diretta:
+    // polinomi" — cioe' il nostro vocabolario interno, in una funzione che
+    // esiste proprio per togliere dalla vista i concetti del modello. Dice
+    // ora quello che il docente ha scelto: l'argomento e quanti.
+    `${input.filtro.argomento} (${input.quanti})`,
     [{
       count: input.quanti,
       argomento: input.filtro.argomento,
