@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
@@ -66,6 +67,31 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
   const idBase = useId();
   const [semi, setSemi] = useState<string[]>(nuoviSemi);
   const [selezionato, setSelezionato] = useState(0);
+
+  // Aggiustamento di stato durante il render (il pattern che React
+  // documenta per derivare uno stato da un cambio di prop, non un effetto:
+  // niente `useEffect` qui, quindi nessuna violazione del vincolo che vieta
+  // `setState` dentro `useEffect` su questa superficie) — giro di
+  // correzioni 1, C1/B2. `<Anteprima>` è montata una volta sola;
+  // `semeRifiuto` le arriva come cambio di prop quando il docente preme
+  // "Controlla" mentre sta guardando una linguetta qualunque. Senza questo
+  // aggiustamento, `selezionato` resterebbe fermo dov'era: la prima
+  // linguetta diventerebbe rossa ma il player continuerebbe a mostrare il
+  // sorteggio che il docente stava già guardando — il seme che ha rotto
+  // l'esercizio non gli verrebbe mai messo davanti agli occhi, che è l'unica
+  // ragione per cui questo meccanismo esiste. Con tre riquadri affiancati
+  // (prima di questo task) non poteva succedere: erano tutti visibili
+  // insieme. Il confronto scatta solo quando `semeRifiuto` CAMBIA, non a
+  // ogni render: dopo essere tornato sulla prima linguetta, il docente può
+  // comunque spostarsi liberamente su un'altra.
+  const [semeRifiutoPrecedente, setSemeRifiutoPrecedente] = useState(semeRifiuto);
+  if (semeRifiuto !== semeRifiutoPrecedente) {
+    setSemeRifiutoPrecedente(semeRifiuto);
+    if (semeRifiuto !== undefined) {
+      setSelezionato(0);
+    }
+  }
+
   const tabRef = useRef<Array<HTMLButtonElement | null>>([]);
   const content = useMemo(() => versoNumbas(editor), [editor]);
   const contentKey = useMemo(() => JSON.stringify(content), [content]);
@@ -86,9 +112,9 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
     setSelezionato(indice);
   }
 
-  // Freccia sinistra/destra sposta sia il fuoco sia la selezione (roving
-  // tabindex, attivazione automatica): è l'unico modo in cui una fila di
-  // linguette funziona da tastiera secondo il pattern ARIA "tabs".
+  // Freccia sinistra/destra (con giro) e Home/End spostano insieme fuoco e
+  // selezione (roving tabindex, attivazione automatica): il pattern ARIA
+  // "tabs" per intero, non solo la parte minima.
   function alTastoGiu(evento: React.KeyboardEvent<HTMLDivElement>) {
     const totale = semiVisibili.length;
     let prossimo: number | null = null;
@@ -96,6 +122,10 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
       prossimo = (selezionato + 1) % totale;
     } else if (evento.key === "ArrowLeft") {
       prossimo = (selezionato - 1 + totale) % totale;
+    } else if (evento.key === "Home") {
+      prossimo = 0;
+    } else if (evento.key === "End") {
+      prossimo = totale - 1;
     }
     if (prossimo === null) return;
     evento.preventDefault();
@@ -130,12 +160,21 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
                 data-seme-rifiuto={rifiuto ? "" : undefined}
                 onClick={() => seleziona(indice)}
                 className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                  attiva ? "border-foreground/30 bg-muted text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+                  "inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                  attiva
+                    ? "border-foreground/30 bg-muted text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                   rifiuto && "border-destructive text-destructive hover:text-destructive",
                 )}
               >
-                {t("sorteggio", { numero: indice + 1 })}
+                {/* Il colore da solo non basta a segnalare la linguetta del
+                    rifiuto — chi non distingue il rosso, o usa un lettore di
+                    schermo, non lo percepirebbe: l'icona è un secondo
+                    segnale visivo, il nome accessibile diverso ("… —
+                    rifiutato") un terzo, testuale. Giro di correzioni 1,
+                    C5/B5. */}
+                {rifiuto && <TriangleAlert aria-hidden="true" className="size-3.5" />}
+                {rifiuto ? t("sorteggioRifiuto", { numero: indice + 1 }) : t("sorteggio", { numero: indice + 1 })}
               </button>
             );
           })}
@@ -145,11 +184,14 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
         </Button>
       </div>
 
+      {/* Niente `tabIndex` qui: il pannello contiene già un elemento
+          focalizzabile (il player) — renderlo focalizzabile a sua volta lo
+          duplicherebbe inutilmente nell'ordine di tabulazione (giro di
+          correzioni 1, C6/B8). */}
       <div
         role="tabpanel"
         id={idPannello}
         aria-labelledby={idTab(selezionato)}
-        tabIndex={0}
         className={cn("rounded-lg border p-3", rifiutoAttivo && "border-destructive")}
       >
         <PlayerEsercizioLazy

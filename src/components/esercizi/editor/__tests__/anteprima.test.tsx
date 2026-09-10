@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -11,17 +12,30 @@ import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
 // dietro le linguette, con la modalità locale passata al player e il
 // contenuto ricostruito dall'editor corrente — senza far girare davvero il
 // motore Numbas tre volte per test (già coperto da player-esercizio.test.tsx).
+//
+// Giro di correzioni 1, C2/B1: lo stub registra il seme al MONTAGGIO
+// (`useState(props.seed)`, un initializer che gira una volta sola), non a
+// ogni render. Uno stub che si limitasse a rendere `props.seed` a ogni
+// render sarebbe una funzione pura delle prop e non potrebbe MAI distinguere
+// "sono stato rimontato" da "sono stato ri-renderizzato con prop diverse" —
+// e la garanzia che conta di più qui (il player carica la domanda una volta
+// sola al montaggio, quindi cambiare linguetta deve rimontarlo, non solo
+// aggiornarlo) resterebbe indifesa: una `key` costante o rimossa avrebbe
+// lasciato l'intera suite verde.
 vi.mock("@/components/esercizi/player/player-esercizio-lazy", () => ({
   PlayerEsercizioLazy: (props: {
     seed: string;
     soloLocale?: boolean;
     content: unknown;
     tentativoId: string;
-  }) => (
-    <div data-testid="player" data-seed={props.seed} data-solo-locale={String(props.soloLocale === true)}>
-      {JSON.stringify(props.content)}
-    </div>
-  ),
+  }) => {
+    const [semeAlMontaggio] = useState(props.seed);
+    return (
+      <div data-testid="player" data-seed={semeAlMontaggio} data-solo-locale={String(props.soloLocale === true)}>
+        {JSON.stringify(props.content)}
+      </div>
+    );
+  },
 }));
 
 import { Anteprima } from "../anteprima";
@@ -43,11 +57,14 @@ function montaggio(editor: EsercizioEditor = EDITOR, semeRifiuto?: number) {
   );
 }
 
-const NOME_LINGUETTA = (numero: number) => messaggiIt.esercizi.redazione.anteprima.sorteggio.replace("{numero}", String(numero));
+const R = messaggiIt.esercizi.redazione.anteprima;
+const NOME_LINGUETTA = (numero: number) => R.sorteggio.replace("{numero}", String(numero));
+const NOME_LINGUETTA_RIFIUTO = (numero: number) => R.sorteggioRifiuto.replace("{numero}", String(numero));
 
-/** Clicca la linguetta n (1-based) e restituisce il seme del player montato
- * subito dopo — il modo in cui ogni test osserva "quale sorteggio si vede
- * ora" in un componente che monta un player alla volta. */
+/** Clicca la linguetta n (1-based, mai quella del rifiuto: la sua etichetta
+ * è diversa) e restituisce il seme del player montato subito dopo — il modo
+ * in cui ogni test osserva "quale sorteggio si vede ora" in un componente
+ * che monta un player alla volta. */
 async function apriLinguetta(numero: number) {
   await userEvent.click(screen.getByRole("tab", { name: NOME_LINGUETTA(numero) }));
   return screen.getByTestId("player").getAttribute("data-seed");
@@ -79,11 +96,20 @@ describe("Anteprima", () => {
     expect(semi.size).toBe(3);
   });
 
-  it("cliccando la seconda linguetta, il player montato porta il seme del secondo sorteggio", async () => {
+  // Giro di correzioni 1, C2/B1: l'asserzione decisiva è il confronto fra il
+  // seme letto PRIMA del clic e quello letto DOPO — non un confronto col
+  // valore letto subito dopo il clic stesso (che sarebbe tautologico). Con
+  // lo stub che registra il seme al montaggio, questa prova è verde
+  // sull'implementazione attuale e rossa se la `key` del player smette di
+  // dipendere dal seme (verificato a mano, vedi rapporto).
+  it("cliccando la seconda linguetta, il player si rimonta con un seme diverso dal primo", async () => {
     montaggio();
-    const semeAtteso = await apriLinguetta(2);
+    const semeUno = screen.getByTestId("player").getAttribute("data-seed");
+
+    await userEvent.click(screen.getByRole("tab", { name: NOME_LINGUETTA(2) }));
+
     expect(screen.getByRole("tab", { name: NOME_LINGUETTA(2) })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByTestId("player")).toHaveAttribute("data-seed", semeAtteso);
+    expect(screen.getByTestId("player").getAttribute("data-seed")).not.toBe(semeUno);
   });
 
   it("passa la modalità locale al player, qualunque linguetta sia aperta: nessuna scrittura dall'anteprima", async () => {
@@ -94,18 +120,28 @@ describe("Anteprima", () => {
     }
   });
 
-  it("costruisce il contenuto Numbas dall'editor corrente", () => {
+  it("costruisce il contenuto Numbas dall'editor corrente, dietro ciascuna delle tre linguette", async () => {
     montaggio();
-    expect(screen.getByTestId("player").textContent).toContain("Prova anteprima");
+    for (const numero of [1, 2, 3]) {
+      await apriLinguetta(numero);
+      expect(screen.getByTestId("player").textContent).toContain("Prova anteprima");
+    }
   });
 
-  it("il pulsante «nuovi numeri» rigenera il seme della linguetta aperta", async () => {
+  // Giro di correzioni 1, C3/B3: non basta che il seme della linguetta
+  // aperta cambi — «Nuovi numeri» deve produrre tre semi diversi fra loro,
+  // altrimenti il docente cliccherebbe le tre linguette e vedrebbe tre
+  // volte lo stesso sorteggio (esattamente ciò che il brief vuole evitare:
+  // "uno solo non mostra che qualcosa è casuale").
+  it("il pulsante «nuovi numeri» rigenera i tre semi, tutti diversi fra loro", async () => {
     montaggio();
-    const semeIniziale = screen.getByTestId("player").getAttribute("data-seed");
+    const semiIniziali = [await apriLinguetta(1), await apriLinguetta(2), await apriLinguetta(3)];
 
-    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.anteprima.rigenera }));
+    await userEvent.click(screen.getByRole("button", { name: R.rigenera }));
 
-    expect(screen.getByTestId("player").getAttribute("data-seed")).not.toBe(semeIniziale);
+    const semiNuovi = [await apriLinguetta(1), await apriLinguetta(2), await apriLinguetta(3)];
+    expect(semiNuovi).not.toEqual(semiIniziali);
+    expect(new Set(semiNuovi).size).toBe(3);
   });
 
   it("la freccia destra sposta selezione e fuoco alla linguetta successiva, e ne rimonta il player", async () => {
@@ -135,6 +171,36 @@ describe("Anteprima", () => {
     expect(linguettaTre).toHaveAttribute("aria-selected", "true");
     expect(linguettaTre).toHaveFocus();
     expect(screen.getByTestId("player")).toHaveAttribute("data-seed", semeTerzo);
+  });
+
+  // Giro di correzioni 1, C6/B8: Home/End fanno parte del pattern ARIA
+  // "tabs" al completo, non solo le frecce.
+  it("il tasto Home sposta selezione e fuoco alla prima linguetta", async () => {
+    montaggio();
+    const semeUno = await apriLinguetta(1);
+    await apriLinguetta(3);
+
+    screen.getByRole("tab", { name: NOME_LINGUETTA(3) }).focus();
+    await userEvent.keyboard("{Home}");
+
+    const linguettaUno = screen.getByRole("tab", { name: NOME_LINGUETTA(1) });
+    expect(linguettaUno).toHaveAttribute("aria-selected", "true");
+    expect(linguettaUno).toHaveFocus();
+    expect(screen.getByTestId("player")).toHaveAttribute("data-seed", semeUno);
+  });
+
+  it("il tasto End sposta selezione e fuoco all'ultima linguetta", async () => {
+    montaggio();
+    const semeTre = await apriLinguetta(3);
+    await apriLinguetta(1);
+
+    screen.getByRole("tab", { name: NOME_LINGUETTA(1) }).focus();
+    await userEvent.keyboard("{End}");
+
+    const linguettaTre = screen.getByRole("tab", { name: NOME_LINGUETTA(3) });
+    expect(linguettaTre).toHaveAttribute("aria-selected", "true");
+    expect(linguettaTre).toHaveFocus();
+    expect(screen.getByTestId("player")).toHaveAttribute("data-seed", semeTre);
   });
 });
 
@@ -170,31 +236,38 @@ describe("Anteprima — il seme del rifiuto", () => {
     montaggio(EDITOR, 14);
     expect(screen.getAllByRole("tab")).toHaveLength(3);
 
-    const primaLinguetta = screen.getByRole("tab", { name: NOME_LINGUETTA(1) });
+    const primaLinguetta = screen.getByRole("tab", { name: NOME_LINGUETTA_RIFIUTO(1) });
     expect(primaLinguetta).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("player")).toHaveAttribute("data-seed", "14");
   });
 
-  it("la prima linguetta porta data-seme-rifiuto ed è l'unica marcata così", () => {
+  // Giro di correzioni 1, C5/B5: il colore da solo non basta a segnalare la
+  // linguetta del rifiuto — un nome accessibile diverso ("… — rifiutato") e
+  // un'icona (non solo un cambio di tinta) sono i due segnali aggiuntivi.
+  it("la prima linguetta ha un nome accessibile e un'icona che la distinguono, non solo il colore, ed è l'unica marcata data-seme-rifiuto", () => {
     montaggio(EDITOR, 14);
     const marcate = document.querySelectorAll("[data-seme-rifiuto]");
     expect(marcate).toHaveLength(1);
-    expect(marcate[0]).toBe(screen.getByRole("tab", { name: NOME_LINGUETTA(1) }));
+
+    const primaLinguetta = screen.getByRole("tab", { name: NOME_LINGUETTA_RIFIUTO(1) });
+    expect(marcate[0]).toBe(primaLinguetta);
+    expect(primaLinguetta.querySelector("svg")).not.toBeNull();
+    // le altre due restano col nome comune, senza menzione del rifiuto
+    expect(screen.getByRole("tab", { name: NOME_LINGUETTA(2) })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: NOME_LINGUETTA(3) })).toBeInTheDocument();
   });
 
   it("l'etichetta sotto il player, quando la linguetta del rifiuto è aperta, dice esplicitamente che è un rifiuto", () => {
     montaggio(EDITOR, 14);
-    expect(
-      screen.getByText(messaggiIt.esercizi.redazione.anteprima.semeRifiuto.replace("{seme}", "14")),
-    ).toBeInTheDocument();
+    expect(screen.getByText(R.semeRifiuto.replace("{seme}", "14"))).toBeInTheDocument();
   });
 
-  it("«nuovi numeri» non cambia il primo seme quando c'è un rifiuto, e lo cambia quando non c'è", async () => {
+  it("«nuovi numeri» non cambia il primo seme quando c'è un rifiuto", async () => {
     montaggio(EDITOR, 14);
-    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.anteprima.rigenera }));
+    await userEvent.click(screen.getByRole("button", { name: R.rigenera }));
 
     // la prima linguetta (quella del rifiuto) resta selezionata e ancorata
-    expect(screen.getByRole("tab", { name: NOME_LINGUETTA(1) })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: NOME_LINGUETTA_RIFIUTO(1) })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("player")).toHaveAttribute("data-seed", "14");
   });
 
@@ -202,8 +275,37 @@ describe("Anteprima — il seme del rifiuto", () => {
     montaggio(EDITOR, undefined);
     const semeIniziale = screen.getByTestId("player").getAttribute("data-seed");
 
-    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.anteprima.rigenera }));
+    await userEvent.click(screen.getByRole("button", { name: R.rigenera }));
 
     expect(screen.getByTestId("player").getAttribute("data-seed")).not.toBe(semeIniziale);
+  });
+
+  // Giro di correzioni 1, C1/B2 — il rilievo più grave: senza questa
+  // correzione, un rifiuto che arriva mentre il docente guarda un'altra
+  // linguetta accende la prima di rosso ma lascia il player fermo sul
+  // sorteggio che stava già guardando — il seme che ha rotto l'esercizio
+  // non gli viene mai mostrato.
+  it("quando il rifiuto arriva come cambio di prop mentre un'altra linguetta è aperta, la selezione torna sulla prima e ne mostra subito il seme", async () => {
+    const { rerender } = montaggio(EDITOR, undefined);
+    await apriLinguetta(2); // il docente sta guardando la seconda linguetta…
+
+    // …preme "Controlla", l'esercizio viene rifiutato: `semeRifiuto` arriva
+    // come cambio di prop su un componente già montato, non come rimontaggio.
+    rerender(
+      <NextIntlClientProvider locale="it" messages={messaggiIt}>
+        <Anteprima editor={EDITOR} locale="it" semeRifiuto={14} />
+      </NextIntlClientProvider>,
+    );
+
+    const primaLinguetta = screen.getByRole("tab", { name: NOME_LINGUETTA_RIFIUTO(1) });
+    expect(primaLinguetta).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("player")).toHaveAttribute("data-seed", "14");
+  });
+
+  it("dopo che il rifiuto ha riportato la selezione sulla prima linguetta, il docente può comunque spostarsi su un'altra", async () => {
+    montaggio(EDITOR, 14);
+    const semeDue = await apriLinguetta(2);
+    expect(screen.getByRole("tab", { name: NOME_LINGUETTA(2) })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("player")).toHaveAttribute("data-seed", semeDue);
   });
 });
