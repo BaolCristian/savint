@@ -281,6 +281,54 @@ describe("AssegnaForm", () => {
   });
 });
 
+// Onda della gerarchia del pannello: il conteggio esiste per essere letto
+// PRIMA di premere. Prima stava sotto la riga dei campi, e sotto i 1300px
+// finiva sotto il pulsante: si scriveva un numero, si premeva, e solo dopo
+// l'occhio arrivava alla cosa che doveva fermare l'errore.
+describe("il conteggio si legge prima di premere", () => {
+  function fetchConConteggio(quanti: number) {
+    return vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("argomento=")) return rispostaJson({ quanti });
+      return rispostaJson([{ argomento: "Equazioni", quanti }]);
+    }) as typeof fetch;
+  }
+
+  it("sta nel documento prima del pulsante Assegna, ed e' la descrizione accessibile del campo 'quanti'", async () => {
+    global.fetch = fetchConConteggio(4);
+    montaggio({ classi: [classeConAnno] });
+    await vi.runOnlyPendingTimersAsync();
+    await screen.findByLabelText(t.argomento);
+    await vi.advanceTimersByTimeAsync(400);
+
+    const conteggio = await screen.findByText("4 esercizi disponibili");
+    const pulsante = screen.getByRole("button", { name: t.assegna });
+    // Ordine nel documento, che e' anche l'ordine di lettura a qualunque
+    // larghezza: il pulsante SEGUE il conteggio.
+    expect(conteggio.compareDocumentPosition(pulsante) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // E chi non vede lo schermo lo sente nel momento in cui entra nel
+    // campo in cui sta per scrivere quanti ne vuole.
+    expect(screen.getByLabelText(t.quanti)).toHaveAccessibleDescription(/4 esercizi disponibili/);
+  });
+
+  it("chiederne piu' di quanti ce ne sono marca il campo come non valido, ma NON blocca l'invio: l'autorita' resta il rifiuto del server", async () => {
+    global.fetch = fetchConConteggio(4);
+    montaggio({ classi: [classeConAnno] });
+    await vi.runOnlyPendingTimersAsync();
+    await screen.findByLabelText(t.argomento);
+    await vi.advanceTimersByTimeAsync(400);
+    await screen.findByText("4 esercizi disponibili");
+
+    const campo = screen.getByLabelText(t.quanti);
+    fireEvent.change(campo, { target: { value: "10" } });
+    expect(campo).toBeInvalid();
+    expect(screen.getByRole("button", { name: t.assegna })).not.toBeDisabled();
+
+    fireEvent.change(campo, { target: { value: "4" } });
+    expect(campo).toBeValid();
+  });
+});
+
 describe("quando il docente non ha ancora dichiarato nessuna classe", () => {
   // E' la prima cosa che vede una scuola nuova, nel riquadro piu' grande
   // della pagina. Prima: tendina vuota, bottone spento, un messaggio che

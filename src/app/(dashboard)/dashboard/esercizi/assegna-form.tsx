@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export interface ClasseOpzione {
@@ -89,6 +89,16 @@ function messaggioErrore(
   return t("erroreGenerico");
 }
 
+// Le classi dei campi, in due pesi soli. I tre campi senza i quali non si
+// assegna niente (classe, argomento, quanti) sono alti 40px con l'etichetta
+// piena; quelli facoltativi sono alti 36px con l'etichetta in grigio. Prima
+// erano sette controlli identici in una riga sola, e i due facoltativi
+// (le date) erano i più larghi di tutti.
+const ETICHETTA_PRIMARIA = "text-sm font-medium";
+const ETICHETTA_SECONDARIA = "text-sm text-muted-foreground";
+const SELECT_PRIMARIO = "h-10 rounded-lg border border-input bg-transparent px-3 text-sm";
+const SELECT_SECONDARIO = "h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm";
+
 /** Il modulo di assegnazione diretta (Task 5, docente-via-veloce): classe,
  * argomento, quanti, entro quando, difficoltà — un solo schermo al posto
  * dei cinque che c'erano prima (classe dichiarata, esercizio scritto o
@@ -101,7 +111,15 @@ function messaggioErrore(
  * L'anno non è mai un campo che il docente compila normalmente: viene
  * dalla classe scelta (`classeSelezionata.yearLevel`). Il campo `anno`
  * qui sotto compare SOLO quando quella classe non ne ha uno — l'unico
- * momento in cui la specifica lo prevede. */
+ * momento in cui la specifica lo prevede.
+ *
+ * La forma del modulo segue la frase che il docente ha in testa — «dieci
+ * equazioni alla 2A entro venerdì» — in quattro righe di peso decrescente:
+ * (1) a chi, di cosa, quanti; (2) entro quando; (3) le rifiniture,
+ * ripiegate; (4) il pulsante. Il conteggio di quanti esercizi esistono sta
+ * ACCANTO al numero che il docente scrive, non sotto la riga: è la cosa
+ * che deve leggere prima di premere, e a qualunque larghezza viene prima
+ * del pulsante — nel documento e sullo schermo. */
 export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; candidati: CandidatoAnteprima[] }) {
   const t = useTranslations("esercizi.assegnaForm");
   const router = useRouter();
@@ -241,6 +259,14 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   const opzioniVisibili = classeId === "" || annoRisolto == null ? [] : argomentiOpzioni;
   const corrispondentiVisibili = argomento === "" || annoRisolto == null ? null : corrispondenti;
 
+  // Il docente ha chiesto piu' esercizi di quanti il conteggio ne dichiara.
+  // Si SEGNALA (il numero diventa rosso, il campo si marca non valido), non
+  // si blocca: il conteggio e' una fotografia (design doc, "Rischi
+  // accettati") e l'autorita' resta il rifiuto del server, che porta i due
+  // numeri esatti. Bloccare qui sarebbe una seconda fonte di verita'.
+  const troppi = corrispondentiVisibili !== null && quantiValide && Number(quanti) > corrispondentiVisibili;
+  const mostraConteggio = argomento !== "";
+
   // Senza classi dichiarate non c'e' niente da assegnare, e il modulo
   // diventava un guscio: tendina vuota, bottone spento, un messaggio che
   // incolpava una classe inesistente, e nemmeno una chiamata di rete —
@@ -252,12 +278,11 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   // constatare.
   if (classi.length === 0) {
     return (
-      <div className="rounded-xl border border-input p-4 text-sm">
-        <p className="text-muted-foreground">{t("nessunaClasseInsegnata")}</p>
-        <Link
-          href="/dashboard/esercizi/classi"
-          className="mt-2 inline-block font-medium text-brand-blue hover:underline"
-        >
+      <div className="flex flex-col items-start gap-4 text-sm">
+        <p>{t("nessunaClasseInsegnata")}</p>
+        {/* In questo stato E' questa l'azione del pannello — l'"Assegna" di
+            una scuola nuova — e ha lo stesso peso. */}
+        <Link href="/dashboard/esercizi/classi" className={buttonVariants({ className: "h-11 px-6 text-base font-semibold" })}>
           {t("vaiAlleClassi")}
         </Link>
       </div>
@@ -265,17 +290,21 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   }
 
   return (
-    <form onSubmit={assegna} className="flex flex-col gap-4 rounded-xl border border-input p-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-classe" className="text-sm font-medium">
+    <form onSubmit={assegna} className="flex flex-col gap-5">
+      {/* Riga 1 — a chi, di cosa, quanti. Larghezze intrinseche, non
+          "riempi la riga": un menu con "2SIA4.0" dentro non ha motivo di
+          essere largo mezzo schermo. Quando la riga non ci sta, ogni campo
+          va a capo intero, da solo: mai un pulsante appiccicato a una data. */}
+      <div className="flex flex-wrap items-start gap-x-5 gap-y-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="assegna-classe" className={ETICHETTA_PRIMARIA}>
             {t("classe")}
           </label>
           <select
             id="assegna-classe"
             value={classeId}
             onChange={(e) => selezionaClasse(e.target.value)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+            className={`${SELECT_PRIMARIO} min-w-36`}
           >
             {classi.map((c) => (
               <option key={c.id} value={c.id}>
@@ -286,8 +315,8 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
         </div>
 
         {mostraAnno && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="assegna-anno" className="text-sm font-medium">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="assegna-anno" className={ETICHETTA_PRIMARIA}>
               {t("anno")}
             </label>
             <Input
@@ -297,13 +326,13 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
               max={5}
               value={annoManuale}
               onChange={(e) => setAnnoManuale(e.target.value)}
-              className="w-20"
+              className="h-10 w-20"
             />
           </div>
         )}
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-argomento" className="text-sm font-medium">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="assegna-argomento" className={ETICHETTA_PRIMARIA}>
             {t("argomento")}
           </label>
           <select
@@ -311,7 +340,7 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
             value={argomento}
             onChange={(e) => setArgomento(e.target.value)}
             disabled={opzioniVisibili.length === 0}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+            className={`${SELECT_PRIMARIO} min-w-44 max-w-xs`}
           >
             {opzioniVisibili.length === 0 ? (
               <option value="">{t("nessunArgomentoDisponibile")}</option>
@@ -325,85 +354,116 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-quanti" className="text-sm font-medium">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="assegna-quanti" className={ETICHETTA_PRIMARIA}>
             {t("quanti")}
           </label>
-          <Input
-            id="assegna-quanti"
-            type="number"
-            min={1}
-            value={quanti}
-            onChange={(e) => setQuanti(e.target.value)}
-            className="w-20"
-          />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {/* Il numero che il docente deve davvero pensare: il campo piu'
+                grande del modulo, con un esempio dentro. `aria-describedby`
+                lega il conteggio al campo, cosi' chi usa un lettore di
+                schermo sente "N esercizi disponibili" nel momento in cui
+                sta per scrivere quanti ne vuole — la stessa cosa che
+                l'occhio fa leggendolo qui accanto. */}
+            <Input
+              id="assegna-quanti"
+              type="number"
+              min={1}
+              value={quanti}
+              onChange={(e) => setQuanti(e.target.value)}
+              placeholder={t("quantiSegnaposto")}
+              aria-describedby={mostraConteggio ? "assegna-conteggio" : undefined}
+              aria-invalid={troppi || undefined}
+              className="h-10 w-24 text-lg font-semibold tabular-nums md:text-lg"
+            />
+            {/* "Sotto i filtri, quanti esercizi corrispondono" (design doc):
+                qui, accanto al numero — è l'informazione che evita di
+                chiedere dieci esercizi dove ce ne sono quattro, mostrata
+                PRIMA di un eventuale rifiuto, non al posto suo (il rifiuto
+                per capienza resta un errore server-side accanto al
+                pulsante, col suo stesso dettaglio). */}
+            {mostraConteggio && (
+              <p id="assegna-conteggio" aria-live="polite" className="text-sm">
+                <span className={troppi ? "font-semibold text-destructive" : "font-medium"}>
+                  {corrispondentiVisibili === null ? t("calcolando") : t("corrispondenti", { quanti: corrispondentiVisibili })}
+                </span>
+                {candidatoAnteprima && (
+                  <>
+                    <span className="text-muted-foreground"> · </span>
+                    <Link href={`/dashboard/esercizi/anteprima/${candidatoAnteprima.id}`} className="text-brand-blue hover:underline">
+                      {t("anteprima")}
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
+          </div>
         </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-difficolta" className="text-sm font-medium">
-            {t("difficolta")}
-          </label>
-          <select
-            id="assegna-difficolta"
-            value={difficoltaMax}
-            onChange={(e) => setDifficoltaMax(e.target.value)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
-          >
-            <option value="">{t("difficoltaQualsiasi")}</option>
-            <option value="1">{t("difficolta1")}</option>
-            <option value="2">{t("difficolta2")}</option>
-            <option value="3">{t("difficolta3")}</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-apertura" className="text-sm font-medium">
-            {t("apertura")}
-          </label>
-          <Input id="assegna-apertura" type="date" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} className="w-40" />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="assegna-scadenza" className="text-sm font-medium">
-            {t("scadenza")}
-          </label>
-          <Input id="assegna-scadenza" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="w-40" />
-        </div>
-
-        <Button type="submit" disabled={invioBloccato}>
-          {t("assegna")}
-        </Button>
       </div>
 
       {mostraAnno && <p className="text-xs text-muted-foreground">{t("annoAiuto")}</p>}
 
-      {/* "Sotto i filtri, quanti esercizi corrispondono" (design doc): qui,
-          non altrove — è l'informazione che evita di chiedere dieci
-          esercizi dove ce ne sono quattro, mostrata PRIMA di un eventuale
-          rifiuto, non al posto suo (il rifiuto per capienza resta un
-          errore server-side qui sotto, col suo stesso dettaglio). */}
-      {argomento !== "" && (
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <p className="text-muted-foreground">{corrispondentiVisibili === null ? t("calcolando") : t("corrispondenti", { quanti: corrispondentiVisibili })}</p>
-          {candidatoAnteprima && (
-            <Link href={`/dashboard/esercizi/anteprima/${candidatoAnteprima.id}`} className="text-brand-blue hover:underline">
-              {t("anteprima")}
-            </Link>
-          )}
-        </div>
-      )}
+      {/* Riga 2 — entro quando. Il quarto pezzo della frase, facoltativo:
+          visibile, ma un gradino sotto. */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="assegna-scadenza" className={ETICHETTA_SECONDARIA}>
+          {t("scadenza")}
+        </label>
+        <Input id="assegna-scadenza" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="h-9 w-40" />
+      </div>
 
-      {esito === "ok" && <span className="text-sm text-brand-green">{t("assegnato")}</span>}
-      {/* role="alert": lo legge chi usa uno screen reader senza doverlo
-          cercare, ed e' il solo modo per una prova di distinguere QUESTO
-          messaggio dal resto del testo — il nome dell'argomento compare
-          anche nel menu ("Equazioni — 4"), e una ricerca per testo
-          prendeva quello. */}
-      {errore && (
-        <span role="alert" className="text-sm text-destructive">
-          {errore}
-        </span>
-      )}
+      {/* Riga 3 — le rifiniture, ripiegate. Il titolo del ripiego dice cosa
+          c'e' dentro, cosi' non serve aprirlo per saperlo. Un <details>
+          nativo: niente stato, tastiera gratis, lo stesso che usa la pagina
+          dei compiti per la seconda via. */}
+      <details className="text-sm">
+        <summary className="w-fit cursor-pointer select-none text-muted-foreground hover:text-foreground">
+          {t("altreOpzioni")}
+        </summary>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-3">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="assegna-difficolta" className={ETICHETTA_SECONDARIA}>
+              {t("difficolta")}
+            </label>
+            <select
+              id="assegna-difficolta"
+              value={difficoltaMax}
+              onChange={(e) => setDifficoltaMax(e.target.value)}
+              className={SELECT_SECONDARIO}
+            >
+              <option value="">{t("difficoltaQualsiasi")}</option>
+              <option value="1">{t("difficolta1")}</option>
+              <option value="2">{t("difficolta2")}</option>
+              <option value="3">{t("difficolta3")}</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="assegna-apertura" className={ETICHETTA_SECONDARIA}>
+              {t("apertura")}
+            </label>
+            <Input id="assegna-apertura" type="date" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} className="h-9 w-40" />
+          </div>
+        </div>
+      </details>
+
+      {/* Riga 4 — l'azione. Sempre l'ultima cosa, dopo il conteggio, a
+          qualunque larghezza; e l'unica cosa blu del pannello. */}
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <Button type="submit" disabled={invioBloccato} className="h-11 px-6 text-base font-semibold">
+          {t("assegna")}
+        </Button>
+        {esito === "ok" && <span className="text-sm font-medium text-brand-green">{t("assegnato")}</span>}
+        {/* role="alert": lo legge chi usa uno screen reader senza doverlo
+            cercare, ed e' il solo modo per una prova di distinguere QUESTO
+            messaggio dal resto del testo — il nome dell'argomento compare
+            anche nel menu ("Equazioni — 4"), e una ricerca per testo
+            prendeva quello. */}
+        {errore && (
+          <span role="alert" className="text-sm text-destructive">
+            {errore}
+          </span>
+        )}
+      </div>
     </form>
   );
 }
