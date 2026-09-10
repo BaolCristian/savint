@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CampoJme } from "./campo-jme";
 import type { ParteEditor, Tolleranza } from "@/lib/esercizi/editor/modello";
 
 type ParteNumericaEditor = Extract<ParteEditor, { tipo: "numerica" }>;
@@ -44,11 +45,14 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
             onChange={(e) => onChange({ ...parte, punti: Number(e.target.value) })}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor={idValore} className="text-sm font-medium">
-            {t("numerica.valore")}
-          </label>
-          <Input id={idValore} value={parte.valore} onChange={(e) => onChange({ ...parte, valore: e.target.value })} />
+        <div className="flex-1">
+          <CampoJme
+            id={idValore}
+            etichetta={t("numerica.valore")}
+            valore={parte.valore}
+            onChange={(valore) => onChange({ ...parte, valore })}
+            tastierino
+          />
         </div>
       </div>
 
@@ -85,14 +89,13 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
         </div>
 
         {parte.tolleranza.tipo === "margine" && (
-          <div className="flex max-w-40 flex-col gap-1">
-            <label htmlFor={idMargine} className="text-sm font-medium">
-              {t("numerica.margine")}
-            </label>
-            <Input
+          <div className="max-w-60">
+            <CampoJme
               id={idMargine}
-              value={parte.tolleranza.margine}
-              onChange={(e) => aggiornaTolleranza({ tipo: "margine", margine: e.target.value })}
+              etichetta={t("numerica.margine")}
+              valore={parte.tolleranza.margine}
+              onChange={(margine) => aggiornaTolleranza({ tipo: "margine", margine })}
+              tastierino
             />
           </div>
         )}

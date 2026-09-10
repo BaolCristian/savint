@@ -13,7 +13,9 @@ import type { InputParteProps } from "./index";
  * di tutto ciò che si inserisce; per una funzione come `sqrt()` è 5, cioè
  * subito dopo la parentesi aperta, in modo da poter scrivere l'argomento
  * senza dover spostare il cursore a mano. */
-interface SimboloTastiera {
+/** Esportati per riuso in `editor/campo-jme.tsx`: stessa tastiera di
+ * simboli, stessa lista, non una seconda copia. */
+export interface SimboloTastiera {
   id: string;
   glifo: string;
   chiaveEtichetta: "tastoPotenza" | "tastoRadice" | "tastoFrazione" | "tastoPiGreco" | "tastoParentesi";
@@ -26,7 +28,7 @@ interface SimboloTastiera {
  * radici, frazioni, π, parentesi ricorrono in ogni anno; il resto della
  * sintassi JME — `+`, `-`, `*`, cifre, lettere — sta già sulla tastiera del
  * telefono). */
-const SIMBOLI: SimboloTastiera[] = [
+export const SIMBOLI: SimboloTastiera[] = [
   { id: "potenza", glifo: "x²", chiaveEtichetta: "tastoPotenza", inserisci: "^", offsetCaret: 1 },
   { id: "radice", glifo: "√", chiaveEtichetta: "tastoRadice", inserisci: "sqrt()", offsetCaret: 5 },
   { id: "frazione", glifo: "/", chiaveEtichetta: "tastoFrazione", inserisci: "/", offsetCaret: 1 },

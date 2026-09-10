@@ -1317,6 +1317,9 @@
         "condizione": "Condition (optional)",
         "condizioneAiuto": "An expression that must be true for a combination of variables to be accepted, for example \"a <> b\". Leave it empty if you don't need one."
       },
+      "campoJme": {
+        "interpretatoCome": "Interpreted as:"
+      },
       "parti": {
         "titolo": "Parts",
         "aggiungi": "Add part",

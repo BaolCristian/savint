@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CampoJme } from "./campo-jme";
 import type { ParteEditor } from "@/lib/esercizi/editor/modello";
 
 type ParteEspressioneEditor = Extract<ParteEditor, { tipo: "espressione" }>;
@@ -40,14 +41,13 @@ export function ParteEspressione({ parte, onChange, onRimuovi }: ParteEspression
             onChange={(e) => onChange({ ...parte, punti: Number(e.target.value) })}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor={idRisposta} className="text-sm font-medium">
-            {t("espressione.risposta")}
-          </label>
-          <Input
+        <div className="flex-1">
+          <CampoJme
             id={idRisposta}
-            value={parte.risposta}
-            onChange={(e) => onChange({ ...parte, risposta: e.target.value })}
+            etichetta={t("espressione.risposta")}
+            valore={parte.risposta}
+            onChange={(risposta) => onChange({ ...parte, risposta })}
+            tastierino
           />
         </div>
       </div>

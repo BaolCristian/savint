@@ -1317,6 +1317,9 @@
         "condizione": "Condizione (opzionale)",
         "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
       },
+      "campoJme": {
+        "interpretatoCome": "Interpretato come:"
+      },
       "parti": {
         "titolo": "Parti",
         "aggiungi": "Aggiungi parte",

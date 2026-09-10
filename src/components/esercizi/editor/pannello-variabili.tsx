@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CampoJme } from "./campo-jme";
 import type { VariabileEditor } from "@/lib/esercizi/editor/modello";
 
 /** Lo stesso identificatore di `src/lib/esercizi/editor/modello.ts`
@@ -82,8 +83,15 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
           const nomeInvalido = erroreNome(v.nome);
           const definizioneMancante = erroreDefinizione(v);
           return (
-            <li key={i} className="rounded-lg border p-3" aria-label={t("rigaAriaLabel", { numero: i + 1 })}>
-              <div className="grid gap-2 sm:grid-cols-3">
+            <li
+              key={i}
+              className="@container rounded-lg border p-3"
+              aria-label={t("rigaAriaLabel", { numero: i + 1 })}
+            >
+              {/* `@sm`, non `sm`: la larghezza che conta è quella di questa
+                  riga, non quella della finestra — la colonna di scrittura
+                  che la contiene non è mai larga tutto lo schermo. */}
+              <div className="grid gap-2 @sm:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <label htmlFor={idNome} className="text-sm font-medium">
                     {t("nome")}
@@ -97,14 +105,11 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
                   {nomeInvalido && <p className="text-xs text-destructive">{t("erroreNome")}</p>}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={idDefinizione} className="text-sm font-medium">
-                    {t("definizione")}
-                  </label>
-                  <Input
+                  <CampoJme
                     id={idDefinizione}
-                    value={v.definizione}
-                    aria-invalid={definizioneMancante}
-                    onChange={(e) => aggiorna(i, "definizione", e.target.value)}
+                    etichetta={t("definizione")}
+                    valore={v.definizione}
+                    onChange={(valore) => aggiorna(i, "definizione", valore)}
                   />
                   {definizioneMancante && <p className="text-xs text-destructive">{t("erroreDefinizione")}</p>}
                 </div>
