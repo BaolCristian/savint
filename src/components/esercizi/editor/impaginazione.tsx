@@ -14,8 +14,17 @@ export interface ImpaginazioneEditorProps {
    * proprio: senza, una colonna più alta della finestra si aggancerebbe e
    * smetterebbe di muoversi, portandosi via il fondo — compreso il
    * dettaglio di un eventuale rifiuto (vedi il commento gemello più sotto e
-   * `editor-esercizio.tsx`, dove quel dettaglio vive). Sotto i 1280px segue
-   * la scrittura nel flusso normale, senza altezza massima. */
+   * `editor-esercizio.tsx`, dove quel dettaglio vive). L'altezza massima
+   * deve sottrarre non solo il padding di `<main>` (il guscio del
+   * cruscotto, `p-4 md:p-8` — 32px a `xl:`) ma anche l'offset a cui la
+   * colonna si aggancia (`top-4`, altri 16px): il bordo superiore della
+   * colonna agganciata cade a 32+16=48px dalla cima della finestra, non a
+   * 32px, e un `max-height` che dimentica i 16px dell'aggancio lascia
+   * sporgere il fondo della colonna di altrettanto sotto il bordo inferiore
+   * della finestra — misurato (giro di correzioni 2): con
+   * `calc(100vh - 2rem)` il fondo cadeva a 1016px su una finestra di
+   * 1000px, con `calc(100vh - 3rem)` cade esattamente a 1000px. Sotto i
+   * 1280px segue la scrittura nel flusso normale, senza altezza massima. */
   visione: ReactNode;
   /** La barra in fondo — Controlla, Salva, lo stato di salvataggio —
    * appiccicata al fondo della finestra, con uno sfondo pieno perché ci
@@ -51,8 +60,24 @@ export function ImpaginazioneEditor({ intestazione, scrittura, visione, azioni }
             irraggiungibile. Lo scorrimento proprio della colonna è ciò che
             lo evita: il porto di scorrimento della pagina (`<main
             overflow-auto>` nel layout del cruscotto) resta quello esterno,
-            questo è un secondo porto annidato solo per questa colonna. */}
-        <div className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+            questo è un secondo porto annidato solo per questa colonna.
+
+            Giro di correzioni 2: `calc(100vh-2rem)` sottraeva solo il
+            padding di `<main>` (`md:p-8` = 32px a `xl:`), non l'offset di
+            `top-4` (16px) a cui la colonna resta agganciata una volta
+            stuck — il bordo superiore agganciato cade quindi a 32+16=48px
+            dalla finestra, e un `max-height` che ignora quei 16px lascia
+            sporgere il fondo della colonna di altrettanto sotto la
+            finestra. `3rem` = 32px (padding) + 16px (top-4): misurato in
+            Chromium headless a 1440×1000 con `<main>` scrollato e la
+            colonna agganciata e satura — il fondo cadeva a 1016px con
+            `2rem`, cade esattamente a 1000px (a filo con la finestra, senza
+            sporgere) con `3rem`. Se il padding di `<main>` cambiasse, questo
+            valore andrebbe ricalcolato insieme: non è derivato a runtime
+            dal DOM, è la somma di due costanti del layout — l'alternativa
+            sarebbe leggere l'altezza disponibile con un ResizeObserver, che
+            per una sola colonna non sembra valere la complessità. */}
+        <div className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           {visione}
         </div>
       </div>
