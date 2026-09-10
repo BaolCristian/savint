@@ -192,6 +192,52 @@ describe("argomentiDisponibili", () => {
     const iMai = tuttiOrdinati.findIndex((x) => x.argomento === maiuscola);
     expect(Math.abs(iMin - iMai)).toBe(1);
   });
+
+  // Dimostrato dal revisore sul database di sviluppo: il menu diceva
+  // "prova — 16", la riga sotto "13 esercizi disponibili" — tre esercizi
+  // su sedici senza versione, lo stato ordinario di uno che il docente ha
+  // appena creato e non ancora salvato. Stessa famiglia del difetto che
+  // questo ramo ha già rifiutato di spedire (Giro di correzioni 1, sopra):
+  // una voce di menu non deve mai promettere più di quanto selezionarla
+  // consegni. La differenza è il verso — lì la voce fusa PROMETTEVA
+  // (conteggio) più di quanto la selezione RAGGIUNGESSE; qui è la stessa
+  // cosa, ma per un motivo diverso (versione mancante, non grafie fuse).
+  //
+  // Invariante, non un caso singolo (dal brief): per OGNI voce che il menu
+  // restituisce, il suo conteggio deve coincidere ESATTAMENTE con quello
+  // che `quantiCorrispondono` trova selezionandola — la stessa uguaglianza
+  // già imposta sopra per la fusione di grafie, qui sul filtro di
+  // versione. Un esempio fisso ("un argomento con 3 senza versione")
+  // lascerebbe passare una prossima divergenza con un mix diverso; questo
+  // test mescola argomenti interamente versionati e parzialmente
+  // versionati apposta, e verifica l'uguaglianza su ciascuna voce
+  // restituita, non solo su quella che ci aspettiamo di guardare.
+  it("il conteggio di ogni voce del menu coincide con quantiCorrispondono: un esercizio senza versione non deve mai farlo sovra-promettere", async () => {
+    const argomentoMisto = `${P}invariante-versione-mista`;
+    const argomentoCompleto = `${P}invariante-versione-completa`;
+
+    // Mix: due esercizi con versione, uno senza — il menu deve dire 2, non 3.
+    await creaEsercizio(`${P}iv-mix-1`, argomentoMisto, { yearLevel: 4 });
+    await creaEsercizio(`${P}iv-mix-2`, argomentoMisto, { yearLevel: 4 });
+    await creaEsercizio(`${P}iv-mix-3-senza-versione`, argomentoMisto, { yearLevel: 4, conVersione: false });
+
+    // Interamente versionato: il caso di controllo, dove il vecchio
+    // comportamento e quello corretto già coincidevano.
+    await creaEsercizio(`${P}iv-completo-1`, argomentoCompleto, { yearLevel: 4 });
+
+    const voci = (await argomentiDisponibili(4)).filter((x) => x.argomento.startsWith(`${P}invariante-versione-`));
+    expect(voci.map((v) => v.argomento).sort()).toEqual([argomentoCompleto, argomentoMisto].sort());
+
+    for (const voce of voci) {
+      const trovati = await quantiCorrispondono({ anno: 4, argomento: voce.argomento });
+      expect(trovati).toBe(voce.quanti);
+    }
+
+    // Il numero concreto del revisore, non solo l'uguaglianza astratta:
+    // la voce mista deve contare 2 (i due con versione), mai 3 (i tre
+    // esercizi grezzi col quel topic).
+    expect(voci.find((v) => v.argomento === argomentoMisto)?.quanti).toBe(2);
+  });
 });
 
 describe("quantiCorrispondono", () => {
@@ -415,4 +461,58 @@ describe("assegnaDiretto", () => {
     expect(compitoDiretta.drawnVersionIds).toEqual(compitoCollezione.drawnVersionIds);
     expect(compitoDiretta.drawnVersionIds).toHaveLength(4);
   });
+
+  // Dimostrato dal revisore sul database di sviluppo:
+  //   assegnaDiretto quanti=0  -> {"ok":true, compitoId: "..."}   drawnVersionIds: []
+  //   batterie automatiche rimaste: 1
+  //   assegnaDiretto quanti=-3 -> {"ok":true, compitoId: "..."}
+  //
+  // Due difetti nello stesso colpo. Primo: un `Compito` che non promette
+  // nessun esercizio viene comunque scritto — `compitoApribile`
+  // (compiti.ts) ritorna `null` su un sorteggio vuoto, quindi lo studente
+  // non può MAI aprirlo: un compito fantasma, indistinguibile da uno vero
+  // finché non si prova ad aprirlo. Secondo: la battaria automatica dietro
+  // di esso non viene mai ripulita, perché la pulizia di `assegnaDiretto`
+  // scatta solo quando `assegna` RIFIUTA (o lancia) — con zero regole da
+  // soddisfare `assegna` non ha nulla da rifiutare, il ciclo sulle regole
+  // (`batteria.regole`) è vuoto e il compito si crea comunque: l'unico
+  // caso, fra tutti quelli coperti dai giri di pulizia precedenti, che è
+  // un SUCCESSO — non un rifiuto, non un'eccezione — e quindi il primo che
+  // quella pulizia non raggiunge.
+  it.each([0, -3])(
+    "un'assegnazione diretta con quanti=%i viene rifiutata: nessun Compito, nessuna batteria automatica lasciata indietro",
+    async (quantiNonValidi) => {
+      const topic = `${P}quanti-non-validi-${Math.abs(quantiNonValidi)}`;
+      await creaEsercizio(`${P}qnv-${Math.abs(quantiNonValidi)}`, topic, { yearLevel: 2, difficulty: 1 });
+
+      const batterieAutomatichePrima = await prisma.batteria.count({
+        where: { name: { contains: P }, automatica: true },
+      });
+      const compitiPrima = await prisma.compito.count({ where: { batteria: { name: { contains: P } } } });
+
+      const r = await assegnaDiretto({
+        classeId, teacherId, filtro: { anno: 2, argomento: topic }, quanti: quantiNonValidi,
+      });
+
+      // Primo difetto: nessun Compito che promette zero esercizi — un
+      // rifiuto vero, nella stessa forma discriminata già usata dal resto
+      // del modulo, non un'eccezione.
+      expect(r).toEqual({ ok: false, motivo: "quantita_non_valida", dettaglio: { quanti: quantiNonValidi } });
+      expect(
+        await prisma.compito.findFirst({ where: { batteria: { name: { contains: topic } } } }),
+      ).toBeNull();
+
+      // Secondo difetto: nessuna batteria automatica lasciata indietro —
+      // lo stesso conteggio prima/dopo che già protegge gli altri rifiuti
+      // di `assegnaDiretto` (vedi il test "non lascia una batteria
+      // orfana" più sopra), qui esteso al caso che quel giro di pulizia
+      // non copriva: un successo apparente con zero regole da pescare.
+      const batterieAutomaticheDopo = await prisma.batteria.count({
+        where: { name: { contains: P }, automatica: true },
+      });
+      const compitiDopo = await prisma.compito.count({ where: { batteria: { name: { contains: P } } } });
+      expect(batterieAutomaticheDopo).toBe(batterieAutomatichePrima);
+      expect(compitiDopo).toBe(compitiPrima);
+    },
+  );
 });

@@ -128,24 +128,45 @@ export async function bacinoRegola(regola: {
  * sul serio i dati è un lavoro diverso, deliberatamente fuori da questo task.
  *
  * `anno`, se passato, filtra per `yearLevel` esatto — lo stesso significato
- * che ha in `FiltroDiretto` (compiti.ts). Il conteggio qui è grezzo (quanti
- * esercizi hanno esattamente questa grafia e, se richiesto, questo anno),
- * non ancora ristretto per versione disponibile o difficoltà: quel numero
- * più preciso è `quantiCorrispondono` (compiti.ts), chiamata quando il
- * docente ha già scelto una voce e sta decidendo quanti esercizi chiederne.
- * Per costruzione — stesso `topic` esatto, stesso `anno` esatto — il
- * conteggio qui è sempre un limite superiore a quello di
- * `quantiCorrispondono` per la stessa voce, mai il contrario: la voce può
- * sotto-promettere (se filtrata anche per difficoltà o versione), mai
- * sovra-promettere. */
+ * che ha in `FiltroDiretto` (compiti.ts).
+ *
+ * **Conta solo ciò che il sorteggio può davvero consegnare (Onda di
+ * correzioni sui numeri): stesso filtro di disponibilità di versione di
+ * `idsConVersione`, non l'appartenenza grezza al topic.** Dimostrato dal
+ * revisore sul database di sviluppo: 16 esercizi col topic «prova», di cui
+ * 3 senza `EsercizioVersione` (lo stato ordinario di uno che il docente ha
+ * appena creato e non ancora salvato) — il menu diceva «prova — 16», la
+ * riga sotto («N esercizi disponibili», da `quantiCorrispondono`) diceva
+ * 13, le due cifre in contraddizione sulla stessa schermata. È la stessa
+ * famiglia del difetto che questo ramo ha già rifiutato di spedire (Giro
+ * di correzioni 1, sopra, sulla fusione delle grafie): una voce di menu
+ * non deve mai promettere più esercizi di quanti selezionarla raggiunga.
+ * La versione precedente di questo commento derubricava il caso a
+ * "sotto-promessa accettabile" insieme alla difficoltà — sbagliando verso:
+ * dal lato del docente è il MENU a sovra-promettere, non
+ * `quantiCorrispondono` a sotto-consegnare.
+ *
+ * Resta invece un limite superiore legittimo, non un difetto, rispetto a
+ * `difficoltaMax`: quel filtro si applica dopo, quando il docente ha già
+ * scelto la voce e sta decidendo quanti esercizi chiederne (lo stesso
+ * momento in cui chiama `quantiCorrispondono`) — a questa schermata la
+ * difficoltà non è ancora stata scelta, quindi non c'è nulla da contare
+ * qui. Per costruzione — stesso `topic` esatto, stesso `anno` esatto,
+ * stesso filtro di versione — il conteggio qui e quello di
+ * `quantiCorrispondono` per la stessa voce coincidono SEMPRE quando
+ * `difficoltaMax` non viene passato: non una stima, la stessa risoluzione
+ * (`idsConVersione`, condivisa) applicata alla stessa identica domanda. */
 export async function argomentiDisponibili(anno?: number): Promise<{ argomento: string; quanti: number }[]> {
   const righe = await prisma.esercizio.findMany({
     where: anno != null ? { yearLevel: anno } : {},
-    select: { topic: true },
+    select: { id: true, topic: true },
   });
 
+  const conVersione = await idsConVersione(righe.map((r) => r.id));
+
   const conteggi = new Map<string, number>();
-  for (const { topic } of righe) {
+  for (const { id, topic } of righe) {
+    if (!conVersione.has(id)) continue;
     conteggi.set(topic, (conteggi.get(topic) ?? 0) + 1);
   }
 
@@ -194,8 +215,29 @@ export function candidatiDisponibili(
  *
  * Controlla PRIMA (prima di qualunque interrogazione: costa niente) che
  * ogni regola rispetti l'invariante — il contenitore, oppure l'argomento,
- * mai entrambi, mai nessuno dei due (Task 1, docente-via-veloce). Poi
- * controlla che ogni `contenitoreId` nominato da una regola esista
+ * mai entrambi, mai nessuno dei due (Task 1, docente-via-veloce) — E che il
+ * suo `count` sia un intero positivo (Onda di correzioni sui numeri).
+ * Quest'ultimo controllo mancava: `creaBatteria` verificava la FORMA di una
+ * regola ma non guardava mai il suo conteggio, così `count: 0` o `count:
+ * -3` arrivavano intatti fino alla scrittura. Dimostrato dal revisore
+ * attraverso `assegnaDiretto` (compiti.ts, che delega qui per la sua unica
+ * regola): un `Compito` con `drawnVersionIds: []` veniva comunque creato —
+ * mai apribile (`compitoApribile` ritorna `null` su un sorteggio vuoto) — e
+ * la batteria automatica dietro di esso restava per sempre, perché la
+ * pulizia di `assegnaDiretto` scatta solo quando `assegna` RIFIUTA, e con
+ * zero regole da soddisfare non c'è nulla da rifiutare.
+ *
+ * Il guardiano vive QUI e non in `assegnaDiretto` — o in una singola rotta
+ * — perché `creaBatteria` è l'UNICO punto di scrittura di una `Batteria`
+ * per ENTRAMBE le provenienze (a mano, automatica) e per qualunque
+ * chiamante futuro (un bulk import, uno script) che non passi da nessuna
+ * rotta HTTP: una convalida qui protegge tutti loro con un solo controllo,
+ * lo stesso principio già scelto per l'invariante contenitore/argomento.
+ * Ripeterla in `assegnaDiretto` sarebbe un secondo posto dove sbagliarla —
+ * esattamente il rischio contro cui il commento di `assegnaDiretto` mette
+ * in guardia.
+ *
+ * Poi controlla che ogni `contenitoreId` nominato da una regola esista
  * davvero: senza questo secondo controllo (Fix round finale, item 5) un id
  * inesistente arrivava intatto fino a `batteriaRegola.createMany`, che
  * violava il vincolo di chiave esterna e lasciava scappare l'errore grezzo
@@ -222,11 +264,15 @@ export async function creaBatteria(
   | { ok: true; id: string }
   | { ok: false; motivo: "contenitore_non_trovato"; dettaglio: { contenitoreId: string } }
   | { ok: false; motivo: "regola_malformata"; dettaglio: { index: number } }
+  | { ok: false; motivo: "conteggio_non_valido"; dettaglio: { index: number; count: number } }
 > {
   for (let i = 0; i < regole.length; i++) {
     const r = regole[i]!;
     if (formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null }) === null) {
       return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
+    }
+    if (!Number.isInteger(r.count) || r.count <= 0) {
+      return { ok: false, motivo: "conteggio_non_valido", dettaglio: { index: i, count: r.count } };
     }
   }
 

@@ -425,3 +425,64 @@ describe("la regola a due forme", () => {
     });
   });
 });
+
+// Dimostrato dal revisore su `assegnaDiretto` (docente-via-veloce, onda di
+// correzioni sui numeri): `assegnaDiretto quanti=0` e `quanti=-3`
+// riuscivano entrambi, creando un Compito che non promette nessun
+// esercizio (mai apribile) e lasciando indietro la batteria automatica che
+// lo produce. `assegnaDiretto` delega interamente a `creaBatteria` per
+// scrivere la sua regola — la stessa funzione che ogni altro chiamante
+// (il modulo a mano, un futuro import massivo) attraversa per scrivere
+// QUALUNQUE regola. `creaBatteria` verifica già la FORMA di una regola
+// (contenitore oppure argomento, mai entrambi né nessuno dei due) prima di
+// qualunque scrittura, ma non guardava affatto il suo `count` — un buco
+// che qualunque chiamante di `creaBatteria`, non solo `assegnaDiretto`,
+// eredita.
+//
+// Il guardiano vive QUI, non in `assegnaDiretto`: è la stessa scelta già
+// fatta per l'invariante contenitore/argomento (Task 1) — un solo punto di
+// scrittura, una sola convalida, per ENTRAMBE le provenienze (a mano,
+// automatica) ed eventuali future. Metterlo solo in `assegnaDiretto`
+// protegge un'unica strada e ripete lì una convalida che la specifica
+// della rotta a monte (`compiti/diretto/route.ts`, `count: z.number().int()
+// .positive()`) già duplica altrove — esattamente il rischio contro cui il
+// commento di `assegnaDiretto` mette in guardia ("un secondo posto dove
+// sbagliare"). Un secondo chiamante di `creaBatteria` che componga una
+// regola a mano (`/api/esercizi/batterie`, la sua stessa validazione zod)
+// resta comunque protetto per lo stesso motivo — ma un chiamante che non
+// passi da NESSUNA rotta (uno script, un import) non lo sarebbe, senza
+// questo controllo nel dominio.
+describe("il conteggio di una regola", () => {
+  it.each([0, -1, -3])(
+    "una regola con count=%i viene rifiutata in scrittura, non lascia scappare una batteria che non pesca mai nulla",
+    async (countNonValido) => {
+      const r = await creaBatteriaGrezza(teacherId, `${P}ConteggioNonValido${countNonValido}`, [
+        { contenitoreId: contA, count: countNonValido },
+      ]);
+      expect(r).toEqual({
+        ok: false,
+        motivo: "conteggio_non_valido",
+        dettaglio: { index: 0, count: countNonValido },
+      });
+      // Nessuna scrittura parziale, stessa garanzia dei rifiuti gemelli
+      // (contenitore_non_trovato, regola_malformata) più sopra.
+      expect(await prisma.batteria.count({ where: { name: `${P}ConteggioNonValido${countNonValido}` } })).toBe(0);
+    },
+  );
+
+  it("una regola valida insieme a una con count non positivo rifiuta l'intera batteria, con l'indice di quella malformata", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}ConteggioMisto`, [
+      { contenitoreId: contA, count: 1 },
+      { contenitoreId: contB, count: 0 },
+    ]);
+    expect(r).toEqual({ ok: false, motivo: "conteggio_non_valido", dettaglio: { index: 1, count: 0 } });
+    expect(await prisma.batteria.count({ where: { name: `${P}ConteggioMisto` } })).toBe(0);
+  });
+
+  it("un count non intero viene rifiutato allo stesso modo", async () => {
+    const r = await creaBatteriaGrezza(teacherId, `${P}ConteggioFrazionario`, [
+      { contenitoreId: contA, count: 1.5 },
+    ]);
+    expect(r).toEqual({ ok: false, motivo: "conteggio_non_valido", dettaglio: { index: 0, count: 1.5 } });
+  });
+});

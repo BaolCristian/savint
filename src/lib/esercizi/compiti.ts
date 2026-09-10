@@ -9,7 +9,13 @@ type MotivoAssegna =
   | "non_insegni_questa_classe"
   | "esercizi_insufficienti"
   | "scadenza_prima_apertura"
-  | "scadenza_nel_passato";
+  | "scadenza_nel_passato"
+  // Prodotto SOLO da `assegnaDiretto` (Onda di correzioni sui numeri), mai
+  // da `assegna`: la traduzione, nella forma di `EsitoAssegna`, del rifiuto
+  // `conteggio_non_valido` che `creaBatteria` restituisce quando `quanti`
+  // non è un intero positivo — vedi il commento su `assegnaDiretto` più
+  // sotto per il perché la convalida vive in `creaBatteria` e non qui.
+  | "quantita_non_valida";
 
 /** L'esito di un'assegnazione. Esportato (Task 2, docente-via-veloce) perché
  * da questo task in poi ha DUE produttori — `assegna` (per raccolta) e
@@ -222,13 +228,41 @@ export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
  * `automatica: true`, Task 1): è provenienza di questo compito, non
  * contenuto che il docente componga o gestisca.
  *
- * `creaBatteria` può in teoria rifiutare (`regola_malformata` se la regola
- * non rispettasse l'invariante, `contenitore_non_trovato` se nominasse un
- * contenitore inesistente) — nessuno dei due può capitare qui: la regola che
- * costruiamo ha sempre e solo `argomento` (mai `contenitoreId`), quindi è
- * valida per costruzione. Un rifiuto qui sarebbe un bug di questa funzione,
- * non un input scorretto del chiamante: si lancia, invece di forzare un
- * `MotivoAssegna` che non esiste per questo caso in `EsitoAssegna`.
+ * `creaBatteria` può rifiutare in tre modi. Due sono impossibili per
+ * costruzione — `regola_malformata` (la regola che costruiamo ha sempre e
+ * solo `argomento`, mai `contenitoreId`) e `contenitore_non_trovato` (non ne
+ * nominiamo mai uno) — un rifiuto lì sarebbe un bug di QUESTA funzione, non
+ * un input scorretto del chiamante: si lancia, invece di forzare un
+ * `MotivoAssegna` che non esiste per quel caso in `EsitoAssegna`.
+ *
+ * **Il terzo — `conteggio_non_valido` — è invece raggiungibile (Onda di
+ * correzioni sui numeri).** `quanti` viene dal chiamante (un docente, una
+ * rotta, uno script) senza che questa funzione lo convalidi prima —
+ * `creaBatteria` è dove quel controllo vive (vedi il suo commento: un solo
+ * punto di scrittura, una sola convalida, per ogni provenienza, non
+ * ripetuta qui). Un `quanti` zero, negativo o non intero non è un bug di
+ * `assegnaDiretto`: è esattamente il genere di input scorretto che questa
+ * funzione esiste per rifiutare con un motivo, non con un'eccezione — si
+ * traduce quindi in `{ ok: false, motivo: "quantita_non_valida", dettaglio:
+ * { quanti } }`. Nessuna pulizia da fare in questo ramo: `creaBatteria`
+ * rifiuta il conteggio PRIMA di scrivere qualunque riga (stesso ordine
+ * della verifica di forma), quindi qui non esiste ancora nessuna batteria
+ * — a differenza del ramo `!esito.ok` più sotto, dove la riga è già stata
+ * scritta.
+ *
+ * Prima di questa convalida, `assegnaDiretto` produceva il difetto
+ * dimostrato dal revisore: `quanti: 0` (o negativo) superava
+ * `creaBatteria` indenne — che verificava la FORMA della regola ma non il
+ * suo conteggio — e arrivava fino ad `assegna`, il cui ciclo sulle regole
+ * (`batteria.regole`) non ha nulla da rifiutare quando `count` è zero o
+ * negativo (`candidati.length < regola.count` è vera per definizione con
+ * zero candidati richiesti, e la pesca di `mescolati.slice(0, regola.count)`
+ * su un conteggio negativo non pesca semplicemente nulla): un `Compito` con
+ * `drawnVersionIds: []` veniva scritto per davvero, mai apribile da nessuno
+ * studente, e — poiché non era un rifiuto di `assegna` — la pulizia più
+ * sotto non scattava mai: l'unico caso, fra tutti quelli che questo file
+ * ripulisce, in cui il tentativo è un SUCCESSO apparente, non un rifiuto né
+ * un'eccezione.
  *
  * **Un rifiuto di `assegna` non lascia una batteria orfana (Fix round 1).**
  * La `Batteria` automatica viene scritta PRIMA che `assegna` validi
@@ -299,6 +333,9 @@ export async function assegnaDiretto(input: {
     true,
   );
   if (!creazione.ok) {
+    if (creazione.motivo === "conteggio_non_valido") {
+      return { ok: false, motivo: "quantita_non_valida", dettaglio: { quanti: input.quanti } };
+    }
     throw new Error(
       `creaBatteria (automatica) rifiutata inaspettatamente in assegnaDiretto: ${creazione.motivo}`,
     );
