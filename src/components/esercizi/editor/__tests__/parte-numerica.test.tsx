@@ -36,6 +36,9 @@ function Cornice({ parteIniziale, onChange, onRimuovi }: {
         onChange(p);
       }}
       onRimuovi={onRimuovi}
+      // I nomi dichiarati nel pannello variabili: qui nessuno, come in un
+      // esercizio senza variabili.
+      nomiVariabili={[]}
     />
   );
 }

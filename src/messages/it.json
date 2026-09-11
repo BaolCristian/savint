@@ -1318,7 +1318,11 @@
         "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
       },
       "campoJme": {
-        "interpretatoCome": "Interpretato come:"
+        "interpretatoCome": "Interpretato come:",
+        "scriviFormula": "Scrivi la formula",
+        "ambiguo": "La formula contiene «{segno}»: il motore ne terrebbe una sola delle due soluzioni, in silenzio. Scrivi le due soluzioni in due formule separate, oppure batti la formula direttamente nel campo.",
+        "nomeSconosciuto": "«{nome}» non è una variabile di questo esercizio, e il motore non leggerebbe la formula come l'hai disegnata. Scrivi le funzioni con le parentesi — {nome}(x) — e i prodotti con l'asterisco — 2*{nome} —, oppure batti la formula direttamente nel campo.",
+        "nonCompila": "Il motore non riesce a leggere questa formula: {dettaglio}. Puoi correggerla qui, oppure batterla direttamente nel campo."
       },
       "campoTesto": {
         "barra": "Strumenti matematici per {campo}",
@@ -1335,11 +1339,11 @@
       },
       "finestraFormula": {
         "titolo": "Scrivi la formula",
-        "descrizione": "Scrivila come la scriveresti sul foglio: entrerà nel testo come zona matematica.",
+        "descrizione": "Scrivila come la scriveresti sul foglio: quando confermi, torna nel campo da cui hai aperto questa finestra.",
         "caricamento": "Carico l’editor di formule…",
         "campo": "Formula",
         "annulla": "Annulla",
-        "inserisci": "Inserisci nel testo"
+        "inserisci": "Inserisci nel campo"
       },
       "parti": {
         "titolo": "Parti",

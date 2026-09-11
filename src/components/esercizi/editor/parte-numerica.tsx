@@ -13,12 +13,16 @@ export interface ParteNumericaProps {
   parte: ParteNumericaEditor;
   onChange: (parte: ParteNumericaEditor) => void;
   onRimuovi: () => void;
+  /** I nomi dichiarati nel pannello variabili: servono al cancello che
+   * converte una formula disegnata verso JME, che senza di essi non può
+   * distinguere una variabile vera da un nome nato per giustapposizione. */
+  nomiVariabili: string[];
 }
 
 /** La parte numerica: valore atteso e tolleranza, mai `minValue`/`maxValue`
  * — quella traduzione appartiene al codice sotto (`versoNumbas`), il
  * docente non deve incontrarla qui (vedi il brief del Task 7). */
-export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps) {
+export function ParteNumerica({ parte, onChange, onRimuovi, nomiVariabili }: ParteNumericaProps) {
   const t = useTranslations("esercizi.redazione.parti");
   const idValore = "parte-numerica-valore";
   const idMargine = "parte-numerica-margine";
@@ -52,6 +56,7 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
             valore={parte.valore}
             onChange={(valore) => onChange({ ...parte, valore })}
             tastierino
+            assistenteFormula={{ nomiNoti: nomiVariabili }}
           />
         </div>
       </div>
@@ -90,10 +95,12 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
 
         {parte.tolleranza.tipo === "margine" && (
           <div className="max-w-40">
-            {/* Nessun tastierino: il margine è una tolleranza, un decimale
-                come `0.01` — `π`, `√`, `^` non si scrivono lì. L'eco invece
-                resta, come su ogni campo JME: anche una tolleranza va vista
-                come il motore l'ha capita. */}
+            {/* Nessun tastierino, e nessun assistente per le formule: il
+                margine è una tolleranza, un decimale come `0.01` — `π`,
+                `√`, `^` non si scrivono lì, e un editor visuale di formule
+                non ha niente da disegnare. L'eco invece resta, come su ogni
+                campo JME: anche una tolleranza va vista come il motore
+                l'ha capita. */}
             <CampoJme
               id={idMargine}
               etichetta={t("numerica.margine")}

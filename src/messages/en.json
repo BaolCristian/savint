@@ -1318,7 +1318,11 @@
         "condizioneAiuto": "An expression that must be true for a combination of variables to be accepted, for example \"a <> b\". Leave it empty if you don't need one."
       },
       "campoJme": {
-        "interpretatoCome": "Interpreted as:"
+        "interpretatoCome": "Interpreted as:",
+        "scriviFormula": "Write the formula",
+        "ambiguo": "The formula contains «{segno}»: the engine would silently keep only one of the two solutions. Write the two solutions as two separate formulas, or type the formula straight into the field.",
+        "nomeSconosciuto": "«{nome}» is not a variable of this exercise, and the engine would not read the formula the way you drew it. Write functions with brackets — {nome}(x) — and products with an asterisk — 2*{nome} — or type the formula straight into the field.",
+        "nonCompila": "The engine cannot read this formula: {dettaglio}. You can fix it here, or type it straight into the field."
       },
       "campoTesto": {
         "barra": "Math tools for {campo}",
@@ -1335,11 +1339,11 @@
       },
       "finestraFormula": {
         "titolo": "Write the formula",
-        "descrizione": "Write it as you would on paper: it will go into the text as a math zone.",
+        "descrizione": "Write it as you would on paper: when you confirm, it goes back into the field you opened this window from.",
         "caricamento": "Loading the formula editor…",
         "campo": "Formula",
         "annulla": "Cancel",
-        "inserisci": "Insert into the text"
+        "inserisci": "Insert into the field"
       },
       "parti": {
         "titolo": "Parts",

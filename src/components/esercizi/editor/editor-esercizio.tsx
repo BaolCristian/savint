@@ -305,10 +305,13 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
     }
   }
 
-  // I nomi, non gli oggetti variabile: il menu «Inserisci variabile» dei
-  // campi di testo inserisce `\var{nome}`. Una riga appena aggiunta ha
-  // ancora il nome vuoto, e due righe possono portare lo stesso nome
-  // mentre si scrive: né l'una né le altre sono voci di menu sensate.
+  // I nomi, non gli oggetti variabile. Li leggono due superfici: il menu
+  // «Inserisci variabile» dei campi di testo, che inserisce `\var{nome}`, e
+  // il cancello che converte una formula disegnata verso JME, che senza
+  // questi nomi non può distinguere una variabile vera da un nome nato per
+  // giustapposizione. Una riga appena aggiunta ha ancora il nome vuoto, e
+  // due righe possono portare lo stesso nome mentre si scrive: né l'una né
+  // le altre sono voci di menu sensate, né nomi da dichiarare noti.
   // Derivato durante il render, non tenuto in uno stato che andrebbe poi
   // risincronizzato.
   const nomiVariabili = [...new Set(editor.variabili.map((v) => v.nome).filter(Boolean))];
@@ -386,11 +389,21 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
                 <div key={i} className="space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground">{t("parti.numeroParte", { numero: i + 1 })}</h3>
                   {parte.tipo === "numerica" ? (
-                    <ParteNumerica parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+                    <ParteNumerica
+                      parte={parte}
+                      onChange={(p) => aggiornaParte(i, p)}
+                      onRimuovi={() => rimuoviParte(i)}
+                      nomiVariabili={nomiVariabili}
+                    />
                   ) : parte.tipo === "scelta" ? (
                     <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
                   ) : (
-                    <ParteEspressione parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+                    <ParteEspressione
+                      parte={parte}
+                      onChange={(p) => aggiornaParte(i, p)}
+                      onRimuovi={() => rimuoviParte(i)}
+                      nomiVariabili={nomiVariabili}
+                    />
                   )}
                 </div>
               ))}

@@ -20,6 +20,14 @@ export interface FinestraFormulaProps {
   aperta: boolean;
   /** Il LaTeX di partenza, quando si modifica una formula esistente. */
   iniziale?: string;
+  /** Perché l'ultima conferma non è stata accolta.
+   *
+   * La finestra non giudica la formula: a giudicarla è chi l'ha aperta —
+   * il campo JME, che la converte e può rifiutare la conversione. Quando
+   * rifiuta, NON richiude: il disegno resta dov'è, da correggere o da
+   * annullare, e questa riga dice perché. Buttare via la formula appena
+   * disegnata per dire che non va bene sarebbe il modo peggiore di dirlo. */
+  avviso?: string;
   onChiudi: () => void;
   onConferma: (risultato: RisultatoFormula) => void;
 }
@@ -63,10 +71,11 @@ function congeda() {
 /** La finestra in cui il docente scrive una formula come la vedrebbe sul
  * foglio, invece di batterne il LaTeX.
  *
- * Non inserisce niente da sé: restituisce la formula a chi l'ha aperta —
- * il campo di testo la avvolge in `\( \)`, il campo delle risposte la
- * converte verso JME — e chi l'ha aperta la richiude. */
-export function FinestraFormula({ aperta, iniziale, onChiudi, onConferma }: FinestraFormulaProps) {
+ * Non inserisce niente da sé e non giudica niente: restituisce la formula a
+ * chi l'ha aperta — il campo di testo la avvolge in `\( \)`, il campo delle
+ * risposte la converte verso JME — e chi l'ha aperta la richiude, oppure la
+ * lascia aperta con un `avviso` se quella formula non gli va bene. */
+export function FinestraFormula({ aperta, iniziale, avviso, onChiudi, onConferma }: FinestraFormulaProps) {
   const t = useTranslations("esercizi.redazione.finestraFormula");
 
   // Le due strade per congedare il campo, e servono tutte e due.
@@ -109,6 +118,15 @@ export function FinestraFormula({ aperta, iniziale, onChiudi, onConferma }: Fine
       <DialogContent className="sm:max-w-xl">
         <DialogTitle>{t("titolo")}</DialogTitle>
         <DialogDescription>{t("descrizione")}</DialogDescription>
+        {/* `role="alert"`: compare dopo un gesto del docente — la conferma
+            rifiutata — e chi non guarda la finestra deve sentirselo dire,
+            altrimenti il pulsante «Inserisci» sembrerebbe non aver fatto
+            niente. */}
+        {avviso && (
+          <p role="alert" className="text-sm text-destructive">
+            {avviso}
+          </p>
+        )}
         <ContenutoFormula iniziale={iniziale ?? ""} onChiudi={chiudi} onConferma={conferma} />
       </DialogContent>
     </Dialog>
