@@ -224,6 +224,35 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
     expect(eco.textContent).toContain(R.notaSimplify);
   });
 
+  it("il riquadro del sorgente mostra il comando che il docente ha scritto, non la nostra traduzione", () => {
+    // Lo statement vero di `01-equazione-primo-grado`. `\var{}` è un comando
+    // LaTeX: tradurlo ha senso solo dentro una zona matematica, dove KaTeX lo
+    // incontrerà. Tradotto prima della divisione, finiva anche nel riquadro
+    // del sorgente — e il docente che ha scritto `\var{c}` leggeva
+    // `\mathit{c}`, un comando che non ha mai battuto.
+    const { container } = montaggio({ valoreIniziale: "Risolvi \\(\\simplify{ {a}x+{b} } = \\var{c}\\)." });
+    const riquadro = ecoDi(container).querySelector("code");
+    expect(riquadro?.textContent).toBe("\\simplify{ {a}x+{b} } = \\var{c}");
+  });
+
+  it("un \\var{} in prosa resta la parola che il docente ha scritto", () => {
+    // Fuori da una zona matematica nessuno renderà mai quel comando: il
+    // docente deve rivedere ciò che ha battuto, non `\mathit{a}`.
+    const { container } = montaggio({ valoreIniziale: "Il valore di \\var{a} è noto." });
+    const eco = ecoDi(container);
+    expect(eco.textContent).toContain("Il valore di \\var{a} è noto.");
+    expect(eco.textContent).not.toContain("\\mathit");
+  });
+
+  it("non dice nulla di simplify quando il simplify non sta in una zona matematica", () => {
+    // Nessuna zona, nessun riquadro grigio: la nota spiegherebbe qualcosa
+    // che non c'è sotto gli occhi del docente.
+    const { container } = montaggio({ valoreIniziale: "Scrivi \\simplify{2x} come vuoi" });
+    const eco = ecoDi(container);
+    expect(eco.querySelector("code")).toBeNull();
+    expect(eco.textContent).not.toContain(R.notaSimplify);
+  });
+
   it("non dice nulla di simplify quando nel testo non ce n'è", () => {
     // La nota qualifica l'etichetta solo dove serve: altrove sarebbe rumore
     // sotto ogni campo, e smetterebbe di essere letta proprio dove conta.

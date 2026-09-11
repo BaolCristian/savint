@@ -2,7 +2,11 @@
 
 import { useTranslations } from "next-intl";
 import { Textarea } from "@/components/ui/textarea";
-import { ContenutoHtml } from "@/components/esercizi/player/contenuto-html";
+import {
+  ContenutoHtml,
+  trovaProssimaFormula,
+  type FormulaTrovata,
+} from "@/components/esercizi/player/contenuto-html";
 import { escapaTesto } from "@/lib/esercizi/editor/verso-numbas";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
 
@@ -34,8 +38,61 @@ const CLASSE_TASTO =
  * `\var{a+b}`. Un contenuto con graffe annidate non viene tradotto e
  * ricade, corretto, nel riquadro col sorgente — mostrare *come si scrive*
  * resta vero anche lì. */
-function varInCorsivo(testo: string): string {
-  return testo.replace(/\\var\{([^{}]*)\}/g, (_, nome: string) => `\\mathit{${nome}}`);
+function varInCorsivo(tex: string): string {
+  return tex.replace(/\\var\{([^{}]*)\}/g, (_, nome: string) => `\\mathit{${nome}}`);
+}
+
+/** Le zone matematiche del testo, nell'ordine, coi loro confini.
+ *
+ * La regola di divisione è quella di `ContenutoHtml` — importata da lì, non
+ * riscritta: è la stessa che dividerà il testo quando lo vedrà lo studente,
+ * e due copie divergerebbero sul caso che quella regola esiste per
+ * risolvere (un `\)` dentro le graffe non è il terminatore della zona).
+ *
+ * Scandire prima dell'escaping HTML e non dopo dà gli stessi confini:
+ * l'escaping tocca solo `&`, `<` e `>`, mai una graffa o una barra
+ * rovesciata. */
+function zoneMatematiche(testo: string): FormulaTrovata[] {
+  const zone: FormulaTrovata[] = [];
+  let da = 0;
+  for (;;) {
+    const trovata = trovaProssimaFormula(testo, da);
+    if (!trovata) return zone;
+    zone.push(trovata);
+    da = trovata.fine;
+  }
+}
+
+/** Una zona che contiene un `\simplify{}` non è LaTeX: KaTeX non conosce
+ * quel comando e lancia sempre, quindi il docente ne leggerà il **sorgente**
+ * nel riquadro grigio di `Formula`. */
+function resaDaKatex(zona: FormulaTrovata): boolean {
+  return !zona.contenuto.includes("\\simplify{");
+}
+
+/** Traduce i `\var{}` **solo dove KaTeX li incontrerà davvero**: dentro una
+ * zona matematica, e solo in una zona che KaTeX proverà a rendere.
+ *
+ * Tradurre il testo intero aveva due torti, entrambi sotto gli occhi del
+ * docente. Un `\var{a}` in mezzo a una frase, che nessuno renderà mai,
+ * compariva come il letterale `\mathit{a}`. E nel riquadro del sorgente —
+ * quello che compare proprio perché la zona non si può rendere — il docente
+ * che aveva scritto `\var{c}` leggeva `\mathit{c}`, un comando che non ha
+ * mai battuto: quel riquadro è l'unico posto dove il docente rivede ciò che
+ * ha scritto, e falsificarlo è il difetto peggiore dei due.
+ *
+ * Le due esclusioni sono la stessa regola detta due volte: si traduce dove
+ * la traduzione ha un effetto visibile, e si sta fermi dove l'unico effetto
+ * sarebbe falsificare il sorgente. */
+function varInCorsivoNelleZone(testo: string, zone: readonly FormulaTrovata[]): string {
+  let out = "";
+  let ultimo = 0;
+  for (const zona of zone) {
+    const tex = testo.slice(zona.inizio, zona.fine);
+    out += testo.slice(ultimo, zona.inizio) + (resaDaKatex(zona) ? varInCorsivo(tex) : tex);
+    ultimo = zona.fine;
+  }
+  return out + testo.slice(ultimo);
 }
 
 export interface CampoTestoMatematicoProps {
@@ -85,13 +142,16 @@ export function CampoTestoMatematico({
 
   const idEco = `${id}-eco`;
   const haEco = valore.trim() !== "";
-  // Un `\simplify{}` fa lanciare KaTeX, e `Formula` — che non lancia mai —
-  // ripiega sul riquadro grigio col sorgente. Sotto la promessa «Come si
-  // vedrà:», quel riquadro si legge come «hai sbagliato la sintassi»: non è
-  // vero, la sintassi è giusta ed è l'eco a non poterla rendere, perché
-  // quel pezzo dipende dai numeri sorteggiati. Lo dice qui sotto, con le
-  // parole, e solo dove c'è davvero un `\simplify{}`.
-  const haSimplify = valore.includes("\\simplify{");
+  const zone = zoneMatematiche(valore);
+  // Un `\simplify{}` dentro una zona matematica fa lanciare KaTeX, e
+  // `Formula` — che non lancia mai — ripiega sul riquadro grigio col
+  // sorgente. Sotto la promessa «Come si vedrà:», quel riquadro si legge
+  // come «hai sbagliato la sintassi»: non è vero, la sintassi è giusta ed è
+  // l'eco a non poterla rendere, perché quel pezzo dipende dai numeri
+  // sorteggiati. La nota lo dice a parole — ma solo quando quel riquadro
+  // esiste davvero: un `\simplify{}` citato in mezzo a una frase resta
+  // testo, e spiegare un riquadro che non c'è è rumore.
+  const haSimplify = zone.some((zona) => !resaDaKatex(zona));
 
   return (
     <div className="flex flex-col gap-2">
@@ -178,7 +238,7 @@ export function CampoTestoMatematico({
           <p>{t("comeSiVedra")}</p>
           {haSimplify && <p className="text-xs">{t("notaSimplify")}</p>}
           <div className="text-foreground">
-            <ContenutoHtml html={`<p>${escapaTesto(varInCorsivo(valore))}</p>`} />
+            <ContenutoHtml html={`<p>${escapaTesto(varInCorsivoNelleZone(valore, zone))}</p>`} />
           </div>
         </div>
       )}

@@ -59,7 +59,7 @@ function ripulisci(radice: Element): void {
   }
 }
 
-interface FormulaTrovata {
+export interface FormulaTrovata {
   inizio: number;
   fine: number;
   inline: boolean;
@@ -74,7 +74,7 @@ interface FormulaTrovata {
  * `\text{...}`) non è il vero terminatore: è dato, non struttura. Una regex
  * lazy (`\\\(.*?\\\)`) non lo sa e taglia lì, lasciando il resto della
  * formula come testo grezzo visibile (fix round 1, punto 4). */
-function trovaProssimaFormula(testo: string, da: number): FormulaTrovata | null {
+export function trovaProssimaFormula(testo: string, da: number): FormulaTrovata | null {
   let inizio = -1;
   let inline = true;
   for (let k = da; k < testo.length - 1; k++) {
