@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,6 +11,7 @@ import {
 import { MacroFormula } from "@/components/esercizi/player/formula";
 import { escapaTesto } from "@/lib/esercizi/editor/verso-numbas";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
+import { FinestraFormula } from "./finestra-formula";
 
 /** I quattro inserimenti LaTeX della barra: il cursore finisce nel primo
  * argomento (`offsetCaret` conta dall'inizio del testo inserito), perché
@@ -67,6 +69,50 @@ function zoneMatematiche(testo: string): FormulaTrovata[] {
   }
 }
 
+/** Il cursore sta dentro le graffe di un `\simplify{}`?
+ *
+ * È una domanda diversa da quella a cui risponde `haSimplify` più sotto —
+ * «nel testo c'è un simplify?», che decide se mostrare la nota. Qui conta
+ * *dove sta il cursore*, perché è lì che finirebbe la formula, e il
+ * contenuto di un `\simplify{}` è JME: un editor di formule lo
+ * distruggerebbe.
+ *
+ * Le graffe si contano invece di cercare la prima chiusura: dentro un
+ * `\simplify{}` le sostituzioni di variabile (`{a}`) sono la regola, non
+ * l'eccezione. E un `\simplify{` non ancora chiuso vale fino in fondo al
+ * testo: mentre lo si scrive, tutto quel che segue è dentro. */
+function dentroSimplify(testo: string, posizione: number): boolean {
+  const APERTURA = "\\simplify{";
+  for (let apre = testo.indexOf(APERTURA); apre !== -1; apre = testo.indexOf(APERTURA, apre + 1)) {
+    const primaPosizione = apre + APERTURA.length;
+    let profondita = 1;
+    let i = primaPosizione;
+    while (i < testo.length && profondita > 0) {
+      if (testo[i] === "{") profondita += 1;
+      else if (testo[i] === "}") profondita -= 1;
+      i += 1;
+    }
+    // `i` è appena dopo la graffa che chiude: l'ultima posizione ancora
+    // dentro è quella della graffa stessa.
+    const ultimaPosizione = profondita === 0 ? i - 1 : testo.length;
+    if (posizione >= primaPosizione && posizione <= ultimaPosizione) return true;
+  }
+  return false;
+}
+
+/** La formula dentro ciò che è selezionato.
+ *
+ * Selezionare la zona intera — delimitatori compresi — e chiedere l'editor
+ * visuale è un gesto naturale: deve aprirlo su `x^2`, non su `\(x^2\)`,
+ * che l'editor non saprebbe disegnare e che, riconfermato, si ritroverebbe
+ * doppio nel testo. */
+function formulaNellaSelezione(selezionato: string): string {
+  if (selezionato.startsWith("\\(") && selezionato.endsWith("\\)")) {
+    return selezionato.slice(2, -2);
+  }
+  return selezionato;
+}
+
 export interface CampoTestoMatematicoProps {
   id: string;
   etichetta: string;
@@ -100,16 +146,65 @@ export function CampoTestoMatematico({
 }: CampoTestoMatematicoProps) {
   const t = useTranslations("esercizi.redazione.campoTesto");
   const { campoRef, inserisciNelCampo } = useTastieraSimboli<HTMLTextAreaElement>(valore, onChange);
+  // Dove sta il cursore, per sapere se il pulsante della finestra va
+  // spento. In stato e non letto dal DOM perché è il rendering a servirsene,
+  // e il rendering il DOM non lo può interrogare.
+  const [selezione, setSelezione] = useState({ inizio: 0, fine: 0 });
+  // La formula da cui la finestra parte; `null` quando è chiusa.
+  const [formulaAperta, setFormulaAperta] = useState<string | null>(null);
+
+  /** Ogni inserimento della barra passa di qui: inserisce con il
+   * meccanismo di sempre (uno solo, nell'hook: qui non si rilegge né si
+   * riscrive il cursore) e segna dove il cursore andrà a finire.
+   *
+   * Segnarlo serve perché quel movimento non è del docente: `onSelect`
+   * scatta sui suoi gesti, non su un `setSelectionRange` fatto da noi, e
+   * il pulsante della finestra resterebbe acceso proprio nell'istante
+   * dopo il pulsante `\simplify{}` — che il cursore lo porta dentro le
+   * graffe. */
+  function inserisci(costruisci: (selezionato: string) => InserimentoNelCampo) {
+    const inizio = campoRef.current?.selectionStart ?? valore.length;
+    let caret = inizio;
+    inserisciNelCampo((selezionato) => {
+      const inserimento = costruisci(selezionato);
+      caret = inizio + inserimento.offsetCaret;
+      return inserimento;
+    });
+    setSelezione({ inizio: caret, fine: caret });
+  }
 
   /** Avvolge ciò che è selezionato invece di sostituirlo: selezionare `x^2`
    * e chiedere una zona matematica deve dare `\(x^2\)`, non `\(\)`. Senza
    * selezione la coppia si apre vuota, col cursore fra i due delimitatori —
    * cioè dove si scriverà la formula. */
   function avvolgiSelezione(prima: string, dopo: string) {
-    inserisciNelCampo((selezione) => ({
-      inserisci: prima + selezione + dopo,
-      offsetCaret: selezione ? prima.length + selezione.length + dopo.length : prima.length,
+    inserisci((selezionato) => ({
+      inserisci: prima + selezionato + dopo,
+      offsetCaret: selezionato ? prima.length + selezionato.length + dopo.length : prima.length,
     }));
+  }
+
+  /** Apre la finestra sulla formula selezionata (vuota, senza selezione).
+   *
+   * La selezione si legge dal campo e non da `selezione`: è la stessa
+   * lettura che farà `inserisciNelCampo` quando la formula tornerà
+   * indietro, e due letture diverse sostituirebbero un tratto di testo
+   * diverso da quello che il docente ha visto nella finestra. */
+  function apriFinestra() {
+    const campo = campoRef.current;
+    const inizio = campo?.selectionStart ?? valore.length;
+    const fine = campo?.selectionEnd ?? valore.length;
+    setFormulaAperta(formulaNellaSelezione(valore.slice(inizio, fine)));
+  }
+
+  /** La formula confermata entra come zona matematica: dalla finestra esce
+   * LaTeX nudo, e senza `\( \)` resterebbe prosa che il motore non
+   * renderebbe mai. Il cursore va dopo la chiusura — si torna a scrivere
+   * il testo, non a rifare la formula. */
+  function inserisciFormula(latex: string) {
+    const zona = `\\(${latex}\\)`;
+    inserisci(() => ({ inserisci: zona, offsetCaret: zona.length }));
+    setFormulaAperta(null);
   }
 
   const idEco = `${id}-eco`;
@@ -124,6 +219,11 @@ export function CampoTestoMatematico({
   // esiste davvero: un `\simplify{}` citato in mezzo a una frase resta
   // testo, e spiegare un riquadro che non c'è è rumore.
   const haSimplify = zone.some((zona) => zona.contenuto.includes("\\simplify{"));
+  // I due capi della selezione, non solo il cursore: selezionare un tratto
+  // che finisce dentro un `\simplify{}` e confermare una formula ne
+  // cancellerebbe un pezzo.
+  const cursoreInSimplify =
+    dentroSimplify(valore, selezione.inizio) || dentroSimplify(valore, selezione.fine);
 
   return (
     <div className="flex flex-col gap-2">
@@ -132,6 +232,20 @@ export function CampoTestoMatematico({
       </label>
 
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("barra", { campo: etichetta })}>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={apriFinestra}
+          // Dentro un `\simplify{}` il contenuto è JME: la finestra
+          // restituisce LaTeX, e inserirlo lì dentro romperebbe
+          // l'espressione. Chi vuole comunque scriverla continua a
+          // battere nel campo, come ha sempre fatto.
+          disabled={cursoreInSimplify}
+          className={CLASSE_TASTO}
+        >
+          {t("scriviFormula")}
+        </button>
+
         <button
           type="button"
           aria-label={t("zonaMatematica")}
@@ -163,7 +277,7 @@ export function CampoTestoMatematico({
             type="button"
             aria-label={t(strumento.chiave)}
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => inserisciNelCampo(() => strumento)}
+            onClick={() => inserisci(() => strumento)}
             className={CLASSE_TASTO}
           >
             {strumento.glifo}
@@ -180,8 +294,8 @@ export function CampoTestoMatematico({
           onChange={(e) => {
             const nome = e.target.value;
             if (!nome) return;
-            const inserisci = `\\var{${nome}}`;
-            inserisciNelCampo(() => ({ inserisci, offsetCaret: inserisci.length }));
+            const comando = `\\var{${nome}}`;
+            inserisci(() => ({ inserisci: comando, offsetCaret: comando.length }));
           }}
           className="min-h-11 rounded-md border border-input bg-transparent px-2.5 text-sm transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
         >
@@ -203,6 +317,23 @@ export function CampoTestoMatematico({
         // ogni lettera (stessa scelta di `campo-jme.tsx`).
         aria-describedby={haEco ? idEco : undefined}
         onChange={(e) => onChange(e.target.value)}
+        // Segue il cursore: è ciò che decide se il pulsante della finestra
+        // è acceso. `onSelect` copre ogni gesto che lo sposta — frecce,
+        // clic, battitura — e non solo le selezioni vere.
+        onSelect={(e) =>
+          setSelezione({
+            inizio: e.currentTarget.selectionStart,
+            fine: e.currentTarget.selectionEnd,
+          })
+        }
+      />
+
+      <FinestraFormula
+        aperta={formulaAperta !== null}
+        iniziale={formulaAperta ?? undefined}
+        onChiudi={() => setFormulaAperta(null)}
+        // L'ASCIIMath qui non serve: il testo dell'esercizio vuole LaTeX.
+        onConferma={({ latex }) => inserisciFormula(latex)}
       />
 
       {haEco && (

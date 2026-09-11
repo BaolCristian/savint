@@ -1323,6 +1323,7 @@
       "campoTesto": {
         "barra": "Strumenti matematici per {campo}",
         "zonaMatematica": "Zona matematica",
+        "scriviFormula": "Scrivi la formula",
         "semplifica": "Espressione da semplificare",
         "inserisciVariabile": "Inserisci variabile",
         "frazione": "Frazione",
@@ -1331,6 +1332,14 @@
         "indice": "Indice",
         "comeSiVedra": "Come si vedrà:",
         "notaSimplify": "Dentro un comando simplify il testo resta scritto com'è: quel che ne esce dipende dai numeri sorteggiati, e si vede nell'anteprima qui accanto."
+      },
+      "finestraFormula": {
+        "titolo": "Scrivi la formula",
+        "descrizione": "Scrivila come la scriveresti sul foglio: entrerà nel testo come zona matematica.",
+        "caricamento": "Carico l’editor di formule…",
+        "campo": "Formula",
+        "annulla": "Annulla",
+        "inserisci": "Inserisci nel testo"
       },
       "parti": {
         "titolo": "Parti",

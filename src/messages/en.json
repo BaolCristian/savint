@@ -1323,6 +1323,7 @@
       "campoTesto": {
         "barra": "Math tools for {campo}",
         "zonaMatematica": "Math zone",
+        "scriviFormula": "Write the formula",
         "semplifica": "Expression to simplify",
         "inserisciVariabile": "Insert variable",
         "frazione": "Fraction",
@@ -1331,6 +1332,14 @@
         "indice": "Subscript",
         "comeSiVedra": "How it will look:",
         "notaSimplify": "Inside a simplify command the text stays as written: what comes out of it depends on the drawn numbers, and you can see that in the preview beside."
+      },
+      "finestraFormula": {
+        "titolo": "Write the formula",
+        "descrizione": "Write it as you would on paper: it will go into the text as a math zone.",
+        "caricamento": "Loading the formula editor…",
+        "campo": "Formula",
+        "annulla": "Cancel",
+        "inserisci": "Insert into the text"
       },
       "parti": {
         "titolo": "Parts",

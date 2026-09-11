@@ -1,12 +1,33 @@
 import { useState } from "react";
-import { describe, it, expect } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
+import type { MathfieldElement } from "mathlive";
 import messaggiIt from "@/messages/it.json";
+import { preparaJsdomPerMathlive } from "./aiuto-mathlive";
 import { CampoTestoMatematico } from "../campo-testo-matematico";
 
 const R = messaggiIt.esercizi.redazione.campoTesto;
+const F = messaggiIt.esercizi.redazione.finestraFormula;
+
+/** La sonda del caricamento pigro: la fabbrica gira quando — e solo quando
+ * — qualcuno importa davvero `mathlive`. Vedi `finestra-formula.test.tsx`,
+ * dove la stessa sonda sorveglia la finestra da sola; qui sorveglia il
+ * campo che la monta, cioè il modulo che la pagina della redazione importa
+ * per davvero. */
+const sonda = vi.hoisted(() => ({ mathliveCaricato: false }));
+
+vi.mock("mathlive", async (importaLOriginale) => {
+  sonda.mathliveCaricato = true;
+  return await importaLOriginale<typeof import("mathlive")>();
+});
+
+preparaJsdomPerMathlive();
+
+/** Lo stato della sonda al caricamento di questo file, prima che un test
+ * possa aprire la finestra. */
+const CARICATO_ALL_IMPORT = sonda.mathliveCaricato;
 
 /** Un campo controllato vero: `CampoTestoMatematico` non tiene il testo da
  * sé, e senza uno stato che retroagisce da `onChange` nessun pulsante
@@ -289,6 +310,131 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
     const eco = ecoDi(container);
     expect(testoResoDa(eco)).toBe("2+b");
     expect(campo.getAttribute("aria-describedby")?.split(" ")).toContain("campo-test-eco");
+  });
+});
+
+/** Il campo di MathLive dentro la finestra, una volta arrivato il pezzo
+ * caricato a parte. */
+async function campoFormula(): Promise<MathfieldElement> {
+  const finestra = await screen.findByRole("dialog");
+  return await waitFor(() => {
+    // Dentro la finestra aperta adesso, non in tutto il documento: la
+    // finestra vive in un portale fuori dal contenitore della resa, e una
+    // ricerca larga potrebbe trovare il campo di un'altra resa.
+    const campo = finestra.querySelector<MathfieldElement>("math-field");
+    if (!campo) throw new Error("il campo delle formule non è nella finestra");
+    return campo;
+  });
+}
+
+function pulsanteFormula(): HTMLElement {
+  return screen.getByRole("button", { name: R.scriviFormula });
+}
+
+describe("CampoTestoMatematico: la finestra delle formule", () => {
+  it("il campo non porta mathlive con sé: le 843 KB arrivano solo aprendo la finestra", () => {
+    // Questo è il file che la pagina della redazione importa davvero. Se un
+    // import statico di `mathlive` finisse qui dentro — o dentro la
+    // finestra — chi apre la redazione lo scaricherebbe senza aver mai
+    // chiesto una formula.
+    expect(CARICATO_ALL_IMPORT).toBe(false);
+
+    montaggio({ valoreIniziale: "Risolvi \\(x^2\\)." });
+
+    expect(sonda.mathliveCaricato).toBe(false);
+  });
+
+  it("la formula confermata entra dove sta il cursore, dentro \\( \\), e la finestra si chiude", async () => {
+    montaggio({ valoreIniziale: "ab" });
+    const campo = campoDi();
+    selezionaNelCampo(campo, 1);
+
+    await premi(R.scriviFormula);
+    const formula = await campoFormula();
+    formula.value = "\\frac{1}{2}";
+    await userEvent.click(screen.getByRole("button", { name: F.inserisci }));
+
+    // I delimitatori li mette il campo: dalla finestra esce LaTeX nudo, e
+    // senza `\( \)` resterebbe prosa — il motore non lo renderebbe mai.
+    expect(campo.value).toBe("a\\(\\frac{1}{2}\\)b");
+    // Il cursore dopo la chiusura: si continua a scrivere il testo, non a
+    // modificare la formula appena inserita.
+    expect(campo.selectionStart).toBe("a\\(\\frac{1}{2}\\)".length);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("selezionare una zona intera la riapre senza raddoppiare i delimitatori", async () => {
+    montaggio({ valoreIniziale: "prima \\(x^2\\) dopo" });
+    const campo = campoDi();
+    selezionaNelCampo(campo, 6, 13);
+
+    await premi(R.scriviFormula);
+    const formula = await campoFormula();
+
+    // Nella finestra arriva la formula, non i delimitatori che la
+    // circondano: `\(` dentro un editor di formule non è una formula.
+    expect(formula.getValue()).toBe("x^2");
+
+    await userEvent.click(screen.getByRole("button", { name: F.inserisci }));
+
+    expect(campo.value).toBe("prima \\(x^2\\) dopo");
+  });
+
+  it("chiusa con Esc e riaperta, la finestra scrive ancora", async () => {
+    // Il campo prende il fuoco appena la finestra si apre, e MathLive tiene
+    // un riferimento globale al campo che ce l'ha: chiuderla senza
+    // congedarlo lasciava quel riferimento appeso a un campo distrutto, e
+    // il campo della finestra successiva lanciava proprio mentre prendeva
+    // il fuoco. Aprire, ripensarci, riaprire è il gesto più ordinario che
+    // ci sia.
+    montaggio();
+    const campo = campoDi();
+
+    await premi(R.scriviFormula);
+    const prima = await campoFormula();
+    // Il fuoco arriva al campo dopo un giro d'orologio, non subito: senza
+    // aspettarlo la prova correrebbe più veloce del difetto.
+    await waitFor(() => expect(document.activeElement).toBe(prima));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await premi(R.scriviFormula);
+    const seconda = await campoFormula();
+    seconda.value = "y^2";
+    await userEvent.click(screen.getByRole("button", { name: F.inserisci }));
+
+    expect(campo.value).toBe("\\(y^2\\)");
+  });
+
+  it("col cursore dentro un \\simplify{} il pulsante è spento", async () => {
+    // Il contenuto di `\simplify{}` è JME, non LaTeX: un editor di formule
+    // lo distruggerebbe. Conta dove sta il cursore, non che la parola
+    // compaia nel testo — con il cursore fuori dalle graffe la finestra si
+    // apre eccome.
+    montaggio({ valoreIniziale: "\\simplify{2x}" });
+    const campo = campoDi();
+
+    await userEvent.click(campo);
+    expect(pulsanteFormula()).toBeEnabled();
+
+    await userEvent.keyboard("{ArrowLeft}");
+
+    expect(pulsanteFormula()).toBeDisabled();
+  });
+
+  it("si spegne appena il pulsante \\simplify{} porta il cursore dentro le graffe", async () => {
+    // Il cursore l'ha spostato il pulsante, non il docente: se il campo
+    // aspettasse il gesto successivo per accorgersene, la finestra si
+    // aprirebbe proprio nell'istante in cui il cursore è appena finito
+    // dentro un `\simplify{}`.
+    montaggio();
+    const campo = campoDi();
+    await userEvent.click(campo);
+
+    await premi(R.semplifica);
+
+    expect(campo.value).toBe("\\simplify{}");
+    expect(pulsanteFormula()).toBeDisabled();
   });
 });
 
