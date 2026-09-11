@@ -1321,7 +1321,7 @@
         "interpretatoCome": "Interpretato come:"
       },
       "campoTesto": {
-        "barra": "Strumenti matematici",
+        "barra": "Strumenti matematici per {campo}",
         "zonaMatematica": "Zona matematica",
         "semplifica": "Espressione da semplificare",
         "inserisciVariabile": "Inserisci variabile",

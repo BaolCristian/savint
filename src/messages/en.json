@@ -1321,7 +1321,7 @@
         "interpretatoCome": "Interpreted as:"
       },
       "campoTesto": {
-        "barra": "Math tools",
+        "barra": "Math tools for {campo}",
         "zonaMatematica": "Math zone",
         "semplifica": "Expression to simplify",
         "inserisciVariabile": "Insert variable",

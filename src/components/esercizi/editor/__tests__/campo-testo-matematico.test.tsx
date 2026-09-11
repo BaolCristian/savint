@@ -246,6 +246,14 @@ describe("CampoTestoMatematico: il campo resta quello di sempre", () => {
     expect(campo).toHaveAttribute("rows", "5");
   });
 
+  it("la barra dice a quale campo appartiene: in pagina ce n'è una per campo", () => {
+    // Testo e suggerimento montano due barre identiche nella stessa colonna:
+    // chiamarle entrambe «Strumenti matematici» lascerebbe chi naviga a voce
+    // senza modo di distinguerle.
+    montaggio();
+    expect(screen.getByRole("group")).toHaveAccessibleName("Strumenti matematici per Testo");
+  });
+
   it("i pulsanti non alterano un \\simplify{} già scritto", async () => {
     montaggio({ valoreIniziale: "\\simplify{2x+{a}}" });
     const campo = campoDi();

@@ -18,7 +18,7 @@ const INSERIMENTI: ReadonlyArray<InserimentoNelCampo & { id: string; glifo: stri
 ];
 
 const CLASSE_TASTO =
-  "flex min-h-11 items-center justify-center rounded-md border border-input px-2.5 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50";
+  "flex min-h-11 min-w-11 items-center justify-center rounded-md border border-input px-2.5 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50";
 
 /** `\var{nome}` è una sostituzione del motore, non un comando LaTeX: KaTeX
  * lancia su «Undefined control sequence: \var», e `Formula` — che non
@@ -34,7 +34,7 @@ const CLASSE_TASTO =
  * `\var{a+b}`. Un contenuto con graffe annidate non viene tradotto e
  * ricade, corretto, nel riquadro col sorgente — mostrare *come si scrive*
  * resta vero anche lì. */
-export function varInCorsivo(testo: string): string {
+function varInCorsivo(testo: string): string {
   return testo.replace(/\\var\{([^{}]*)\}/g, (_, nome: string) => `\\mathit{${nome}}`);
 }
 
@@ -98,7 +98,7 @@ export function CampoTestoMatematico({
         {etichetta}
       </label>
 
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("barra")}>
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("barra", { campo: etichetta })}>
         <button
           type="button"
           aria-label={t("zonaMatematica")}
@@ -175,7 +175,7 @@ export function CampoTestoMatematico({
 
       {haEco && (
         <div id={idEco} className="space-y-1 text-sm text-muted-foreground">
-          <span>{t("comeSiVedra")}</span>
+          <p>{t("comeSiVedra")}</p>
           <div className="text-foreground">
             <ContenutoHtml html={`<p>${escapaTesto(varInCorsivo(valore))}</p>`} />
           </div>
