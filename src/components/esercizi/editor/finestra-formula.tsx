@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useLayoutEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -40,6 +41,25 @@ function Caricamento() {
   return <p className="text-sm text-muted-foreground">{t("caricamento")}</p>;
 }
 
+/** Toglie il fuoco a quel che ce l'ha dentro la finestra, prima che la
+ * finestra sparisca.
+ *
+ * Serve perché MathLive tiene un riferimento globale al campo che ha il
+ * fuoco e non lo libera quando quel campo viene distrutto: chiudere la
+ * finestra mentre ci si scriveva dentro lascia quel riferimento appeso a
+ * un campo morto, e il campo della finestra successiva lancia proprio
+ * mentre prende il fuoco a sua volta. Non è un guaio di una volta sola:
+ * finché la pagina resta aperta, quel riferimento appeso rompe **ogni**
+ * apertura successiva.
+ *
+ * Quando il fuoco è su un pulsante, il campo l'ha già perso per conto suo
+ * e questa chiamata non fa niente; togliere il fuoco a un pulsante che sta
+ * per sparire non fa danno. */
+function congeda() {
+  const conIlFuoco = document.activeElement;
+  if (conIlFuoco instanceof HTMLElement) conIlFuoco.blur();
+}
+
 /** La finestra in cui il docente scrive una formula come la vedrebbe sul
  * foglio, invece di batterne il LaTeX.
  *
@@ -49,26 +69,21 @@ function Caricamento() {
 export function FinestraFormula({ aperta, iniziale, onChiudi, onConferma }: FinestraFormulaProps) {
   const t = useTranslations("esercizi.redazione.finestraFormula");
 
-  /** Toglie il fuoco a quel che ce l'ha dentro la finestra, prima che la
-   * finestra sparisca.
-   *
-   * Serve perché MathLive tiene un riferimento globale al campo che ha il
-   * fuoco e non lo libera quando quel campo viene distrutto: chiudere la
-   * finestra mentre ci si scriveva dentro lasciava quel riferimento appeso
-   * a un campo morto, e alla riapertura il campo nuovo lanciava proprio
-   * mentre prendeva il fuoco — la finestra si apriva rotta dalla seconda
-   * volta in poi. Il campo non può congedarsi da sé mentre sparisce:
-   * quando React fa girare le pulizie degli effetti ha già staccato i nodi
-   * e MathLive l'ha già distrutto.
-   *
-   * Passa di qui ogni uscita: i due pulsanti, il tasto Esc, lo sfondo, la
-   * crocetta. Quando il fuoco è su un pulsante il campo l'ha già perso per
-   * conto suo, e togliere il fuoco a un pulsante che sta per sparire non
-   * fa danno. */
-  function congeda() {
-    const conIlFuoco = document.activeElement;
-    if (conIlFuoco instanceof HTMLElement) conIlFuoco.blur();
-  }
+  // Le due strade per congedare il campo, e servono tutte e due.
+  //
+  // Questa copre l'uscita che non passa da nessun gesto della finestra:
+  // se la redazione intera sparisse con la finestra aperta — una
+  // navigazione — nessuno chiamerebbe `chiudi`. La pulizia di un effetto
+  // di impaginazione **del genitore** gira mentre i nodi del figlio sono
+  // ancora attaccati e il campo è ancora vivo; è la pulizia del figlio ad
+  // arrivare quando React ha già staccato tutto (misurato: lì
+  // `isConnected` è già `false` e MathLive ha già distrutto il campo, e un
+  // `blur()` non fa più niente).
+  //
+  // Le chiamate qui sotto restano: su una chiusura normale il componente
+  // NON si smonta — torna a rendere `null` — e questo effetto non si
+  // pulisce affatto.
+  useLayoutEffect(() => congeda, []);
 
   function chiudi() {
     congeda();

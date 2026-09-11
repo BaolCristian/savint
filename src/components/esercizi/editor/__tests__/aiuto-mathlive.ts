@@ -21,6 +21,23 @@
  * Va chiamata al livello di modulo del file di prova, prima che un test
  * possa far nascere un campo: `document.fonts` deve esistere già quando
  * MathLive si connette. */
+/** Le dodici famiglie che MathLive cerca in `document.fonts` prima di
+ * decidere se scaricarne i file (copiate dal suo `loadFonts`). */
+const FAMIGLIE_KATEX = [
+  "KaTeX_Main",
+  "KaTeX_Math",
+  "KaTeX_AMS",
+  "KaTeX_Caligraphic",
+  "KaTeX_Fraktur",
+  "KaTeX_SansSerif",
+  "KaTeX_Script",
+  "KaTeX_Typewriter",
+  "KaTeX_Size1",
+  "KaTeX_Size2",
+  "KaTeX_Size3",
+  "KaTeX_Size4",
+];
+
 export function preparaJsdomPerMathlive(): void {
   const globali = globalThis as unknown as Record<string, unknown>;
 
@@ -63,7 +80,18 @@ export function preparaJsdomPerMathlive(): void {
       value: {
         ready: Promise.resolve(),
         add() {},
-        [Symbol.iterator]: function* () {},
+        // Le famiglie si dichiarano già presenti, ed è il modo di tenere
+        // pulito l'output delle prove: trovandole, MathLive salta il
+        // caricamento: altrimenti proverebbe a risolvere la cartella dei
+        // font con un `fetch` sul proprio file — che in jsdom è un
+        // `file://`, fallisce, e stampa un `Invalid URL` a ogni apertura
+        // della finestra. Rumore che nasconderebbe il prossimo errore
+        // vero. Qui i font non si caricherebbero comunque (`FontFace` è un
+        // guscio), e la prova sulla cartella guarda `fontsDirectory` —
+        // cioè quel che il browser chiederebbe — non il caricamento.
+        [Symbol.iterator]: function* () {
+          for (const famiglia of FAMIGLIE_KATEX) yield { family: famiglia };
+        },
       },
     });
   }

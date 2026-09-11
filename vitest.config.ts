@@ -18,18 +18,26 @@ export default defineConfig({
       ".numbas-upstream/**",
       "packages/engine/test/differential/**",
     ],
+    alias: {
+      // MathLive pubblica due build. Qui la condizione di risoluzione è
+      // "node", che porta alla build SSR: quella senza `MathfieldElement`,
+      // cioè senza l'elemento personalizzato che la finestra delle formule
+      // è tutta (la build SSR esporta solo le funzioni di conversione).
+      // Nel browser Next sceglie la condizione "browser", e in produzione
+      // la sua diramazione "production": `mathlive.min.mjs`, che è la
+      // stessa build a cui punta questo alias — le prove girano sul codice
+      // che sarà servito al docente.
+      //
+      // Sta fra le opzioni di prova e non in `resolve.alias` perché è una
+      // faccenda della sola suite: il pacchetto servito risolve `mathlive`
+      // dalla mappa `exports`, da solo e bene.
+      mathlive: path.resolve(__dirname, "./node_modules/mathlive/mathlive.min.mjs"),
+    },
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@savint/engine": path.resolve(__dirname, "./packages/engine/src/index.ts"),
-      // MathLive pubblica due build. Qui la condizione di risoluzione è
-      // "node", che porta alla build SSR: quella senza `MathfieldElement`,
-      // cioè senza l'elemento personalizzato che la finestra delle formule
-      // è tutta. Nel browser Next sceglie invece la condizione "browser".
-      // L'alias punta alla build che vede il docente, così le prove girano
-      // sullo stesso codice che sarà servito.
-      mathlive: path.resolve(__dirname, "./node_modules/mathlive/mathlive.mjs"),
     },
   },
 });

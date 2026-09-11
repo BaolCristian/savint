@@ -78,6 +78,14 @@ export function ContenutoFormula({ iniziale, onChiudi, onConferma }: ContenutoFo
 
     // Prima di far nascere il campo: vedi il commento su `CARTELLA_FONT`.
     MathfieldElement.fontsDirectory = withBasePath(CARTELLA_FONT);
+    // Niente suoni. MathLive li cerca in `./sounds` — una cartella che non
+    // esiste in questa installazione — al primo tasto della sua tastiera
+    // virtuale: un 404 che si vedrebbe solo in produzione, cioè la stessa
+    // famiglia di difetto dei font. I file non si spediscono perché quei
+    // suoni servono alla tastiera su schermo, e questo è uno strumento da
+    // scrivania, con una tastiera vera sotto le mani. `null` spegne il
+    // giro alla radice: MathLive non prova nemmeno a scaricarli.
+    MathfieldElement.soundsDirectory = null;
 
     const mathfield = new MathfieldElement();
     contenitore.append(mathfield);
@@ -90,11 +98,12 @@ export function ContenutoFormula({ iniziale, onChiudi, onConferma }: ContenutoFo
     // quel giro andasse storto.
     mathfield.focus();
 
-    // Il fuoco NON si toglie qui: quando React fa girare la pulizia di un
-    // effetto ha già staccato i nodi dal documento, e MathLive a quel punto
-    // ha già distrutto il campo — un `blur()` non fa più niente. Lo toglie
-    // la finestra, prima di chiudersi (vedi `congeda` in
-    // `finestra-formula.tsx`).
+    // Il fuoco NON si toglie qui: quando React fa girare la pulizia degli
+    // effetti di questo componente ha già staccato i suoi nodi dal
+    // documento, e MathLive a quel punto ha già distrutto il campo — un
+    // `blur()` non fa più niente (misurato: `isConnected: false`). Lo
+    // toglie la finestra, che è il genitore e le cui pulizie girano prima
+    // (vedi `congeda` in `finestra-formula.tsx`).
     return () => {
       mathfield.remove();
       campo.current = null;

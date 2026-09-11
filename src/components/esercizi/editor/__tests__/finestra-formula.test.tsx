@@ -136,6 +136,28 @@ describe("FinestraFormula: il giro di una formula", () => {
     expect(onConferma).toHaveBeenCalledWith({ latex: "\\frac{1}{2}", asciiMath: "(1)/(2)" });
   });
 
+  it("sparita di colpo con la pagina, non rompe la finestra dopo", async () => {
+    // L'uscita che non passa da nessun gesto della finestra: la redazione
+    // intera se ne va — una navigazione — con la finestra ancora aperta e
+    // il cursore dentro il campo. Nessuno chiama `onChiudi`, e il
+    // riferimento globale che MathLive tiene al campo col fuoco resterebbe
+    // appeso a un campo morto: non per una volta, ma per tutta la
+    // sessione, perché ogni campo che prende il fuoco dopo prova a
+    // congedare quello.
+    const prima = montaggio({ iniziale: "x^2" });
+    const campoPrima = await campoFormula();
+    // Il fuoco arriva al campo dopo un giro d'orologio, non subito: senza
+    // aspettarlo la prova correrebbe più veloce del difetto e resterebbe
+    // verde anche col difetto dentro.
+    await waitFor(() => expect(document.activeElement).toBe(campoPrima));
+
+    prima.unmount();
+
+    montaggio({ iniziale: "y^2" });
+    const campo = await campoFormula();
+    expect(campo.getValue("ascii-math")).toBe("y^2");
+  });
+
   it("annullare chiude senza confermare niente", async () => {
     const { onConferma, onChiudi } = montaggio({ iniziale: "x^2" });
     await campoFormula();
@@ -161,5 +183,10 @@ describe("FinestraFormula: i font", () => {
 
     const { MathfieldElement } = await import("mathlive");
     expect(MathfieldElement.fontsDirectory).toBe("/demo/fonts/mathlive");
+    // Stessa famiglia di difetto, stesso posto: i suoni della tastiera
+    // virtuale, che questa installazione non spedisce. Col valore
+    // predefinito (`./sounds`) sarebbe un 404 al primo tasto, visibile
+    // solo in produzione; `null` spegne il giro alla radice.
+    expect(MathfieldElement.soundsDirectory).toBeNull();
   });
 });
