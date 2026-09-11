@@ -1329,7 +1329,8 @@
         "radice": "Square root",
         "potenza": "Power",
         "indice": "Subscript",
-        "comeSiVedra": "How it will look:"
+        "comeSiVedra": "How it will look:",
+        "notaSimplify": "Inside a simplify command the text stays as written: what comes out of it depends on the drawn numbers, and you can see that in the preview beside."
       },
       "parti": {
         "titolo": "Parts",

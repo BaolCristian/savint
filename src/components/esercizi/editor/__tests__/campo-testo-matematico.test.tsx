@@ -16,11 +16,9 @@ const R = messaggiIt.esercizi.redazione.campoTesto;
 function CampoControllato({
   valoreIniziale = "",
   variabili = [],
-  righe,
 }: {
   valoreIniziale?: string;
   variabili?: string[];
-  righe?: number;
 }) {
   const [valore, setValore] = useState(valoreIniziale);
   return (
@@ -30,12 +28,11 @@ function CampoControllato({
       valore={valore}
       onChange={setValore}
       variabili={variabili}
-      righe={righe}
     />
   );
 }
 
-function montaggio(props?: { valoreIniziale?: string; variabili?: string[]; righe?: number }) {
+function montaggio(props?: { valoreIniziale?: string; variabili?: string[] }) {
   return render(
     <NextIntlClientProvider locale="it" messages={messaggiIt}>
       <CampoControllato {...props} />
@@ -193,6 +190,12 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
     // valore dipende dal seme, e quella è l'anteprima, che sta accanto.
     // Il segno è il meno matematico U+2212, quello che KaTeX disegna.
     expect(testoResoDa(eco)).toBe("x2−a2");
+    // «in corsivo», l'altra metà del requisito: KaTeX disegna `\mathit{a}`
+    // come `mord mathit` e una `a` nuda come `mord mathnormal`. Senza questa
+    // riga, tradurre `\var{a}` in una `a` nuda lascerebbe il testo reso
+    // identico — e il Task 6, la cui macro sarà `var: "\\mathit{#1}"`,
+    // divergerebbe da qui senza che nulla lo dica.
+    expect(eco.querySelector(".mathit")?.textContent).toBe("a");
     expect(eco.textContent).toContain("Risolvi ");
     expect(eco.textContent).toContain(" subito.");
     // I delimitatori sono struttura, non testo: se l'eco non dividesse le
@@ -208,12 +211,24 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
     expect(ecoDi(container).textContent).toContain("Vale x < 0 & y > 1?");
   });
 
-  it("mostra il sorgente di \\simplify{} invece di una formula storta", () => {
+  it("mostra il sorgente di \\simplify{} invece di una formula storta, e dice perché", () => {
     // Che cosa esca da un `\simplify` dipende dai valori sorteggiati: è
     // l'anteprima a saperlo, non l'eco, che mostra *come si scrive*. Il
     // sorgente deve quindi arrivare intatto, graffe interne comprese.
     const { container } = montaggio({ valoreIniziale: "Risolvi \\(\\simplify{2x+{a}} = 0\\)." });
-    expect(ecoDi(container).textContent).toContain("\\simplify{2x+{a}} = 0");
+    const eco = ecoDi(container);
+    expect(eco.textContent).toContain("\\simplify{2x+{a}} = 0");
+    // Il riquadro grigio del sorgente, sotto la promessa «Come si vedrà:», si
+    // legge come «hai sbagliato la sintassi». Non è vero, e l'eco deve dirlo
+    // con le parole, non lasciarlo indovinare.
+    expect(eco.textContent).toContain(R.notaSimplify);
+  });
+
+  it("non dice nulla di simplify quando nel testo non ce n'è", () => {
+    // La nota qualifica l'etichetta solo dove serve: altrove sarebbe rumore
+    // sotto ogni campo, e smetterebbe di essere letta proprio dove conta.
+    const { container } = montaggio({ valoreIniziale: "Risolvi \\(x^2 = 0\\)." });
+    expect(ecoDi(container).textContent).not.toContain(R.notaSimplify);
   });
 
   it("non c'è eco quando non c'è ancora niente da rendere", () => {
@@ -239,11 +254,9 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
 });
 
 describe("CampoTestoMatematico: il campo resta quello di sempre", () => {
-  it("l'etichetta comanda il campo, e `righe` ne fissa l'altezza", () => {
-    montaggio({ righe: 5 });
-    const campo = campoDi();
-    expect(campo.tagName).toBe("TEXTAREA");
-    expect(campo).toHaveAttribute("rows", "5");
+  it("l'etichetta comanda il campo, che è una textarea e non un input", () => {
+    montaggio();
+    expect(campoDi().tagName).toBe("TEXTAREA");
   });
 
   it("la barra dice a quale campo appartiene: in pagina ce n'è una per campo", () => {

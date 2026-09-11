@@ -1329,7 +1329,8 @@
         "radice": "Radice quadrata",
         "potenza": "Potenza",
         "indice": "Indice",
-        "comeSiVedra": "Come si vedrà:"
+        "comeSiVedra": "Come si vedrà:",
+        "notaSimplify": "Dentro un comando simplify il testo resta scritto com'è: quel che ne esce dipende dai numeri sorteggiati, e si vede nell'anteprima qui accanto."
       },
       "parti": {
         "titolo": "Parti",

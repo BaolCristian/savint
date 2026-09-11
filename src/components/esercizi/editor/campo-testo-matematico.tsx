@@ -45,11 +45,6 @@ export interface CampoTestoMatematicoProps {
   onChange: (v: string) => void;
   /** I nomi dichiarati nel pannello variabili, per il menu «Inserisci variabile». */
   variabili: string[];
-  /** L'altezza iniziale del campo, in righe. La `Textarea` del design system
-   * cresce già da sé col contenuto (`field-sizing: content`): serve solo a
-   * chi vuole un riquadro alto prima ancora che ci sia qualcosa dentro —
-   * nessuno dei due campi della redazione, per ora. */
-  righe?: number;
 }
 
 /** Il campo con cui il docente scrive il testo di un esercizio: una
@@ -73,7 +68,6 @@ export function CampoTestoMatematico({
   valore,
   onChange,
   variabili,
-  righe,
 }: CampoTestoMatematicoProps) {
   const t = useTranslations("esercizi.redazione.campoTesto");
   const { campoRef, inserisciNelCampo } = useTastieraSimboli<HTMLTextAreaElement>(valore, onChange);
@@ -91,6 +85,13 @@ export function CampoTestoMatematico({
 
   const idEco = `${id}-eco`;
   const haEco = valore.trim() !== "";
+  // Un `\simplify{}` fa lanciare KaTeX, e `Formula` — che non lancia mai —
+  // ripiega sul riquadro grigio col sorgente. Sotto la promessa «Come si
+  // vedrà:», quel riquadro si legge come «hai sbagliato la sintassi»: non è
+  // vero, la sintassi è giusta ed è l'eco a non poterla rendere, perché
+  // quel pezzo dipende dai numeri sorteggiati. Lo dice qui sotto, con le
+  // parole, e solo dove c'è davvero un `\simplify{}`.
+  const haSimplify = valore.includes("\\simplify{");
 
   return (
     <div className="flex flex-col gap-2">
@@ -164,7 +165,6 @@ export function CampoTestoMatematico({
       <Textarea
         id={id}
         ref={campoRef}
-        rows={righe}
         value={valore}
         // L'eco descrive il campo, ma non si annuncia da sola: cambia a ogni
         // tasto premuto, e un `aria-live` la farebbe leggere a voce dopo
@@ -176,6 +176,7 @@ export function CampoTestoMatematico({
       {haEco && (
         <div id={idEco} className="space-y-1 text-sm text-muted-foreground">
           <p>{t("comeSiVedra")}</p>
+          {haSimplify && <p className="text-xs">{t("notaSimplify")}</p>}
           <div className="text-foreground">
             <ContenutoHtml html={`<p>${escapaTesto(varInCorsivo(valore))}</p>`} />
           </div>
