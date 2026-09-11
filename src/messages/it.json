@@ -1320,6 +1320,17 @@
       "campoJme": {
         "interpretatoCome": "Interpretato come:"
       },
+      "campoTesto": {
+        "barra": "Strumenti matematici",
+        "zonaMatematica": "Zona matematica",
+        "semplifica": "Espressione da semplificare",
+        "inserisciVariabile": "Inserisci variabile",
+        "frazione": "Frazione",
+        "radice": "Radice quadrata",
+        "potenza": "Potenza",
+        "indice": "Indice",
+        "comeSiVedra": "Come si vedrà:"
+      },
       "parti": {
         "titolo": "Parti",
         "aggiungi": "Aggiungi parte",

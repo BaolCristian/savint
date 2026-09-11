@@ -1320,6 +1320,17 @@
       "campoJme": {
         "interpretatoCome": "Interpreted as:"
       },
+      "campoTesto": {
+        "barra": "Math tools",
+        "zonaMatematica": "Math zone",
+        "semplifica": "Expression to simplify",
+        "inserisciVariabile": "Insert variable",
+        "frazione": "Fraction",
+        "radice": "Square root",
+        "potenza": "Power",
+        "indice": "Subscript",
+        "comeSiVedra": "How it will look:"
+      },
       "parti": {
         "titolo": "Parts",
         "aggiungi": "Add part",

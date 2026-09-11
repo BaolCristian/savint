@@ -34,11 +34,37 @@ export const SIMBOLI: readonly SimboloTastiera[] = [
   { id: "parentesi", glifo: "()", chiaveEtichetta: "tastoParentesi", inserisci: "()", offsetCaret: 1 },
 ];
 
-export interface TastieraSimboliAgganci {
+/** I due campi di testo che sanno gestire un cursore, e che qui si
+ * comportano allo stesso identico modo: `selectionStart`, `selectionEnd`,
+ * `setSelectionRange` e `focus` stanno su entrambi con la stessa firma.
+ * L'`Input` dello studente e la `Textarea` del docente si servono perciò
+ * dello stesso meccanismo, non di due copie. */
+export type CampoConCursore = HTMLInputElement | HTMLTextAreaElement;
+
+/** Che cosa prende il posto della selezione, e dove va il cursore dopo.
+ *
+ * `offsetCaret` è contato dall'inizio del testo inserito, non dalla fine:
+ * per un tasto come `^` è 1 — tutta la lunghezza dell'inserimento — mentre
+ * per `sqrt()` è 5, cioè subito dopo la parentesi aperta, in modo da poter
+ * scrivere l'argomento senza spostare il cursore a mano. `SimboloTastiera`
+ * ha già questa forma: un tasto della tastiera *è* un inserimento. */
+export interface InserimentoNelCampo {
+  inserisci: string;
+  offsetCaret: number;
+}
+
+export interface TastieraSimboliAgganci<E extends CampoConCursore = HTMLInputElement> {
   /** Va sul campo di testo servito dalla tastiera. */
-  campoRef: RefObject<HTMLInputElement | null>;
+  campoRef: RefObject<E | null>;
   /** Da passare a `TastieraSimboli` come `onInserisci`. */
   inserisciSimbolo: (simbolo: SimboloTastiera) => void;
+  /** L'inserimento generico, per chi non usa la tastiera dei cinque tasti:
+   * `costruisci` riceve il testo oggi selezionato e decide che cosa mettere
+   * al suo posto. Riceverlo è ciò che permette di *avvolgere* la selezione
+   * invece di sostituirla — `x^2` che diventa `\(x^2\)` — senza che il
+   * chiamante debba leggere il cursore da sé, cioè senza una seconda copia
+   * del meccanismo qui sotto. */
+  inserisciNelCampo: (costruisci: (selezione: string) => InserimentoNelCampo) => void;
 }
 
 /** Il comportamento del cursore per un campo servito dalla tastiera di
@@ -47,13 +73,20 @@ export interface TastieraSimboliAgganci {
  * `sqrt()`, subito dopo il `^`.
  *
  * Sta in un hook, e non ricopiato in ogni chiamante, proprio perché è
- * *stato locale*: due `useRef` e un `useEffect` che nessuno dei due
- * chiamanti deve conoscere. Incapsularlo è ciò per cui esistono gli hook
- * personalizzati; averne due copie significherebbe correggere il cursore in
- * una sola delle due superfici, senza che nessun test dica che l'altra è
- * rimasta indietro. */
-export function useTastieraSimboli(valore: string, onChange: (v: string) => void): TastieraSimboliAgganci {
-  const campoRef = useRef<HTMLInputElement>(null);
+ * *stato locale*: due `useRef` e un `useEffect` che nessuno dei chiamanti
+ * deve conoscere. Incapsularlo è ciò per cui esistono gli hook
+ * personalizzati; averne più copie significherebbe correggere il cursore in
+ * una sola delle superfici, senza che nessun test dica che le altre sono
+ * rimaste indietro. Le superfici sono tre: lo studente che risponde
+ * (`player/parti/espressione.tsx`), il docente che scrive la risposta
+ * attesa (`editor/campo-jme.tsx`) e il docente che scrive il testo
+ * dell'esercizio (`editor/campo-testo-matematico.tsx`) — quest'ultima su
+ * una `Textarea` invece che su un `Input`, da cui il parametro di tipo. */
+export function useTastieraSimboli<E extends CampoConCursore = HTMLInputElement>(
+  valore: string,
+  onChange: (v: string) => void,
+): TastieraSimboliAgganci<E> {
+  const campoRef = useRef<E>(null);
   // Il cursore va spostato dopo che `valore` è arrivato dal genitore e il
   // campo si è ridisegnato col nuovo testo: impostarlo subito, prima del
   // ridisegno, verrebbe sovrascritto dal valore ancora vecchio.
@@ -67,12 +100,13 @@ export function useTastieraSimboli(valore: string, onChange: (v: string) => void
     }
   }, [valore]);
 
-  function inserisciSimbolo(simbolo: SimboloTastiera) {
+  function inserisciNelCampo(costruisci: (selezione: string) => InserimentoNelCampo) {
     const campo = campoRef.current;
     const inizio = campo?.selectionStart ?? valore.length;
     const fine = campo?.selectionEnd ?? valore.length;
-    const nuovoTesto = valore.slice(0, inizio) + simbolo.inserisci + valore.slice(fine);
-    posizioneCaretInSospeso.current = inizio + simbolo.offsetCaret;
+    const { inserisci, offsetCaret } = costruisci(valore.slice(inizio, fine));
+    const nuovoTesto = valore.slice(0, inizio) + inserisci + valore.slice(fine);
+    posizioneCaretInSospeso.current = inizio + offsetCaret;
     onChange(nuovoTesto);
     // Il cursore torna al campo: chi scrive continua senza dover ricliccare,
     // il tasto non deve "rubare" il focus in modo permanente (vedi anche
@@ -80,7 +114,13 @@ export function useTastieraSimboli(valore: string, onChange: (v: string) => void
     campo?.focus();
   }
 
-  return { campoRef, inserisciSimbolo };
+  // Un tasto della tastiera non guarda la selezione: quel che c'era sotto
+  // viene sostituito, come quando si digita avendo del testo selezionato.
+  function inserisciSimbolo(simbolo: SimboloTastiera) {
+    inserisciNelCampo(() => simbolo);
+  }
+
+  return { campoRef, inserisciSimbolo, inserisciNelCampo };
 }
 
 export interface TastieraSimboliProps {

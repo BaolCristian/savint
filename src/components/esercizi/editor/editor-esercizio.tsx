@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import type { EsercizioEditor, ParteEditor } from "@/lib/esercizi/editor/modello";
+import { CampoTestoMatematico } from "./campo-testo-matematico";
 import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
 import { ParteScelta, NESSUNA_RISPOSTA_CORRETTA } from "./parte-scelta";
@@ -305,6 +305,14 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
     }
   }
 
+  // I nomi, non gli oggetti variabile: il menu «Inserisci variabile» dei
+  // campi di testo inserisce `\var{nome}`. Una riga appena aggiunta ha
+  // ancora il nome vuoto, e due righe possono portare lo stesso nome
+  // mentre si scrive: né l'una né le altre sono voci di menu sensate.
+  // Derivato durante il render, non tenuto in uno stato che andrebbe poi
+  // risincronizzato.
+  const nomiVariabili = [...new Set(editor.variabili.map((v) => v.nome).filter(Boolean))];
+
   return (
     <ImpaginazioneEditor
       // L'intestazione porta l'h1 di pagina («Redazione esercizio») e la
@@ -337,24 +345,22 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
           </div>
 
           <div className="space-y-2 rounded-lg border bg-card p-4">
-            <label htmlFor="redazione-testo" className="text-base font-semibold">
-              {t("testo")}
-            </label>
-            <Textarea
+            <CampoTestoMatematico
               id="redazione-testo"
-              value={editor.testo}
-              onChange={(e) => mutaEditor((ed) => ({ ...ed, testo: e.target.value }))}
+              etichetta={t("testo")}
+              valore={editor.testo}
+              onChange={(testo) => mutaEditor((ed) => ({ ...ed, testo }))}
+              variabili={nomiVariabili}
             />
           </div>
 
           <div className="space-y-2 rounded-lg border bg-card p-4">
-            <label htmlFor="redazione-suggerimento" className="text-base font-semibold">
-              {t("suggerimento")}
-            </label>
-            <Textarea
+            <CampoTestoMatematico
               id="redazione-suggerimento"
-              value={editor.suggerimento}
-              onChange={(e) => mutaEditor((ed) => ({ ...ed, suggerimento: e.target.value }))}
+              etichetta={t("suggerimento")}
+              valore={editor.suggerimento}
+              onChange={(suggerimento) => mutaEditor((ed) => ({ ...ed, suggerimento }))}
+              variabili={nomiVariabili}
             />
             <p className="text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
           </div>
