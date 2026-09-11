@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Formula } from "@/components/esercizi/player/formula";
-import { SIMBOLI, type SimboloTastiera } from "@/components/esercizi/player/parti/espressione";
+import { TastieraSimboli, useTastieraSimboli } from "@/components/esercizi/tastiera-simboli";
 import { ecoDi } from "./eco-jme";
 
 export interface CampoJmeProps {
@@ -16,6 +16,13 @@ export interface CampoJmeProps {
   /** Il tastierino compare solo dove serve davvero: non sotto ogni campo. */
   tastierino?: boolean;
   aiuto?: string;
+  /** Il campo è sbagliato per una ragione che il chiamante conosce e l'eco
+   * no — una definizione vuota accanto a un nome compilato, per esempio: per
+   * `ecoDi` è solo un campo vuoto, per il pannello è un errore. Segna il
+   * campo come `aria-invalid`, che è anche ciò che gli dà il bordo rosso
+   * (`input.tsx`). L'eco d'errore ha già il suo canale, sotto: i due non si
+   * sovrappongono mai (dove l'eco parla, il campo non è vuoto). */
+  invalido?: boolean;
 }
 
 /** Un campo JME: l'etichetta, il campo di testo, opzionalmente la tastiera
@@ -30,36 +37,32 @@ export interface CampoJmeProps {
  * discreta (`text-muted-foreground`) finché il campo scrive; diventa un
  * avviso (`text-destructive`) solo dopo che ha perso il fuoco — il momento
  * in cui il docente ha finito, e un'espressione ancora sgrammaticata è
- * davvero un problema da vedere. */
-export function CampoJme({ id, etichetta, valore, onChange, tastierino = false, aiuto }: CampoJmeProps) {
-  const t = useTranslations("esercizi");
+ * davvero un problema da vedere. Nello stesso momento, e per la stessa
+ * ragione, il campo diventa `aria-invalid`: il bordo rosso e l'avviso sono
+ * lo stesso fatto detto due volte, e devono accendersi insieme.
+ *
+ * L'eco è legata al campo con `aria-describedby`, non annunciata da sola:
+ * cambia a ogni tasto premuto, e un `aria-live` la farebbe leggere a voce
+ * dopo ogni lettera, coprendo ciò che il docente sta scrivendo. Come
+ * descrizione del campo resta invece disponibile quando serve, cioè quando
+ * ci si ferma sopra. */
+export function CampoJme({
+  id,
+  etichetta,
+  valore,
+  onChange,
+  tastierino = false,
+  aiuto,
+  invalido = false,
+}: CampoJmeProps) {
   const tCampo = useTranslations("esercizi.redazione.campoJme");
   const [haFocus, setHaFocus] = useState(false);
-  const campoRef = useRef<HTMLInputElement>(null);
-  // Stesso motivo del gemello in `player/parti/espressione.tsx`: il cursore
-  // va spostato dopo che `valore` è arrivato dal genitore e il campo si è
-  // ridisegnato col nuovo testo, non prima (verrebbe sovrascritto).
-  const posizioneCaretInSospeso = useRef<number | null>(null);
-
-  useEffect(() => {
-    const posizione = posizioneCaretInSospeso.current;
-    if (posizione !== null && campoRef.current) {
-      campoRef.current.setSelectionRange(posizione, posizione);
-      posizioneCaretInSospeso.current = null;
-    }
-  }, [valore]);
+  const { campoRef, inserisciSimbolo } = useTastieraSimboli(valore, onChange);
 
   const esito = ecoDi(valore);
-
-  function inserisciSimbolo(simbolo: SimboloTastiera) {
-    const campo = campoRef.current;
-    const inizio = campo?.selectionStart ?? valore.length;
-    const fine = campo?.selectionEnd ?? valore.length;
-    const nuovoTesto = valore.slice(0, inizio) + simbolo.inserisci + valore.slice(fine);
-    posizioneCaretInSospeso.current = inizio + simbolo.offsetCaret;
-    onChange(nuovoTesto);
-    campo?.focus();
-  }
+  const idEco = `${id}-eco`;
+  const idAiuto = `${id}-aiuto`;
+  const descrizioni = [aiuto ? idAiuto : null, esito.stato === "vuoto" ? null : idEco].filter(Boolean).join(" ");
 
   return (
     <div className="flex flex-col gap-1">
@@ -67,22 +70,7 @@ export function CampoJme({ id, etichetta, valore, onChange, tastierino = false, 
         {etichetta}
       </label>
 
-      {tastierino && (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("tastieraSimboli")}>
-          {SIMBOLI.map((simbolo) => (
-            <button
-              key={simbolo.id}
-              type="button"
-              aria-label={t(simbolo.chiaveEtichetta)}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => inserisciSimbolo(simbolo)}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-input text-base font-medium transition-colors hover:bg-accent"
-            >
-              {simbolo.glifo}
-            </button>
-          ))}
-        </div>
-      )}
+      {tastierino && <TastieraSimboli onInserisci={inserisciSimbolo} />}
 
       <Input
         id={id}
@@ -90,22 +78,30 @@ export function CampoJme({ id, etichetta, valore, onChange, tastierino = false, 
         inputMode="text"
         autoComplete="off"
         value={valore}
+        aria-invalid={invalido || (esito.stato === "errore" && !haFocus)}
+        aria-describedby={descrizioni || undefined}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setHaFocus(true)}
         onBlur={() => setHaFocus(false)}
       />
 
-      {aiuto && <p className="text-xs text-muted-foreground">{aiuto}</p>}
+      {aiuto && (
+        <p id={idAiuto} className="text-xs text-muted-foreground">
+          {aiuto}
+        </p>
+      )}
 
       {esito.stato === "reso" && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div id={idEco} className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{tCampo("interpretatoCome")}</span>
           <Formula tex={esito.latex} />
         </div>
       )}
 
       {esito.stato === "errore" && (
-        <p className={cn("text-xs", haFocus ? "text-muted-foreground" : "text-destructive")}>{esito.messaggio}</p>
+        <p id={idEco} className={cn("text-xs", haFocus ? "text-muted-foreground" : "text-destructive")}>
+          {esito.messaggio}
+        </p>
       )}
     </div>
   );

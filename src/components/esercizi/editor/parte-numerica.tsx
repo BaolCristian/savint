@@ -89,13 +89,16 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
         </div>
 
         {parte.tolleranza.tipo === "margine" && (
-          <div className="max-w-60">
+          <div className="max-w-40">
+            {/* Nessun tastierino: il margine è una tolleranza, un decimale
+                come `0.01` — `π`, `√`, `^` non si scrivono lì. L'eco invece
+                resta, come su ogni campo JME: anche una tolleranza va vista
+                come il motore l'ha capita. */}
             <CampoJme
               id={idMargine}
               etichetta={t("numerica.margine")}
               valore={parte.tolleranza.margine}
               onChange={(margine) => aggiornaTolleranza({ tipo: "margine", margine })}
-              tastierino
             />
           </div>
         )}

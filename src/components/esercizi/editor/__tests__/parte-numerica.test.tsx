@@ -86,6 +86,32 @@ describe("ParteNumerica", () => {
     expect(ultima.tolleranza).toEqual({ tipo: "margine", margine: "0.01" });
   });
 
+  it("il margine non ha la tastiera di simboli, il valore atteso sì", async () => {
+    // Il margine è una tolleranza — `0.01`, un decimale — non una risposta
+    // attesa: `π`, `√`, `^` non si scrivono lì, e una riga di tasti sotto un
+    // campo così è rumore. Il valore atteso invece è matematica
+    // (`sqrt(2)*a` è una risposta plausibile) e la tastiera resta.
+    montaggio();
+    const tastiere = () => screen.queryAllByRole("group", { name: messaggiIt.esercizi.tastieraSimboli });
+    expect(tastiere()).toHaveLength(1);
+    await userEvent.click(
+      screen.getByRole("radio", { name: messaggiIt.esercizi.redazione.parti.numerica.tolleranzaMargine }),
+    );
+    await screen.findByLabelText(messaggiIt.esercizi.redazione.parti.numerica.margine);
+    expect(tastiere()).toHaveLength(1);
+  });
+
+  it("il margine mostra comunque l'eco: anche una tolleranza va vista come il motore l'ha capita", async () => {
+    const { container } = montaggio();
+    await userEvent.click(
+      screen.getByRole("radio", { name: messaggiIt.esercizi.redazione.parti.numerica.tolleranzaMargine }),
+    );
+    const campoMargine = await screen.findByLabelText(messaggiIt.esercizi.redazione.parti.numerica.margine);
+    await userEvent.type(campoMargine, "0.01");
+    const echi = [...container.querySelectorAll(".katex-html")].map((n) => n.textContent);
+    expect(echi).toContain("0.01");
+  });
+
   it("passare a tolleranza «decimali» mostra il campo cifre e lo riporta in onChange", async () => {
     const { onChange } = montaggio();
     await userEvent.click(

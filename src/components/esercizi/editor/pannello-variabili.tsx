@@ -88,10 +88,17 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
               className="@container rounded-lg border p-3"
               aria-label={t("rigaAriaLabel", { numero: i + 1 })}
             >
-              {/* `@sm`, non `sm`: la larghezza che conta è quella di questa
+              {/* `@xl`, non `sm`: la larghezza che conta è quella di questa
                   riga, non quella della finestra — la colonna di scrittura
-                  che la contiene non è mai larga tutto lo schermo. */}
-              <div className="grid gap-2 @sm:grid-cols-3">
+                  che la contiene non è mai larga tutto lo schermo. La soglia
+                  è scelta sulla colonna, non sul nome: `@xl` compila in
+                  `@container (width >= 36rem)` (misurato sul CSS generato dal
+                  `@tailwindcss/postcss` del repo), cioè 576px meno i 16px dei
+                  due `gap-2` = ~186px per colonna, quanto basta al campo e
+                  alla formula che gli sta sotto. `@sm` (24rem) darebbe
+                  ~120px: la stessa strettezza che questa riga vuole togliere,
+                  solo su un asse diverso. */}
+              <div className="grid gap-2 @xl:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <label htmlFor={idNome} className="text-sm font-medium">
                     {t("nome")}
@@ -105,11 +112,19 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
                   {nomeInvalido && <p className="text-xs text-destructive">{t("erroreNome")}</p>}
                 </div>
                 <div className="flex flex-col gap-1">
+                  {/* `invalido`: la definizione mancante è un errore che
+                      conosce solo il pannello — per l'eco un campo vuoto non
+                      ha niente da dire. Senza questo il campo `definizione`
+                      perderebbe il bordo rosso che il campo `nome` accanto ha
+                      (`aria-invalid:border-destructive` in `input.tsx`), e la
+                      stessa riga segnalerebbe i suoi due errori in due modi
+                      diversi. */}
                   <CampoJme
                     id={idDefinizione}
                     etichetta={t("definizione")}
                     valore={v.definizione}
                     onChange={(valore) => aggiorna(i, "definizione", valore)}
+                    invalido={definizioneMancante}
                   />
                   {definizioneMancante && <p className="text-xs text-destructive">{t("erroreDefinizione")}</p>}
                 </div>

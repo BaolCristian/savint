@@ -95,6 +95,24 @@ describe("PannelloVariabili", () => {
     expect(screen.getByText(messaggiIt.esercizi.redazione.variabili.erroreDefinizione)).toBeInTheDocument();
   });
 
+  it("i due campi sbagliati della stessa riga si segnalano allo stesso modo: entrambi marcati come non validi", () => {
+    // `aria-invalid` non è solo per le tecnologie assistive: è ciò che
+    // accende il bordo rosso di `input.tsx`
+    // (`aria-invalid:border-destructive`). Senza questo test, un campo può
+    // perdere il bordo mentre il suo messaggio d'errore resta, e la riga
+    // segnala i suoi due errori in due modi diversi senza che nulla lo dica.
+    const variabili: VariabileEditor[] = [{ nome: "1a", definizione: "", descrizione: "" }];
+    montaggio({ variabili });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toBeInvalid();
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toBeInvalid();
+  });
+
+  it("una riga valida non marca nessuno dei suoi campi come sbagliato", () => {
+    montaggio({ variabili: [DUE_VARIABILI[0]!] });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toBeValid();
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toBeValid();
+  });
+
   it("non mostra nessun errore su una riga appena aggiunta, ancora vuota", () => {
     const variabili: VariabileEditor[] = [{ nome: "", definizione: "", descrizione: "" }];
     montaggio({ variabili });
