@@ -235,6 +235,16 @@ describe("CampoTestoMatematico: l'eco di come il testo verrà reso", () => {
     expect(riquadro?.textContent).toBe("\\simplify{ {a}x+{b} } = \\var{c}");
   });
 
+  it("una zona a metà mostra il sorgente battuto, non un comando mai scritto", () => {
+    // Il pulsante \( \) inserisce la coppia col cursore in mezzo: il
+    // delimitatore di chiusura c'è già, e ogni stato intermedio della
+    // battitura è una zona matematica vera. Qui il docente ha appena battuto
+    // l'accento circonflesso e l'esponente non c'è ancora: KaTeX rifiuta, e
+    // ciò che legge nel riquadro deve essere ciò che ha battuto.
+    const { container } = montaggio({ valoreIniziale: "\\(\\var{a}^\\)" });
+    expect(ecoDi(container).querySelector("code")?.textContent).toBe("\\var{a}^");
+  });
+
   it("un \\var{} in prosa resta la parola che il docente ha scritto", () => {
     // Fuori da una zona matematica nessuno renderà mai quel comando: il
     // docente deve rivedere ciò che ha battuto, non `\mathit{a}`.

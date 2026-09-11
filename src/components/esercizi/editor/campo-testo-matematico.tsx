@@ -7,6 +7,7 @@ import {
   trovaProssimaFormula,
   type FormulaTrovata,
 } from "@/components/esercizi/player/contenuto-html";
+import { MacroFormula } from "@/components/esercizi/player/formula";
 import { escapaTesto } from "@/lib/esercizi/editor/verso-numbas";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
 
@@ -25,22 +26,25 @@ const CLASSE_TASTO =
   "flex min-h-11 min-w-11 items-center justify-center rounded-md border border-input px-2.5 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50";
 
 /** `\var{nome}` è una sostituzione del motore, non un comando LaTeX: KaTeX
- * lancia su «Undefined control sequence: \var», e `Formula` — che non
- * lancia mai — ripiegherebbe in silenzio sul sorgente grezzo in un riquadro
- * `<code>`. Nell'eco il nome si mostra dunque in corsivo, che è come lo
- * disegnerà il motore quando al suo posto ci sarà un valore.
+ * lancia su «Undefined control sequence: \var», e `Formula` — che non lancia
+ * mai — ripiega sul sorgente grezzo in un riquadro `<code>`. Nell'eco il nome
+ * si mostra invece in corsivo, che è come lo disegnerà il motore quando al
+ * suo posto ci sarà un valore.
  *
- * È deliberatamente la stessa traduzione che l'editor di formule
- * registrerà come macro (`var: "\\mathit{#1}"`): le due superfici devono
- * disegnare `\var{a}` allo stesso modo, o l'eco mentirebbe sull'altra.
+ * Si insegna il comando a KaTeX invece di riscrivere il testo prima di
+ * darglielo. Riscriverlo falsificava l'unico posto in cui il docente rivede
+ * ciò che ha battuto: quando la zona non si può rendere, il riquadro mostra
+ * il sorgente — e quel sorgente sarebbe stato il nostro, non il suo. Chi
+ * scriveva `\var{c}` leggeva `\mathit{c}`, e bastava un esponente non ancora
+ * battuto (`\(\var{a}^\)`, stato normalissimo dopo il pulsante `\( \)`, che
+ * la coppia la chiude da sé) perché succedesse anche senza `\simplify{}`.
  *
- * Un solo livello di graffe, come la macro: `\var{a}`, `\var{r1}`,
- * `\var{a+b}`. Un contenuto con graffe annidate non viene tradotto e
- * ricade, corretto, nel riquadro col sorgente — mostrare *come si scrive*
- * resta vero anche lì. */
-function varInCorsivo(tex: string): string {
-  return tex.replace(/\\var\{([^{}]*)\}/g, (_, nome: string) => `\\mathit{${nome}}`);
-}
+ * È deliberatamente la stessa traduzione che l'editor di formule registrerà
+ * come macro (`var: "\mathit{#1}"`): le due superfici devono disegnare
+ * `\var{a}` allo stesso modo, o l'eco mentirebbe sull'altra. E vale solo
+ * qui: vedi il commento su `MacroFormula` per il motivo per cui lo studente
+ * non deve averla. */
+const MACRO_ECO: Readonly<Record<string, string>> = { "\\var": "\\mathit{#1}" };
 
 /** Le zone matematiche del testo, nell'ordine, coi loro confini.
  *
@@ -61,38 +65,6 @@ function zoneMatematiche(testo: string): FormulaTrovata[] {
     zone.push(trovata);
     da = trovata.fine;
   }
-}
-
-/** Una zona che contiene un `\simplify{}` non è LaTeX: KaTeX non conosce
- * quel comando e lancia sempre, quindi il docente ne leggerà il **sorgente**
- * nel riquadro grigio di `Formula`. */
-function resaDaKatex(zona: FormulaTrovata): boolean {
-  return !zona.contenuto.includes("\\simplify{");
-}
-
-/** Traduce i `\var{}` **solo dove KaTeX li incontrerà davvero**: dentro una
- * zona matematica, e solo in una zona che KaTeX proverà a rendere.
- *
- * Tradurre il testo intero aveva due torti, entrambi sotto gli occhi del
- * docente. Un `\var{a}` in mezzo a una frase, che nessuno renderà mai,
- * compariva come il letterale `\mathit{a}`. E nel riquadro del sorgente —
- * quello che compare proprio perché la zona non si può rendere — il docente
- * che aveva scritto `\var{c}` leggeva `\mathit{c}`, un comando che non ha
- * mai battuto: quel riquadro è l'unico posto dove il docente rivede ciò che
- * ha scritto, e falsificarlo è il difetto peggiore dei due.
- *
- * Le due esclusioni sono la stessa regola detta due volte: si traduce dove
- * la traduzione ha un effetto visibile, e si sta fermi dove l'unico effetto
- * sarebbe falsificare il sorgente. */
-function varInCorsivoNelleZone(testo: string, zone: readonly FormulaTrovata[]): string {
-  let out = "";
-  let ultimo = 0;
-  for (const zona of zone) {
-    const tex = testo.slice(zona.inizio, zona.fine);
-    out += testo.slice(ultimo, zona.inizio) + (resaDaKatex(zona) ? varInCorsivo(tex) : tex);
-    ultimo = zona.fine;
-  }
-  return out + testo.slice(ultimo);
 }
 
 export interface CampoTestoMatematicoProps {
@@ -151,7 +123,7 @@ export function CampoTestoMatematico({
   // sorteggiati. La nota lo dice a parole — ma solo quando quel riquadro
   // esiste davvero: un `\simplify{}` citato in mezzo a una frase resta
   // testo, e spiegare un riquadro che non c'è è rumore.
-  const haSimplify = zone.some((zona) => !resaDaKatex(zona));
+  const haSimplify = zone.some((zona) => zona.contenuto.includes("\\simplify{"));
 
   return (
     <div className="flex flex-col gap-2">
@@ -238,7 +210,9 @@ export function CampoTestoMatematico({
           <p>{t("comeSiVedra")}</p>
           {haSimplify && <p className="text-xs">{t("notaSimplify")}</p>}
           <div className="text-foreground">
-            <ContenutoHtml html={`<p>${escapaTesto(varInCorsivoNelleZone(valore, zone))}</p>`} />
+            <MacroFormula.Provider value={MACRO_ECO}>
+              <ContenutoHtml html={`<p>${escapaTesto(valore)}</p>`} />
+            </MacroFormula.Provider>
           </div>
         </div>
       )}
