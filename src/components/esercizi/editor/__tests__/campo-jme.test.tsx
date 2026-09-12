@@ -314,6 +314,33 @@ describe("CampoJme: l'assistente per scrivere la formula", () => {
     expect(avviso.textContent).not.toContain("a(x)");
   });
 
+  it("un disegno che non dà ASCIIMath non chiude la finestra e non tocca il campo, selezione compresa", async () => {
+    // `\overline{x}` è una forma che MathLive non sa serializzare in
+    // ASCIIMath: restituisce la stringa vuota. Prima della guardia in cima a
+    // `versoJme` quel vuoto era un `ok`, e allora: la finestra si chiudeva,
+    // nel campo non entrava niente, nessun avviso — il disegno era perso
+    // senza una parola. E con una selezione attiva era peggio: la selezione
+    // veniva sostituita dalla stringa vuota, cioè CANCELLATA.
+    montaggio({ valoreIniziale: "2*sqrt(2)", assistenteFormula: { nomiNoti: [] } });
+    const campo = screen.getByLabelText("Valore") as HTMLInputElement;
+    // «sqrt(2)» selezionato: il gesto naturale di chi apre la finestra per
+    // rifare quel pezzo.
+    campo.setSelectionRange(2, 9);
+
+    const campoFormule = await disegnaEConferma("\\overline{x}");
+
+    // La premessa della prova, misurata qui e non data per buona: se un
+    // giorno MathLive imparasse a serializzare il soprallineato, questa riga
+    // lo direbbe invece di lasciare la prova verde per la ragione sbagliata.
+    expect(campoFormule.getValue("ascii-math").trim()).toBe("");
+    // Il campo è intatto: né l'inserimento a vuoto né la cancellazione.
+    expect(campo.value).toBe("2*sqrt(2)");
+    // E il docente sa perché, con la finestra ancora aperta sul suo disegno.
+    const avviso = await screen.findByRole("alert");
+    expect(avviso.textContent).toBe(CAMPO.vuoto);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("la formula entra dove sta il cursore, non in fondo al campo", async () => {
     // Il meccanismo del cursore è uno solo (`useTastieraSimboli`), lo
     // stesso del tastierino: questa riga è ciò che se ne accorgerebbe se

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,6 @@ export interface CampoJmeProps {
   onChange: (v: string) => void;
   /** Il tastierino compare solo dove serve davvero: non sotto ogni campo. */
   tastierino?: boolean;
-  aiuto?: string;
   /** Il campo è sbagliato per una ragione che il chiamante conosce e l'eco
    * no — una definizione vuota accanto a un nome compilato, per esempio: per
    * `ecoDi` è solo un campo vuoto, per il pannello è un errore. Segna il
@@ -27,6 +26,15 @@ export interface CampoJmeProps {
    * (`input.tsx`). L'eco d'errore ha già il suo canale, sotto: i due non si
    * sovrappongono mai (dove l'eco parla, il campo non è vuoto). */
   invalido?: boolean;
+  /** L'`id` di un testo, fuori da questo componente, che spiega il campo —
+   * in pratica il messaggio d'errore che accompagna `invalido`.
+   *
+   * Va in `aria-describedby` insieme all'eco, non al suo posto: `invalido`
+   * da solo dà al campo il bordo rosso e l'`aria-invalid`, cioè fa sentire
+   * «non valido» senza il perché, mentre il perché sta scritto accanto. Chi
+   * lo passa deve passarlo solo mentre quel testo è davvero nel documento:
+   * un `aria-describedby` che punta a un `id` assente non descrive nulla. */
+  descrittoDa?: string;
   /** L'assistente per disegnare la formula invece di batterla, e i nomi
    * delle variabili dichiarate nell'esercizio.
    *
@@ -88,8 +96,8 @@ export function CampoJme({
   valore,
   onChange,
   tastierino = false,
-  aiuto,
   invalido = false,
+  descrittoDa,
   assistenteFormula,
 }: CampoJmeProps) {
   const tCampo = useTranslations("esercizi.redazione.campoJme");
@@ -116,6 +124,11 @@ export function CampoJme({
         return tCampo("nomeComeFunzione", { nome: motivato.dettaglio });
       case "non_compila":
         return tCampo("nonCompila", { dettaglio: motivato.dettaglio });
+      // L'unico motivo senza un dato da nominare: non c'è niente che si
+      // possa mettere davanti agli occhi del docente se non il fatto che da
+      // quel disegno non esce nessuna formula.
+      case "vuoto":
+        return tCampo("vuoto");
     }
   }
 
@@ -144,10 +157,15 @@ export function CampoJme({
     chiudiFinestra();
   }
 
-  const esito = ecoDi(valore);
+  // `useMemo`, come il gemello nel player (`player/parti/espressione.tsx`):
+  // `ecoDi` compila e rende con il motore, e misurata costa ~1 ms per campo.
+  // Senza memoria ogni campo montato la ripaga a OGNI render del modulo —
+  // cioè a ogni tasto premuto in un campo qualunque, anche in un altro — e
+  // un esercizio con sei variabili e tre parti ne ha una decina. Con la
+  // memoria la paga solo il campo il cui testo è davvero cambiato.
+  const esito = useMemo(() => ecoDi(valore), [valore]);
   const idEco = `${id}-eco`;
-  const idAiuto = `${id}-aiuto`;
-  const descrizioni = [aiuto ? idAiuto : null, esito.stato === "vuoto" ? null : idEco].filter(Boolean).join(" ");
+  const descrizioni = [descrittoDa, esito.stato === "vuoto" ? null : idEco].filter(Boolean).join(" ");
 
   return (
     <div className="flex flex-col gap-1">
@@ -205,12 +223,6 @@ export function CampoJme({
           // `versoJme` è misurato.
           onConferma={({ asciiMath }) => confermaFormula(asciiMath, assistenteFormula)}
         />
-      )}
-
-      {aiuto && (
-        <p id={idAiuto} className="text-xs text-muted-foreground">
-          {aiuto}
-        </p>
       )}
 
       {esito.stato === "reso" && (

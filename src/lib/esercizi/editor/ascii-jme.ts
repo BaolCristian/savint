@@ -10,8 +10,17 @@ export type EsitoConversione =
        * A `sin x` si risponde «scrivi le parentesi: sin(x)»; ad `a(x+1)`
        * quella stessa frase suggerirebbe il difetto, perché le parentesi ci
        * sono già e quel che manca è l'asterisco. Due frasi contrarie non
-       * possono stare dietro un motivo solo. */
-      motivo: "ambiguo" | "non_compila" | "nome_sconosciuto" | "nome_come_funzione";
+       * possono stare dietro un motivo solo.
+       *
+       * `vuoto` è il quinto, e nasce da una misura della revisione finale:
+       * `jme.compile("")` NON lancia, quindi senza un motivo suo un
+       * ASCIIMath vuoto uscirebbe da qui come `{ ok: true, jme: "" }`. Vedi
+       * la guardia in cima a `versoJme`. */
+      motivo: "vuoto" | "ambiguo" | "non_compila" | "nome_sconosciuto" | "nome_come_funzione";
+      /** Il dato che la frase mostrata al docente deve nominare. `vuoto` è
+       * l'unico motivo che non ne ha uno — non c'è niente da nominare — e
+       * porta la stringa vuota: la frase che gli corrisponde non interpola
+       * nulla. */
       dettaglio: string;
     };
 
@@ -144,7 +153,8 @@ function chiamataSconosciuta(albero: jme.Tree | null | undefined): string | null
  * nome inventato dalla giustapposizione.
  *
  * **`jme.compile` non è un cancello sufficiente**, ed è il motivo per cui
- * questa funzione ha tre strati e non uno:
+ * questa funzione ha tre strati e non uno (più la guardia sul vuoto, che
+ * sta davanti a tutti e tre perché `jme.compile("")` non lancia):
  *
  * 1. **Il rifiuto testuale di `+-` e `-+`, prima di tutto.** Non si sceglie
  *    una delle due soluzioni e non si prova a produrne una lista: si
@@ -201,6 +211,20 @@ export function versoJme(
   nomiNoti: string[],
   { incognitaAmmessa = false }: OpzioniConversione = {},
 ): EsitoConversione {
+  // Strato 0, prima di tutto: il vuoto non è una formula.
+  //
+  // `jme.compile("")` non lancia — misurato — e `findvars` di quell'albero
+  // dà `[]`: senza questa riga un ASCIIMath vuoto attraversa i tre strati
+  // senza incontrare nessuno e arriva in fondo come `{ ok: true, jme: "" }`.
+  // Non è un caso di scuola: MathLive restituisce la stringa vuota per ogni
+  // forma che non sa serializzare in ASCIIMath — `\overline{x}` è quella
+  // misurata dalla revisione finale, e non è l'unica. Un `ok` lì significa
+  // che la finestra si chiude, che nel campo non entra niente e che, se
+  // c'era una selezione, quella selezione viene CANCELLATA: il docente
+  // perde il disegno e il testo, senza una parola. Un rifiuto invece tiene
+  // la finestra aperta, che è la regola dichiarata del componente.
+  if (!asciiMath.trim()) return { ok: false, motivo: "vuoto", dettaglio: "" };
+
   const ambiguo = SEGNI_AMBIGUI.find((segno) => asciiMath.includes(segno));
   if (ambiguo) return { ok: false, motivo: "ambiguo", dettaglio: ambiguo };
 

@@ -180,6 +180,28 @@ const CASI: Array<[string, string, string[], (esito: EsitoConversione) => void]>
     (esito) => expect(jmeProdotto(esito)).toBe("x^2-a^2"),
   ],
   [
+    // `jme.compile("")` NON lancia, e `findvars` di quell'albero dà `[]`:
+    // senza la guardia in cima a `versoJme` la stringa vuota attraversa i
+    // tre strati senza incontrare nessuno e arriva in fondo come
+    // `{ ok: true, jme: "" }`. Non è un caso di scuola: MathLive
+    // restituisce la stringa vuota per ogni forma che non sa serializzare
+    // in ASCIIMath — `\overline{x}` è quella misurata, e un `ok` lì vuol
+    // dire finestra chiusa, campo invariato e selezione cancellata, in
+    // silenzio (vedi la prova gemella in `campo-jme.test.tsx`).
+    "l'ASCIIMath vuoto è rifiutato, non convertito in un JME vuoto",
+    "",
+    [],
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("vuoto"),
+  ],
+  [
+    // La guardia guarda `trim()`: `\;` e gli altri spazi LaTeX escono da
+    // MathLive come spazi, e uno spazio non è più una formula del vuoto.
+    "un ASCIIMath di soli spazi è vuoto quanto la stringa vuota",
+    "   ",
+    [],
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("vuoto"),
+  ],
+  [
     "una formula sgrammaticata è rifiutata, col motivo del motore",
     "((",
     [],
