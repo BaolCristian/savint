@@ -79,6 +79,7 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
         {variabili.map((v, i) => {
           const idNome = `variabile-${i}-nome`;
           const idDefinizione = `variabile-${i}-definizione`;
+          const idErroreDefinizione = `${idDefinizione}-errore`;
           const idDescrizione = `variabile-${i}-descrizione`;
           const nomeInvalido = erroreNome(v.nome);
           const definizioneMancante = erroreDefinizione(v);
@@ -125,8 +126,22 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
                     valore={v.definizione}
                     onChange={(valore) => aggiorna(i, "definizione", valore)}
                     invalido={definizioneMancante}
+                    // Senza questo il campo è `aria-invalid` e basta: chi usa
+                    // un lettore di schermo sente «non valido» e non sente il
+                    // PERCHÉ, che è scritto nel paragrafo qui sotto — mentre
+                    // il campo accanto, con l'eco, il perché ce l'ha. Il
+                    // messaggio e il bordo rosso nascono dallo stesso
+                    // `definizioneMancante`, quindi la descrizione si passa
+                    // solo quando il paragrafo esiste davvero: un
+                    // `aria-describedby` che punta a un nodo assente non
+                    // descrive niente.
+                    descrittoDa={definizioneMancante ? idErroreDefinizione : undefined}
                   />
-                  {definizioneMancante && <p className="text-xs text-destructive">{t("erroreDefinizione")}</p>}
+                  {definizioneMancante && (
+                    <p id={idErroreDefinizione} className="text-xs text-destructive">
+                      {t("erroreDefinizione")}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label htmlFor={idDescrizione} className="text-sm font-medium">

@@ -179,3 +179,75 @@ describe("ParteNumerica: il valore atteso non ammette l'incognita", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("y");
   });
 });
+
+/** La descrizione del campo risolta a mano — `aria-describedby` seguito fino
+ * al testo, come farebbe una tecnologia assistiva.
+ *
+ * `document.getElementById` e non `querySelector("#…")`: gli `id` di
+ * `useId` contengono i due punti, che in un selettore CSS non sono un
+ * carattere ordinario. */
+function descrizioneDi(campo: HTMLElement): string {
+  return (campo.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .map((id) => document.getElementById(id)?.textContent ?? "")
+    .join(" ");
+}
+
+/** Due parti numeriche nello stesso esercizio: caso supportato (ciascuna
+ * porta il suo «Parte N»), e prima di `useId` ciascuna portava anche gli
+ * stessi `id` costanti dell'altra. */
+function montaggioDoppio(prima: string, seconda: string) {
+  return render(
+    <NextIntlClientProvider locale="it" messages={messaggiIt}>
+      <Cornice parteIniziale={{ ...PARTE, valore: prima }} onChange={vi.fn()} onRimuovi={vi.fn()} />
+      <Cornice parteIniziale={{ ...PARTE, valore: seconda }} onChange={vi.fn()} onRimuovi={vi.fn()} />
+    </NextIntlClientProvider>,
+  );
+}
+
+describe("ParteNumerica: due parti dello stesso esercizio non si scambiano gli id", () => {
+  it("ogni campo del valore è descritto dalla PROPRIA eco, non da quella dell'altra parte", () => {
+    // Con `id` costanti i due campi condividevano `id`, e da quell'`id`
+    // discende `${id}-eco`: l'`aria-describedby` del secondo campo puntava
+    // all'eco del PRIMO — cioè al lettore di schermo, sotto il valore atteso
+    // della seconda domanda, arrivava l'interpretazione del motore della
+    // prima. Un `id` duplicato era un fastidio; con l'eco appesa sopra è
+    // un'informazione sbagliata.
+    montaggioDoppio("2*", "sin x");
+
+    const campi = screen.getAllByLabelText(
+      messaggiIt.esercizi.redazione.parti.numerica.valore,
+    ) as HTMLInputElement[];
+    expect(campi).toHaveLength(2);
+    expect(campi[0]!.id).not.toBe(campi[1]!.id);
+
+    // Ciascuno sente il proprio: l'errore del motore sotto «2*», la
+    // moltiplicazione implicita sotto «sin x».
+    expect(descrizioneDi(campi[0]!)).toContain("Argomenti insufficienti per l'operazione *");
+    expect(descrizioneDi(campi[0]!)).not.toContain("sin×x");
+    expect(descrizioneDi(campi[1]!)).toContain("sin×x");
+    expect(descrizioneDi(campi[1]!)).not.toContain("Argomenti insufficienti");
+  });
+
+  it("la tolleranza scelta in una parte non spegne quella dell'altra", async () => {
+    // I tre radio prendono il `name` dallo stesso `id`: con `id` costanti i
+    // due terzetti diventano per il browser UN gruppo solo, e scegliere
+    // «margine» nella parte 2 toglierebbe la scelta alla parte 1 — senza che
+    // il modello della parte 1 sia cambiato.
+    montaggioDoppio("1", "2");
+
+    const esatta = screen.getAllByRole("radio", {
+      name: messaggiIt.esercizi.redazione.parti.numerica.tolleranzaEsatta,
+    });
+    const margine = screen.getAllByRole("radio", {
+      name: messaggiIt.esercizi.redazione.parti.numerica.tolleranzaMargine,
+    });
+    expect(esatta[0]).toBeChecked();
+
+    await userEvent.click(margine[1]!);
+
+    expect(margine[1]).toBeChecked();
+    expect(esatta[0]).toBeChecked();
+  });
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,13 @@ export interface ParteEspressioneProps {
  * servono (vedi il brief del Task 7). */
 export function ParteEspressione({ parte, onChange, onRimuovi, nomiVariabili }: ParteEspressioneProps) {
   const t = useTranslations("esercizi.redazione.parti");
-  const idRisposta = "parte-espressione-risposta";
+  // `useId`, non una costante: vedi il commento gemello in
+  // `parte-numerica.tsx`. Due parti a formula nello stesso esercizio sono un
+  // caso supportato, e da questo `id` discende l'`aria-describedby` che lega
+  // il campo all'eco del motore: duplicarlo vuol dire descrivere la risposta
+  // attesa della parte 2 con l'eco della parte 1.
+  const idBase = useId();
+  const idRisposta = `${idBase}-risposta`;
 
   return (
     <div className="space-y-3 rounded-lg border p-4">

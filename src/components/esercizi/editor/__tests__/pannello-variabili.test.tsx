@@ -106,6 +106,29 @@ describe("PannelloVariabili", () => {
     expect(screen.getByText(messaggiIt.esercizi.redazione.variabili.erroreDefinizione)).toBeInTheDocument();
   });
 
+  it("l'errore della definizione descrive il campo: chi non lo vede se lo sente leggere", () => {
+    // `aria-invalid` da solo fa sentire «non valido» e non fa sentire il
+    // PERCHÉ, che è scritto nel paragrafo accanto: il campo della
+    // definizione era l'unico della riga a portare un messaggio slegato da
+    // sé. Il campo accanto, con l'eco, la sua descrizione ce l'aveva già.
+    const variabili: VariabileEditor[] = [{ nome: "a", definizione: "", descrizione: "" }];
+    montaggio({ variabili });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toHaveAccessibleDescription(
+      messaggiIt.esercizi.redazione.variabili.erroreDefinizione,
+    );
+  });
+
+  it("una definizione scritta non lascia appeso un aria-describedby a un testo che non c'è più", () => {
+    // Un `aria-describedby` che punta a un `id` assente non descrive niente:
+    // il messaggio e la descrizione nascono dallo stesso errore e devono
+    // sparire insieme.
+    montaggio({ variabili: [DUE_VARIABILI[0]!] });
+    const definizione = screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione);
+    for (const id of (definizione.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean)) {
+      expect(document.getElementById(id)).not.toBeNull();
+    }
+  });
+
   it("i due campi sbagliati della stessa riga si segnalano allo stesso modo: entrambi marcati come non validi", () => {
     // `aria-invalid` non è solo per le tecnologie assistive: è ciò che
     // accende il bordo rosso di `input.tsx`

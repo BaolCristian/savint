@@ -111,3 +111,41 @@ describe("ParteEspressione: la risposta attesa ammette l'incognita", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+/** La descrizione del campo risolta a mano — `aria-describedby` seguito fino
+ * al testo, come farebbe una tecnologia assistiva. `document.getElementById`
+ * e non `querySelector("#…")`: gli `id` di `useId` contengono i due punti,
+ * che in un selettore CSS non sono un carattere ordinario. */
+function descrizioneDi(campo: HTMLElement): string {
+  return (campo.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .map((id) => document.getElementById(id)?.textContent ?? "")
+    .join(" ");
+}
+
+describe("ParteEspressione: due parti dello stesso esercizio non si scambiano gli id", () => {
+  it("ogni campo della risposta è descritto dalla PROPRIA eco, non da quella dell'altra parte", () => {
+    // Il gemello della prova in `parte-numerica.test.tsx`: prima di `useId`
+    // questo componente aveva anch'esso un `id` costante, e due parti a
+    // formula nello stesso esercizio se lo dividevano — con l'eco del motore
+    // della parte 1 appesa come descrizione del campo della parte 2.
+    render(
+      <NextIntlClientProvider locale="it" messages={messaggiIt}>
+        <Cornice parteIniziale={{ ...PARTE, risposta: "2*" }} onChange={vi.fn()} onRimuovi={vi.fn()} />
+        <Cornice parteIniziale={{ ...PARTE, risposta: "sin x" }} onChange={vi.fn()} onRimuovi={vi.fn()} />
+      </NextIntlClientProvider>,
+    );
+
+    const campi = screen.getAllByLabelText(
+      messaggiIt.esercizi.redazione.parti.espressione.risposta,
+    ) as HTMLInputElement[];
+    expect(campi).toHaveLength(2);
+    expect(campi[0]!.id).not.toBe(campi[1]!.id);
+
+    expect(descrizioneDi(campi[0]!)).toContain("Argomenti insufficienti per l'operazione *");
+    expect(descrizioneDi(campi[0]!)).not.toContain("sin×x");
+    expect(descrizioneDi(campi[1]!)).toContain("sin×x");
+    expect(descrizioneDi(campi[1]!)).not.toContain("Argomenti insufficienti");
+  });
+});

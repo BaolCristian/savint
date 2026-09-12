@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,20 @@ export interface ParteNumericaProps {
  * docente non deve incontrarla qui (vedi il brief del Task 7). */
 export function ParteNumerica({ parte, onChange, onRimuovi, nomiVariabili }: ParteNumericaProps) {
   const t = useTranslations("esercizi.redazione.parti");
-  const idValore = "parte-numerica-valore";
-  const idMargine = "parte-numerica-margine";
-  const idCifre = "parte-numerica-cifre";
+  // `useId`, non costanti: questo componente è reso dentro un `map` sulle
+  // parti (`editor-esercizio.tsx`), e due parti numeriche nello stesso
+  // esercizio sono un caso supportato — tant'è che ciascuna porta il suo
+  // «Parte N». Con `id` costanti le due parti li condividerebbero, e da
+  // quegli `id` discendono ora anche `${id}-eco` e l'`aria-describedby` del
+  // campo: il valore atteso della parte 2 risulterebbe descritto dall'eco
+  // del motore della parte 1, cioè da un'informazione sbagliata. Lo stesso
+  // vale per il `name` dei tre radio della tolleranza, che qui deriva dallo
+  // stesso `id`: due gruppi omonimi sono per il browser un gruppo solo, e
+  // scegliere «margine» nella parte 2 spegnerebbe la scelta della parte 1.
+  const idBase = useId();
+  const idValore = `${idBase}-valore`;
+  const idMargine = `${idBase}-margine`;
+  const idCifre = `${idBase}-cifre`;
 
   function aggiornaTolleranza(tolleranza: Tolleranza) {
     onChange({ ...parte, tolleranza });
