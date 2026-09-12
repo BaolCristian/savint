@@ -1337,7 +1337,8 @@
         "potenza": "Power",
         "indice": "Subscript",
         "comeSiVedra": "How it will look:",
-        "notaSimplify": "Inside a simplify command the text stays as written: what comes out of it depends on the drawn numbers, and you can see that in the preview beside."
+        "notaSimplify": "Inside a simplify command the text stays as written: what comes out of it depends on the drawn numbers, and you can see that in the preview beside.",
+        "vuoto": "The window is empty: there is no formula to insert. Draw one here, or close the window if you changed your mind."
       },
       "finestraFormula": {
         "titolo": "Write the formula",
