@@ -8,6 +8,9 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],
+    // Una suite alla volta sul database di sviluppo: vedi il commento in
+    // testa a `tests/global-setup.ts` per la misura che lo motiva.
+    globalSetup: ["./tests/global-setup.ts"],
     // I test differenziali contro il runtime Numbas sono lenti (bundle da
     // 1,6 MB in jsdom): girano a parte, con `npm run test:engine:diff`.
     exclude: [
