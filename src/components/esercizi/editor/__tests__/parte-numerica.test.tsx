@@ -6,6 +6,12 @@ import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
 import type { ParteEditor } from "@/lib/esercizi/editor/modello";
 import { ParteNumerica } from "../parte-numerica";
+import { campoFormulaAperto, preparaJsdomPerMathlive } from "./aiuto-mathlive";
+
+preparaJsdomPerMathlive();
+
+const CAMPO = messaggiIt.esercizi.redazione.campoJme;
+const FINESTRA = messaggiIt.esercizi.redazione.finestraFormula;
 
 type ParteNumericaEditor = Extract<ParteEditor, { tipo: "numerica" }>;
 
@@ -104,6 +110,23 @@ describe("ParteNumerica", () => {
     expect(tastiere()).toHaveLength(1);
   });
 
+  it("il margine non ha l'assistente per le formule, il valore atteso sì", async () => {
+    // La stessa ragione della tastiera, e vale la pena sorvegliarla a
+    // parte: la prop che accende l'assistente è diversa da quella della
+    // tastiera, e senza questa riga niente impedirebbe che il pulsante
+    // ricomparisse sotto un campo dove una formula disegnata non ha senso —
+    // un margine è `0.01`, un editor visuale non ha niente da disegnarci.
+    montaggio();
+    const pulsanti = () =>
+      screen.queryAllByRole("button", { name: messaggiIt.esercizi.redazione.campoJme.scriviFormula });
+    expect(pulsanti()).toHaveLength(1);
+    await userEvent.click(
+      screen.getByRole("radio", { name: messaggiIt.esercizi.redazione.parti.numerica.tolleranzaMargine }),
+    );
+    await screen.findByLabelText(messaggiIt.esercizi.redazione.parti.numerica.margine);
+    expect(pulsanti()).toHaveLength(1);
+  });
+
   it("il margine mostra comunque l'eco: anche una tolleranza va vista come il motore l'ha capita", async () => {
     const { container } = montaggio();
     await userEvent.click(
@@ -131,5 +154,28 @@ describe("ParteNumerica", () => {
     const { onRimuovi } = montaggio();
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.parti.rimuovi }));
     expect(onRimuovi).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ParteNumerica: il valore atteso non ammette l'incognita", () => {
+  it("una formula con un simbolo libero è rifiutata, e il campo non cambia", async () => {
+    // Il gemello contrario della prova in `parte-espressione.test.tsx`: la
+    // stessa formula, l'altra superficie. Qui il valore deve venir fuori
+    // dalle variabili dichiarate — un nome libero è un errore, non
+    // un'incognita — e le due prove insieme sono ciò che impedisce di
+    // accendere o spegnere `incognitaAmmessa` su entrambe per sbaglio.
+    montaggio();
+    const valore = screen.getByLabelText(
+      messaggiIt.esercizi.redazione.parti.numerica.valore,
+    ) as HTMLInputElement;
+    const prima = valore.value;
+
+    await userEvent.click(screen.getByRole("button", { name: CAMPO.scriviFormula }));
+    const campo = await campoFormulaAperto();
+    campo.value = "2y";
+    await userEvent.click(screen.getByRole("button", { name: FINESTRA.inserisci }));
+
+    expect(valore.value).toBe(prima);
+    expect((await screen.findByRole("alert")).textContent).toContain("y");
   });
 });

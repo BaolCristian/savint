@@ -52,7 +52,15 @@ export function ParteEspressione({ parte, onChange, onRimuovi, nomiVariabili }: 
             valore={parte.risposta}
             onChange={(risposta) => onChange({ ...parte, risposta })}
             tastierino
-            assistenteFormula={{ nomiNoti: nomiVariabili }}
+            // `incognitaAmmessa`: qui la risposta è scritta *nell'incognita*
+            // — `a*n*x^(n-1)`, dove `x` non è una variabile del pannello ma
+            // il simbolo della funzione. È la forma normale di una risposta
+            // a espressione (`content/esercizi/06-derivate-elementari.json`),
+            // e la verifica a valle già la campiona con identificatori
+            // liberi (`verifica.ts`). Sul valore atteso di una parte
+            // numerica, invece, non è ammessa: lì il valore deve venir
+            // fuori dalle variabili dichiarate.
+            assistenteFormula={{ nomiNoti: nomiVariabili, incognitaAmmessa: true }}
           />
         </div>
       </div>

@@ -1321,7 +1321,8 @@
         "interpretatoCome": "Interpretato come:",
         "scriviFormula": "Scrivi la formula",
         "ambiguo": "La formula contiene «{segno}»: il motore ne terrebbe una sola delle due soluzioni, in silenzio. Scrivi le due soluzioni in due formule separate, oppure batti la formula direttamente nel campo.",
-        "nomeSconosciuto": "«{nome}» non è una variabile di questo esercizio, e il motore non leggerebbe la formula come l'hai disegnata. Scrivi le funzioni con le parentesi — {nome}(x) — e i prodotti con l'asterisco — 2*{nome} —, oppure batti la formula direttamente nel campo.",
+        "nomeSconosciuto": "«{nome}» non è una variabile di questo esercizio, e il motore lo leggerebbe come una moltiplicazione. Se intendevi una funzione, scrivila con le parentesi: {nome}(x). Altrimenti dichiara la variabile nel pannello, oppure batti la formula direttamente nel campo.",
+        "nomeComeFunzione": "Scritto così, «{nome}(…)» è una chiamata alla funzione «{nome}», che il motore non ha. Se intendevi una moltiplicazione, scrivila con l'asterisco: {nome}*(…). Oppure batti la formula direttamente nel campo.",
         "nonCompila": "Il motore non riesce a leggere questa formula: {dettaglio}. Puoi correggerla qui, oppure batterla direttamente nel campo."
       },
       "campoTesto": {

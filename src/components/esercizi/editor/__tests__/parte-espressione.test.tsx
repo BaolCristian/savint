@@ -6,6 +6,12 @@ import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
 import type { ParteEditor } from "@/lib/esercizi/editor/modello";
 import { ParteEspressione } from "../parte-espressione";
+import { campoFormulaAperto, preparaJsdomPerMathlive } from "./aiuto-mathlive";
+
+preparaJsdomPerMathlive();
+
+const CAMPO = messaggiIt.esercizi.redazione.campoJme;
+const FINESTRA = messaggiIt.esercizi.redazione.finestraFormula;
 
 type ParteEspressioneEditor = Extract<ParteEditor, { tipo: "espressione" }>;
 
@@ -80,5 +86,28 @@ describe("ParteEspressione", () => {
     const { onRimuovi } = montaggio();
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.redazione.parti.rimuovi }));
     expect(onRimuovi).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ParteEspressione: la risposta attesa ammette l'incognita", () => {
+  it("una formula con un simbolo libero entra nel campo", async () => {
+    // Una risposta a espressione si scrive *nell'incognita*: la forma
+    // normale è `a*n*x^(n-1)`, dove `x` non è una variabile del pannello.
+    // Qui `2y` è la stessa cosa in piccolo — un solo nome libero — e passa
+    // solo perché questa superficie lo ammette. È l'unica prova che
+    // sorveglia `incognitaAmmessa` dove viene deciso, cioè qui: nel
+    // cancello, senza l'opzione, `2y` sarebbe rifiutata.
+    montaggio();
+    await userEvent.click(screen.getByRole("button", { name: CAMPO.scriviFormula }));
+    const campo = await campoFormulaAperto();
+    campo.value = "2y";
+
+    await userEvent.click(screen.getByRole("button", { name: FINESTRA.inserisci }));
+
+    const risposta = screen.getByLabelText(
+      messaggiIt.esercizi.redazione.parti.espressione.risposta,
+    ) as HTMLInputElement;
+    expect(risposta.value).toContain("2y");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

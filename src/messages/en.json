@@ -1321,7 +1321,8 @@
         "interpretatoCome": "Interpreted as:",
         "scriviFormula": "Write the formula",
         "ambiguo": "The formula contains «{segno}»: the engine would silently keep only one of the two solutions. Write the two solutions as two separate formulas, or type the formula straight into the field.",
-        "nomeSconosciuto": "«{nome}» is not a variable of this exercise, and the engine would not read the formula the way you drew it. Write functions with brackets — {nome}(x) — and products with an asterisk — 2*{nome} — or type the formula straight into the field.",
+        "nomeSconosciuto": "«{nome}» is not a variable of this exercise, and the engine would read it as a multiplication. If you meant a function, write it with brackets: {nome}(x). Otherwise declare the variable in the panel, or type the formula straight into the field.",
+        "nomeComeFunzione": "Written this way, «{nome}(…)» is a call to a function named «{nome}», which the engine does not have. If you meant a multiplication, write it with an asterisk: {nome}*(…). Or type the formula straight into the field.",
         "nonCompila": "The engine cannot read this formula: {dettaglio}. You can fix it here, or type it straight into the field."
       },
       "campoTesto": {

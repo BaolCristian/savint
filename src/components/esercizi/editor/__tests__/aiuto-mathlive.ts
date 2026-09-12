@@ -1,3 +1,6 @@
+import { screen, waitFor } from "@testing-library/react";
+import type { MathfieldElement } from "mathlive";
+
 /** Cinque cose che MathLive usa e che jsdom non ha.
  *
  * Non è una comodità: senza di esse il costruttore del campo lancia, il
@@ -95,4 +98,24 @@ export function preparaJsdomPerMathlive(): void {
       },
     });
   }
+}
+
+/** Il campo di MathLive dentro la finestra aperta adesso.
+ *
+ * Il pezzo che contiene MathLive arriva a parte (`dynamic()`), quindi fra
+ * il clic che apre la finestra e la nascita del campo passa almeno un giro
+ * d'orologio: cercarlo subito non lo troverebbe. Si cerca **dentro la
+ * finestra**, non in tutto il documento: la finestra vive in un portale
+ * fuori dal contenitore della resa, e una ricerca larga potrebbe trovare il
+ * campo di un'altra resa rimasta appesa.
+ *
+ * Sta qui e non in ogni file di prova perché i campi che aprono questa
+ * finestra sono più d'uno, e tre copie di questa attesa divergerebbero. */
+export async function campoFormulaAperto(): Promise<MathfieldElement> {
+  const finestra = await screen.findByRole("dialog");
+  return await waitFor(() => {
+    const campo = finestra.querySelector<MathfieldElement>("math-field");
+    if (!campo) throw new Error("il campo delle formule non è nella finestra");
+    return campo;
+  });
 }

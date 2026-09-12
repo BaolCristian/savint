@@ -44,8 +44,12 @@ export interface CampoJmeProps {
    * dove si scrive matematica (la risposta attesa, il valore atteso), non
    * sulle istruzioni, non sulla condizione, non sulla definizione di una
    * variabile (`random(-9..9 except 0)` non è una formula) e non sul
-   * margine di tolleranza (è un decimale). */
-  assistenteFormula?: { nomiNoti: string[] };
+   * margine di tolleranza (è un decimale).
+   *
+   * `incognitaAmmessa` dice che superficie è questa: sulla risposta attesa
+   * un nome libero in più è l'incognita (`a*n*x^(n-1)`), sul valore atteso
+   * è un errore. Vedi `OpzioniConversione` in `ascii-jme.ts`. */
+  assistenteFormula?: { nomiNoti: string[]; incognitaAmmessa?: boolean };
 }
 
 /** Un campo JME: l'etichetta, il campo di testo, opzionalmente la tastiera
@@ -108,6 +112,8 @@ export function CampoJme({
         return tCampo("ambiguo", { segno: motivato.dettaglio });
       case "nome_sconosciuto":
         return tCampo("nomeSconosciuto", { nome: motivato.dettaglio });
+      case "nome_come_funzione":
+        return tCampo("nomeComeFunzione", { nome: motivato.dettaglio });
       case "non_compila":
         return tCampo("nonCompila", { dettaglio: motivato.dettaglio });
     }
@@ -124,8 +130,10 @@ export function CampoJme({
    * fra quelle che MathLive restituisce, e quella su cui il cancello di
    * `versoJme` è misurato. Il rifiuto NON richiude la finestra: il disegno
    * resta lì, da correggere o da annullare. */
-  function confermaFormula(asciiMath: string, nomiNoti: string[]) {
-    const convertita = versoJme(asciiMath, nomiNoti);
+  function confermaFormula(asciiMath: string, assistente: NonNullable<CampoJmeProps["assistenteFormula"]>) {
+    const convertita = versoJme(asciiMath, assistente.nomiNoti, {
+      incognitaAmmessa: assistente.incognitaAmmessa,
+    });
     if (!convertita.ok) {
       setRifiuto(convertita);
       return;
@@ -195,7 +203,7 @@ export function CampoJme({
           onChiudi={chiudiFinestra}
           // L'ASCIIMath e non il LaTeX: è la forma su cui il cancello di
           // `versoJme` è misurato.
-          onConferma={({ asciiMath }) => confermaFormula(asciiMath, assistenteFormula.nomiNoti)}
+          onConferma={({ asciiMath }) => confermaFormula(asciiMath, assistenteFormula)}
         />
       )}
 

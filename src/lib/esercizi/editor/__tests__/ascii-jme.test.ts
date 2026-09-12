@@ -55,6 +55,23 @@ const CASI: Array<[string, string, string[], (esito: EsitoConversione) => void]>
     (esito) => expect(esitoRifiutato(esito).motivo).toBe("ambiguo"),
   ],
   [
+    // I digrammi ASCII non sono l'unica forma in cui MathLive emette il
+    // segno: `\pm` in mezzo a una formula esce come U+00B1. `a±b` compila,
+    // ha nomi tutti noti, e senza questa riga passerebbe.
+    "«±» (U+00B1) è ambiguo come il digramma",
+    "a±b",
+    ["a", "b"],
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("ambiguo"),
+  ],
+  [
+    // LA quadratica scritta con l'altro segno: `\frac{-b\mp\sqrt{...}}{2a}`
+    // esce da MathLive con U+2213, non con `-+`.
+    "la quadratica con «∓» (U+2213): rifiutata come la sua gemella",
+    "(-b∓sqrt(b^2-4a c))/(2a)",
+    ["a", "b", "c"],
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("ambiguo"),
+  ],
+  [
     // Strato 2, riga 1: JME non ha una `root` a due chiamate. Il valore,
     // non la stringa.
     "la radice cubica di 8 diventa un JME che vale 2",
@@ -109,29 +126,46 @@ const CASI: Array<[string, string, string[], (esito: EsitoConversione) => void]>
     (esito) => expect(vale(jmeProdotto(esito), "sin(x)", { x: 1 })).toBe(true),
   ],
   [
-    // `_` letto come funzione: `findvars` ne dice ["_", "log", "x"].
+    // `_` letto come chiamata: `findvars` ne dice ["_", "log", "x"], e `_`
+    // sta in posizione di funzione.
     "«log _(10)x» è rifiutato: il pedice non è sintassi del motore",
     "log _(10)x",
     ["x"],
-    (esito) => expect(esitoRifiutato(esito).motivo).toBe("nome_sconosciuto"),
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("nome_come_funzione"),
   ],
   [
     // Misurato: `\pi(x+1)` esce da MathLive come `pi(x+1)`, e il motore lo
     // legge come una CHIAMATA alla funzione `pi`, che non esiste
     // («La funzione pi non è definita: pi è una variabile e intendevi
-    // pi*(...)?»). `findvars` restituisce `pi` fra i nomi liberi proprio
-    // perché sta in posizione di funzione: è il motivo per cui i nomi
-    // liberi NON vanno ripassati per un secondo filtro costruito su
-    // `allConstants()` — quel filtro lascerebbe passare questa formula
-    // rotta. Vedi il commento sullo strato 3 in `ascii-jme.ts`.
+    // pi*(...)?»).
     "«pi(x+1)»: una costante in posizione di funzione è rifiutata",
     "pi(x+1)",
     ["x"],
     (esito) => {
       const rifiuto = esitoRifiutato(esito);
-      expect(rifiuto.motivo).toBe("nome_sconosciuto");
+      expect(rifiuto.motivo).toBe("nome_come_funzione");
       expect(rifiuto.dettaglio).toContain("pi");
     },
+  ],
+  [
+    // Il caso frequente, e quello che `nomiNoti` da solo assolverebbe: il
+    // docente scrive `a(x+1)` intendendo `a·(x+1)`, con `a` DICHIARATA.
+    // MathLive emette esattamente `a(x+1)`; il motore poi lancia («La
+    // funzione a non è definita: a è una variabile e intendevi a*(...)?»).
+    "«a(x+1)» con «a» dichiarata: rifiutata lo stesso, nominando «a»",
+    "a(x+1)",
+    ["a", "x"],
+    (esito) => {
+      const rifiuto = esitoRifiutato(esito);
+      expect(rifiuto.motivo).toBe("nome_come_funzione");
+      expect(rifiuto.dettaglio).toBe("a");
+    },
+  ],
+  [
+    "«f(x)»: una funzione che il motore non ha è rifiutata",
+    "f(x)",
+    ["x"],
+    (esito) => expect(esitoRifiutato(esito).motivo).toBe("nome_come_funzione"),
   ],
   [
     "un prodotto esplicito passa intatto",
@@ -178,6 +212,43 @@ describe("versoJme: i nomi che il motore conosce da sé", () => {
 
   it("una costante dentro una formula non è scambiata per una variabile mancante", () => {
     expect(versoJme("2 * pi * r", ["r"]).ok).toBe(true);
+  });
+});
+
+/** Le due superfici, una per riga: `ammessa` dice se quella superficie
+ * concede l'incognita. La stessa formula deve dare esiti diversi, ed è
+ * esattamente ciò che questa tabella sorveglia. */
+const INCOGNITA: Array<[string, string, string[], boolean, "ok" | "rifiuto"]> = [
+  // La forma normale di una risposta a espressione: `x` non è una variabile
+  // del pannello, è il simbolo della funzione
+  // (`content/esercizi/06-derivate-elementari.json`).
+  ["la derivata di a*x^n, con l'incognita", "a*n*x^(n-1)", ["a", "n"], true, "ok"],
+  // La stessa formula sul valore atteso di una parte numerica: lì il valore
+  // deve venir fuori dalle variabili dichiarate, e `x` è un errore.
+  ["la stessa formula sul valore atteso", "a*n*x^(n-1)", ["a", "n"], false, "rifiuto"],
+  // Due nomi liberi non sono un'incognita: sono una giustapposizione.
+  ["«sin x»: due nomi liberi", "sin x", [], true, "rifiuto"],
+  // Ciò che MathLive fa di `sen x`: tre nomi liberi, `e` è Nepero. Senza
+  // questo controllo non lancerebbe nemmeno — `evaluate("s e n x", …)` vale
+  // 2.718281828459045 — cioè sarebbe silenzioso come la quadratica.
+  ["«sen x» spezzato in «s e n x»: tre nomi liberi", "s e n x", [], true, "rifiuto"],
+  ["«tg x» spezzato in «t g x»: tre nomi liberi", "t g x", [], true, "rifiuto"],
+  // Il costo accettato della regola: un nome libero solo passa anche
+  // quando è una svista. La verifica a venti semi resta a valle.
+  ["un nome libero solo passa, anche se è una svista", "2 * y", [], true, "ok"],
+];
+
+describe("versoJme: l'incognita della risposta attesa", () => {
+  it.each(INCOGNITA)("%s", (_descrizione, ascii, noti, ammessa, atteso) => {
+    const esito = versoJme(ascii, noti, { incognitaAmmessa: ammessa });
+    if (atteso === "ok") expect(jmeProdotto(esito)).toBe(ascii);
+    else expect(esitoRifiutato(esito).motivo).toBe("nome_sconosciuto");
+  });
+
+  it("senza opzioni la superficie è quella stretta: nessun nome libero", () => {
+    // Il valore per difetto conta: un chiamante che dimentica l'opzione
+    // deve ottenere il cancello severo, non quello indulgente.
+    expect(versoJme("2 * y", []).ok).toBe(false);
   });
 });
 

@@ -3,12 +3,11 @@ import { describe, it, expect } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import type { MathfieldElement } from "mathlive";
 import { evaluate } from "@savint/engine";
 import messaggiIt from "@/messages/it.json";
 import { ecoDi, type EsitoEco } from "../eco-jme";
 import { CampoJme } from "../campo-jme";
-import { preparaJsdomPerMathlive } from "./aiuto-mathlive";
+import { campoFormulaAperto, preparaJsdomPerMathlive } from "./aiuto-mathlive";
 
 preparaJsdomPerMathlive();
 
@@ -230,22 +229,10 @@ describe("CampoJme: il campo sbagliato si vede, e si sente", () => {
   });
 });
 
-/** Il campo di MathLive dentro la finestra aperta ora. Come in
- * `finestra-formula.test.tsx`: il pezzo con dentro le 843 KB arriva a parte,
- * e prima che arrivi nel DOM non c'è nessun `math-field`. */
-async function campoFormula(): Promise<MathfieldElement> {
-  const finestra = await screen.findByRole("dialog");
-  return await waitFor(() => {
-    const campo = finestra.querySelector<MathfieldElement>("math-field");
-    if (!campo) throw new Error("il campo delle formule non è nella finestra");
-    return campo;
-  });
-}
-
 /** Apre la finestra, ci disegna dentro `latex` e conferma. */
 async function disegnaEConferma(latex: string) {
   await userEvent.click(screen.getByRole("button", { name: CAMPO.scriviFormula }));
-  const campo = await campoFormula();
+  const campo = await campoFormulaAperto();
   campo.value = latex;
   await userEvent.click(screen.getByRole("button", { name: FINESTRA.inserisci }));
   return campo;
@@ -310,6 +297,21 @@ describe("CampoJme: l'assistente per scrivere la formula", () => {
     expect((screen.getByLabelText("Valore") as HTMLInputElement).value).toBe("");
     const avviso = await screen.findByRole("alert");
     expect(avviso.textContent).toContain("sin(x)");
+  });
+
+  it("«a(x+1)» dice che manca l'asterisco, non che mancano le parentesi", async () => {
+    // Il docente scrive `a(x+1)` intendendo `a·(x+1)`, con `a` dichiarata.
+    // La frase che gli serve è quella del motore («a è una variabile e
+    // intendevi a*(...)?»): le parentesi ci sono già, e suggerirgliele
+    // sarebbe suggerirgli il difetto. `not.toContain("a(x)")` è la metà che
+    // conta: senza, la vecchia frase sbagliata terrebbe verde la riga.
+    montaggio({ assistenteFormula: { nomiNoti: ["a", "x"] } });
+
+    await disegnaEConferma("a(x+1)");
+
+    const avviso = await screen.findByRole("alert");
+    expect(avviso.textContent).toContain("a*(");
+    expect(avviso.textContent).not.toContain("a(x)");
   });
 
   it("la formula entra dove sta il cursore, non in fondo al campo", async () => {

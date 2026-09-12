@@ -2,14 +2,56 @@ import { jme, errorMessageIn } from "@savint/engine";
 
 export type EsitoConversione =
   | { ok: true; jme: string }
-  | { ok: false; motivo: "ambiguo" | "non_compila" | "nome_sconosciuto"; dettaglio: string };
+  | {
+      ok: false;
+      /** `nome_come_funzione` è il quarto motivo, e non c'era nel brief: ce
+       * l'ha messo la constatazione che un nome in posizione di chiamata
+       * vuole una frase OPPOSTA a quella di un nome in posizione di valore.
+       * A `sin x` si risponde «scrivi le parentesi: sin(x)»; ad `a(x+1)`
+       * quella stessa frase suggerirebbe il difetto, perché le parentesi ci
+       * sono già e quel che manca è l'asterisco. Due frasi contrarie non
+       * possono stare dietro un motivo solo. */
+      motivo: "ambiguo" | "non_compila" | "nome_sconosciuto" | "nome_come_funzione";
+      dettaglio: string;
+    };
 
-/** I due segni che MathLive emette per `\pm` e `\mp`.
+export interface OpzioniConversione {
+  /** La superficie ammette UN nome libero non dichiarato: l'incognita.
+   *
+   * Vale per la **risposta attesa** di una parte a espressione, dove
+   * `a*n*x^(n-1)` è la forma normale e `x` è l'incognita, non una variabile
+   * dimenticata nel pannello (`content/esercizi/06-derivate-elementari.json`).
+   * Non è un'indulgenza inventata qui: `verifica.ts:363-416` **campiona
+   * già** gli identificatori liberi delle risposte a espressione, per
+   * progetto, e questo cancello si allinea a ciò che la verifica fa a valle.
+   *
+   * Uno, non «quanti se ne vogliono»: è il numero che separa l'incognita
+   * dalla giustapposizione. `sin x` ne ha due (`sin`, `x`), `s e n x` — ciò
+   * che MathLive fa di `sen x`, e che vale `e` di Nepero senza lanciare —
+   * ne ha tre.
+   *
+   * Sul **valore atteso** di una parte numerica resta spento: lì il valore
+   * deve essere calcolabile dalle variabili dichiarate, e un nome libero è
+   * davvero un errore. */
+  incognitaAmmessa?: boolean;
+}
+
+/** I segni che MathLive emette per `\pm` e `\mp`, in tutte le forme in cui
+ * li emette davvero.
  *
- * `jme.compile` li ACCETTA, e in silenzio: `x=+-3` compila e vale `x = -3`,
- * `(-b+-sqrt(b^2-4a c))/(2a)` — la formula quadratica — compila e tiene la
- * sola radice col meno. Misurato, non temuto. */
-const SEGNI_AMBIGUI = ["+-", "-+"] as const;
+ * I due digrammi ASCII sono quelli del brief. I due caratteri Unicode sono
+ * la lacuna che quella misura aveva: `\mp` esce come **U+2213**, non come
+ * `-+`, e `\frac{-b\mp\sqrt{b^2-4ac}}{2a}` — la stessa quadratica, con
+ * l'altro segno — passerebbe il cancello. `jme.compile` li ACCETTA in
+ * silenzio: `x=+-3` compila e vale `x = -3`, la quadratica compila e tiene
+ * la sola radice col meno, `a±b` compila e ha nomi tutti noti. (`x=±3`
+ * lancia in compilazione, ma affidarsi a quello vorrebbe dire affidarsi al
+ * caso: `a±b` no.)
+ *
+ * Questi caratteri stanno nell'elenco dei RIFIUTI, non nella tabella delle
+ * riscritture dello strato 2: non c'è un JME in cui tradurli, ed è tutto il
+ * punto. */
+const SEGNI_AMBIGUI = ["+-", "-+", "±", "∓"] as const;
 
 /** Il contenuto delle parentesi che si aprono in `aperta`, e l'indice subito
  * dopo quella che le chiude. `null` se non si chiudono. Le parentesi si
@@ -71,6 +113,31 @@ function sciogliBarre(testo: string): string {
   return fuori;
 }
 
+/** Il nome della prima chiamata a qualcosa che non è una funzione del
+ * motore, `null` se non ce ne sono.
+ *
+ * È il complemento esatto dello strato 3, non la sua copia: `findvars`
+ * riporta un nome in posizione di funzione **se e solo se** non è una
+ * funzione del motore (`evaluate.ts:751`), ma poi lo mescola ai nomi in
+ * posizione di valore, dove il confronto con `nomiNoti` lo assolve. Ed è
+ * proprio il nome DICHIARATO il caso frequente: il docente scrive `a(x+1)`
+ * intendendo `a·(x+1)`, MathLive emette esattamente `a(x+1)`, e il motore
+ * poi lancia («La funzione a non è definita: a è una variabile e intendevi
+ * a*(...)?»). Una chiamata a un nome che non è funzione del motore non è
+ * mai ciò che il docente ha disegnato, `nomiNoti` o no. */
+function chiamataSconosciuta(albero: jme.Tree | null | undefined): string | null {
+  if (!albero) return null;
+  if (albero.tok.type === "function") {
+    const nome = jme.normaliseName(albero.tok.name, jme.builtinScope);
+    if (jme.builtinScope.getFunction(nome).length === 0) return nome;
+  }
+  for (const ramo of albero.args ?? []) {
+    const trovata = chiamataSconosciuta(ramo);
+    if (trovata !== null) return trovata;
+  }
+  return null;
+}
+
 /** ASCIIMath (ciò che MathLive restituisce con `getValue("ascii-math")`)
  * verso JME. `nomiNoti` sono le variabili dichiarate nell'esercizio: senza
  * di esse il controllo finale non può distinguere una variabile vera da un
@@ -92,21 +159,26 @@ function sciogliBarre(testo: string): string {
  *    né `**`: MathLive emette già `*` sia per `\times` sia per `\cdot`.
  *    Aggiungere righe «per sicurezza» è come si finisce a mantenere un
  *    parser LaTeX.
- * 3. **I nomi liberi**, ed è lo strato che rende sicuro il resto: ogni nome
- *    che il motore non risolve da sé dev'essere fra `nomiNoti`. `sin x`
- *    compila e vale `sin × x` — una moltiplicazione per una variabile di
- *    nome `sin` — e qui viene rifiutato nominando `sin`.
+ * 3. **I nomi liberi**, ed è lo strato che rende sicuro il resto, in due
+ *    controlli che guardano due posizioni diverse. Prima le **chiamate**:
+ *    un nome seguito da parentesi che non sia una funzione del motore è
+ *    rifiutato sempre, anche se dichiarato (vedi `chiamataSconosciuta`).
+ *    Poi i nomi in **posizione di valore**: devono essere fra `nomiNoti`,
+ *    salvo l'unica incognita che `incognitaAmmessa` concede sulla
+ *    superficie della risposta attesa. `sin x` compila e vale `sin × x` —
+ *    una moltiplicazione per una variabile di nome `sin` — e qui viene
+ *    rifiutato nominando `sin` da questo secondo controllo.
  *
  * Le costanti del motore (`e`, `pi`, `i`, …) non vanno ripassate per un
- * secondo filtro: le toglie già `findvars`, a cui si passa `builtinScope`
- * (`scope.getConstant`, misurato — `findvars(compile("2*pi*r"))` dà
- * `["r"]`). Un filtro in più costruito su `allConstants()` non sarebbe
- * ridondante ma SBAGLIATO: `pi(x+1)` — quel che MathLive emette per
- * `\pi(x+1)` — mette `pi` fra i nomi liberi perché sta in posizione di
- * funzione, e toglierlo lascerebbe passare una formula che il motore
- * rifiuta di valutare («La funzione pi non è definita: pi è una variabile e
- * intendevi pi*(...)?»). L'elenco delle costanti resta quello del motore,
- * preso da `builtinScope`: qui non ce n'è nessuno scritto a mano.
+ * secondo filtro costruito su `allConstants()`, e la decisione è confermata
+ * (Ruling 19). Le toglie già `findvars`, a cui si passa `builtinScope`
+ * (`scope.getConstant`, misurato: `findvars(compile("2*pi*r"))` dà `["r"]`,
+ * `findvars(compile("pi"))` dà `[]`). Quel filtro sarebbe dunque codice
+ * morto sui nomi in posizione di valore — e prima che esistesse
+ * `chiamataSconosciuta` era peggio che morto: toglieva anche il `pi` di
+ * `pi(x+1)`, cioè apriva un buco nello strato che esiste per chiuderli.
+ * L'elenco delle costanti resta quello del motore, preso da `builtinScope`:
+ * qui non ce n'è nessuno scritto a mano.
  *
  * Il `dettaglio` è il DATO che la frase mostrata al docente deve nominare —
  * il segno ambiguo, il nome sconosciuto, il messaggio del motore — non la
@@ -124,7 +196,11 @@ function sciogliBarre(testo: string): string {
  * di `@cortex-js/compute-engine` per un comodo da scrivania di un solo
  * ruolo. Se un giorno i rifiuti dello strato 3 dessero fastidio davvero, è
  * questa la porta da riaprire. */
-export function versoJme(asciiMath: string, nomiNoti: string[]): EsitoConversione {
+export function versoJme(
+  asciiMath: string,
+  nomiNoti: string[],
+  { incognitaAmmessa = false }: OpzioniConversione = {},
+): EsitoConversione {
   const ambiguo = SEGNI_AMBIGUI.find((segno) => asciiMath.includes(segno));
   if (ambiguo) return { ok: false, motivo: "ambiguo", dettaglio: ambiguo };
 
@@ -139,14 +215,20 @@ export function versoJme(asciiMath: string, nomiNoti: string[]): EsitoConversion
     return { ok: false, motivo: "non_compila", dettaglio: errorMessageIn(e, "it") };
   }
 
+  // Le chiamate per prime: dopo questo controllo ogni nome che `findvars`
+  // restituisce è in posizione di VALORE, e il conteggio qui sotto conta
+  // quello che dice di contare.
+  const chiamata = chiamataSconosciuta(albero);
+  if (chiamata !== null) return { ok: false, motivo: "nome_come_funzione", dettaglio: chiamata };
+
   // `findvars` restituisce i nomi normalizzati (minuscoli, se lo scope non
   // è sensibile alle maiuscole): i nomi dichiarati vanno normalizzati con
   // la stessa regola, o una variabile `Vmax` risulterebbe sconosciuta al
   // docente che l'ha appena scritta nel pannello.
   const noti = new Set(nomiNoti.map((nome) => jme.normaliseName(nome, jme.builtinScope)));
-  const sconosciuto = jme.findvars(albero, [], jme.builtinScope).find((nome) => !noti.has(nome));
-  if (sconosciuto !== undefined) {
-    return { ok: false, motivo: "nome_sconosciuto", dettaglio: sconosciuto };
+  const liberi = jme.findvars(albero, [], jme.builtinScope).filter((nome) => !noti.has(nome));
+  if (liberi.length > (incognitaAmmessa ? 1 : 0)) {
+    return { ok: false, motivo: "nome_sconosciuto", dettaglio: liberi[0] as string };
   }
 
   return { ok: true, jme: testo };

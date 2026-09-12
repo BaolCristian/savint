@@ -28,6 +28,17 @@ const DUE_VARIABILI: VariabileEditor[] = [
 ];
 
 describe("PannelloVariabili", () => {
+  it("nessun assistente per le formule: una definizione non è una formula", () => {
+    // `random(1..10)`, `a+1`, `random(-9..9 except 0)`: sono definizioni,
+    // non matematica da disegnare, e un editor visuale di formule le
+    // distruggerebbe. Lo stesso vale per la condizione. Senza questa riga
+    // niente impedirebbe che il pulsante ricomparisse qui.
+    montaggio({ variabili: DUE_VARIABILI, condizione: "a <> b" });
+    expect(
+      screen.queryAllByRole("button", { name: messaggiIt.esercizi.redazione.campoJme.scriviFormula }),
+    ).toHaveLength(0);
+  });
+
   it("mostra una riga per variabile, con nome, definizione e descrizione", () => {
     montaggio({ variabili: DUE_VARIABILI });
     expect(screen.getAllByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toHaveLength(2);
