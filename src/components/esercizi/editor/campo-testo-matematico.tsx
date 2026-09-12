@@ -152,6 +152,10 @@ export function CampoTestoMatematico({
   const [selezione, setSelezione] = useState({ inizio: 0, fine: 0 });
   // La formula da cui la finestra parte; `null` quando è chiusa.
   const [formulaAperta, setFormulaAperta] = useState<string | null>(null);
+  // Acceso quando la conferma è stata rifiutata: la finestra resta aperta e
+  // lo mostra. Stessa regola del gemello sui campi JME — il rifiuto non
+  // richiude, perché richiudere butterebbe via il disegno.
+  const [formulaRifiutata, setFormulaRifiutata] = useState(false);
 
   /** Ogni inserimento della barra passa di qui: inserisce con il
    * meccanismo di sempre (uno solo, nell'hook: qui non si rilegge né si
@@ -194,17 +198,32 @@ export function CampoTestoMatematico({
     const campo = campoRef.current;
     const inizio = campo?.selectionStart ?? valore.length;
     const fine = campo?.selectionEnd ?? valore.length;
+    setFormulaRifiutata(false);
     setFormulaAperta(formulaNellaSelezione(valore.slice(inizio, fine)));
   }
 
   /** La formula confermata entra come zona matematica: dalla finestra esce
    * LaTeX nudo, e senza `\( \)` resterebbe prosa che il motore non
    * renderebbe mai. Il cursore va dopo la chiusura — si torna a scrivere
-   * il testo, non a rifare la formula. */
+   * il testo, non a rifare la formula.
+   *
+   * Una finestra vuota non è una formula: inserirla darebbe `\(\)`, cioè
+   * una zona matematica senza niente dentro — e, con una selezione attiva,
+   * la selezione sostituita dal nulla, cioè cancellata. Si rifiuta e si
+   * resta aperti, come fa il gemello sui campi JME. */
   function inserisciFormula(latex: string) {
+    if (latex.trim() === "") {
+      setFormulaRifiutata(true);
+      return;
+    }
     const zona = `\\(${latex}\\)`;
     inserisci(() => ({ inserisci: zona, offsetCaret: zona.length }));
+    chiudiFinestraFormula();
+  }
+
+  function chiudiFinestraFormula() {
     setFormulaAperta(null);
+    setFormulaRifiutata(false);
   }
 
   const idEco = `${id}-eco`;
@@ -331,7 +350,8 @@ export function CampoTestoMatematico({
       <FinestraFormula
         aperta={formulaAperta !== null}
         iniziale={formulaAperta ?? undefined}
-        onChiudi={() => setFormulaAperta(null)}
+        avviso={formulaRifiutata ? t("vuoto") : undefined}
+        onChiudi={chiudiFinestraFormula}
         // L'ASCIIMath qui non serve: il testo dell'esercizio vuole LaTeX.
         onConferma={({ latex }) => inserisciFormula(latex)}
       />

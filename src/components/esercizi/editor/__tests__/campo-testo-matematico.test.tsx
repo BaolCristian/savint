@@ -363,6 +363,35 @@ describe("CampoTestoMatematico: la finestra delle formule", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("confermare la finestra vuota non chiude e non tocca il testo, selezione compresa", async () => {
+    // Il gemello del difetto già chiuso sui campi JME, qui sull'altra
+    // superficie del docente — e con un innesco più stretto, perché questa
+    // finestra restituisce LaTeX: `\overline{x}`, che sul lato JME non si
+    // serializza, qui entra benissimo. Resta il caso vero: si apre la
+    // finestra, si cambia idea, si preme «Inserisci». Senza guardia il campo
+    // riceveva `\(\)` — cioè, con una selezione attiva, la selezione
+    // CANCELLATA — e la finestra si chiudeva senza una parola.
+    montaggio({ valoreIniziale: "Calcola xyz adesso" });
+    const campo = campoDi();
+    // «xyz» selezionato: il gesto di chi apre la finestra per rifare quel
+    // pezzo, ed è la selezione che il difetto mangiava.
+    selezionaNelCampo(campo, 8, 11);
+
+    await userEvent.click(pulsanteFormula());
+    const formula = await campoFormula();
+    // La finestra si apre con dentro il tratto selezionato: svuotarla è il
+    // gesto di chi ha cambiato idea, o ha cancellato tutto per ricominciare.
+    formula.value = "";
+    await userEvent.click(screen.getByRole("button", { name: F.inserisci }));
+
+    // Il testo è intatto: né l'inserimento a vuoto né la cancellazione.
+    expect(campo.value).toBe("Calcola xyz adesso");
+    // E il docente sa perché, con la finestra ancora aperta.
+    const avviso = await screen.findByRole("alert");
+    expect(avviso.textContent).toBe(R.vuoto);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("selezionare una zona intera la riapre senza raddoppiare i delimitatori", async () => {
     montaggio({ valoreIniziale: "prima \\(x^2\\) dopo" });
     const campo = campoDi();
