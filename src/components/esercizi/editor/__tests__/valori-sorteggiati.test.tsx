@@ -133,6 +133,34 @@ describe("ValoriSorteggiati", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("un enunciato rotto non cancella la tabella: le variabili sono ancora buone, e si vedono", () => {
+    // Il prezzo dichiarato della memoria ristretta (`parteCheDecide`), e la
+    // ragione per cui vale la pena pagarlo. `Question` lancia mentre
+    // sostituisce l'enunciato se ci trova un `\simplify{}` che non compila:
+    // finché la tabella si ricalcolava sul contenuto INTERO, ogni carattere
+    // battuto nel testo dell'esercizio ripagava tre `loadQuestion` (7 ms
+    // misurati) e, appena il testo passava per uno stato rotto — cioè quasi
+    // sempre, mentre lo si scrive — la tabella spariva del tutto. I valori
+    // delle variabili non dipendono dall'enunciato: restano giusti, e ora
+    // restano anche visibili. Il guasto dell'enunciato è mostrato
+    // dall'anteprima, che sta sopra questa tabella.
+    const content = versoNumbas({
+      ...BASE,
+      testo: "\\(\\simplify{2*}\\)",
+      variabili: [{ nome: "a", definizione: "5", descrizione: "" }],
+    }) as NumbasQuestionJSON;
+
+    // La premessa della prova: senza questa riga, un enunciato che (per una
+    // qualunque ragione) smettesse di far lanciare il caricamento lascerebbe
+    // la prova verde per il motivo sbagliato.
+    expect(() => loadQuestion(content, { seed: "0", locale: "it" })).toThrow();
+
+    montaggio(content, ["0"]);
+
+    const righe = screen.getAllByRole("row").slice(1);
+    expect(celleRiga(righe[0]!)).toEqual(["a", "5"]);
+  });
+
   it("senza variabili dichiarate, non c'è niente da mostrare: rende null", () => {
     const content = contenuto([]);
     const { container } = montaggio(content, ["0", "1", "2"]);

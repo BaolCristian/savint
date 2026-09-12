@@ -36,6 +36,38 @@ function nomiVariabili(content: NumbasQuestionJSON): string[] {
   return nomi;
 }
 
+/** La sola parte del contenuto da cui dipende questa tabella: le
+ * definizioni delle variabili, la condizione che le rigenera, le funzioni
+ * che le definizioni possono chiamare e i ruleset che il loro scope porta.
+ *
+ * Serve a due cose insieme, ed è la stessa cosa detta due volte: è la
+ * CHIAVE della memoria qui sotto, ed è anche ciò che si passa a
+ * `loadQuestion` — così il risultato è una funzione pura della chiave,
+ * senza il rischio che la memoria tenga un valore calcolato su qualcosa
+ * che la chiave non guarda.
+ *
+ * Enunciato, aiuto e parti restano fuori apposta. Non entrano nel valore
+ * di nessuna variabile (`Question` genera le variabili PRIMA di sostituire
+ * l'enunciato e prima di costruire le parti), ma cambiano a ogni tasto
+ * premuto dal docente mentre scrive il testo o una risposta attesa: con
+ * loro nella chiave, ogni tasto ricomprava tre `loadQuestion` sincroni
+ * dentro il render — 7 ms misurati su una macchina veloce con due sole
+ * variabili, moltiplicati per 3-5 su un portatile scolastico.
+ *
+ * Il prezzo, dichiarato: un enunciato rotto (un `\simplify{}` che non
+ * compila) faceva lanciare `loadQuestion` e quindi spariva la tabella
+ * intera. Ora non la fa più sparire — e i valori che mostra restano quelli
+ * giusti, perché le variabili non sono cambiate. Il guasto dell'enunciato
+ * si vede dove è già mostrato, cioè nell'anteprima sopra questa tabella. */
+function parteCheDecide(content: NumbasQuestionJSON): NumbasQuestionJSON {
+  return {
+    ...content,
+    statement: "",
+    advice: "",
+    parts: [],
+  };
+}
+
 /** I valori delle variabili date, per un seme, o `undefined` se il
  * caricamento per QUEL seme lancia — un esercizio in corso di scrittura è
  * quasi sempre rotto (vedi il brief del Task 3): la colonna diventa un
@@ -63,22 +95,24 @@ function valoriDelSeme(content: NumbasQuestionJSON, seme: string, nomi: string[]
 export function ValoriSorteggiati({ content, semi }: ValoriSorteggiatiProps) {
   const t = useTranslations("esercizi.redazione.valoriSorteggiati");
 
-  // La stessa chiave che l'anteprima già calcola per il player
-  // (`contentKey`, la stringificazione di `content`) più i semi correnti:
-  // tre `loadQuestion` per cambio di contenuto sono un costo da tenere
-  // fuori dal ridisegno, non da ripetere a ogni render — `semiVisibili`, a
-  // differenza di `semi`, è ricreato a ogni render di `Anteprima` (non è un
-  // `useState`), quindi la sua IDENTITÀ non è una chiave utilizzabile: solo
-  // il suo contenuto lo è.
-  const contentKey = useMemo(() => JSON.stringify(content), [content]);
+  // La chiave è il CONTENUTO della parte che decide questa tabella, più i
+  // semi correnti: tre `loadQuestion` sincroni dentro il render sono un
+  // costo da pagare quando le variabili cambiano, non a ogni tasto premuto
+  // nell'enunciato (vedi `parteCheDecide`). `semiVisibili`, a differenza di
+  // `semi`, è ricreato a ogni render di `Anteprima` (non è un `useState`),
+  // quindi la sua IDENTITÀ non è una chiave utilizzabile: solo il suo
+  // contenuto lo è — e lo stesso vale per `content`, che `Anteprima`
+  // ricostruisce con `versoNumbas` a ogni modifica del modello.
+  const chiaveDecisiva = useMemo(() => JSON.stringify(parteCheDecide(content)), [content]);
   const semiKey = semi.join("|");
 
   const { nomi, colonne } = useMemo(() => {
-    const nomiCorrenti = nomiVariabili(content);
-    const colonneCorrenti = semi.map((seme) => valoriDelSeme(content, seme, nomiCorrenti));
+    const decisivo = parteCheDecide(content);
+    const nomiCorrenti = nomiVariabili(decisivo);
+    const colonneCorrenti = semi.map((seme) => valoriDelSeme(decisivo, seme, nomiCorrenti));
     return { nomi: nomiCorrenti, colonne: colonneCorrenti };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentKey, semiKey]);
+  }, [chiaveDecisiva, semiKey]);
 
   const tutteFallite = colonne.every((colonna) => colonna === undefined);
   if (nomi.length === 0 || tutteFallite) {
