@@ -22,11 +22,20 @@ export type EsitoEco = { stato: "vuoto" } | { stato: "reso"; latex: string } | {
  *    di quanto sappia disegnare: `sqrt()` — l'argomento mancante appena
  *    premuto il tasto radice della tastiera, prima che lo studente scriva
  *    qualcosa — compila (una chiamata a zero argomenti è sintassi valida)
- *    ma la resa lancia (arità sbagliata) o, in altre versioni del motore,
- *    non lancia affatto e produce invece `"\sqrt{ undefined }"` — un buco
- *    del motore, non un errore del docente. Le due varianti sono difese
- *    insieme: si scarta sia il lancio sia la stringa che contiene
- *    "undefined" (la stessa regola già in `player/parti/espressione.tsx`).
+ *    ma la resa **lancia**: «sqrt è chiamata con 0 argomenti, un numero che
+ *    nessuna definizione accetta» — un buco del motore, non un errore del
+ *    docente.
+ *
+ *    Il controllo su `"undefined"` nella stringa resa difende da un'ALTRA
+ *    variante del motore, che invece di lanciare produceva
+ *    `"\sqrt{ undefined }"` (è la stessa regola che sta in
+ *    `player/parti/espressione.tsx`). In **questo** repository quella
+ *    variante non c'è: misurato, `renderLatex("sqrt()")` lancia, e così
+ *    `abs()`, `root()`, `log()`. Quella riga è dunque difesa in profondità
+ *    e oggi non viene mai raggiunta — non toglierla credendo che serva, e
+ *    non contarci credendo che sia lei a prendere il caso `sqrt()`: quello
+ *    lo prende il `catch`.
+ *
  *    In entrambi i casi il risultato è `"vuoto"`, non `"errore"`: un
  *    messaggio come «sqrt è chiamata con 0 argomenti» sarebbe tecnicamente
  *    vero ma allarmante mentre si sta ancora scrivendo l'argomento, per
@@ -52,6 +61,9 @@ export function ecoDi(espressione: string): EsitoEco {
 
   try {
     const latex = renderLatex(testo);
+    // Difesa in profondità per una variante del motore che qui non vive:
+    // in questa build la resa lancia invece di produrre "undefined" (vedi
+    // il punto 2 del commento in cima). Non è la riga che prende `sqrt()`.
     if (/\bundefined\b/.test(latex)) return { stato: "vuoto" };
     return { stato: "reso", latex };
   } catch {

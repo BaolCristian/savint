@@ -22,22 +22,46 @@ import type { RisultatoFormula } from "./finestra-formula";
  * testo dell'esercizio il motore si aspetta il comando, non la sua resa. */
 const MACRO_VAR = "\\mathit{#1}";
 
-/** Dove MathLive cerca i suoi venti font.
+/** Dove MathLive cerca i suoi venti font — una rete di sicurezza che di
+ * norma non si tende mai.
  *
- * **Come si verifica a mano** (nessun test lo può fare fino in fondo: in
- * jsdom i font non si caricano, e una cartella sbagliata non si vede
- * finché non la si guarda in un browser vero):
+ * **Come stanno le cose davvero** (misurato dalla revisione finale, leggendo
+ * il caricatore dentro `mathlive.min.mjs`): MathLive controlla per prime le
+ * dodici famiglie `KaTeX_*` già presenti in `document.fonts`, e **se ci sono
+ * tutte esce prima di leggere `fontsDirectory`**. In questa applicazione ci
+ * sono sempre: `src/app/layout.tsx` importa `katex/dist/katex.min.css` nel
+ * layout di RADICE, cioè su ogni pagina, e quel CSS dichiara esattamente
+ * quelle dodici famiglie. I venti `.woff2` sotto `public/fonts/mathlive/`
+ * sono per giunta identici byte per byte a quelli che katex già serve.
+ * Quindi: in condizioni normali **nessuno di questi file viene mai
+ * richiesto**, e in una scheda Rete non compare affatto — non «senza 404»,
+ * proprio assente.
  *
- * 1. `BASE_PATH=/demo npm run build && BASE_PATH=/demo npx next start -p 3200`
- * 2. `curl -sI http://localhost:3200/demo/fonts/mathlive/KaTeX_Main-Regular.woff2`
- *    deve dare `200` e `content-type: font/woff2`, e lo **stesso file
- *    senza il prefisso** deve dare `404`: è esattamente ciò che
- *    chiederebbe una cartella scritta a mano;
- * 3. poi con gli occhi: si apre la redazione di un esercizio, si preme
- *    «Scrivi la formula» e si scrive `x^2`. Nella scheda Rete i venti
- *    `KaTeX_*.woff2` non devono essere 404, e la formula a schermo deve
- *    avere i serif della matematica, non il carattere di sistema.
- * 4. si ferma il server per porta: `lsof -ti:3200 | xargs kill`.
+ * **Perché la riga e i file restano lo stesso** (296 KB): senza di loro il
+ * funzionamento della finestra dipenderebbe in silenzio da un import in un
+ * file che non c'entra niente con lei. Il giorno in cui `layout.tsx`
+ * smettesse di importare katex, le formule perderebbero i font e nessun test
+ * lo direbbe. Costano nulla finché katex li precede, e coprono l'unico caso
+ * in cui servono.
+ *
+ * **Come si verifica davvero che la catena regga** — non guardando la rete,
+ * che per quanto sopra non dice niente:
+ *
+ * 1. che i file siano *serviti* sotto il prefisso di percorso lo dice
+ *    `curl`, ed è un controllo vero:
+ *    `BASE_PATH=/demo npm run build && BASE_PATH=/demo npx next start -p 3200`,
+ *    poi `curl -sI http://localhost:3200/demo/fonts/mathlive/KaTeX_Main-Regular.woff2`
+ *    deve dare `200` e `content-type: font/woff2`, e lo **stesso file senza
+ *    il prefisso** deve dare `404` (si ferma il server per porta:
+ *    `lsof -ti:3200 | xargs kill`);
+ * 2. che la cartella sia quella giusta *quando serve* si vede solo togliendo
+ *    chi la precede: si commenta l'import di `katex.min.css` in
+ *    `src/app/layout.tsx`, si apre «Scrivi la formula» e si guarda
+ *    `document.fonts` in console — devono comparire le dodici famiglie
+ *    `KaTeX_*` caricate da `/fonts/mathlive/`. Se la cartella è sbagliata,
+ *    MathLive mette la classe `ML__fonts-did-not-load` su `<body>` e la
+ *    formula esce col carattere di sistema invece dei serif della
+ *    matematica. Poi si rimette l'import.
  *
  * Il prefisso non si compone a mano: `withBasePath` è la fonte unica di
  * questa installazione (`__NEXT_ROUTER_BASEPATH` sul client, `BASE_PATH`
