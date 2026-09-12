@@ -1,9 +1,11 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CampoJme } from "./campo-jme";
 import type { ParteEditor, Tolleranza } from "@/lib/esercizi/editor/modello";
 
 type ParteNumericaEditor = Extract<ParteEditor, { tipo: "numerica" }>;
@@ -12,16 +14,31 @@ export interface ParteNumericaProps {
   parte: ParteNumericaEditor;
   onChange: (parte: ParteNumericaEditor) => void;
   onRimuovi: () => void;
+  /** I nomi dichiarati nel pannello variabili: servono al cancello che
+   * converte una formula disegnata verso JME, che senza di essi non può
+   * distinguere una variabile vera da un nome nato per giustapposizione. */
+  nomiVariabili: string[];
 }
 
 /** La parte numerica: valore atteso e tolleranza, mai `minValue`/`maxValue`
  * — quella traduzione appartiene al codice sotto (`versoNumbas`), il
  * docente non deve incontrarla qui (vedi il brief del Task 7). */
-export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps) {
+export function ParteNumerica({ parte, onChange, onRimuovi, nomiVariabili }: ParteNumericaProps) {
   const t = useTranslations("esercizi.redazione.parti");
-  const idValore = "parte-numerica-valore";
-  const idMargine = "parte-numerica-margine";
-  const idCifre = "parte-numerica-cifre";
+  // `useId`, non costanti: questo componente è reso dentro un `map` sulle
+  // parti (`editor-esercizio.tsx`), e due parti numeriche nello stesso
+  // esercizio sono un caso supportato — tant'è che ciascuna porta il suo
+  // «Parte N». Con `id` costanti le due parti li condividerebbero, e da
+  // quegli `id` discendono ora anche `${id}-eco` e l'`aria-describedby` del
+  // campo: il valore atteso della parte 2 risulterebbe descritto dall'eco
+  // del motore della parte 1, cioè da un'informazione sbagliata. Lo stesso
+  // vale per il `name` dei tre radio della tolleranza, che qui deriva dallo
+  // stesso `id`: due gruppi omonimi sono per il browser un gruppo solo, e
+  // scegliere «margine» nella parte 2 spegnerebbe la scelta della parte 1.
+  const idBase = useId();
+  const idValore = `${idBase}-valore`;
+  const idMargine = `${idBase}-margine`;
+  const idCifre = `${idBase}-cifre`;
 
   function aggiornaTolleranza(tolleranza: Tolleranza) {
     onChange({ ...parte, tolleranza });
@@ -44,11 +61,15 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
             onChange={(e) => onChange({ ...parte, punti: Number(e.target.value) })}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor={idValore} className="text-sm font-medium">
-            {t("numerica.valore")}
-          </label>
-          <Input id={idValore} value={parte.valore} onChange={(e) => onChange({ ...parte, valore: e.target.value })} />
+        <div className="flex-1">
+          <CampoJme
+            id={idValore}
+            etichetta={t("numerica.valore")}
+            valore={parte.valore}
+            onChange={(valore) => onChange({ ...parte, valore })}
+            tastierino
+            assistenteFormula={{ nomiNoti: nomiVariabili }}
+          />
         </div>
       </div>
 
@@ -85,14 +106,18 @@ export function ParteNumerica({ parte, onChange, onRimuovi }: ParteNumericaProps
         </div>
 
         {parte.tolleranza.tipo === "margine" && (
-          <div className="flex max-w-40 flex-col gap-1">
-            <label htmlFor={idMargine} className="text-sm font-medium">
-              {t("numerica.margine")}
-            </label>
-            <Input
+          <div className="max-w-40">
+            {/* Nessun tastierino, e nessun assistente per le formule: il
+                margine è una tolleranza, un decimale come `0.01` — `π`,
+                `√`, `^` non si scrivono lì, e un editor visuale di formule
+                non ha niente da disegnare. L'eco invece resta, come su ogni
+                campo JME: anche una tolleranza va vista come il motore
+                l'ha capita. */}
+            <CampoJme
               id={idMargine}
-              value={parte.tolleranza.margine}
-              onChange={(e) => aggiornaTolleranza({ tipo: "margine", margine: e.target.value })}
+              etichetta={t("numerica.margine")}
+              valore={parte.tolleranza.margine}
+              onChange={(margine) => aggiornaTolleranza({ tipo: "margine", margine })}
             />
           </div>
         )}

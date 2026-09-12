@@ -85,9 +85,13 @@ describe("EditorEsercizio — le parti", () => {
 });
 
 describe("EditorEsercizio — l'anteprima", () => {
-  it("mostra l'anteprima con tre riquadri", () => {
+  // Task 2: l'anteprima è un player solo dietro tre linguette (la prova
+  // dettagliata delle linguette è in anteprima.test.tsx) — qui si verifica
+  // solo che l'integrazione con l'editor arrivi fino al player, non che ci
+  // siano tre riquadri affiancati (non più veri dal Task 2 in poi).
+  it("mostra l'anteprima con un solo player montato", () => {
     montaggio();
-    expect(screen.getAllByTestId("player-stub")).toHaveLength(3);
+    expect(screen.getAllByTestId("player-stub")).toHaveLength(1);
   });
 });
 

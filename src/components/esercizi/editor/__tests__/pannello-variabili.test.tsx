@@ -28,6 +28,17 @@ const DUE_VARIABILI: VariabileEditor[] = [
 ];
 
 describe("PannelloVariabili", () => {
+  it("nessun assistente per le formule: una definizione non è una formula", () => {
+    // `random(1..10)`, `a+1`, `random(-9..9 except 0)`: sono definizioni,
+    // non matematica da disegnare, e un editor visuale di formule le
+    // distruggerebbe. Lo stesso vale per la condizione. Senza questa riga
+    // niente impedirebbe che il pulsante ricomparisse qui.
+    montaggio({ variabili: DUE_VARIABILI, condizione: "a <> b" });
+    expect(
+      screen.queryAllByRole("button", { name: messaggiIt.esercizi.redazione.campoJme.scriviFormula }),
+    ).toHaveLength(0);
+  });
+
   it("mostra una riga per variabile, con nome, definizione e descrizione", () => {
     montaggio({ variabili: DUE_VARIABILI });
     expect(screen.getAllByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toHaveLength(2);
@@ -93,6 +104,47 @@ describe("PannelloVariabili", () => {
     const variabili: VariabileEditor[] = [{ nome: "a", definizione: "", descrizione: "" }];
     montaggio({ variabili });
     expect(screen.getByText(messaggiIt.esercizi.redazione.variabili.erroreDefinizione)).toBeInTheDocument();
+  });
+
+  it("l'errore della definizione descrive il campo: chi non lo vede se lo sente leggere", () => {
+    // `aria-invalid` da solo fa sentire «non valido» e non fa sentire il
+    // PERCHÉ, che è scritto nel paragrafo accanto: il campo della
+    // definizione era l'unico della riga a portare un messaggio slegato da
+    // sé. Il campo accanto, con l'eco, la sua descrizione ce l'aveva già.
+    const variabili: VariabileEditor[] = [{ nome: "a", definizione: "", descrizione: "" }];
+    montaggio({ variabili });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toHaveAccessibleDescription(
+      messaggiIt.esercizi.redazione.variabili.erroreDefinizione,
+    );
+  });
+
+  it("una definizione scritta non lascia appeso un aria-describedby a un testo che non c'è più", () => {
+    // Un `aria-describedby` che punta a un `id` assente non descrive niente:
+    // il messaggio e la descrizione nascono dallo stesso errore e devono
+    // sparire insieme.
+    montaggio({ variabili: [DUE_VARIABILI[0]!] });
+    const definizione = screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione);
+    for (const id of (definizione.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean)) {
+      expect(document.getElementById(id)).not.toBeNull();
+    }
+  });
+
+  it("i due campi sbagliati della stessa riga si segnalano allo stesso modo: entrambi marcati come non validi", () => {
+    // `aria-invalid` non è solo per le tecnologie assistive: è ciò che
+    // accende il bordo rosso di `input.tsx`
+    // (`aria-invalid:border-destructive`). Senza questo test, un campo può
+    // perdere il bordo mentre il suo messaggio d'errore resta, e la riga
+    // segnala i suoi due errori in due modi diversi senza che nulla lo dica.
+    const variabili: VariabileEditor[] = [{ nome: "1a", definizione: "", descrizione: "" }];
+    montaggio({ variabili });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toBeInvalid();
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toBeInvalid();
+  });
+
+  it("una riga valida non marca nessuno dei suoi campi come sbagliato", () => {
+    montaggio({ variabili: [DUE_VARIABILI[0]!] });
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.nome)).toBeValid();
+    expect(screen.getByLabelText(messaggiIt.esercizi.redazione.variabili.definizione)).toBeValid();
   });
 
   it("non mostra nessun errore su una riga appena aggiunta, ancora vuota", () => {

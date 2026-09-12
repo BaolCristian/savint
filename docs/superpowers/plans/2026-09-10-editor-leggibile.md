@@ -115,10 +115,14 @@ senza toccare i componenti di base — si agisce sul contenitore, non sul
 campo.
 
 - [ ] **Passo 1: i test che falliscono.** Tre asserzioni sul
-      comportamento, non sulle classi: (a) l'anteprima è nel DOM **prima**
-      della sezione delle domande — `compareDocumentPosition` fra i due
-      nodi, che è ciò che «l'anteprima non è più ultima» significa
-      davvero; (b) il riassunto della scheda mostra anno, argomento e
+      comportamento, non sulle classi: (a) l'anteprima precede **la barra
+      delle azioni** nel DOM (`compareDocumentPosition` fra i due nodi) e
+      vive in una regione distinta da quella di scrittura. *Non* «prima
+      delle domande»: in due colonne la visione segue la scrittura
+      nell'ordine del documento, ed è giusto così — sotto i 1280 pixel
+      quell'ordine diventa quello a schermo. Ciò che la specifica chiede
+      davvero è che l'anteprima non sia più sepolta sotto i pulsanti;
+      (b) il riassunto della scheda mostra anno, argomento e
       difficoltà correnti mentre è **chiusa**; (c) cambiare l'anno dentro
       la scheda aggiorna il riassunto.
 - [ ] **Passo 2: eseguirli e vederli fallire**
@@ -209,9 +213,10 @@ in console. Se lanciano tutti e tre, il componente rende `null`: c'è già
 l'anteprima che mostra il guasto, e due messaggi d'errore sullo stesso
 guasto sono peggio di uno.
 
-Il valore si mostra con `jme.display.treeToJME` o, per i tipi semplici
-(numero, stringa), la loro forma testuale; niente LaTeX qui — è una
-tabella di controllo, non una formula.
+Il valore si mostra con **`jme.tokenToDisplayString(token, scope)`** —
+verificata in pre-volo: dà `2` per un intero, `[ 1, 2, 3 ]` per una lista,
+`ciao` per una stringa. Niente LaTeX qui: è una tabella di controllo, non
+una formula.
 
 **Costo:** tre `loadQuestion` per ogni cambio del contenuto. Va dentro un
 `useMemo` sulla stessa chiave che l'anteprima già calcola (`contentKey` +
@@ -294,9 +299,10 @@ che sono istruzioni.
 - [ ] **Passo 1: i test che falliscono.** Sette casi su `ecoDi`, come
       tabella: `""` → vuoto; `"2*x"` → reso; `"2*"` → errore; `"sqrt()"` →
       **vuoto**, non reso (la trappola 1); `"sin x"` → reso **come
-      moltiplicazione** (è il caso che motiva tutta la funzione: si
-      asserisce che il LaTeX contiene la moltiplicazione, così se un giorno
-      il motore cambiasse comportamento il test lo dice); `"random(1..5)"`
+      moltiplicazione**: il LaTeX è `\texttt{sin} \times x` (misurato in
+      pre-volo), e si asserisce la presenza di `\times`. È il caso che
+      motiva tutta la funzione, e se un giorno il motore cambiasse
+      comportamento il test lo direbbe; `"random(1..5)"`
       → reso; un errore di sintassi ha un messaggio **senza parole
       inglesi** — si asserisce che il messaggio non contiene «Expected».
       Più due sul componente: l'eco non è rossa mentre il campo ha il
@@ -387,7 +393,10 @@ export interface FinestraFormulaProps {
   /** Il LaTeX di partenza, quando si modifica una formula esistente. */
   iniziale?: string;
   onChiudi: () => void;
-  onConferma: (latex: string) => void;
+  /** Entrambe le forme, non solo il LaTeX: il Task 7 converte verso JME a
+   * partire dall'ASCIIMath, e farglielo richiedere dopo significherebbe
+   * cambiare questa firma a lavoro fatto. */
+  onConferma: (risultato: { latex: string; asciiMath: string }) => void;
 }
 export function FinestraFormula(props: FinestraFormulaProps): JSX.Element | null;
 ```
@@ -406,12 +415,22 @@ produzione le formule appaiono senza font — **e nessun test se ne
 accorge**, perché in jsdom i font non si caricano. Il task deve lasciare
 una nota nel file su come si verifica a mano.
 
-**La macro `\var`.** `\var{a}` dentro una formula deve sopravvivere al giro
-attraverso MathLive. Si registra come macro
+**La macro `\var`, e non è facoltativa.** Misurato: senza registrarla,
+`convertLatexToMarkup("x^2-\var{a}^2")` produce **un errore dentro il
+markup** — la formula appare rotta a schermo. `\var{a}` dentro una formula
+deve sopravvivere al giro attraverso MathLive. Si registra come macro
 (`MathfieldElement.macros = { ...MathfieldElement.macros, var: "\\mathit{#1}" }`)
 così che l'editor la mostri come `a` in corsivo e la restituisca
 invariata. **Il test che conta:** una formula con `\var{a}` che entra ed
 esce dalla finestra torna byte per byte identica.
+
+**Attenzione a dove si registra la macro.** `MathfieldElement` è un
+elemento personalizzato: fuori da un DOM **non esiste** (misurato: in Node
+è `undefined`). Scrivere `MathfieldElement.macros = {...}` a livello di
+modulo in un file che la pagina importa lancerebbe durante il rendering
+sul server. Va fatto dentro il componente caricato pigramente, dopo
+l'import dinamico — che è anche l'unico posto in cui i test possono
+verificarlo, perché jsdom un DOM ce l'ha.
 
 `\simplify{}` **non passa di qui**: il pulsante della finestra è
 disabilitato quando il cursore è dentro un `\simplify{}`, perché il suo
@@ -445,54 +464,110 @@ contenuto è JME e MathLive lo distruggerebbe.
 
 ```ts
 export type EsitoConversione =
-  | { ok: true; jme: string; latex: string }
-  | { ok: false; motivo: "non_compila" | "ambiguo"; dettaglio: string };
+  | { ok: true; jme: string }
+  | { ok: false; motivo: "ambiguo" | "non_compila" | "nome_sconosciuto"; dettaglio: string };
 
 /** ASCIIMath (ciò che MathLive restituisce con `getValue("ascii-math")`)
- * verso JME, con il nostro parser come giudice finale. */
-export function versoJme(asciiMath: string): EsitoConversione;
+ * verso JME. `nomiNoti` sono le variabili dichiarate nell'esercizio: senza
+ * di esse il controllo finale non può distinguere una variabile vera da un
+ * nome inventato dalla giustapposizione. */
+export function versoJme(asciiMath: string, nomiNoti: string[]): EsitoConversione;
 ```
 
-Il flusso: si scrive nella finestra del Task 6, si preme conferma,
-MathLive dà l'ASCIIMath, `versoJme` lo aggiusta e lo **passa a
-`jme.compile`**. Se compila, il docente vede il JME e la formula resa e
-conferma; se non compila, **non si inserisce niente** e si spiega perché.
+### Il difetto che questo task esiste per non commettere
 
-**La tabella degli aggiustamenti va tenuta corta e chiusa.** Quello che
-serve davvero, misurato sul corpus:
+**`jme.compile` NON è un cancello sufficiente.** Misurato, non supposto:
 
-| ASCIIMath | JME |
-|---|---|
-| `root(n)(x)` | `x^(1/n)` |
-| `abs(x)` | `abs(x)` *(già giusto)* |
-| `x^2` | `x^2` *(già giusto)* |
-| `(a)/(b)` | `(a)/(b)` *(già giusto)* |
-| `sqrt(x)` | `sqrt(x)` *(già giusto)* |
-| `pi` | `pi` *(già giusto)* |
-| `**` | `^` |
-| `xx` | `*` |
-| `-:` | `/` |
+| ASCIIMath | `jme.compile` | valore | esito reale |
+|---|---|---|---|
+| `x=+-3` | **compila** | `x = -3` | perde `+`, in silenzio |
+| `(-b+-sqrt(b^2-4a c))/(2a)` | **compila** | solo la radice col meno | **la formula più scritta delle superiori, sbagliata a metà** |
+| `sin x` | **compila** | `\texttt{sin} \times x` | moltiplicazione per una variabile `sin` |
+| `log _(10)x` | **compila** | — | `_` letto come funzione |
+| `\|x\|` | rifiuta | — | corretto |
+| `a -: b` | rifiuta | — | corretto |
+| `root(3)(8)` | rifiuta | — | corretto |
 
-**`+-` si rifiuta**, con motivo `ambiguo`: ASCIIMath lo produce per `\pm`,
-e qualunque conversione ne sceglierebbe **una sola** delle due soluzioni,
-in silenzio. Un docente che scrive `x = +- 3` e ne ottiene `x = 3` ha un
-esercizio sbagliato e nessun modo di accorgersene. È il difetto più
-pericoloso di tutto questo task e la sua unica difesa è il rifiuto
-esplicito.
+Un docente che scrive la formula quadratica nella finestra e la conferma
+otterrebbe **un esercizio con una sola soluzione su due** e nessun modo di
+accorgersene: passa la verifica a venti semi, passa il salvataggio, e
+sbaglia davanti alla classe. È il motivo per cui questo cancello ha tre
+strati e non uno.
 
-**Non si scrive un parser.** Se dopo la tabella `jme.compile` lancia, si
-restituisce `non_compila` col messaggio del motore. La tentazione di
-aggiungere una regola in più per far passare un caso è esattamente come si
-finisce a mantenere un parser LaTeX.
+### I tre strati del cancello
 
-- [ ] **Passo 1: il test a tabella.** Almeno venti coppie
-      (ASCIIMath, atteso), fra cui tutte le righe qui sopra, più: `+-` →
-      `ambiguo`; `root(3)(8)` → `8^(1/3)` che **compila e vale 2**
-      (si asserisce il valore, non la stringa: è ciò che rende il test una
-      prova e non una fotografia); una stringa che non compila →
-      `non_compila` con un dettaglio non vuoto
+**Strato 1 — rifiuto testuale, PRIMA di tutto.** Se l'ASCIIMath contiene
+`+-` o `-+`, si restituisce `ambiguo` senza andare oltre. Non si sceglie
+una delle due soluzioni, non si prova a produrre una lista: si rifiuta e
+si dice perché.
+
+**Strato 2 — la tabella degli aggiustamenti.** Corta, chiusa, e
+**misurata su ciò che MathLive produce davvero** (non su ciò che
+l'ASCIIMath può in teoria contenere):
+
+| MathLive dà | diventa | perché |
+|---|---|---|
+| `root(n)(x)` | `x^(1/n)` | JME non ha `root` a due chiamate |
+| `-:` | `/` | è ciò che MathLive emette per `\div` |
+| `\|…\|` | `abs(…)` | JME non ha le barre |
+
+E basta. In particolare **non** servono `xx` né `**`: MathLive emette già
+`*` sia per `\times` sia per `\cdot` (misurato). Aggiungere righe «per
+sicurezza» è come si finisce a mantenere un parser LaTeX.
+
+**Strato 3 — i nomi liberi, ed è lo strato che rende il resto sicuro.**
+Dopo `jme.compile`, si prende `jme.findvars(albero)` e si controlla che
+**ogni nome libero** sia fra `nomiNoti` o fra le costanti del motore
+(`e`, `pi`, `i`, …, prese da `builtinScope`, non da un elenco scritto a
+mano). Un nome fuori da lì — `sin`, `log`, `sum`, `int`, `_` — è
+esattamente il danno della giustapposizione, e si restituisce
+`nome_sconosciuto` **nominando il nome**.
+
+Il messaggio deve essere azionabile, perché la causa è quasi sempre la
+stessa: «`sin` non è una variabile di questo esercizio. Se intendevi la
+funzione seno, scrivila con le parentesi: `sin(x)`.»
+
+### Cosa questo cancello rifiuta, e perché va bene
+
+`sin x` scritto **senza parentesi** viene rifiutato; `sin (x)` passa e
+vale il seno (misurato). Il valore assoluto passa grazie allo strato 2.
+`log_10 x` viene rifiutato.
+
+Chi scrive trigonometria senza parentesi ha due vie che restano aperte:
+mettere le parentesi nella finestra, o scrivere direttamente nel campo —
+**la finestra è un assistente, non l'unico ingresso**, ed è la ragione per
+cui rifiutare costa poco.
+
+### La via che NON si prende, e quanto costa
+
+MathLive sa anche restituire **MathJSON**, un albero: `\sin x` diventa
+`["Sin","x"]`, `\pm` diventa un nodo esplicito che si può rifiutare invece
+che perdere, `\left|x\right|` diventa `["Abs","x"]`. Un traduttore
+albero → JME su un insieme chiuso di nodi sarebbe **strutturalmente**
+immune alla giustapposizione, invece che immune per via di un controllo.
+
+Non si prende **perché MathLive non include il motore di calcolo**: lo
+cerca su un simbolo globale e, se non c'è, `getValue("math-json")`
+restituisce `["Error", "compute-engine-not-available"]` (verificato nel
+sorgente di `mathlive.mjs`). Servirebbero **~2 MB in più** di
+`@cortex-js/compute-engine` da caricare e registrare a mano, per un
+comodo da scrivania di un solo ruolo.
+
+Se un giorno i rifiuti dello strato 3 dessero fastidio davvero, questa è
+la porta da riaprire — ed è documentata qui perché sia una scelta
+riesaminabile e non una dimenticanza.
+
+- [ ] **Passo 1: il test a tabella.** Le tre righe dello strato 2, più:
+      `x=+-3` → `ambiguo`; `(-b+-sqrt(b^2-4a c))/(2a)` → `ambiguo` (è
+      **il** caso: se questo passa, il task ha fallito anche col resto
+      verde); `root(3)(8)` → un JME che **compila e vale 2** — si asserisce
+      il valore, non la stringa, così il test è una prova e non una
+      fotografia; `|x|` con `x` noto → `abs(x)`; `sin x` →
+      `nome_sconosciuto` **con «sin» dentro il dettaglio**; `sin (x)` →
+      accettato; `2 * x` e `x^2-a^2` con `a` noto → accettati intatti; una
+      stringa che non compila → `non_compila` con dettaglio non vuoto.
 - [ ] **Passo 2: eseguirli e vederli fallire**
-- [ ] **Passo 3: `versoJme` e il pulsante**
+- [ ] **Passo 3: `versoJme` e il pulsante in `campo-jme.tsx`**
 - [ ] **Passo 4: eseguirli e vederli passare**
 - [ ] **Passo 5: commit**
 
@@ -512,8 +587,10 @@ finisce a mantenere un parser LaTeX.
 - **Il Task 6 ha un modo di fallire che nessun test vede**: i font sotto
   `basePath`. Va verificato a mano, in un `npm run build` con
   `BASE_PATH` impostato, e la verifica va scritta nel commit.
-- **Il Task 7 ha un modo di fallire che sembra un successo**: `+-`
-  convertito invece che rifiutato. Guardare quel caso per primo.
+- **Il Task 7 ha un modo di fallire che sembra un successo**: la formula
+  quadratica convertita invece che rifiutata. `jme.compile` la accetta e
+  ne tiene una radice sola — è misurato, non temuto. Guardare quel caso
+  per primo, prima di ogni altra cosa nel diff.
 - Il modello, il formato e il corpus non cambiano: un diff che tocca
   `verso-numbas.ts`, `da-numbas.ts`, `modello.ts` o `content/esercizi/` è
   un diff sbagliato, qualunque cosa dica la sua motivazione.

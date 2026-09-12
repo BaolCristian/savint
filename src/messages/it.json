@@ -1292,6 +1292,10 @@
         "difficolta2": "Media",
         "difficolta3": "Difficile"
       },
+      "catalogo": {
+        "titolo": "Catalogo",
+        "riassunto": "{anno}ª · {argomento} · {difficolta}"
+      },
       "testo": "Testo dell'esercizio",
       "suggerimento": "Suggerimento",
       "suggerimentoAiuto": "Mostrato allo studente dopo una risposta sbagliata.",
@@ -1312,6 +1316,36 @@
         "nessuna": "Nessuna variabile: l'esercizio proporrà sempre la stessa domanda.",
         "condizione": "Condizione (opzionale)",
         "condizioneAiuto": "Un'espressione che deve risultare vera perché una combinazione di variabili sia accettata, per esempio \"a <> b\". Lasciala vuota se non ti serve."
+      },
+      "campoJme": {
+        "interpretatoCome": "Interpretato come:",
+        "scriviFormula": "Scrivi la formula",
+        "ambiguo": "La formula contiene «{segno}»: il motore ne terrebbe una sola delle due soluzioni, in silenzio. Scrivi le due soluzioni in due formule separate, oppure batti la formula direttamente nel campo.",
+        "nomeSconosciuto": "«{nome}» non è una variabile di questo esercizio, e il motore lo leggerebbe come una moltiplicazione. Se intendevi una funzione, scrivila con le parentesi: {nome}(x). Altrimenti dichiara la variabile nel pannello, oppure batti la formula direttamente nel campo.",
+        "nomeComeFunzione": "Scritto così, «{nome}(…)» è una chiamata alla funzione «{nome}», che il motore non ha. Se intendevi una moltiplicazione, scrivila con l'asterisco: {nome}*(…). Oppure batti la formula direttamente nel campo.",
+        "nonCompila": "Il motore non riesce a leggere questa formula: {dettaglio}. Puoi correggerla qui, oppure batterla direttamente nel campo.",
+        "vuoto": "Da questo disegno non esce nessuna formula: o è ancora vuoto, o è scritto in una forma che non si sa convertire (il soprallineato, per esempio). Riscrivilo qui in un altro modo, oppure batti la formula direttamente nel campo."
+      },
+      "campoTesto": {
+        "barra": "Strumenti matematici per {campo}",
+        "zonaMatematica": "Zona matematica",
+        "scriviFormula": "Scrivi la formula",
+        "semplifica": "Espressione da semplificare",
+        "inserisciVariabile": "Inserisci variabile",
+        "frazione": "Frazione",
+        "radice": "Radice quadrata",
+        "potenza": "Potenza",
+        "indice": "Indice",
+        "comeSiVedra": "Come si vedrà:",
+        "notaSimplify": "Dentro un comando simplify il testo resta scritto com'è: quel che ne esce dipende dai numeri sorteggiati, e si vede nell'anteprima qui accanto."
+      },
+      "finestraFormula": {
+        "titolo": "Scrivi la formula",
+        "descrizione": "Scrivila come la scriveresti sul foglio: quando confermi, torna nel campo da cui hai aperto questa finestra.",
+        "caricamento": "Carico l’editor di formule…",
+        "campo": "Formula",
+        "annulla": "Annulla",
+        "inserisci": "Inserisci nel campo"
       },
       "parti": {
         "titolo": "Parti",
@@ -1349,10 +1383,17 @@
       },
       "anteprima": {
         "titolo": "Anteprima",
-        "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi, come lo vedrebbero tre studenti diversi seduti vicini. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi: apri le linguette qui sotto per vedere come lo vedrebbero tre studenti diversi. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "sorteggio": "Sorteggio {numero}",
+        "sorteggioRifiuto": "Sorteggio {numero} — rifiutato",
         "seme": "Seme: {seme}",
         "semeRifiuto": "Seme del rifiuto: {seme} — il sorteggio che ha rotto l'esercizio",
         "rigenera": "Nuovi numeri"
+      },
+      "valoriSorteggiati": {
+        "titolo": "Valori sorteggiati",
+        "variabile": "Variabile",
+        "sorteggio": "Sorteggio {numero}"
       },
       "confermaUscita": "Ci sono modifiche non salvate. Vuoi davvero uscire senza salvare?",
       "salva": "Salva",

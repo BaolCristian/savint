@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CampoJme } from "./campo-jme";
 import type { VariabileEditor } from "@/lib/esercizi/editor/modello";
 
 /** Lo stesso identificatore di `src/lib/esercizi/editor/modello.ts`
@@ -78,12 +79,27 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
         {variabili.map((v, i) => {
           const idNome = `variabile-${i}-nome`;
           const idDefinizione = `variabile-${i}-definizione`;
+          const idErroreDefinizione = `${idDefinizione}-errore`;
           const idDescrizione = `variabile-${i}-descrizione`;
           const nomeInvalido = erroreNome(v.nome);
           const definizioneMancante = erroreDefinizione(v);
           return (
-            <li key={i} className="rounded-lg border p-3" aria-label={t("rigaAriaLabel", { numero: i + 1 })}>
-              <div className="grid gap-2 sm:grid-cols-3">
+            <li
+              key={i}
+              className="@container rounded-lg border p-3"
+              aria-label={t("rigaAriaLabel", { numero: i + 1 })}
+            >
+              {/* `@xl`, non `sm`: la larghezza che conta è quella di questa
+                  riga, non quella della finestra — la colonna di scrittura
+                  che la contiene non è mai larga tutto lo schermo. La soglia
+                  è scelta sulla colonna, non sul nome: `@xl` compila in
+                  `@container (width >= 36rem)` (misurato sul CSS generato dal
+                  `@tailwindcss/postcss` del repo), cioè 576px meno i 16px dei
+                  due `gap-2` = ~186px per colonna, quanto basta al campo e
+                  alla formula che gli sta sotto. `@sm` (24rem) darebbe
+                  ~120px: la stessa strettezza che questa riga vuole togliere,
+                  solo su un asse diverso. */}
+              <div className="grid gap-2 @xl:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <label htmlFor={idNome} className="text-sm font-medium">
                     {t("nome")}
@@ -97,16 +113,35 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
                   {nomeInvalido && <p className="text-xs text-destructive">{t("erroreNome")}</p>}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={idDefinizione} className="text-sm font-medium">
-                    {t("definizione")}
-                  </label>
-                  <Input
+                  {/* `invalido`: la definizione mancante è un errore che
+                      conosce solo il pannello — per l'eco un campo vuoto non
+                      ha niente da dire. Senza questo il campo `definizione`
+                      perderebbe il bordo rosso che il campo `nome` accanto ha
+                      (`aria-invalid:border-destructive` in `input.tsx`), e la
+                      stessa riga segnalerebbe i suoi due errori in due modi
+                      diversi. */}
+                  <CampoJme
                     id={idDefinizione}
-                    value={v.definizione}
-                    aria-invalid={definizioneMancante}
-                    onChange={(e) => aggiorna(i, "definizione", e.target.value)}
+                    etichetta={t("definizione")}
+                    valore={v.definizione}
+                    onChange={(valore) => aggiorna(i, "definizione", valore)}
+                    invalido={definizioneMancante}
+                    // Senza questo il campo è `aria-invalid` e basta: chi usa
+                    // un lettore di schermo sente «non valido» e non sente il
+                    // PERCHÉ, che è scritto nel paragrafo qui sotto — mentre
+                    // il campo accanto, con l'eco, il perché ce l'ha. Il
+                    // messaggio e il bordo rosso nascono dallo stesso
+                    // `definizioneMancante`, quindi la descrizione si passa
+                    // solo quando il paragrafo esiste davvero: un
+                    // `aria-describedby` che punta a un nodo assente non
+                    // descrive niente.
+                    descrittoDa={definizioneMancante ? idErroreDefinizione : undefined}
                   />
-                  {definizioneMancante && <p className="text-xs text-destructive">{t("erroreDefinizione")}</p>}
+                  {definizioneMancante && (
+                    <p id={idErroreDefinizione} className="text-xs text-destructive">
+                      {t("erroreDefinizione")}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label htmlFor={idDescrizione} className="text-sm font-medium">

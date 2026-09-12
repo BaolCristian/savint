@@ -4,13 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import type { EsercizioEditor, ParteEditor } from "@/lib/esercizi/editor/modello";
+import { CampoTestoMatematico } from "./campo-testo-matematico";
 import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
 import { ParteScelta, NESSUNA_RISPOSTA_CORRETTA } from "./parte-scelta";
 import { ParteEspressione } from "./parte-espressione";
 import { Anteprima } from "./anteprima";
+import { ImpaginazioneEditor } from "./impaginazione";
+import { SchedaCatalogo } from "./scheda-catalogo";
 
 /** Un esercizio nuovo, vuoto: `parti: []` non è ancora valido per lo schema
  * del dominio (`esercizioEditorSchema.parti.min(1)`) — non deve esserlo qui,
@@ -23,9 +25,6 @@ export const ESERCIZIO_VUOTO: EsercizioEditor = {
   condizione: "",
   parti: [],
 };
-
-const ANNI = [1, 2, 3, 4, 5];
-const DIFFICOLTA = [1, 2, 3] as const;
 
 type TipoParte = ParteEditor["tipo"];
 const TIPI_PARTE: TipoParte[] = ["numerica", "scelta", "espressione"];
@@ -159,13 +158,19 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       ? rifiutoAttivo.dettaglio.seme
       : undefined;
 
-  // Sempre I6: l'alert del rifiuto è l'ultimo elemento della pagina, sotto i
-  // tre riquadri di anteprima — a 1440×1000 (misurato dalla revisione) resta
-  // fuori dallo schermo dopo "controlla". Porta lo scroll e il focus sul suo
-  // contenitore ogni volta che un rifiuto compare, invece di lasciare che il
-  // docente lo scopra scrollando a caso. `tabIndex={-1}` sul contenitore
-  // (nel JSX più sotto) è ciò che rende `.focus()` valido su un elemento non
-  // interattivo.
+  // Sempre I6: prima del Task 1 (impaginazione a due colonne) l'alert del
+  // rifiuto era l'ultimo elemento della pagina, sotto i tre riquadri di
+  // anteprima — a 1440×1000 (misurato dalla revisione originale) restava
+  // fuori dallo schermo dopo "controlla". Da questo task vive invece nella
+  // colonna di visione, subito sotto <Anteprima> (vedi il JSX più sotto):
+  // più vicino allo schermo, ma lo scroll+focus restano necessari lo stesso,
+  // perché quella colonna può comunque superare l'altezza della finestra (un
+  // esercizio con molte parti, o più riquadri di anteprima) — niente qui
+  // garantisce che il rifiuto compaia già visibile senza scorrere. Porta lo
+  // scroll e il focus sul suo contenitore ogni volta che un rifiuto compare,
+  // invece di lasciare che il docente lo scopra scrollando a caso.
+  // `tabIndex={-1}` sul contenitore (nel JSX più sotto) è ciò che rende
+  // `.focus()` valido su un elemento non interattivo.
   const rifiutoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!rifiutoVerifica && !rifiutoSalvataggio) return;
@@ -300,205 +305,176 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
     }
   }
 
+  // I nomi, non gli oggetti variabile. Li leggono due superfici: il menu
+  // «Inserisci variabile» dei campi di testo, che inserisce `\var{nome}`, e
+  // il cancello che converte una formula disegnata verso JME, che senza
+  // questi nomi non può distinguere una variabile vera da un nome nato per
+  // giustapposizione. Una riga appena aggiunta ha ancora il nome vuoto, e
+  // due righe possono portare lo stesso nome mentre si scrive: né l'una né
+  // le altre sono voci di menu sensate, né nomi da dichiarare noti.
+  // Derivato durante il render, non tenuto in uno stato che andrebbe poi
+  // risincronizzato.
+  const nomiVariabili = [...new Set(editor.variabili.map((v) => v.nome).filter(Boolean))];
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">{t("titolo")}</h1>
-
-      <section className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1 sm:col-span-2">
-          <label htmlFor="redazione-titolo" className="text-sm font-medium">
-            {t("meta.titolo")}
-          </label>
-          <Input
-            id="redazione-titolo"
-            value={editor.meta.titolo}
-            onChange={(e) => aggiornaMeta("titolo", e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1 sm:col-span-2">
-          <label htmlFor="redazione-descrizione" className="text-sm font-medium">
-            {t("meta.descrizione")}
-          </label>
-          <Textarea
-            id="redazione-descrizione"
-            value={editor.meta.descrizione}
-            onChange={(e) => aggiornaMeta("descrizione", e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="redazione-anno" className="text-sm font-medium">
-            {t("meta.anno")}
-          </label>
-          <select
-            id="redazione-anno"
-            value={editor.meta.anno}
-            onChange={(e) => aggiornaMeta("anno", Number(e.target.value))}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
-          >
-            {ANNI.map((anno) => (
-              <option key={anno} value={anno}>
-                {anno}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="redazione-difficolta" className="text-sm font-medium">
-            {t("meta.difficolta")}
-          </label>
-          <select
-            id="redazione-difficolta"
-            value={editor.meta.difficolta}
-            onChange={(e) => aggiornaMeta("difficolta", Number(e.target.value))}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
-          >
-            {DIFFICOLTA.map((d) => (
-              <option key={d} value={d}>
-                {t(`meta.difficolta${d}`)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="redazione-argomento" className="text-sm font-medium">
-            {t("meta.argomento")}
-          </label>
-          <Input
-            id="redazione-argomento"
-            value={editor.meta.argomento}
-            onChange={(e) => aggiornaMeta("argomento", e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="redazione-tag" className="text-sm font-medium">
-            {t("meta.tag")}
-          </label>
-          <Input
-            id="redazione-tag"
-            value={editor.meta.tag.join(", ")}
-            onChange={(e) =>
-              aggiornaMeta(
-                "tag",
-                e.target.value
-                  .split(",")
-                  .map((tag) => tag.trim())
-                  .filter((tag) => tag.length > 0),
-              )
-            }
-          />
-          <p className="text-xs text-muted-foreground">{t("meta.tagAiuto")}</p>
-        </div>
-      </section>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="redazione-testo" className="text-sm font-medium">
-          {t("testo")}
-        </label>
-        <Textarea
-          id="redazione-testo"
-          value={editor.testo}
-          onChange={(e) => mutaEditor((ed) => ({ ...ed, testo: e.target.value }))}
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="redazione-suggerimento" className="text-sm font-medium">
-          {t("suggerimento")}
-        </label>
-        <Textarea
-          id="redazione-suggerimento"
-          value={editor.suggerimento}
-          onChange={(e) => mutaEditor((ed) => ({ ...ed, suggerimento: e.target.value }))}
-        />
-        <p className="text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
-      </div>
-
-      <PannelloVariabili
-        variabili={editor.variabili}
-        onChange={(variabili) => mutaEditor((ed) => ({ ...ed, variabili }))}
-        condizione={editor.condizione}
-        onChangeCondizione={(condizione) => mutaEditor((ed) => ({ ...ed, condizione }))}
-      />
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t("parti.titolo")}</h2>
-
-        <div className="space-y-4">
-          {editor.parti.map((parte, i) => (
-            // `numeroParte` (Task 6/7): tradotto in entrambe le lingue ma
-            // rimasto inutilizzato — un esercizio con più parti non mostrava
-            // nessuna etichetta "Parte N" oltre all'ordine nel DOM
-            // (correzione riportata dalla revisione del task precedente).
-            <div key={i} className="space-y-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">{t("parti.numeroParte", { numero: i + 1 })}</h3>
-              {parte.tipo === "numerica" ? (
-                <ParteNumerica parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-              ) : parte.tipo === "scelta" ? (
-                <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-              ) : (
-                <ParteEspressione parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-end gap-2">
+    <ImpaginazioneEditor
+      // L'intestazione porta l'h1 di pagina («Redazione esercizio») e la
+      // scheda di catalogo, ripiegata. Sta sopra le due colonne, non dentro
+      // la scrittura: nell'ordine del documento precede sia la scrittura
+      // sia la visione, in ogni larghezza. Il campo Titolo dell'esercizio
+      // NON è qui: apre la colonna di scrittura (vedi sotto) — è la prima
+      // istruzione esplicita del brief sull'ordine di quella colonna, ed è
+      // anche l'ordine in cui un docente pensa: prima come si chiama
+      // l'esercizio, poi il testo.
+      intestazione={
+        <>
+          <h1 className="text-xl font-semibold">{t("titolo")}</h1>
+          <SchedaCatalogo meta={editor.meta} onChange={aggiornaMeta} />
+        </>
+      }
+      // La colonna sinistra, nell'ordine del brief: titolo, testo,
+      // suggerimento, variabili, domande.
+      scrittura={
+        <>
           <div className="flex flex-col gap-1">
-            <label htmlFor="redazione-nuovo-tipo-parte" className="text-sm font-medium">
-              {t("parti.tipo")}
+            <label htmlFor="redazione-titolo" className="text-xs font-medium text-muted-foreground">
+              {t("meta.titolo")}
             </label>
-            <select
-              id="redazione-nuovo-tipo-parte"
-              value={nuovoTipoParte}
-              onChange={(e) => setNuovoTipoParte(e.target.value as TipoParte)}
-              className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
-            >
-              {TIPI_PARTE.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {t(`parti.tipo${tipo === "numerica" ? "Numerica" : tipo === "scelta" ? "Scelta" : "Espressione"}`)}
-                </option>
-              ))}
-            </select>
+            <Input
+              id="redazione-titolo"
+              value={editor.meta.titolo}
+              onChange={(e) => aggiornaMeta("titolo", e.target.value)}
+            />
           </div>
-          <Button type="button" variant="outline" onClick={aggiungiParte}>
-            {t("parti.aggiungi")}
+
+          <div className="space-y-2 rounded-lg border bg-card p-4">
+            <CampoTestoMatematico
+              id="redazione-testo"
+              etichetta={t("testo")}
+              valore={editor.testo}
+              onChange={(testo) => mutaEditor((ed) => ({ ...ed, testo }))}
+              variabili={nomiVariabili}
+            />
+          </div>
+
+          <div className="space-y-2 rounded-lg border bg-card p-4">
+            <CampoTestoMatematico
+              id="redazione-suggerimento"
+              etichetta={t("suggerimento")}
+              valore={editor.suggerimento}
+              onChange={(suggerimento) => mutaEditor((ed) => ({ ...ed, suggerimento }))}
+              variabili={nomiVariabili}
+            />
+            <p className="text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
+          </div>
+
+          <div className="rounded-lg border bg-card p-4">
+            <PannelloVariabili
+              variabili={editor.variabili}
+              onChange={(variabili) => mutaEditor((ed) => ({ ...ed, variabili }))}
+              condizione={editor.condizione}
+              onChangeCondizione={(condizione) => mutaEditor((ed) => ({ ...ed, condizione }))}
+            />
+          </div>
+
+          <section className="space-y-3 rounded-lg border bg-card p-4">
+            <h2 className="text-base font-semibold">{t("parti.titolo")}</h2>
+
+            <div className="space-y-4">
+              {editor.parti.map((parte, i) => (
+                // `numeroParte` (Task 6/7): tradotto in entrambe le lingue ma
+                // rimasto inutilizzato — un esercizio con più parti non mostrava
+                // nessuna etichetta "Parte N" oltre all'ordine nel DOM
+                // (correzione riportata dalla revisione del task precedente).
+                <div key={i} className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground">{t("parti.numeroParte", { numero: i + 1 })}</h3>
+                  {parte.tipo === "numerica" ? (
+                    <ParteNumerica
+                      parte={parte}
+                      onChange={(p) => aggiornaParte(i, p)}
+                      onRimuovi={() => rimuoviParte(i)}
+                      nomiVariabili={nomiVariabili}
+                    />
+                  ) : parte.tipo === "scelta" ? (
+                    <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+                  ) : (
+                    <ParteEspressione
+                      parte={parte}
+                      onChange={(p) => aggiornaParte(i, p)}
+                      onRimuovi={() => rimuoviParte(i)}
+                      nomiVariabili={nomiVariabili}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="redazione-nuovo-tipo-parte" className="text-xs font-medium text-muted-foreground">
+                  {t("parti.tipo")}
+                </label>
+                <select
+                  id="redazione-nuovo-tipo-parte"
+                  value={nuovoTipoParte}
+                  onChange={(e) => setNuovoTipoParte(e.target.value as TipoParte)}
+                  className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+                >
+                  {TIPI_PARTE.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {t(`parti.tipo${tipo === "numerica" ? "Numerica" : tipo === "scelta" ? "Scelta" : "Espressione"}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="button" variant="outline" onClick={aggiungiParte}>
+                {t("parti.aggiungi")}
+              </Button>
+            </div>
+          </section>
+        </>
+      }
+      // La colonna destra: l'anteprima, e subito accanto a lei il dettaglio
+      // di un eventuale rifiuto — racconta la stessa storia del riquadro
+      // evidenziato nell'anteprima (stesso seme), non i pulsanti che l'hanno
+      // prodotto. Vive in una regione distinta dalla scrittura e precede
+      // sempre la barra delle azioni nell'ordine del documento.
+      visione={
+        <>
+          <Anteprima editor={editor} locale="it" semeRifiuto={semeInEvidenza} />
+
+          {(rifiutoVerifica || rifiutoSalvataggio) && (
+            // I6: contenitore che riceve scroll e focus (vedi l'effetto sopra) —
+            // `tabIndex={-1}` lo rende un bersaglio valido per `.focus()` pur
+            // restando fuori dall'ordine di tabulazione normale.
+            <div ref={rifiutoRef} tabIndex={-1}>
+              {rifiutoVerifica && <DettaglioRifiuto corpo={rifiutoVerifica} />}
+              {rifiutoSalvataggio && <DettaglioRifiuto corpo={rifiutoSalvataggio} />}
+            </div>
+          )}
+        </>
+      }
+      // La barra fissa in fondo: i due pulsanti, lo stato di salvataggio, e
+      // l'unico avviso abbastanza corto (una riga) da restare qui accanto ai
+      // pulsanti che blocca — non il dettaglio del rifiuto, che è nella
+      // visione.
+      azioni={
+        <section className="flex flex-wrap items-center gap-3">
+          <Button type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
+            {verificando ? t("verificaInCorso") : t("verifica")}
           </Button>
-        </div>
-      </section>
-
-      <Anteprima editor={editor} locale="it" semeRifiuto={semeInEvidenza} />
-
-      <section className="flex flex-wrap items-center gap-3 border-t pt-4">
-        <Button type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
-          {verificando ? t("verificaInCorso") : t("verifica")}
-        </Button>
-        <Button type="button" onClick={salva} disabled={salvando || sceltaMancante}>
-          {salvando ? t("salvataggioInCorso") : t("salva")}
-        </Button>
-        {salvatoOk && <span className="text-sm text-brand-green">{t("salvato")}</span>}
-        {verificaOk && <span className="text-sm text-brand-green">{t("verificaOk")}</span>}
-      </section>
-
-      {sceltaMancante && (
-        <p role="alert" className="text-sm text-destructive">
-          {t("salvataggioBloccatoScelta")}
-        </p>
-      )}
-
-      {(rifiutoVerifica || rifiutoSalvataggio) && (
-        // I6: contenitore che riceve scroll e focus (vedi l'effetto sopra) —
-        // `tabIndex={-1}` lo rende un bersaglio valido per `.focus()` pur
-        // restando fuori dall'ordine di tabulazione normale.
-        <div ref={rifiutoRef} tabIndex={-1}>
-          {rifiutoVerifica && <DettaglioRifiuto corpo={rifiutoVerifica} />}
-          {rifiutoSalvataggio && <DettaglioRifiuto corpo={rifiutoSalvataggio} />}
-        </div>
-      )}
-    </div>
+          <Button type="button" onClick={salva} disabled={salvando || sceltaMancante}>
+            {salvando ? t("salvataggioInCorso") : t("salva")}
+          </Button>
+          {salvatoOk && <span className="text-sm text-brand-green">{t("salvato")}</span>}
+          {verificaOk && <span className="text-sm text-brand-green">{t("verificaOk")}</span>}
+          {sceltaMancante && (
+            <p role="alert" className="w-full text-sm text-destructive">
+              {t("salvataggioBloccatoScelta")}
+            </p>
+          )}
+        </section>
+      }
+    />
   );
 }
