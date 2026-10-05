@@ -80,4 +80,17 @@ describe("percorsoCompitoStudente", () => {
     await expect(percorsoCompitoStudente("c1", "s1")).resolves.toBeNull();
     expect(prisma.tentativo.findMany).not.toHaveBeenCalled();
   });
+
+  // `/studente/compito/[id]` con l'id di un compito ritirato, scritto a mano
+  // nell'indirizzo: la riga esiste ancora (soft delete), ma per lo studente
+  // quel compito non c'è più.
+  it("non apre un compito ritirato dal docente", async () => {
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      classeId: "classe-1", opensAt: null, ritiratoAt: new Date(),
+      drawnVersionIds: ["v2", "v1"], batteria: { name: "Algebra" },
+    } as never);
+
+    await expect(percorsoCompitoStudente("c1", "s1")).resolves.toBeNull();
+    expect(prisma.tentativo.findMany).not.toHaveBeenCalled();
+  });
 });

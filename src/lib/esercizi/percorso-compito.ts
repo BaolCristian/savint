@@ -26,7 +26,14 @@ export async function percorsoCompitoStudente(
     where: { id: compitoId },
     include: { batteria: { select: { name: true } } },
   });
-  if (!compito || (compito.opensAt && compito.opensAt > new Date()) || compito.drawnVersionIds.length === 0) return null;
+  // `ritiratoAt`: un compito ritirato dal docente non si apre più, nemmeno
+  // con l'id scritto a mano in /studente/compito/[id] (vedi `ritiraCompito`).
+  if (
+    !compito ||
+    compito.ritiratoAt != null ||
+    (compito.opensAt && compito.opensAt > new Date()) ||
+    compito.drawnVersionIds.length === 0
+  ) return null;
 
   const iscrizione = await prisma.classeStudente.findUnique({
     where: { classeId_studentId: { classeId: compito.classeId, studentId } },

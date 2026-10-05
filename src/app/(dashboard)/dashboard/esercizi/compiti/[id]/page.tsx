@@ -5,6 +5,12 @@ import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { consegneDelCompito } from "@/lib/esercizi/compiti";
 import { prisma } from "@/lib/db/client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { GestioneCompito } from "./gestione-compito";
+
+// La data nel formato del campo `type="date"`, in UTC: il modulo di
+// assegnazione la manda come `new Date("AAAA-MM-GG")`, cioè mezzanotte UTC,
+// e leggerla in un altro fuso la sposterebbe di un giorno nel campo.
+const perCampoData = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const session = await redirectUnlessTeacher();
@@ -32,7 +38,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     where: { id },
     include: { classe: true, batteria: true },
   });
-  if (!compito) notFound();
+  // Un compito ritirato (soft delete) esiste ancora come riga: questa
+  // lettura per id lo troverebbe, quindi lo si esclude qui esplicitamente —
+  // `consegneDelCompito` lo tratta già come inesistente.
+  if (!compito || compito.ritiratoAt != null) notFound();
 
   const consegne = esito.righe;
   const tUi = await getTranslations("teacherExercisesUi");
@@ -51,6 +60,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {compito.dueAt ? t("compitoScadenza", { quando: compito.dueAt.toLocaleDateString("it-IT") }) : t("nessunaScadenza")}
         </p>
       </div>
+
+      <GestioneCompito compitoId={compito.id} opensAt={perCampoData(compito.opensAt)} dueAt={perCampoData(compito.dueAt)} />
 
       {consegne.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("nessunoIscritto")}</p>

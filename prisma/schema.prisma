@@ -774,6 +774,14 @@ model Compito {
   drawnVersionIds String[]
   opensAt         DateTime?
   dueAt           DateTime?
+  // Ritiro di un compito (dato alla classe sbagliata, per errore): un soft
+  // delete, non una cancellazione. La riga resta perché i Tentativo già
+  // svolti la referenziano (onDelete: SetNull li staccherebbe dal compito,
+  // perdendo per sempre di quale assegnazione erano consegna) e perché la
+  // Batteria resta "in uso" (onDelete: Restrict). Ogni lettura dei compiti
+  // in compiti.ts e percorso-compito.ts tratta un ritiratoAt non nullo come
+  // "compito inesistente".
+  ritiratoAt      DateTime?
   createdAt       DateTime    @default(now())
   batteria        Batteria    @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
   classe          Classe      @relation(fields: [classeId], references: [id], onDelete: Cascade)

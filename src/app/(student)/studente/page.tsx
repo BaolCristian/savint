@@ -46,8 +46,11 @@ export default async function StudentHomePage() {
     compitiDelloStudente(session.user.id),
   ]);
 
+  // `ritiratoAt: null` anche qui, benché `compitiDelloStudente` escluda già
+  // i compiti ritirati: questa rilettura decide cosa la pagina mostra, e non
+  // deve fidarsi di chi le ha passato gli id.
   const datiCompiti = await prisma.compito.findMany({
-    where: { id: { in: compitiGrezzi.map((c) => c.id) } },
+    where: { id: { in: compitiGrezzi.map((c) => c.id) }, ritiratoAt: null },
     select: { id: true, opensAt: true, drawnVersionIds: true },
   });
   const ora = new Date();
