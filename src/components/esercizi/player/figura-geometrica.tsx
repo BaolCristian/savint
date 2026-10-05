@@ -111,7 +111,11 @@ export function FiguraGeometrica({ specifica }: { specifica: SpecificaFigura }) 
       nx = -nx;
       ny = -ny;
     }
-    return { x: m.x + nx * 18, y: m.y + ny * 18 + 5 };
+    // Su un lato quasi verticale il testo si appoggia di fianco (allineato
+    // verso il lato), invece di centrarsi sul punto: centrato, un'etichetta
+    // larga come «8 cm» toccava la linea.
+    const ancora: "start" | "middle" | "end" = nx > 0.5 ? "start" : nx < -0.5 ? "end" : "middle";
+    return { x: m.x + nx * 12, y: m.y + ny * 18 + 5, ancora };
   };
 
   // Il segno dell'angolo retto, nel primo vertice dei rettangoli e del
@@ -149,7 +153,7 @@ export function FiguraGeometrica({ specifica }: { specifica: SpecificaFigura }) 
       <g fontSize={14} className="fill-slate-800">
         {lati.map((l, i) => {
           const pos = posizione(l.lato);
-          return <text key={i} x={pos.x} y={pos.y} textAnchor="middle">{testo(i)}</text>;
+          return <text key={i} x={pos.x} y={pos.y} textAnchor={pos.ancora}>{testo(i)}</text>;
         })}
       </g>
     </svg>
