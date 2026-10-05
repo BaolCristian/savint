@@ -117,6 +117,11 @@ function costruisciParte(p: PartBase): PartePubblica {
 
   if (p.type === "1_n_2" || p.type === "m_n_2") {
     parte.scelte = ((impostazioni.choices as string[] | undefined) ?? []).map(sostituisci);
+    // L'ordine mescolato per questo studente: per le scelte singole e
+    // multiple il motore lo tiene in `shuffleAnswers` (una permutazione degli
+    // indici originali, seminata come tutto il resto della domanda).
+    const ordine = (p as unknown as { shuffleAnswers?: number[] }).shuffleAnswers;
+    if (Array.isArray(ordine) && ordine.length === parte.scelte.length) parte.ordine = [...ordine];
   } else if (p.type === "m_n_x") {
     parte.righe = ((impostazioni.choices as string[] | undefined) ?? []).map(sostituisci);
     parte.colonne = ((impostazioni.answers as string[] | undefined) ?? []).map(sostituisci);

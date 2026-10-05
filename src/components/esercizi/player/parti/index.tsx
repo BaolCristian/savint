@@ -17,8 +17,12 @@ export interface PartePubblica {
   type: PartType;
   promptHtml: string;
   marks: number;
-  /** 1_n_2, m_n_2: gli HTML delle scelte. */
+  /** 1_n_2, m_n_2: gli HTML delle scelte, nell'ordine del docente. */
   scelte?: string[];
+  /** 1_n_2, m_n_2: l'ordine in cui MOSTRARLE a questo studente (indici
+   * originali, dal mescolamento del motore, `shuffleAnswers`). Le risposte
+   * restano sempre nell'ordine originale. Assente: l'ordine del docente. */
+  ordine?: number[];
   /** m_n_x: le scelte (righe). */
   righe?: string[];
   /** m_n_x: le risposte (colonne). */

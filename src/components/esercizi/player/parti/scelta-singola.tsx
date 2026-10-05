@@ -7,9 +7,13 @@ import type { InputParteProps } from "./index";
 export function InputSceltaSingola({ parte, valore, onChange, disabilitato }: InputParteProps) {
   const scelte = parte.scelte ?? [];
   const nome = `scelta-${parte.path}`;
+  // Mostrate nell'ordine mescolato per questo studente, ma ogni scelta tiene
+  // il suo indice originale: è quello che il motore si aspetta.
+  const ordine = parte.ordine ?? scelte.map((_, i) => i);
   return (
     <div className="space-y-1" role="radiogroup">
-      {scelte.map((html, i) => {
+      {ordine.map((i) => {
+        const html = scelte[i] ?? "";
         const id = `${nome}-${i}`;
         return (
           <div key={id} className="flex items-center gap-2">

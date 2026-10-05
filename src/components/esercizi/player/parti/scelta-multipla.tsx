@@ -15,9 +15,13 @@ export function InputSceltaMultipla({ parte, valore, onChange, disabilitato }: I
     onChange(copia);
   }
 
+  // Mostrate nell'ordine mescolato per questo studente; le spunte restano
+  // nell'ordine originale, quello che il motore si aspetta.
+  const ordine = parte.ordine ?? scelte.map((_, i) => i);
   return (
     <div className="space-y-1">
-      {scelte.map((html, i) => {
+      {ordine.map((i) => {
+        const html = scelte[i] ?? "";
         const id = `scelta-${parte.path}-${i}`;
         return (
           <div key={id} className="flex items-center gap-2">

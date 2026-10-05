@@ -6,6 +6,8 @@ import { NextIntlClientProvider } from "next-intl";
 import type { Answer } from "@savint/engine";
 import it_ from "@/messages/it.json";
 import { InputParte, type PartePubblica } from "../index";
+import { InputSceltaSingola } from "../scelta-singola";
+import { InputSceltaMultipla } from "../scelta-multipla";
 
 const base = { path: "p0", promptHtml: "<p>Domanda</p>", marks: 1 };
 
@@ -163,5 +165,32 @@ describe("InputParte", () => {
     const parte = { ...base, type: "numberentry" } as PartePubblica;
     renderIntl(<InputParte parte={parte} valore="1" onChange={vi.fn()} disabilitato />);
     expect(screen.getByRole("textbox")).toBeDisabled();
+  });
+});
+
+// Il motore mescola le risposte per ogni studente (`shuffleAnswers` di
+// `1_n_2`/`m_n_2`) ma le risposte restano indicizzate nell'ordine
+// originale: il player mostra le scelte nell'ordine mescolato e invia
+// sempre l'indice ORIGINALE. Prima le mostrava nell'ordine del docente, e la
+// risposta giusta stava per tutti nello stesso posto.
+describe("le scelte nell'ordine mescolato", () => {
+  const parte = { path: "p0", type: "1_n_2" as const, promptHtml: "", marks: 1, scelte: ["<p>A</p>", "<p>B</p>", "<p>C</p>"], ordine: [2, 0, 1] };
+
+  it("scelta singola: mostra C, A, B e cliccando il primo invia 2", async () => {
+    const onChange = vi.fn();
+    const { container } = render(<InputSceltaSingola parte={parte} valore={null as never} onChange={onChange} disabilitato={false} />);
+    expect(Array.from(container.querySelectorAll("label")).map((l) => l.textContent)).toEqual(["C", "A", "B"]);
+    await userEvent.click(container.querySelectorAll("input")[0]!);
+    expect(onChange).toHaveBeenCalledWith(2);
+  });
+
+  it("scelta multipla: le spunte restano nell'ordine originale", async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <InputSceltaMultipla parte={{ ...parte, type: "m_n_2" }} valore={[false, false, false]} onChange={onChange} disabilitato={false} />,
+    );
+    expect(Array.from(container.querySelectorAll("label")).map((l) => l.textContent)).toEqual(["C", "A", "B"]);
+    await userEvent.click(container.querySelectorAll("input")[0]!);
+    expect(onChange).toHaveBeenCalledWith([false, false, true]);
   });
 });
