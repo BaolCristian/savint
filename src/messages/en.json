@@ -1419,6 +1419,7 @@
         "tipo": "Type",
         "tipoNumerica": "Numeric",
         "tipoScelta": "Multiple choice",
+        "tipoSceltaMultipla": "Multiple choice with several correct answers",
         "tipoEspressione": "Formula",
         "numerica": {
           "valore": "Correct value",
@@ -1437,6 +1438,12 @@
           "corretta": "Correct",
           "spiegazione": "Explanation if chosen by mistake (optional)",
           "correttaRimossa": "You removed the answer marked correct: choose a new one before saving."
+        },
+        "sceltaMultipla": {
+          "corretta": "Correct",
+          "spiegazione": "Explanation if wrong (optional)",
+          "nessunaCorretta": "Mark at least one answer as correct before saving.",
+          "tuttoONiente": "The student gets the marks only by ticking all and only the correct answers: no partial marks."
         },
         "espressione": {
           "risposta": "Correct answer",

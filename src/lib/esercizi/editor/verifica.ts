@@ -242,8 +242,10 @@ function distrattoriDichiarati(v: unknown): string[] {
 }
 
 /** Le risposte proposte (`choices`) e le spiegazioni (`distractors`) di
- * ogni parte a scelta multipla ("1_n_2", l'unico tipo che questo editor
- * produce per una parte "scelta" — vedi `versoNumbas`), grezze, con lo
+ * ogni parte a scelta multipla ("1_n_2" per una parte "scelta", "m_n_2"
+ * per una "sceltaMultipla" — i due tipi che questo editor produce, vedi
+ * `versoNumbas`; per entrambi il motore tiene le spiegazioni nella stessa
+ * forma a righe, vedi `distrattoriDichiarati`), grezze, con lo
  * scope necessario a sostituirle. Il controllo statico sopra
  * (`erroreTestoStatico`/`campiTesto`) già guarda questi stessi campi per un
  * identificatore non dichiarato dentro `\var{}`/`\simplify{{...}}`: questo
@@ -255,7 +257,7 @@ function distrattoriDichiarati(v: unknown): string[] {
 function campiSceltaGrezzi(caricata: Question): CampoScelta[] {
   const campi: CampoScelta[] = [];
   caricata.allParts().forEach((parte) => {
-    if (parte.type !== "1_n_2") return;
+    if (parte.type !== "1_n_2" && parte.type !== "m_n_2") return;
     const scope = parte.getScope();
     const impostazioni = parte.settings as Record<string, unknown>;
     const numero = parte.index + 1;

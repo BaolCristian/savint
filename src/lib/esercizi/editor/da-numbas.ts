@@ -254,12 +254,11 @@ function leggiIntervallo(p: Record<string, unknown>): { valore: string; tolleran
  * corpus non ha mai mostrato) ricade in una descrizione generica. */
 const DESCRIZIONE_TIPO_PARTE: Record<string, string> = {
   gapfill: "è divisa in più spazi da riempire dentro lo stesso testo (una domanda composita)",
-  m_n_2: "chiede allo studente di scegliere più di una risposta, non una sola",
   m_n_x: "chiede di abbinare ogni voce a una corrispondente, non di scegliere fra risposte proposte",
   patternmatch: "controlla la risposta confrontandola con un modello di testo (un'espressione regolare)",
 };
 
-const TIPI_SUPPORTATI = new Set(["numberentry", "1_n_2", "jme"]);
+const TIPI_SUPPORTATI = new Set(["numberentry", "1_n_2", "m_n_2", "jme"]);
 
 type EsitoParte = { ok: true; parte: ParteEditor } | { ok: false; lettura: Lettura };
 
@@ -278,7 +277,8 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
       ok: false,
       lettura: rifiutaTipo(
         `${posizione} ${descrizione} (tipo "${nomeTipo}"): l'editor gestisce solo domande numeriche, a ` +
-          `scelta multipla singola, o con risposta in formula matematica. ${SUGGERIMENTO_REPOSITORIO}`,
+          `scelta multipla (con una o più risposte giuste), o con risposta in formula matematica. ` +
+          SUGGERIMENTO_REPOSITORIO,
       ),
     };
   }
@@ -359,8 +359,27 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
     return { ok: true, parte: { tipo: "espressione", consegna, punti, risposta } };
   }
 
-  // tipo === "1_n_2": i punti stanno nella matrice di marcatura, non in
-  // "marks" (che vale sempre 0 per convenzione, vedi verso-numbas.ts).
+  // L'editor scrive solo la correzione tutto o niente (vedi
+  // verso-numbas.ts): un m_n_2 che somma i punti delle caselle spuntate —
+  // il predefinito di Numbas quando `markingMethod` manca, come
+  // nell'esercizio 04 del corpus — darebbe agli studenti un voto diverso
+  // se riaperto e salvato da qui. Rifiutato con un motivo leggibile, non
+  // lasciato al confronto strutturale che direbbe solo "non torna". Prima
+  // delle risposte: è il motivo più diretto, e non dipende da come sono
+  // scritte le singole risposte.
+  if (tipo === "m_n_2" && p.markingMethod !== "all-or-nothing") {
+    return {
+      ok: false,
+      lettura: rifiutaCostrutto(
+        `${posizione} dà punteggi parziali alle singole caselle spuntate: l'editor sa scrivere solo una ` +
+          "scelta multipla con più risposte giuste corretta tutto o niente (punti pieni solo spuntando " +
+          `esattamente le risposte giuste). ${SUGGERIMENTO_REPOSITORIO} (markingMethod)`,
+      ),
+    };
+  }
+
+  // Le risposte proposte e la matrice dei punteggi: stessa forma per le
+  // due scelte multiple, una voce di matrice per risposta.
   const scelteGrezze = lista(p.choices);
   const matriceGrezza = lista(p.matrix);
   if (scelteGrezze === null || matriceGrezza === null || scelteGrezze.length !== matriceGrezza.length) {
@@ -372,37 +391,43 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
       ),
     };
   }
+  const risposte = leggiRisposte(scelteGrezze, posizione);
+  if (!risposte.ok) return risposte;
+  const valori = leggiMatrice(matriceGrezza, posizione);
+  if (!valori.ok) return valori;
+  const spiegazioni = leggiSpiegazioni(p, risposte.valori.length, posizione);
+  if (!spiegazioni.ok) return spiegazioni;
 
-  const risposte: string[] = [];
-  for (const scelta of scelteGrezze) {
-    const r = estraiTesto(scelta);
-    if (r === null) {
-      return {
-        ok: false,
-        lettura: rifiutaCostrutto(messaggioTestoAmbiguo(`una delle risposte proposte nella ${posizione}`, "choices")),
-      };
+  if (tipo === "m_n_2") {
+    const punti = numero(p.marks);
+    if (punti === null) {
+      return { ok: false, lettura: rifiutaCostrutto(`${posizione} non ha un punteggio valido (marks).`) };
     }
-    risposte.push(r);
+    // Con tutto o niente conta solo quali caselle vanno spuntate (una voce
+    // positiva). Che la matrice sia davvero "1"/"0", e non punti o voci
+    // negative, lo garantisce il confronto strutturale: qui non si
+    // normalizza nulla, quindi passa solo la forma esatta scritta
+    // dall'editor.
+    const corrette = valori.valori.map((v) => v > 0);
+    return {
+      ok: true,
+      parte: { tipo: "sceltaMultipla", consegna, punti, risposte: risposte.valori, corrette, spiegazioni: spiegazioni.valori },
+    };
   }
 
+  // tipo === "1_n_2": i punti stanno nella matrice di marcatura, non in
+  // "marks" (che vale sempre 0 per convenzione, vedi verso-numbas.ts).
   let indiceGiusta = -1;
   let punti = 0;
-  for (let i = 0; i < matriceGrezza.length; i++) {
-    const voce = matriceGrezza[i];
-    const valore = typeof voce === "number" ? voce : typeof voce === "string" ? Number(voce) : NaN;
-    if (!Number.isFinite(valore)) {
-      return {
-        ok: false,
-        lettura: rifiutaCostrutto(`${posizione}: il punteggio assegnato a una risposta non è un numero (matrix).`),
-      };
-    }
+  for (let i = 0; i < valori.valori.length; i++) {
+    const valore = valori.valori[i]!;
     if (valore !== 0) {
       if (indiceGiusta !== -1) {
         return {
           ok: false,
           lettura: rifiutaCostrutto(
-            `${posizione}: più di una risposta ha un punteggio diverso da zero — l'editor gestisce solo una ` +
-              "scelta multipla con un'unica risposta corretta (matrix).",
+            `${posizione}: più di una risposta ha un punteggio diverso da zero — una scelta multipla con ` +
+              "una sola risposta corretta non può averne più d'una (matrix).",
           ),
         };
       }
@@ -420,46 +445,90 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
     };
   }
 
-  // distractors: il commento che lo studente legge dopo una risposta
-  // sbagliata (una spiegazione del perché è sbagliata). Assente in giro 1:
-  // silenziosamente scartato da versoNumbas, che scriveva sempre stringhe
-  // vuote. Letto quando presente, non solo per completezza: senza, il
-  // confronto strutturale rifiuterebbe qualunque file che lo usa davvero
-  // (il file 02 del corpus, per esempio).
-  let spiegazioni: string[] | undefined;
-  if (p.distractors !== undefined) {
-    const distractorsGrezzi = lista(p.distractors);
-    if (distractorsGrezzi === null || distractorsGrezzi.length !== risposte.length) {
+  return {
+    ok: true,
+    parte: { tipo: "scelta", consegna, punti, risposte: risposte.valori, indiceGiusta, spiegazioni: spiegazioni.valori },
+  };
+}
+
+type EsitoCampo<T> = { ok: true; valori: T } | { ok: false; lettura: Lettura };
+
+/** Le risposte proposte (`choices`) di una scelta multipla, come testo del
+ * docente: rifiutate in blocco se anche una sola non è nella forma
+ * canonica (vedi `estraiTesto`). */
+function leggiRisposte(scelteGrezze: unknown[], posizione: string): EsitoCampo<string[]> {
+  const risposte: string[] = [];
+  for (const scelta of scelteGrezze) {
+    const r = estraiTesto(scelta);
+    if (r === null) {
+      return {
+        ok: false,
+        lettura: rifiutaCostrutto(messaggioTestoAmbiguo(`una delle risposte proposte nella ${posizione}`, "choices")),
+      };
+    }
+    risposte.push(r);
+  }
+  return { ok: true, valori: risposte };
+}
+
+/** Le voci della matrice dei punteggi come numeri: Numbas le accetta sia
+ * numero sia stringa. */
+function leggiMatrice(matriceGrezza: unknown[], posizione: string): EsitoCampo<number[]> {
+  const valori: number[] = [];
+  for (const voce of matriceGrezza) {
+    const valore = typeof voce === "number" ? voce : typeof voce === "string" ? Number(voce) : NaN;
+    if (!Number.isFinite(valore)) {
+      return {
+        ok: false,
+        lettura: rifiutaCostrutto(`${posizione}: il punteggio assegnato a una risposta non è un numero (matrix).`),
+      };
+    }
+    valori.push(valore);
+  }
+  return { ok: true, valori };
+}
+
+/** distractors: il commento che lo studente legge dopo una risposta
+ * sbagliata (una spiegazione del perché è sbagliata). Assente in giro 1:
+ * silenziosamente scartato da versoNumbas, che scriveva sempre stringhe
+ * vuote. Letto quando presente, non solo per completezza: senza, il
+ * confronto strutturale rifiuterebbe qualunque file che lo usa davvero
+ * (il file 02 del corpus, per esempio). */
+function leggiSpiegazioni(
+  p: Record<string, unknown>,
+  numeroRisposte: number,
+  posizione: string,
+): EsitoCampo<string[] | undefined> {
+  if (p.distractors === undefined) return { ok: true, valori: undefined };
+  const distractorsGrezzi = lista(p.distractors);
+  if (distractorsGrezzi === null || distractorsGrezzi.length !== numeroRisposte) {
+    return {
+      ok: false,
+      lettura: rifiutaCostrutto(
+        `${posizione}: le spiegazioni delle risposte sbagliate non corrispondono in numero alle risposte ` +
+          "stesse (distractors).",
+      ),
+    };
+  }
+  const spiegazioniEstratte: string[] = [];
+  for (const d of distractorsGrezzi) {
+    const s = estraiTesto(d);
+    if (s === null) {
       return {
         ok: false,
         lettura: rifiutaCostrutto(
-          `${posizione}: le spiegazioni delle risposte sbagliate non corrispondono in numero alle risposte ` +
-            "stesse (distractors).",
+          messaggioTestoAmbiguo(`la spiegazione di una risposta sbagliata nella ${posizione}`, "distractors"),
         ),
       };
     }
-    const spiegazioniEstratte: string[] = [];
-    for (const d of distractorsGrezzi) {
-      const s = estraiTesto(d);
-      if (s === null) {
-        return {
-          ok: false,
-          lettura: rifiutaCostrutto(
-            messaggioTestoAmbiguo(`la spiegazione di una risposta sbagliata nella ${posizione}`, "distractors"),
-          ),
-        };
-      }
-      spiegazioniEstratte.push(s);
-    }
-    // Nessuna spiegazione scritta per nessuna risposta è indistinguibile,
-    // per un docente, dal campo mai toccato: `versoNumbas` scrive comunque
-    // stringhe vuote (Numbas vuole l'array), quindi senza questo collasso
-    // un esercizio salvato senza spiegazioni e poi riaperto acquisirebbe un
-    // `spiegazioni: ["", ...]` che l'originale non aveva mai avuto.
-    spiegazioni = spiegazioniEstratte.some((s) => s !== "") ? spiegazioniEstratte : undefined;
+    spiegazioniEstratte.push(s);
   }
-
-  return { ok: true, parte: { tipo: "scelta", consegna, punti, risposte, indiceGiusta, spiegazioni } };
+  // Nessuna spiegazione scritta per nessuna risposta è indistinguibile,
+  // per un docente, dal campo mai toccato: `versoNumbas` scrive comunque
+  // stringhe vuote (Numbas vuole l'array), quindi senza questo collasso
+  // un esercizio salvato senza spiegazioni e poi riaperto acquisirebbe un
+  // `spiegazioni: ["", ...]` che l'originale non aveva mai avuto.
+  return { ok: true, valori: spiegazioniEstratte.some((s) => s !== "") ? spiegazioniEstratte : undefined };
 }
 
 // ---- il confronto strutturale ------------------------------------------
@@ -512,6 +581,11 @@ function normalizzaParte(raw: Record<string, unknown>, estratta: ParteEditor): R
       normalizzato.distractors = distractorsGrezzi.map((d) => contenutoGrezzo(d) ?? "");
     }
   }
+  // Una parte "sceltaMultipla" (m_n_2) non riceve nessuna di queste
+  // equivalenze: è un tipo che solo l'editor scrive, e il corpus non ne ha
+  // nessuno nella sua forma. Risposte senza `<p>`, voci di matrice numeriche
+  // o diverse da "1"/"0" restano differenze, e l'esercizio resta in sola
+  // lettura invece di essere riscritto in silenzio al primo salvataggio.
   return normalizzato;
 }
 

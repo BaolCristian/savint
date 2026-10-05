@@ -45,7 +45,7 @@ describe("il corpus reale", () => {
     ["01-equazione-primo-grado.json", true],   // rigenera byte per byte
     ["02-scomposizione-polinomi.json", true],  // distractors ora modellati
     ["03-sistemi-lineari.json", false],   // gapfill
-    ["04-disequazioni-secondo-grado.json", false], // m_n_2, non piu' il "<" nello statement
+    ["04-disequazioni-secondo-grado.json", false], // m_n_2 a punteggio parziale, non tutto o niente
     ["05-goniometria-valori.json", false],  // m_n_x
     ["06-derivate-elementari.json", false], // checkVariableNames/expectedVariableNames
     ["07-limiti-notevoli.json", false],     // margine E precisione insieme
@@ -54,12 +54,19 @@ describe("il corpus reale", () => {
     expect(daNumbas(leggi(nome)).ok).toBe(atteso);
   });
 
-  it("04 e' rifiutato per il tipo di parte (m_n_2), non piu' per il '<' nello statement", () => {
+  // Da quando l'editor scrive anche parti m_n_2, il tipo da solo non basta
+  // più a rifiutare 04: lo rifiuta la correzione. 04 somma i punti delle
+  // caselle spuntate (+1 per una giusta, -1 per una sbagliata, il
+  // `markingMethod` predefinito di Numbas), l'editor scrive solo la
+  // correzione tutto o niente: aprirlo e salvarlo cambierebbe il voto degli
+  // studenti. Resta in sola lettura, e il messaggio dice perché.
+  it("04 resta in sola lettura: la sua parte m_n_2 dà punteggi parziali, non tutto o niente", () => {
     const esito = daNumbas(leggi("04-disequazioni-secondo-grado.json"));
     expect(esito.ok).toBe(false);
     if (!esito.ok) {
-      expect(esito.motivo).toBe("tipo_non_supportato");
-      expect(esito.dettaglio).toContain("m_n_2");
+      expect(esito.motivo).toBe("costrutti_non_supportati");
+      expect(esito.dettaglio).toContain("markingMethod");
+      expect(esito.dettaglio).toContain("tutto o niente");
     }
   });
 
@@ -136,6 +143,86 @@ describe("andata e ritorno", () => {
     const esito = daNumbas(versoFile(originale));
     expect(esito.ok).toBe(true);
     if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+});
+
+describe("scelta multipla con più risposte giuste (m_n_2)", () => {
+  const conParte = (parte: EsercizioEditor["parti"][number]): EsercizioEditor => ({ ...base, parti: [parte] });
+  const PARTE = { tipo: "sceltaMultipla" as const, consegna: "Quali sono pari?", punti: 2,
+    risposte: ["2", "3", "4", "x < 5 & y > 1"], corrette: [true, false, true, false] };
+
+  it("si riapre identica, e riconvertita dà gli stessi byte", () => {
+    const originale = conParte(PARTE);
+    const file = versoFile(originale);
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.editor).toEqual(originale);
+    expect(JSON.stringify(versoFile(esito.editor))).toBe(JSON.stringify(file));
+  });
+
+  it("con le spiegazioni torna identica, spiegazioni incluse", () => {
+    const originale = conParte({ ...PARTE, spiegazioni: ["", "3 è dispari", "", "non è un numero"] });
+    const file = versoFile(originale);
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.editor).toEqual(originale);
+    expect(JSON.stringify(versoFile(esito.editor))).toBe(JSON.stringify(file));
+  });
+
+  it("anche con tutte le risposte giuste", () => {
+    const originale = conParte({ ...PARTE, risposte: ["a", "b"], corrette: [true, true] });
+    const esito = daNumbas(versoFile(originale));
+    expect(esito.ok).toBe(true);
+    if (esito.ok) expect(esito.editor).toEqual(originale);
+  });
+
+  // Il riconoscimento non va oltre la forma che l'editor stesso scrive: una
+  // parte m_n_2 qualunque toccata in un solo campo resta in sola lettura.
+  function mutata(muta: (p: Record<string, unknown>) => void) {
+    const file = versoFile(conParte(PARTE));
+    const q = structuredClone(file.question) as { parts: Record<string, unknown>[] };
+    muta(q.parts[0]!);
+    return { ...file, question: q };
+  }
+
+  it("una correzione a punteggio parziale (sum ticked cells) non è rappresentabile, e il messaggio lo dice", () => {
+    const esito = daNumbas(mutata((p) => { p.markingMethod = "sum ticked cells"; }));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) {
+      expect(esito.dettaglio).toContain("tutto o niente");
+      expect(esito.dettaglio).toContain("markingMethod");
+    }
+  });
+
+  it("senza markingMethod (il predefinito di Numbas somma le caselle) non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { delete p.markingMethod; })).ok).toBe(false);
+  });
+
+  it("una casella sbagliata che toglie punti (-1 nella matrice) non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.matrix = ["1", "-1", "1", "0"]; })).ok).toBe(false);
+  });
+
+  it("una matrice coi punti invece che con 1/0 non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.matrix = ["2", "0", "2", "0"]; })).ok).toBe(false);
+  });
+
+  it("un numero minimo di caselle da spuntare non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.minAnswers = 2; })).ok).toBe(false);
+  });
+
+  it("maxMarks, che il motore leggerebbe al posto di marks, non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.maxMarks = 0; })).ok).toBe(false);
+  });
+
+  it("risposte senza l'involucro <p> che scrive l'editor non sono rappresentabili", () => {
+    expect(daNumbas(mutata((p) => { p.choices = ["2", "3", "4", "x &lt; 5 &amp; y &gt; 1"]; })).ok).toBe(false);
+  });
+
+  it("nessuna casella da spuntare non è rappresentabile", () => {
+    const esito = daNumbas(mutata((p) => { p.matrix = ["0", "0", "0", "0"]; }));
+    expect(esito.ok).toBe(false);
   });
 });
 

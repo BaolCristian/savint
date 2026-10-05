@@ -51,6 +51,22 @@ describe("EditorEsercizio — le parti", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(2);
   });
 
+  it("aggiunge una parte a scelta con più risposte giuste: due risposte vuote, nessuna segnata", async () => {
+    montaggio();
+    await userEvent.selectOptions(screen.getByLabelText(R.parti.tipo), "sceltaMultipla");
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi }));
+
+    const caselle = screen.getAllByRole("checkbox", { name: R.parti.sceltaMultipla.corretta });
+    expect(caselle).toHaveLength(2);
+    for (const c of caselle) expect(c).not.toBeChecked();
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+  });
+
+  it("il menu «Tipo» offre la scelta con più risposte giuste", () => {
+    montaggio();
+    expect(screen.getByRole("option", { name: R.parti.tipoSceltaMultipla })).toBeInTheDocument();
+  });
+
   it("aggiunge una parte a formula", async () => {
     montaggio();
     await userEvent.selectOptions(screen.getByLabelText(R.parti.tipo), "espressione");
@@ -247,6 +263,38 @@ describe("EditorEsercizio — salvataggio e il dettaglio del rifiuto", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const corpo = JSON.parse((vi.mocked(fetchMock).mock.calls[0]![1] as RequestInit).body as string);
     expect(corpo.editor.parti[0].indiceGiusta).toBe(0);
+  });
+});
+
+// Come per la scelta singola, la fonte di verità del blocco è il modello:
+// una parte a più risposte giuste senza nessuna casella «corretta» spuntata
+// non passerebbe lo schema del dominio, e una correzione tutto o niente
+// senza risposte giuste darebbe punti pieni a chi non spunta nulla.
+describe("EditorEsercizio — scelta con più risposte giuste senza corrette", () => {
+  it("blocca salva e controlla finché non si spunta almeno una risposta corretta, poi le invia tutte", async () => {
+    const fetchMock: MockFetch = vi.fn(async () => new Response(JSON.stringify({ esercizioId: "e1", versione: 1 }), { status: 201 }));
+    global.fetch = fetchMock as never;
+    montaggio();
+
+    await userEvent.selectOptions(screen.getByLabelText(R.parti.tipo), "sceltaMultipla");
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi }));
+
+    const salvaBtn = screen.getByRole("button", { name: R.salva });
+    expect(salvaBtn).toBeDisabled();
+    expect(screen.getByRole("button", { name: R.verifica })).toBeDisabled();
+    expect(screen.getByText(R.salvataggioBloccatoScelta)).toBeInTheDocument();
+    await userEvent.click(salvaBtn);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const caselle = screen.getAllByRole("checkbox", { name: R.parti.sceltaMultipla.corretta });
+    await userEvent.click(caselle[0]!);
+    await userEvent.click(caselle[1]!);
+    expect(salvaBtn).not.toBeDisabled();
+
+    await userEvent.click(salvaBtn);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const corpo = JSON.parse((vi.mocked(fetchMock).mock.calls[0]![1] as RequestInit).body as string);
+    expect(corpo.editor.parti[0]).toMatchObject({ tipo: "sceltaMultipla", corrette: [true, true] });
   });
 });
 

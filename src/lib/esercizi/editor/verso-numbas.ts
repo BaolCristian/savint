@@ -76,6 +76,44 @@ function versoParte(parte: ParteEditor): unknown {
         // le risposte), nessuna informazione persa.
         distractors: (parte.spiegazioni ?? parte.risposte.map(() => "")).map(escapaTesto),
       };
+    case "sceltaMultipla":
+      // Le impostazioni di m_n_2 che danno la correzione tutto o niente
+      // (verificate sul motore in scelta-multipla-correzione.test.ts):
+      // - `markingMethod: "all-or-nothing"`: lo script di correzione
+      //   (marking/scripts/multipleresponse.jme, `binary_score_ticks`)
+      //   confronta ogni casella con quella attesa e dà credito 1 solo se
+      //   tornano tutte, altrimenti 0. Il predefinito di Numbas, "sum ticked
+      //   cells", somma invece i punti delle caselle spuntate: punteggi
+      //   parziali, ed è quello che fa l'esercizio 04 del corpus.
+      // - `matrix` "1"/"0": in tutto o niente conta solo quali celle sono
+      //   positive (la casella va spuntata), non quanto valgono.
+      // - `marks` porta i punti. `maxMarks` NON va scritto: per i tipi
+      //   diversi da 1_n_2 il motore lo legge AL POSTO di `marks`
+      //   (multiple-response-part.ts, `loadFromJSON`), e `maxMarks: 0`
+      //   farebbe ricalcolare i punti dalla matrice — uno per risposta giusta.
+      // - `minAnswers`/`maxAnswers` 0 e `warningType: "none"`: nessun
+      //   limite al numero di spunte, che suggerirebbe allo studente quante
+      //   sono le risposte giuste; spuntarne troppe o troppo poche è già
+      //   sbagliato per la correzione stessa.
+      // - `shuffleChoices`: le risposte mescolate per ogni studente, come
+      //   per "scelta" (per m_n_2 il motore lo traduce in `shuffleAnswers`).
+      return {
+        type: "m_n_2",
+        marks: parte.punti,
+        prompt: `<p>${testoVersoHtml(parte.consegna)}</p>`,
+        choices: parte.risposte.map((r) => `<p>${escapaTesto(r)}</p>`),
+        matrix: parte.corrette.map((c) => (c ? "1" : "0")),
+        markingMethod: "all-or-nothing",
+        minAnswers: 0,
+        maxAnswers: 0,
+        warningType: "none",
+        displayType: "checkbox",
+        displayColumns: 0,
+        shuffleChoices: true,
+        showCellAnswerState: true,
+        minMarks: 0,
+        distractors: (parte.spiegazioni ?? parte.risposte.map(() => "")).map(escapaTesto),
+      };
     case "espressione":
       return {
         type: "jme",

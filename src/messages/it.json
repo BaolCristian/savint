@@ -1419,6 +1419,7 @@
         "tipo": "Tipo",
         "tipoNumerica": "Numerica",
         "tipoScelta": "Scelta multipla",
+        "tipoSceltaMultipla": "Scelta multipla con più risposte giuste",
         "tipoEspressione": "Formula",
         "numerica": {
           "valore": "Valore corretto",
@@ -1437,6 +1438,12 @@
           "corretta": "Corretta",
           "spiegazione": "Spiegazione se scelta per errore (facoltativa)",
           "correttaRimossa": "Hai rimosso la risposta segnata come corretta: scegline una nuova prima di salvare."
+        },
+        "sceltaMultipla": {
+          "corretta": "Corretta",
+          "spiegazione": "Spiegazione se sbagliata (facoltativa)",
+          "nessunaCorretta": "Segna almeno una risposta come corretta prima di salvare.",
+          "tuttoONiente": "Lo studente prende i punti solo se spunta tutte e sole le risposte corrette: nessun punto parziale."
         },
         "espressione": {
           "risposta": "Risposta corretta",
