@@ -1469,6 +1469,21 @@
         "faseCaricamento": "caricamento",
         "faseRisposta": "risposta"
       },
+      "immagine": {
+        "inserisci": "Inserisci immagine",
+        "titolo": "Inserisci un'immagine",
+        "spiegazione": "Una figura, uno schema o un grafico. Le misure che cambiano per ogni studente scrivile nel testo, con le variabili.",
+        "file": "File (PNG, JPG, GIF o WebP, fino a 5 MB)",
+        "descrizione": "Descrizione",
+        "descrizioneAiuto": "Cosa mostra l'immagine, in poche parole: la legge chi usa un programma di lettura dello schermo.",
+        "conferma": "Inserisci",
+        "annulla": "Annulla",
+        "caricamento": "Caricamento…",
+        "erroreTipo": "Questo file non è un'immagine PNG, JPG, GIF o WebP.",
+        "erroreGrande": "L'immagine supera i 5 MB: riducila e riprova.",
+        "erroreGenerico": "Caricamento non riuscito. Riprova.",
+        "dentroFormula": "Sposta il cursore fuori dalla formula per inserire un'immagine."
+      },
       "erroreSalvataggio": {
         "nonTrovato": "Questo esercizio non esiste più.",
         "nonRappresentabile": "Questo esercizio non può essere aperto in questo editor.",

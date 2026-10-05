@@ -25,6 +25,23 @@ describe("verificaSuSemi", () => {
     expect(verificaSuSemi(versoNumbas(base))).toEqual({ ok: true });
   });
 
+  // JME non distingue maiuscole e minuscole: il motore legge `N` e `n` come
+  // la stessa variabile. Il controllo statico invece confrontava i nomi
+  // esatti e rifiutava «la variabile "n" … non è dichiarata» per un `N`
+  // dichiarato e usato tale e quale.
+  it("una variabile con il nome maiuscolo non è scambiata per non dichiarata", () => {
+    const e: EsercizioEditor = {
+      ...base,
+      testo: "Calcola il \\(\\var{P}\\%\\) di \\(\\var{N}\\)",
+      variabili: [
+        { nome: "N", definizione: "20*random(2..10)", descrizione: "" },
+        { nome: "P", definizione: "5*random(1..10)", descrizione: "" },
+      ],
+      parti: [{ tipo: "numerica", consegna: "Risultato:", punti: 1, valore: "N*P/100", tolleranza: { tipo: "esatta" } }],
+    };
+    expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+  });
+
   it("una definizione che divide per zero fallisce solo su alcuni semi, non su tutti", () => {
     // b e' definita come random(1..(1/a)): quando a vale 0 (semi 14 e 17,
     // con questo generatore) l'estremo 1/a e' infinito e generare un numero

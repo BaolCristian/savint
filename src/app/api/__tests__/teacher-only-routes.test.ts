@@ -55,6 +55,7 @@ const routes: Entry[] = [
   { name: "installation/hub/connect", load: () => import("@/app/api/installation/hub/connect/route"), methods: ["POST"] },
   { name: "esercizi/classi/insegnate", load: () => import("@/app/api/esercizi/classi/insegnate/route"), methods: ["POST"] },
   { name: "esercizi/classi", load: () => import("@/app/api/esercizi/classi/route"), methods: ["POST"] },
+  { name: "esercizi/immagini", load: () => import("@/app/api/esercizi/immagini/route"), methods: ["POST"] },
   { name: "esercizi/classi/[id]/codice", load: () => import("@/app/api/esercizi/classi/[id]/codice/route"), methods: ["POST"] },
   { name: "esercizi/contenitori", load: () => import("@/app/api/esercizi/contenitori/route"), methods: ["POST"] },
   { name: "esercizi/contenitori/[id]", load: () => import("@/app/api/esercizi/contenitori/[id]/route"), methods: ["DELETE"] },

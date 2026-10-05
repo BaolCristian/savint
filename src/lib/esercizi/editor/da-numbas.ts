@@ -1,3 +1,4 @@
+import { htmlVersoTesto, testoVersoHtml } from "./immagini-testo";
 import { esercizioEditorSchema } from "./modello";
 import type { EsercizioEditor, ParteEditor, Tolleranza, VariabileEditor } from "./modello";
 import { hashContenuto, stabile, type EsercizioFile } from "../format/schema";
@@ -102,6 +103,19 @@ function estraiTesto(v: unknown): string | null {
   if (grezzo === null) return null;
   const testo = unescapaTesto(grezzo);
   return escapaTesto(testo) === grezzo ? testo : null;
+}
+
+/** Come `estraiTesto`, per i campi che possono contenere immagini (testo,
+ * suggerimento, consegne): un `<img>` nella forma esatta che produce
+ * l'editor torna segnaposto `![descrizione](file)`. Stessa garanzia: il
+ * campo è rappresentabile solo se riconvertito torna identico byte per byte,
+ * quindi un `<img>` con un attributo in più rende l'esercizio non
+ * rappresentabile invece di perderlo al salvataggio. */
+function estraiTestoConImmagini(v: unknown): string | null {
+  const grezzo = contenutoGrezzo(v);
+  if (grezzo === null) return null;
+  const testo = htmlVersoTesto(grezzo);
+  return testoVersoHtml(testo) === grezzo ? testo : null;
 }
 
 /** Il messaggio, in lingua da docente, per un campo di testo che non ha
@@ -282,7 +296,7 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
     };
   }
 
-  const consegna = estraiTesto(p.prompt);
+  const consegna = estraiTestoConImmagini(p.prompt);
   if (consegna === null) {
     return { ok: false, lettura: rifiutaCostrutto(messaggioTestoAmbiguo(`la consegna della ${posizione}`, "prompt")) };
   }
@@ -612,14 +626,14 @@ export function daNumbas(file: EsercizioFile): Lettura {
     variabili.push({ nome, definizione, descrizione });
   }
 
-  const testoEsercizio = estraiTesto(q.statement ?? "");
+  const testoEsercizio = estraiTestoConImmagini(q.statement ?? "");
   if (testoEsercizio === null) {
     return rifiutaCostrutto(messaggioTestoAmbiguo("il testo dell'esercizio", "statement"));
   }
 
   let suggerimento = "";
   if (q.advice) {
-    const s = estraiTesto(q.advice);
+    const s = estraiTestoConImmagini(q.advice);
     if (s === null) {
       return rifiutaCostrutto(messaggioTestoAmbiguo("il suggerimento mostrato dopo un tentativo", "advice"));
     }

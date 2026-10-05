@@ -2,6 +2,7 @@
 
 import { Fragment, type JSX, type ReactNode } from "react";
 import { Formula } from "./formula";
+import { NOME_FILE_IMMAGINE, urlImmagine } from "@/lib/esercizi/immagini";
 
 const TAG_AMMESSI = new Set([
   "P", "BR", "STRONG", "EM", "B", "I", "U", "SUB", "SUP",
@@ -40,6 +41,23 @@ function ripulisci(radice: Element): void {
 
     if (TAG_DA_RIMUOVERE_CON_CONTENUTO.has(el.tagName)) {
       el.remove();
+      continue;
+    }
+
+    // Un'immagine resta solo se nomina un file della piattaforma
+    // (`data-savint-immagine`), e di lei restano quel nome e la
+    // descrizione: l'indirizzo lo costruisce `rendi`, mai da un `src` del
+    // file. Tutto il resto (un indirizzo esterno, un percorso, un gestore di
+    // eventi) sparisce con l'elemento o con l'attributo.
+    if (el.tagName === "IMG") {
+      const file = el.getAttribute("data-savint-immagine") ?? "";
+      if (!NOME_FILE_IMMAGINE.test(file)) {
+        el.remove();
+        continue;
+      }
+      for (const attr of Array.from(el.attributes)) {
+        if (attr.name !== "data-savint-immagine" && attr.name !== "alt") el.removeAttribute(attr.name);
+      }
       continue;
     }
 
@@ -173,6 +191,18 @@ function rendi(nodo: Node, chiave: number, segnaposti?: ReactNode[]): ReactNode 
       : el.tagName.toLowerCase();
   const Tag = nome as keyof JSX.IntrinsicElements;
   const className = el.getAttribute("class") ?? undefined;
+  if (el.tagName === "IMG") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- immagine caricata dal docente, servita da /api/uploads
+      <img
+        key={chiave}
+        src={urlImmagine(el.getAttribute("data-savint-immagine")!)}
+        alt={el.getAttribute("alt") ?? ""}
+        loading="lazy"
+        className="my-2 inline-block h-auto max-w-full rounded-md align-middle"
+      />
+    );
+  }
   if (TAG_VUOTI.has(el.tagName)) {
     return <Tag key={chiave} className={className} />;
   }

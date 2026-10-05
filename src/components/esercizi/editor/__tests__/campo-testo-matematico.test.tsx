@@ -548,3 +548,36 @@ describe("CampoTestoMatematico: il campo resta quello di sempre", () => {
     expect(campo.value).toBe("\\simplify{2x+{a}}\\(\\)\\sqrt{}");
   });
 });
+
+describe("CampoTestoMatematico: le immagini", () => {
+  const I = messaggiIt.esercizi.redazione.immagine;
+  const FILE = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90.png";
+
+  it("inserisce il segnaposto dove sta il cursore, e «Come si vedrà» mostra l'immagine", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ file: FILE }), { status: 201 })) as never;
+    montaggio({ valoreIniziale: "Guarda  e rispondi" });
+    const campo = campoDi();
+    selezionaNelCampo(campo, "Guarda ".length);
+
+    await userEvent.click(screen.getByRole("button", { name: I.inserisci }));
+    await userEvent.upload(screen.getByLabelText(I.file), new File([new Uint8Array([0x89])], "f.png", { type: "image/png" }));
+    await userEvent.type(screen.getByLabelText(I.descrizione), "triangolo");
+    await userEvent.click(screen.getByRole("button", { name: I.conferma }));
+
+    await waitFor(() => expect(campo.value).toBe(`Guarda ![triangolo](${FILE}) e rispondi`));
+    expect(screen.getByRole("img", { name: "triangolo" })).toBeInTheDocument();
+  });
+
+  // Un <img> dentro `\( \)` romperebbe la formula: il pulsante si spegne.
+  it("dentro una formula il pulsante è spento", async () => {
+    montaggio({ valoreIniziale: "\\(x+1\\)" });
+    const campo = campoDi();
+    await userEvent.click(campo);
+    expect(screen.getByRole("button", { name: I.inserisci })).toBeEnabled();
+
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}");
+
+    expect(screen.getByRole("button", { name: I.inserisci })).toBeDisabled();
+  });
+});
+
