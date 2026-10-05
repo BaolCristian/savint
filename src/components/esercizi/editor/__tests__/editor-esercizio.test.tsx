@@ -194,6 +194,31 @@ describe("EditorEsercizio — salvataggio e il dettaglio del rifiuto", () => {
     expect(screen.queryByText(R.erroreSalvataggio.generico)).toBeNull();
   });
 
+  // Il campo «Argomento» sta nella scheda «Catalogo», che si ripiega: un
+  // docente ha cercato invano il campo che il messaggio gli chiedeva di
+  // riempire. Un esercizio nuovo la apre subito, e un rifiuto per argomento
+  // mancante la riapre e ci porta il cursore.
+  it("in un esercizio nuovo la scheda Catalogo è aperta", () => {
+    montaggio();
+    expect(screen.getByLabelText(R.meta.argomento)).toBeVisible();
+    expect(screen.getByLabelText(R.meta.argomento).closest("details")!.open).toBe(true);
+  });
+
+  it("se al salvataggio manca l'argomento, la scheda si apre e il cursore va nel campo", async () => {
+    global.fetch = vi.fn(async () => new Response(
+      JSON.stringify({ error: "invalid_body", dettaglio: [{ chiave: "argomento" }] }),
+      { status: 400 },
+    )) as never;
+    montaggio();
+    const scheda = screen.getByLabelText(R.meta.argomento).closest("details")!;
+    scheda.open = false;
+
+    await userEvent.click(screen.getByRole("button", { name: R.salva }));
+
+    await waitFor(() => expect(screen.getByLabelText(R.meta.argomento)).toHaveFocus());
+    expect(scheda.open).toBe(true);
+  });
+
   it("un conflitto di versione mostra un messaggio dedicato, non il generico", async () => {
     const fetchMock = vi.fn(async () => new Response(
       JSON.stringify({ error: "versione_in_conflitto", dettaglio: "un altro salvataggio ha già scritto una versione nel frattempo; riprova" }),

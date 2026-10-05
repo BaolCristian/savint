@@ -221,15 +221,24 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
   // `tabIndex={-1}` sul contenitore (nel JSX più sotto) è ciò che rende
   // `.focus()` valido su un elemento non interattivo.
   const rifiutoRef = useRef<HTMLDivElement>(null);
+  // Il rifiuto attivo, se fra le cose che mancano c'è l'argomento: allora il
+  // cursore va nel campo (dentro la scheda Catalogo), non sull'elenco.
+  const rifiutoPerArgomento = [rifiutoVerifica, rifiutoSalvataggio].find(
+    (r) => r?.error === "invalid_body" && eElencoMancanze(r.dettaglio) && r.dettaglio.some((m) => m.chiave === "argomento"),
+  ) ?? null;
+  // La scheda Catalogo nasce aperta per un esercizio nuovo o senza
+  // argomento: è lì che va scritto, e chiusa non si vede.
+  const [catalogoApertoIniziale] = useState(() => !esercizioId || (valoreIniziale?.meta.argomento ?? "").trim() === "");
   useEffect(() => {
     if (!rifiutoVerifica && !rifiutoSalvataggio) return;
+    if (rifiutoPerArgomento) return;
     const nodo = rifiutoRef.current;
     if (!nodo) return;
     if (typeof nodo.scrollIntoView === "function") {
       nodo.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     nodo.focus();
-  }, [rifiutoVerifica, rifiutoSalvataggio]);
+  }, [rifiutoVerifica, rifiutoSalvataggio, rifiutoPerArgomento]);
 
   // I7: il caso più semplice di modifiche non salvate — chiudere la scheda,
   // ricaricare, digitare un altro URL. Il testo passato a `returnValue` non
@@ -391,7 +400,12 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
             </div>
             {modificato && <span className="rounded-full bg-brand-orange-50 px-3 py-1 text-xs font-medium text-brand-ink">{t("modificheNonSalvate")}</span>}
           </div>
-          <SchedaCatalogo meta={editor.meta} onChange={aggiornaMeta} />
+          <SchedaCatalogo
+            meta={editor.meta}
+            onChange={aggiornaMeta}
+            apertaIniziale={catalogoApertoIniziale}
+            richiamoArgomento={rifiutoPerArgomento}
+          />
         </>
       }
       // La colonna sinistra, nell'ordine del brief: titolo, testo,

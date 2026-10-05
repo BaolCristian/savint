@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,12 @@ export interface SchedaCatalogoProps {
    * `editor-esercizio.tsx`, che la implementa: nessuna lambda intermedia
    * necessaria al callsite. */
   onChange: <K extends keyof EsercizioEditor["meta"]>(campo: K, valore: EsercizioEditor["meta"][K]) => void;
+  /** La scheda nasce aperta: per un esercizio nuovo, o senza argomento. */
+  apertaIniziale?: boolean;
+  /** Cambia ogni volta che un salvataggio è rifiutato perché manca
+   * l'argomento: la scheda si riapre e il cursore va nel campo. Un docente
+   * ha cercato invano il campo che il messaggio nominava, chiuso qui. */
+  richiamoArgomento?: unknown;
 }
 
 /** I metadati di catalogo — descrizione, anno, difficoltà, argomento, tag —
@@ -27,8 +34,19 @@ export interface SchedaCatalogoProps {
  * servono a chi lo cerca nel catalogo dopo. Il riassunto accanto al
  * riepilogo («2ª · Equazioni · media») resta visibile a scheda chiusa,
  * così chi scorre la colonna sa cosa c'è dentro senza doverla aprire. */
-export function SchedaCatalogo({ meta, onChange }: SchedaCatalogoProps) {
+export function SchedaCatalogo({ meta, onChange, apertaIniziale, richiamoArgomento }: SchedaCatalogoProps) {
   const t = useTranslations("esercizi.redazione");
+  const schedaRef = useRef<HTMLDetailsElement>(null);
+  const argomentoRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!richiamoArgomento) return;
+    if (schedaRef.current) schedaRef.current.open = true;
+    const campo = argomentoRef.current;
+    if (!campo) return;
+    if (typeof campo.scrollIntoView === "function") campo.scrollIntoView({ behavior: "smooth", block: "center" });
+    campo.focus();
+  }, [richiamoArgomento]);
 
   const riassunto = t("catalogo.riassunto", {
     anno: meta.anno,
@@ -37,7 +55,7 @@ export function SchedaCatalogo({ meta, onChange }: SchedaCatalogoProps) {
   });
 
   return (
-    <details className="group border-b pb-3">
+    <details ref={schedaRef} open={apertaIniziale} className="group border-b pb-3">
       {/* `list-none` toglie il triangolino solo su Chrome/Firefox: Safari
        * (WebKit) ignora `list-style` sui `<summary>` e lo mostra comunque —
        * va spento esplicitamente. Tolto il marcatore nativo, il chevron qui
@@ -103,6 +121,7 @@ export function SchedaCatalogo({ meta, onChange }: SchedaCatalogoProps) {
             {t("meta.argomento")}
           </label>
           <Input
+            ref={argomentoRef}
             id="redazione-argomento"
             value={meta.argomento}
             onChange={(e) => onChange("argomento", e.target.value)}
