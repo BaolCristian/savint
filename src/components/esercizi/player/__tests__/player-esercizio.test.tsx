@@ -685,7 +685,10 @@ describe("PlayerEsercizio — ripasso dopo un errore", () => {
     global.fetch = vi.fn(async () => rispostaIncorretta()) as never;
     montaggio({ content: scomposizionePolinomi, seed: "seme-02" });
     await waitFor(() => screen.getAllByRole("radio"));
-    await userEvent.click(screen.getAllByRole("radio")[1]!);
+    // Una risposta sicuramente sbagliata, scelta dal testo e non dalla
+    // posizione: le scelte compaiono nell'ordine mescolato per lo studente.
+    const etichetta = screen.getByText(/non si può scomporre/).closest("label")!;
+    await userEvent.click(document.getElementById(etichetta.htmlFor)!);
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
     await waitFor(() =>
       screen.getByRole("button", { name: messaggiIt.esercizi.comeSiRisolve }),
