@@ -3,6 +3,17 @@
 import { Fragment, type JSX, type ReactNode } from "react";
 import { Formula } from "./formula";
 import { NOME_FILE_IMMAGINE, urlImmagine } from "@/lib/esercizi/immagini";
+import { leggiSpecificaGrafico } from "@/lib/esercizi/grafici";
+import { GraficoFunzione } from "./grafico-funzione";
+
+/** La specifica del grafico portata da uno `<span data-savint-grafico>`,
+ * o `null` se non è nella forma ammessa (vedi src/lib/esercizi/grafici.ts). */
+function specificaDi(el: Element) {
+  const espressione = el.getAttribute("data-savint-grafico");
+  const x = el.getAttribute("data-x");
+  if (el.tagName !== "SPAN" || espressione === null || x === null) return null;
+  return leggiSpecificaGrafico(espressione, x, el.getAttribute("data-y") ?? undefined);
+}
 
 const TAG_AMMESSI = new Set([
   "P", "BR", "STRONG", "EM", "B", "I", "U", "SUB", "SUP",
@@ -49,6 +60,20 @@ function ripulisci(radice: Element): void {
     // descrizione: l'indirizzo lo costruisce `rendi`, mai da un `src` del
     // file. Tutto il resto (un indirizzo esterno, un percorso, un gestore di
     // eventi) sparisce con l'elemento o con l'attributo.
+    // Un grafico di funzione: uno `<span>` vuoto con espressione e
+    // intervalli. Se la specifica è valida ne restano solo quei tre
+    // attributi; altrimenti è uno `<span>` qualunque, e il ramo comune qui
+    // sotto gli toglie tutto tranne `class`.
+    if (specificaDi(el)) {
+      for (const attr of Array.from(el.attributes)) {
+        if (attr.name !== "data-savint-grafico" && attr.name !== "data-x" && attr.name !== "data-y") {
+          el.removeAttribute(attr.name);
+        }
+      }
+      el.replaceChildren();
+      continue;
+    }
+
     if (el.tagName === "IMG") {
       const file = el.getAttribute("data-savint-immagine") ?? "";
       if (!NOME_FILE_IMMAGINE.test(file)) {
@@ -191,6 +216,10 @@ function rendi(nodo: Node, chiave: number, segnaposti?: ReactNode[]): ReactNode 
       : el.tagName.toLowerCase();
   const Tag = nome as keyof JSX.IntrinsicElements;
   const className = el.getAttribute("class") ?? undefined;
+  const grafico = specificaDi(el);
+  if (grafico) {
+    return <GraficoFunzione key={chiave} specifica={grafico} />;
+  }
   if (el.tagName === "IMG") {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- immagine caricata dal docente, servita da /api/uploads

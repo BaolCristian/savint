@@ -581,3 +581,20 @@ describe("CampoTestoMatematico: le immagini", () => {
   });
 });
 
+describe("CampoTestoMatematico: i grafici", () => {
+  const G = messaggiIt.esercizi.redazione.grafico;
+
+  it("inserisce il segnaposto del grafico, e «Come si vedrà» dice che si vede nell'anteprima", async () => {
+    montaggio({ valoreIniziale: "Guarda: " });
+    const campo = campoDi();
+    selezionaNelCampo(campo, "Guarda: ".length);
+
+    await userEvent.click(screen.getByRole("button", { name: G.inserisci }));
+    await userEvent.type(screen.getByLabelText(G.funzione), "a*x+b");
+    await userEvent.click(screen.getByRole("button", { name: G.conferma }));
+
+    expect(campo.value).toBe("Guarda: [grafico: a*x+b | x: -5..5]");
+    expect(screen.getByText(/si vede nell'anteprima/)).toBeInTheDocument();
+  });
+});
+

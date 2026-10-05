@@ -15,8 +15,10 @@ import {
   type NumbasQuestionJSON,
   type PartState,
   type QuestionState,
+  type jme,
   Question,
 } from "@savint/engine";
+import { ScopeGrafici } from "./grafico-funzione";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { withBasePath } from "@/lib/base-path";
 import { ContenutoHtml } from "./contenuto-html";
@@ -439,6 +441,9 @@ export function PlayerEsercizio({
 
   const [fase, setFase] = useState<Fase>("caricamento");
   const [statementHtml, setStatementHtml] = useState("");
+  // Lo scope della domanda caricata: i grafici di funzione lo usano per
+  // disegnarsi con i numeri di QUESTO studente (vedi grafico-funzione.tsx).
+  const [scopeDomanda, setScopeDomanda] = useState<jme.Scope | null>(null);
   const [adviceHtml, setAdviceHtml] = useState("");
   const [parti, setParti] = useState<PartePubblica[]>([]);
   const [risposte, setRisposte] = useState<Record<string, Answer>>({});
@@ -517,6 +522,7 @@ export function PlayerEsercizio({
 
       setParti(partiCostruite);
       setStatementHtml(q.statementHtml);
+      setScopeDomanda(q.scope);
       setAdviceHtml(q.adviceHtml);
       setRisposte(risposteIniziali);
       setRispostoConSuccesso(rispostoIniziale);
@@ -791,6 +797,7 @@ export function PlayerEsercizio({
   const bloccato = invioInCorso || completando || passaggioCompito || completamentoInCorsoRef.current;
 
   return (
+    <ScopeGrafici.Provider value={scopeDomanda}>
     <section className="space-y-6">
       {intestazione}
       {richiestaCompitoRifiutata && (
@@ -933,5 +940,6 @@ export function PlayerEsercizio({
       {passaggioCompito && <p role="status" className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"><CheckCircle2 aria-hidden="true" className="size-5 shrink-0" />{studentT("assignmentSuccess")}</p>}
       {erroreCompletamento && <div role="alert" className="space-y-3 rounded-xl border border-destructive/25 bg-white p-4"><p>{studentT("assignmentCompletionError")}</p><Button type="button" variant="outline" disabled={completando} onClick={() => completaAutomaticamente(true)}>{t("riprova")}</Button></div>}
     </section>
+    </ScopeGrafici.Provider>
   );
 }

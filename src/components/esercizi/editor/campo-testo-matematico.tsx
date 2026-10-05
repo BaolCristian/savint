@@ -13,6 +13,7 @@ import { testoVersoHtml } from "@/lib/esercizi/editor/immagini-testo";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
 import { FinestraFormula } from "./finestra-formula";
 import { PulsanteImmagine } from "./pulsante-immagine";
+import { PulsanteGrafico } from "./pulsante-grafico";
 
 /** I quattro inserimenti LaTeX della barra: il cursore finisce nel primo
  * argomento (`offsetCaret` conta dall'inizio del testo inserito), perché
@@ -282,6 +283,12 @@ export function CampoTestoMatematico({
         </button>
 
         <PulsanteImmagine
+          disabilitato={cursoreInFormula}
+          motivoDisabilitato={tImmagine("dentroFormula")}
+          onInserisci={(segnaposto) => inserisci(() => ({ inserisci: segnaposto, offsetCaret: segnaposto.length }))}
+        />
+
+        <PulsanteGrafico
           disabilitato={cursoreInFormula}
           motivoDisabilitato={tImmagine("dentroFormula")}
           onInserisci={(segnaposto) => inserisci(() => ({ inserisci: segnaposto, offsetCaret: segnaposto.length }))}

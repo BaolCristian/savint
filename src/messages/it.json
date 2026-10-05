@@ -1326,6 +1326,11 @@
     "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
     "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
     },
+    "grafico": {
+      "descrizione": "Grafico di una funzione per x da {da} a {a}",
+      "segnaposto": "Grafico di y = {espressione}, per x da {da} a {a}: si vede nell'anteprima, con i numeri estratti.",
+      "errore": "Questo grafico non si può disegnare."
+    },
     "redazione": {
       "titolo": "Redazione esercizio",
       "sezioni": {
@@ -1468,6 +1473,21 @@
         "faseTesto": "testo",
         "faseCaricamento": "caricamento",
         "faseRisposta": "risposta"
+      },
+      "grafico": {
+        "inserisci": "Inserisci grafico",
+        "titolo": "Inserisci il grafico di una funzione",
+        "spiegazione": "La funzione si scrive con le variabili dell'esercizio: ogni studente vedrà il grafico con i suoi numeri. Nel grafico la formula non compare.",
+        "funzione": "y =",
+        "funzioneAiuto": "Per esempio a*x + b, oppure x^2 - c. Le variabili si scrivono senza graffe.",
+        "xDa": "x da",
+        "xA": "x a",
+        "yAutomatico": "Intervallo delle y automatico",
+        "yDa": "y da",
+        "yA": "y a",
+        "conferma": "Inserisci",
+        "annulla": "Annulla",
+        "nonValido": "Controlla la funzione (senza graffe) e gli intervalli: il primo estremo deve essere minore del secondo."
       },
       "immagine": {
         "inserisci": "Inserisci immagine",

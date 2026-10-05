@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { testoVersoHtml, htmlVersoTesto, tokenImmagine } from "../immagini-testo";
+import { testoVersoHtml, htmlVersoTesto, tokenImmagine, tokenGrafico } from "../immagini-testo";
 import { versoFile, versoNumbas } from "../verso-numbas";
 import { daNumbas } from "../da-numbas";
 import { verificaSuSemi } from "../verifica";
@@ -90,5 +90,37 @@ describe("un esercizio con immagini si salva e si riapre nell'editor", () => {
     const q = file.question as { statement: string };
     const alterato = { ...file, question: { ...q, statement: q.statement.replace("<img ", '<img width="200" ') } };
     expect(daNumbas(alterato).ok).toBe(false);
+  });
+});
+
+describe("grafici nel testo del docente", () => {
+  it("il segnaposto diventa uno <span> con espressione e intervalli", () => {
+    expect(testoVersoHtml("Guarda [grafico: a*x+b | x: -5..5] qui")).toBe(
+      'Guarda <span data-savint-grafico="a*x+b" data-x="-5..5"></span> qui',
+    );
+    expect(testoVersoHtml("[grafico: x^2 | x: -3..3 | y: -1..9]")).toBe(
+      '<span data-savint-grafico="x^2" data-x="-3..3" data-y="-1..9"></span>',
+    );
+  });
+
+  it("andata e ritorno restituiscono il testo, anche con immagini insieme", () => {
+    for (const testo of [
+      "[grafico: a*x+b | x: -5..5]",
+      "[grafico: x^2 - c | x: -3..3 | y: -1..9]",
+      `prima ![figura](${FILE}) poi [grafico: 1/x | x: -4..4 | y: -5..5]`,
+    ]) {
+      expect(htmlVersoTesto(testoVersoHtml(testo))).toBe(testo);
+    }
+  });
+
+  it("un segnaposto non valido resta testo", () => {
+    for (const testo of ["[grafico: {a}*x | x: -5..5]", "[grafico: x | x: 5..-5]", "[grafico: x]"]) {
+      expect(testoVersoHtml(testo)).not.toContain("<span");
+    }
+  });
+
+  it("tokenGrafico scrive il segnaposto nella forma canonica", () => {
+    expect(tokenGrafico({ espressione: "a*x+b", x: [-5, 5], y: null })).toBe("[grafico: a*x+b | x: -5..5]");
+    expect(tokenGrafico({ espressione: "x^2", x: [-0.5, 2], y: [0, 4] })).toBe("[grafico: x^2 | x: -0.5..2 | y: 0..4]");
   });
 });
