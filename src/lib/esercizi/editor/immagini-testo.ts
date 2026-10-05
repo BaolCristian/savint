@@ -1,5 +1,6 @@
 import { NOME_FILE_IMMAGINE } from "../immagini";
 import { leggiSpecificaGrafico, type SpecificaGrafico } from "../grafici";
+import { leggiSpecificaDiagramma, type SpecificaDiagramma } from "../diagrammi";
 
 /** Le immagini nel testo del docente.
  *
@@ -25,6 +26,15 @@ const IMG = /<img data-savint-immagine="([^"]+)" alt="([^"]*)">/g;
  * attributi; lo disegna il player, con i numeri dello studente (vedi
  * src/lib/esercizi/grafici.ts). */
 const SEGNAPOSTO_GRAFICO = /\[grafico:\s*([^|\]\n]+?)\s*\|\s*x:\s*([^|\]\s]+)\s*(?:\|\s*y:\s*([^|\]\s]+)\s*)?\]/g;
+
+/** Un grafico statistico: `[diagramma: barre | valori: dati | etichette:
+ * giorni]` (etichette facoltative), con `barre`, `istogramma` o `torta`. I
+ * dati sono espressioni JME, di solito nomi di variabili (vedi
+ * src/lib/esercizi/diagrammi.ts). */
+const SEGNAPOSTO_DIAGRAMMA = /\[diagramma:\s*(\w+)\s*\|\s*valori:\s*([^|\]\n]+?)\s*(?:\|\s*etichette:\s*([^|\]\n]+?)\s*)?\]/g;
+
+/** Uno `<span>` di diagramma esattamente nella forma che produce `testoVersoHtml`. */
+const SPAN_DIAGRAMMA = /<span data-savint-diagramma="(\w+)" data-valori="([^"]+)"(?: data-etichette="([^"]+)")?><\/span>/g;
 
 /** Uno `<span>` di grafico esattamente nella forma che produce `testoVersoHtml`. */
 const SPAN_GRAFICO = /<span data-savint-grafico="([^"]+)" data-x="([^"]+)"(?: data-y="([^"]+)")?><\/span>/g;
@@ -55,6 +65,11 @@ export function testoVersoHtml(testo: string): string {
       const specifica = leggiSpecificaGrafico(unescapa(espressione), x, y);
       if (!specifica) return intero;
       return `<span data-savint-grafico="${espressione.trim()}" data-x="${x}"${y ? ` data-y="${y}"` : ""}></span>`;
+    })
+    .replace(SEGNAPOSTO_DIAGRAMMA, (intero, tipo: string, valori: string, etichette: string | undefined) => {
+      const specifica = leggiSpecificaDiagramma(tipo, unescapa(valori), etichette === undefined ? undefined : unescapa(etichette));
+      if (!specifica) return intero;
+      return `<span data-savint-diagramma="${tipo}" data-valori="${valori.trim()}"${etichette ? ` data-etichette="${etichette.trim()}"` : ""}></span>`;
     });
 }
 
@@ -69,6 +84,9 @@ export function htmlVersoTesto(html: string): string {
       )
       .replace(SPAN_GRAFICO, (_intero, espressione: string, x: string, y: string | undefined) =>
         `[grafico: ${espressione} | x: ${x}${y ? ` | y: ${y}` : ""}]`,
+      )
+      .replace(SPAN_DIAGRAMMA, (_intero, tipo: string, valori: string, etichette: string | undefined) =>
+        `[diagramma: ${tipo} | valori: ${valori}${etichette ? ` | etichette: ${etichette}` : ""}]`,
       ),
   );
 }
@@ -88,6 +106,22 @@ export function graficiNelHtml(html: string): SpecificaGrafico[] {
     if (specifica) out.push(specifica);
   }
   return out;
+}
+
+/** Le specifiche dei diagrammi statistici contenuti in un HTML di esercizio,
+ * per la verifica dei venti sorteggi (vedi `graficiNelHtml`). */
+export function diagrammiNelHtml(html: string): SpecificaDiagramma[] {
+  const out: SpecificaDiagramma[] = [];
+  for (const m of html.matchAll(SPAN_DIAGRAMMA)) {
+    const specifica = leggiSpecificaDiagramma(m[1]!, unescapa(m[2]!), m[3] === undefined ? undefined : unescapa(m[3]));
+    if (specifica) out.push(specifica);
+  }
+  return out;
+}
+
+/** Il segnaposto di un diagramma statistico, nella forma canonica. */
+export function tokenDiagramma(s: SpecificaDiagramma): string {
+  return `[diagramma: ${s.tipo} | valori: ${s.valori.trim()}${s.etichette ? ` | etichette: ${s.etichette.trim()}` : ""}]`;
 }
 
 /** Il segnaposto di un grafico, nella forma canonica che l'editor inserisce. */

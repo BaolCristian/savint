@@ -1326,6 +1326,14 @@
     "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
     "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
     },
+    "diagramma": {
+      "barre": "Diagramma a barre",
+      "istogramma": "Istogramma",
+      "torta": "Diagramma a torta",
+      "descrizione": "{tipo}: {elenco}",
+      "segnaposto": "{tipo} con i valori di {valori}: si vede nell'anteprima, con i dati estratti.",
+      "errore": "Questo diagramma non si può disegnare."
+    },
     "grafico": {
       "descrizione": "Grafico di una funzione per x da {da} a {a}",
       "segnaposto": "Grafico di y = {espressione}, per x da {da} a {a}: si vede nell'anteprima, con i numeri estratti.",
@@ -1473,6 +1481,21 @@
         "faseTesto": "testo",
         "faseCaricamento": "caricamento",
         "faseRisposta": "risposta"
+      },
+      "diagramma": {
+        "inserisci": "Inserisci diagramma",
+        "titolo": "Inserisci un grafico statistico",
+        "spiegazione": "Definisci prima i dati nelle Variabili, per esempio dati = repeat(random(1..10), 5) e giorni = [\"Lun\", \"Mar\", \"Mer\", \"Gio\", \"Ven\"]: ogni studente vedrà il diagramma con i suoi dati.",
+        "tipo": "Tipo",
+        "tipoBarre": "Diagramma a barre",
+        "tipoIstogramma": "Istogramma",
+        "tipoTorta": "Diagramma a torta",
+        "valori": "Valori (nome della variabile)",
+        "etichette": "Etichette (facoltative, nome della variabile)",
+        "etichetteAiuto": "Senza etichette le barre o le fette si chiamano 1, 2, 3…",
+        "conferma": "Inserisci",
+        "annulla": "Annulla",
+        "nonValido": "Scrivi il nome di una variabile, senza graffe né parentesi quadre: le liste vanno definite nelle Variabili."
       },
       "grafico": {
         "inserisci": "Inserisci grafico",

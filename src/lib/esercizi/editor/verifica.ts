@@ -1,5 +1,6 @@
 import { campiona } from "../grafici";
-import { graficiNelHtml } from "./immagini-testo";
+import { diagrammiNelHtml, graficiNelHtml } from "./immagini-testo";
+import { valutaDiagramma } from "../diagrammi";
 import {
   EngineError,
   errorMessageIn,
@@ -574,6 +575,25 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
             seme,
             fase: "testo",
             messaggio: `il grafico di y = ${grafico.espressione} ${campo.descrizione} non ha nessun punto per x da ${grafico.x[0]} a ${grafico.x[1]}: controlla la funzione e le variabili che usa`,
+          };
+        }
+      }
+    }
+
+    // Lo stesso per i diagrammi statistici: dati che non sono una lista di
+    // numeri, negativi, tutti zero, o con un numero di etichette diverso.
+    // Si controlla OGNI seme: dati casuali possono andare bene su diciannove
+    // sorteggi e diventare tutti zero sul ventesimo.
+    for (const campo of campiConGrafici(question as NumbasQuestionJSON)) {
+      for (const diagramma of diagrammiNelHtml(campo.testo)) {
+        try {
+          valutaDiagramma(caricata.scope, diagramma);
+        } catch (e) {
+          return {
+            ok: false,
+            seme,
+            fase: "testo",
+            messaggio: `il diagramma ${campo.descrizione} non si può disegnare: ${e instanceof Error ? e.message : String(e)}`,
           };
         }
       }

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Textarea } from "@/components/ui/textarea";
 import { PulsanteImmagine } from "./pulsante-immagine";
 import { PulsanteGrafico } from "./pulsante-grafico";
+import { PulsanteDiagramma } from "./pulsante-diagramma";
 
 export interface CampoConsegnaProps {
   valore: string;
@@ -12,7 +13,7 @@ export interface CampoConsegnaProps {
 }
 
 /** La consegna di una parte: un'area di testo, come prima, più i pulsanti
- * «Inserisci immagine» e «Inserisci grafico», che mettono il segnaposto dove
+ * «Inserisci immagine», «Inserisci grafico» e «Inserisci diagramma», che mettono il segnaposto dove
  * sta il cursore (in fondo, se il campo non è mai stato toccato). Comune alle
  * tre parti dell'editor. */
 export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
@@ -34,6 +35,7 @@ export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
         <div className="flex gap-1.5">
           <PulsanteImmagine onInserisci={inserisci} />
           <PulsanteGrafico onInserisci={inserisci} />
+          <PulsanteDiagramma onInserisci={inserisci} />
         </div>
       </div>
       <Textarea id={id} ref={campo} value={valore} onChange={(e) => onChange(e.target.value)} />

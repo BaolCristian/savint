@@ -5,6 +5,17 @@ import { Formula } from "./formula";
 import { NOME_FILE_IMMAGINE, urlImmagine } from "@/lib/esercizi/immagini";
 import { leggiSpecificaGrafico } from "@/lib/esercizi/grafici";
 import { GraficoFunzione } from "./grafico-funzione";
+import { leggiSpecificaDiagramma } from "@/lib/esercizi/diagrammi";
+import { DiagrammaStatistico } from "./diagramma-statistico";
+
+/** La specifica del diagramma statistico portata da uno `<span
+ * data-savint-diagramma>`, o `null` (vedi src/lib/esercizi/diagrammi.ts). */
+function diagrammaDi(el: Element) {
+  const tipo = el.getAttribute("data-savint-diagramma");
+  const valori = el.getAttribute("data-valori");
+  if (el.tagName !== "SPAN" || tipo === null || valori === null) return null;
+  return leggiSpecificaDiagramma(tipo, valori, el.getAttribute("data-etichette") ?? undefined);
+}
 
 /** La specifica del grafico portata da uno `<span data-savint-grafico>`,
  * o `null` se non è nella forma ammessa (vedi src/lib/esercizi/grafici.ts). */
@@ -64,6 +75,16 @@ function ripulisci(radice: Element): void {
     // intervalli. Se la specifica è valida ne restano solo quei tre
     // attributi; altrimenti è uno `<span>` qualunque, e il ramo comune qui
     // sotto gli toglie tutto tranne `class`.
+    if (diagrammaDi(el)) {
+      for (const attr of Array.from(el.attributes)) {
+        if (attr.name !== "data-savint-diagramma" && attr.name !== "data-valori" && attr.name !== "data-etichette") {
+          el.removeAttribute(attr.name);
+        }
+      }
+      el.replaceChildren();
+      continue;
+    }
+
     if (specificaDi(el)) {
       for (const attr of Array.from(el.attributes)) {
         if (attr.name !== "data-savint-grafico" && attr.name !== "data-x" && attr.name !== "data-y") {
@@ -216,6 +237,10 @@ function rendi(nodo: Node, chiave: number, segnaposti?: ReactNode[]): ReactNode 
       : el.tagName.toLowerCase();
   const Tag = nome as keyof JSX.IntrinsicElements;
   const className = el.getAttribute("class") ?? undefined;
+  const diagramma = diagrammaDi(el);
+  if (diagramma) {
+    return <DiagrammaStatistico key={chiave} specifica={diagramma} />;
+  }
   const grafico = specificaDi(el);
   if (grafico) {
     return <GraficoFunzione key={chiave} specifica={grafico} />;

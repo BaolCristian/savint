@@ -14,6 +14,7 @@ import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/eserc
 import { FinestraFormula } from "./finestra-formula";
 import { PulsanteImmagine } from "./pulsante-immagine";
 import { PulsanteGrafico } from "./pulsante-grafico";
+import { PulsanteDiagramma } from "./pulsante-diagramma";
 
 /** I quattro inserimenti LaTeX della barra: il cursore finisce nel primo
  * argomento (`offsetCaret` conta dall'inizio del testo inserito), perché
@@ -289,6 +290,12 @@ export function CampoTestoMatematico({
         />
 
         <PulsanteGrafico
+          disabilitato={cursoreInFormula}
+          motivoDisabilitato={tImmagine("dentroFormula")}
+          onInserisci={(segnaposto) => inserisci(() => ({ inserisci: segnaposto, offsetCaret: segnaposto.length }))}
+        />
+
+        <PulsanteDiagramma
           disabilitato={cursoreInFormula}
           motivoDisabilitato={tImmagine("dentroFormula")}
           onInserisci={(segnaposto) => inserisci(() => ({ inserisci: segnaposto, offsetCaret: segnaposto.length }))}

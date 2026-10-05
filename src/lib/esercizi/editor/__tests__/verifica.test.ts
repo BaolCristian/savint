@@ -50,6 +50,30 @@ describe("verificaSuSemi", () => {
     });
   });
 
+  describe("i diagrammi statistici", () => {
+    const conDiagramma = (dati: string, segnaposto = "[diagramma: torta | valori: dati]"): EsercizioEditor => ({
+      ...base,
+      testo: `Guarda ${segnaposto}`,
+      variabili: [...base.variabili, { nome: "dati", definizione: dati, descrizione: "" }],
+    });
+
+    it("dati disegnabili passano", () => {
+      expect(verificaSuSemi(versoNumbas(conDiagramma("repeat(random(1..10), 4)")))).toEqual({ ok: true });
+    });
+
+    it("dati che su qualche sorteggio sono tutti zero non passano, e il messaggio lo dice", () => {
+      const esito = verificaSuSemi(versoNumbas(conDiagramma("repeat(random(0..1), 2)")));
+      expect(esito.ok).toBe(false);
+      if (esito.ok) return;
+      expect(esito.messaggio).toContain("diagramma");
+    });
+
+    it("una variabile non dichiarata non passa", () => {
+      const esito = verificaSuSemi(versoNumbas(conDiagramma("[1,2]", "[diagramma: barre | valori: altri]")));
+      expect(esito.ok).toBe(false);
+    });
+  });
+
   // JME non distingue maiuscole e minuscole: il motore legge `N` e `n` come
   // la stessa variabile. Il controllo statico invece confrontava i nomi
   // esatti e rifiutava «la variabile "n" … non è dichiarata» per un `N`

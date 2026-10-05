@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { testoVersoHtml, htmlVersoTesto, tokenImmagine, tokenGrafico } from "../immagini-testo";
+import { testoVersoHtml, htmlVersoTesto, tokenImmagine, tokenGrafico, tokenDiagramma } from "../immagini-testo";
 import { versoFile, versoNumbas } from "../verso-numbas";
 import { daNumbas } from "../da-numbas";
 import { verificaSuSemi } from "../verifica";
@@ -122,5 +122,36 @@ describe("grafici nel testo del docente", () => {
   it("tokenGrafico scrive il segnaposto nella forma canonica", () => {
     expect(tokenGrafico({ espressione: "a*x+b", x: [-5, 5], y: null })).toBe("[grafico: a*x+b | x: -5..5]");
     expect(tokenGrafico({ espressione: "x^2", x: [-0.5, 2], y: [0, 4] })).toBe("[grafico: x^2 | x: -0.5..2 | y: 0..4]");
+  });
+});
+
+describe("diagrammi statistici nel testo del docente", () => {
+  it("il segnaposto diventa uno <span> con tipo, valori ed etichette", () => {
+    expect(testoVersoHtml("Guarda [diagramma: barre | valori: dati | etichette: giorni]")).toBe(
+      'Guarda <span data-savint-diagramma="barre" data-valori="dati" data-etichette="giorni"></span>',
+    );
+    expect(testoVersoHtml("[diagramma: torta | valori: voti]")).toBe(
+      '<span data-savint-diagramma="torta" data-valori="voti"></span>',
+    );
+  });
+
+  it("andata e ritorno restituiscono il testo, insieme a grafici e immagini", () => {
+    for (const testo of [
+      "[diagramma: istogramma | valori: freq | etichette: classi]",
+      `![f](${FILE}) [grafico: x | x: -1..1] [diagramma: torta | valori: voti]`,
+    ]) {
+      expect(htmlVersoTesto(testoVersoHtml(testo))).toBe(testo);
+    }
+  });
+
+  it("un segnaposto non valido resta testo", () => {
+    for (const testo of ["[diagramma: linee | valori: dati]", "[diagramma: barre | valori: {dati}]"]) {
+      expect(testoVersoHtml(testo)).not.toContain("<span");
+    }
+  });
+
+  it("tokenDiagramma scrive la forma canonica", () => {
+    expect(tokenDiagramma({ tipo: "barre", valori: "dati", etichette: "giorni" })).toBe("[diagramma: barre | valori: dati | etichette: giorni]");
+    expect(tokenDiagramma({ tipo: "torta", valori: "voti", etichette: null })).toBe("[diagramma: torta | valori: voti]");
   });
 });
