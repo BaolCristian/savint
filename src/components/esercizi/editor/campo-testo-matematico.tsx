@@ -100,6 +100,17 @@ function dentroSimplify(testo: string, posizione: number): boolean {
   return false;
 }
 
+/** Il cursore sta fra `\(` e `\)` (o fra `\[` e `\]`)?
+ *
+ * Decide che cosa inserisce il pulsante `\simplify{}`: dentro una zona
+ * matematica il comando nudo, fuori la zona intera. Un `\simplify{}` fuori
+ * da `\( \)` resta prosa, e lo studente leggerebbe il comando così com'è
+ * scritto: è l'errore in cui un docente cade al primo esercizio. I confini
+ * sono quelli di `zoneMatematiche`, cioè gli stessi dell'eco e del player. */
+function dentroZonaMatematica(testo: string, posizione: number): boolean {
+  return zoneMatematiche(testo).some((zona) => posizione >= zona.inizio + 2 && posizione <= zona.fine - 2);
+}
+
 /** La formula dentro ciò che è selezionato.
  *
  * Selezionare la zona intera — delimitatori compresi — e chiedere l'editor
@@ -287,7 +298,11 @@ export function CampoTestoMatematico({
               onMouseDown={(e) => e.preventDefault()}
               // Il contenuto di `\simplify{}` resta JME, scritto a mano: questo
               // pulsante non apre nessun editor di formule.
-              onClick={() => avvolgiSelezione("\\simplify{", "}")}
+              onClick={() => {
+                const inizio = campoRef.current?.selectionStart ?? valore.length;
+                if (dentroZonaMatematica(valore, inizio)) avvolgiSelezione("\\simplify{", "}");
+                else avvolgiSelezione("\\(\\simplify{", "}\\)");
+              }}
               className={CLASSE_TASTO}
             >
               {"\\simplify{}"}
@@ -318,7 +333,10 @@ export function CampoTestoMatematico({
           onChange={(e) => {
             const nome = e.target.value;
             if (!nome) return;
-            const comando = `\\var{${nome}}`;
+            // Dentro `\simplify{}` una variabile si scrive `{a}`; fuori,
+            // `\var{a}`. Il menu sceglie da sé, guardando dove sta il cursore.
+            const inizio = campoRef.current?.selectionStart ?? valore.length;
+            const comando = dentroSimplify(valore, inizio) ? `{${nome}}` : `\\var{${nome}}`;
             inserisci(() => ({ inserisci: comando, offsetCaret: comando.length }));
           }}
           className="min-h-11 rounded-md border border-input bg-transparent px-2.5 text-sm transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"

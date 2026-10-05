@@ -4,6 +4,7 @@ import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { creaEsercizio, elencoRedazione } from "@/lib/esercizi/redazione";
 import { esercizioEditorSchema } from "@/lib/esercizi/editor/modello";
+import { dettaglioCorpoNonValido } from "@/lib/esercizi/editor/completezza";
 
 const bodySchema = z.object({ editor: esercizioEditorSchema });
 
@@ -45,8 +46,11 @@ export async function POST(request: Request) {
     });
   }
 
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  const corpo: unknown = await request.json().catch(() => null);
+  const parsed = bodySchema.safeParse(corpo);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "invalid_body", ...dettaglioCorpoNonValido(corpo) }, { status: 400 });
+  }
 
   const esito = await creaEsercizio(parsed.data.editor, teacherId);
   if (!esito.ok) {

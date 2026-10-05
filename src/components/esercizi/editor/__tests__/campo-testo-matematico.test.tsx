@@ -116,13 +116,37 @@ describe("CampoTestoMatematico: la zona matematica avvolge ciò che è seleziona
   });
 
   it("il pulsante \\simplify{} avvolge a sua volta la selezione", async () => {
+    montaggio({ valoreIniziale: "\\(2x+{a}\\)" });
+    const campo = campoDi();
+    selezionaNelCampo(campo, 2, 8);
+
+    await premi(R.semplifica);
+
+    expect(campo.value).toBe("\\(\\simplify{2x+{a}}\\)");
+  });
+
+  // Un `\simplify{}` fuori da `\( \)` resta prosa: lo studente leggerebbe il
+  // comando com'è scritto. Fuori da una zona matematica il pulsante la apre
+  // da sé, col cursore dentro le graffe.
+  it("fuori da una zona matematica, \\simplify{} arriva già dentro \\( \\)", async () => {
+    montaggio({ valoreIniziale: "Risolvi " });
+    const campo = campoDi();
+    selezionaNelCampo(campo, 8);
+
+    await premi(R.semplifica);
+
+    expect(campo.value).toBe("Risolvi \\(\\simplify{}\\)");
+    expect(campo.selectionStart).toBe("Risolvi \\(\\simplify{".length);
+  });
+
+  it("fuori da una zona matematica, una selezione finisce dentro \\(\\simplify{…}\\)", async () => {
     montaggio({ valoreIniziale: "2x+{a}" });
     const campo = campoDi();
     selezionaNelCampo(campo, 0, 6);
 
     await premi(R.semplifica);
 
-    expect(campo.value).toBe("\\simplify{2x+{a}}");
+    expect(campo.value).toBe("\\(\\simplify{2x+{a}}\\)");
   });
 });
 
@@ -179,6 +203,19 @@ describe("CampoTestoMatematico: il menu delle variabili", () => {
     await userEvent.selectOptions(menu, "a");
 
     expect(campo.value).toBe("\\var{a}\\var{a}");
+  });
+
+  // Dentro `\simplify{}` la sintassi è `{a}`, non `\var{a}`: il menu deve
+  // inserire quella giusta per il punto in cui sta il cursore.
+  it("dentro \\simplify{} inserisce {nome}, non \\var{nome}", async () => {
+    montaggio({ valoreIniziale: "\\(\\simplify{x+}\\)", variabili: ["a"] });
+    const campo = campoDi();
+    selezionaNelCampo(campo, "\\(\\simplify{x+".length);
+
+    await userEvent.selectOptions(screen.getByLabelText(R.inserisciVariabile), "a");
+
+    expect(campo.value).toBe("\\(\\simplify{x+{a}}\\)");
+    expect(campo.selectionStart).toBe("\\(\\simplify{x+{a}".length);
   });
 
   it("senza variabili dichiarate il menu è spento: non c'è niente da scegliere", () => {
@@ -465,7 +502,7 @@ describe("CampoTestoMatematico: la finestra delle formule", () => {
 
     await premi(R.semplifica);
 
-    expect(campo.value).toBe("\\simplify{}");
+    expect(campo.value).toBe("\\(\\simplify{}\\)");
     expect(pulsanteFormula()).toBeDisabled();
   });
 });

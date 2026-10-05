@@ -6,6 +6,7 @@ import { BookOpenCheck, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { EsercizioEditor, ParteEditor } from "@/lib/esercizi/editor/modello";
+import type { Mancanza } from "@/lib/esercizi/editor/completezza";
 import { CampoTestoMatematico } from "./campo-testo-matematico";
 import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
@@ -54,6 +55,23 @@ function eDettaglioVerifica(v: unknown): v is { seme: number; fase: string; mess
   return typeof v === "object" && v !== null && "seme" in v && "fase" in v && "messaggio" in v;
 }
 
+const CHIAVI_MANCANZA = new Set(["titolo", "argomento", "parti", "altro", "parte", "variabile"]);
+
+function eElencoMancanze(v: unknown): v is Mancanza[] {
+  return Array.isArray(v) && v.every((m) => typeof m === "object" && m !== null && CHIAVI_MANCANZA.has((m as { chiave?: string }).chiave ?? ""));
+}
+
+function testoMancanza(t: ReturnType<typeof useTranslations>, m: Mancanza): string {
+  switch (m.chiave) {
+    case "titolo": return t("erroreSalvataggio.incompleto.titoloEsercizio");
+    case "argomento": return t("erroreSalvataggio.incompleto.argomento");
+    case "parti": return t("erroreSalvataggio.incompleto.parti");
+    case "parte": return t("erroreSalvataggio.incompleto.parte", { numero: m.numero });
+    case "variabile": return t("erroreSalvataggio.incompleto.variabile", { numero: m.numero });
+    case "altro": return t("erroreSalvataggio.incompleto.altro");
+  }
+}
+
 /** Il dettaglio di un rifiuto, mostrato per intero: quando è la verifica a
  * venti semi a rifiutare, il seme è la sola informazione che permette a un
  * docente di riprodurre il difetto — appiattirla su un messaggio generico
@@ -79,6 +97,22 @@ function DettaglioRifiuto({ corpo }: { corpo: CorpoRifiuto }) {
           <strong>{t("erroreVerifica.fase")}:</strong> <span data-fase>{faseTradotta}</span>
         </p>
         <p>{messaggio}</p>
+      </div>
+    );
+  }
+
+  // Un modello che non passa lo schema: il server dice cosa manca (vedi
+  // `cosaManca`), e la pagina lo elenca invece di «Salvataggio non
+  // riuscito. Riprova.», che faceva riprovare all'infinito.
+  if (corpo.error === "invalid_body" && eElencoMancanze(corpo.dettaglio) && corpo.dettaglio.length > 0) {
+    return (
+      <div role="alert" className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+        <p className="font-medium text-destructive">{t("erroreSalvataggio.incompleto.titolo")}</p>
+        <ul className="list-disc space-y-0.5 pl-5">
+          {corpo.dettaglio.map((m) => (
+            <li key={"numero" in m ? `${m.chiave}-${m.numero}` : m.chiave}>{testoMancanza(t, m)}</li>
+          ))}
+        </ul>
       </div>
     );
   }
