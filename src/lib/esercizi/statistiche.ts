@@ -216,7 +216,10 @@ export async function andamentoDellaClasse(
   if (!classe) return { ok: false, motivo: "non_trovata" };
 
   const compiti = await prisma.compito.findMany({
-    where: { classeId, ritiratoAt: null },
+    // Né i ritirati né quelli non ancora aperti: un compito che si apre fra
+    // una settimana non l'ha visto nessuno, e contarlo abbasserebbe il
+    // completamento di un argomento che la classe sta facendo bene.
+    where: { classeId, ritiratoAt: null, OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }] },
     select: { id: true, drawnVersionIds: true },
   });
   const studenti = await iscrittiAttuali(classeId);

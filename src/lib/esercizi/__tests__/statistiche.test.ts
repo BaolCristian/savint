@@ -24,7 +24,9 @@ let v2: string;
 let v3: string;
 let vFuori: string;
 
-async function nuovoCompito(dati: { versioni?: string[]; assignedById?: string; classe?: string; ritirato?: boolean } = {}) {
+async function nuovoCompito(
+  dati: { versioni?: string[]; assignedById?: string; classe?: string; ritirato?: boolean; apreIl?: Date } = {},
+) {
   return (await prisma.compito.create({
     data: {
       batteriaId,
@@ -33,6 +35,7 @@ async function nuovoCompito(dati: { versioni?: string[]; assignedById?: string; 
       drawSeed: "seme",
       drawnVersionIds: dati.versioni ?? [v1, v2, v3],
       ritiratoAt: dati.ritirato ? new Date() : null,
+      opensAt: dati.apreIl ?? null,
     },
   })).id;
 }
@@ -236,6 +239,18 @@ describe("andamentoDellaClasse", () => {
     expect(esito.righe).toEqual([
       { argomento: "frazioni", esercizi: 2, completate: 1, attese: 6, percentualeCompletamento: 17, mediaPercentuale: 100 },
     ]);
+  });
+
+  // Un compito che si apre fra una settimana non è ancora stato visto da
+  // nessuno: contarlo abbasserebbe il completamento di un argomento che la
+  // classe sta facendo bene.
+  it("un compito non ancora aperto non conta", async () => {
+    await nuovoCompito({ versioni: [v1] });
+    await nuovoCompito({ versioni: [v3], apreIl: new Date(Date.now() + 7 * 864e5) });
+    const esito = await andamentoDellaClasse(classeId, assegnatore);
+    if (!esito.ok) throw new Error("atteso ok");
+    expect(esito.compiti).toBe(1);
+    expect(esito.righe.map((r) => r.argomento)).toEqual(["frazioni"]);
   });
 
   it("un compito ritirato non conta, nemmeno con i tentativi già svolti", async () => {
