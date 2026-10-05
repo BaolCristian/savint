@@ -1,10 +1,10 @@
 "use client";
 
+import { CampoConsegna } from "./campo-consegna";
 import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { CampoJme } from "./campo-jme";
 import type { ParteEditor, Tolleranza } from "@/lib/esercizi/editor/modello";
 
@@ -46,10 +46,7 @@ export function ParteNumerica({ parte, onChange, onRimuovi, nomiVariabili }: Par
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium">{t("consegna")}</label>
-        <Textarea value={parte.consegna} onChange={(e) => onChange({ ...parte, consegna: e.target.value })} />
-      </div>
+      <CampoConsegna valore={parte.consegna} onChange={(consegna) => onChange({ ...parte, consegna })} />
 
       <div className="flex flex-wrap gap-3">
         <div className="flex w-24 flex-col gap-1">

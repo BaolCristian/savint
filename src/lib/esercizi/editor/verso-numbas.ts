@@ -1,3 +1,4 @@
+import { testoVersoHtml } from "./immagini-testo";
 import { esercizioFileSchema, type EsercizioFile } from "../format/schema";
 import type { EsercizioEditor, ParteEditor, Tolleranza } from "./modello";
 
@@ -49,7 +50,7 @@ function versoParte(parte: ParteEditor): unknown {
       return {
         type: "numberentry",
         marks: parte.punti,
-        prompt: `<p>${escapaTesto(parte.consegna)}</p>`,
+        prompt: `<p>${testoVersoHtml(parte.consegna)}</p>`,
         ...intervalloNumerico(parte.valore, parte.tolleranza),
         correctAnswerFraction: false,
         allowFractions: false,
@@ -60,7 +61,7 @@ function versoParte(parte: ParteEditor): unknown {
       return {
         type: "1_n_2",
         marks: 0, // i punti stanno nella matrice, non qui
-        prompt: `<p>${escapaTesto(parte.consegna)}</p>`,
+        prompt: `<p>${testoVersoHtml(parte.consegna)}</p>`,
         choices: parte.risposte.map((r) => `<p>${escapaTesto(r)}</p>`),
         matrix: parte.risposte.map((_, i) => (i === parte.indiceGiusta ? String(parte.punti) : "0")),
         displayType: "radiogroup",
@@ -79,7 +80,7 @@ function versoParte(parte: ParteEditor): unknown {
       return {
         type: "jme",
         marks: parte.punti,
-        prompt: `<p>${escapaTesto(parte.consegna)}</p>`,
+        prompt: `<p>${testoVersoHtml(parte.consegna)}</p>`,
         answer: parte.risposta,
         checkingType: "absdiff",
         checkingAccuracy: 0.001,
@@ -98,8 +99,11 @@ function versoParte(parte: ParteEditor): unknown {
 export function versoNumbas(e: EsercizioEditor): unknown {
   return {
     name: e.meta.titolo,
-    statement: `<p>${escapaTesto(e.testo)}</p>`,
-    advice: e.suggerimento ? `<p>${escapaTesto(e.suggerimento)}</p>` : "",
+    // Testo, suggerimento e consegne possono contenere immagini
+    // (`![descrizione](file)`, vedi immagini-testo.ts); scelte, spiegazioni
+    // e descrizioni delle variabili no, e restano testo scappato.
+    statement: `<p>${testoVersoHtml(e.testo)}</p>`,
+    advice: e.suggerimento ? `<p>${testoVersoHtml(e.suggerimento)}</p>` : "",
     variables: Object.fromEntries(
       e.variabili.map((v) => [
         v.nome,

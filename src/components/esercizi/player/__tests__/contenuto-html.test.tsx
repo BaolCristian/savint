@@ -23,6 +23,36 @@ describe("ContenutoHtml", () => {
     expect(screen.getByText("ciao")).toBeInTheDocument();
   });
 
+  describe("le immagini degli esercizi", () => {
+    const FILE = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90.png";
+
+    it("un'immagine della piattaforma si vede, col suo indirizzo e la descrizione", () => {
+      render(<ContenutoHtml html={`<p>Guarda <img data-savint-immagine="${FILE}" alt="triangolo rettangolo"> qui</p>`} />);
+      const img = screen.getByRole("img", { name: "triangolo rettangolo" });
+      expect(img.getAttribute("src")).toBe(`/api/uploads/esercizi/${FILE}`);
+      expect(screen.getByText(/Guarda/)).toBeInTheDocument();
+    });
+
+    // Il nome nel file è l'unica fonte dell'indirizzo: un `src` scritto nel
+    // file, un indirizzo esterno o un nome qualsiasi non producono mai
+    // un'immagine che il browser andrebbe a caricare.
+    it("un <img> che non è della piattaforma sparisce", () => {
+      const { container } = render(
+        <ContenutoHtml
+          html={
+            '<p>a <img src="https://esempio.it/x.png" alt="esterna"> ' +
+            '<img data-savint-immagine="../segreto.png" alt="percorso"> ' +
+            `<img data-savint-immagine="${FILE}" src="https://esempio.it/x.png" onerror="alert(1)" alt="mista"> b</p>`
+          }
+        />,
+      );
+      const immagini = Array.from(container.querySelectorAll("img"));
+      expect(immagini.map((i) => i.getAttribute("alt"))).toEqual(["mista"]);
+      expect(immagini[0]!.getAttribute("src")).toBe(`/api/uploads/esercizi/${FILE}`);
+      expect(immagini[0]!.getAttribute("onerror")).toBeNull();
+    });
+  });
+
   it("tiene i tag di formattazione ammessi", () => {
     const { container } = render(<ContenutoHtml html={"<p>a <strong>b</strong> <em>c</em></p><ul><li>d</li></ul>"} />);
     expect(container.querySelector("strong")).not.toBeNull();

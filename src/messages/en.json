@@ -1469,6 +1469,21 @@
         "faseCaricamento": "loading",
         "faseRisposta": "answer"
       },
+      "immagine": {
+        "inserisci": "Insert image",
+        "titolo": "Insert an image",
+        "spiegazione": "A figure, a diagram or a graph. Write the measures that change for each student in the text, with variables.",
+        "file": "File (PNG, JPG, GIF or WebP, up to 5 MB)",
+        "descrizione": "Description",
+        "descrizioneAiuto": "What the image shows, in a few words: screen reader users will hear it.",
+        "conferma": "Insert",
+        "annulla": "Cancel",
+        "caricamento": "Uploading…",
+        "erroreTipo": "This file is not a PNG, JPG, GIF or WebP image.",
+        "erroreGrande": "The image is larger than 5 MB: shrink it and try again.",
+        "erroreGenerico": "Upload failed. Please try again.",
+        "dentroFormula": "Move the cursor outside the formula to insert an image."
+      },
       "erroreSalvataggio": {
         "nonTrovato": "This exercise no longer exists.",
         "nonRappresentabile": "This exercise can't be opened in this editor.",

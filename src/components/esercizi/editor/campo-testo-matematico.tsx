@@ -9,9 +9,10 @@ import {
   type FormulaTrovata,
 } from "@/components/esercizi/player/contenuto-html";
 import { MacroFormula } from "@/components/esercizi/player/formula";
-import { escapaTesto } from "@/lib/esercizi/editor/verso-numbas";
+import { testoVersoHtml } from "@/lib/esercizi/editor/immagini-testo";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
 import { FinestraFormula } from "./finestra-formula";
+import { PulsanteImmagine } from "./pulsante-immagine";
 
 /** I quattro inserimenti LaTeX della barra: il cursore finisce nel primo
  * argomento (`offsetCaret` conta dall'inizio del testo inserito), perché
@@ -156,6 +157,7 @@ export function CampoTestoMatematico({
   variabili,
 }: CampoTestoMatematicoProps) {
   const t = useTranslations("esercizi.redazione.campoTesto");
+  const tImmagine = useTranslations("esercizi.redazione.immagine");
   const { campoRef, inserisciNelCampo } = useTastieraSimboli<HTMLTextAreaElement>(valore, onChange);
   // Dove sta il cursore, per sapere se il pulsante della finestra va
   // spento. In stato e non letto dal DOM perché è il rendering a servirsene,
@@ -254,6 +256,9 @@ export function CampoTestoMatematico({
   // cancellerebbe un pezzo.
   const cursoreInSimplify =
     dentroSimplify(valore, selezione.inizio) || dentroSimplify(valore, selezione.fine);
+  // Un'immagine dentro `\( \)` romperebbe la formula: lì il pulsante si spegne.
+  const cursoreInFormula =
+    dentroZonaMatematica(valore, selezione.inizio) || dentroZonaMatematica(valore, selezione.fine);
 
   return (
     <div className="flex flex-col gap-2">
@@ -275,6 +280,12 @@ export function CampoTestoMatematico({
         >
           {t("scriviFormula")}
         </button>
+
+        <PulsanteImmagine
+          disabilitato={cursoreInFormula}
+          motivoDisabilitato={tImmagine("dentroFormula")}
+          onInserisci={(segnaposto) => inserisci(() => ({ inserisci: segnaposto, offsetCaret: segnaposto.length }))}
+        />
 
         <details className="rounded-md border border-input open:w-full open:bg-muted/20">
           <summary className="min-h-11 cursor-pointer rounded-md px-2.5 py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">{t("altriStrumenti")}</summary>
@@ -391,7 +402,7 @@ export function CampoTestoMatematico({
           {haSimplify && <p className="text-xs">{t("notaSimplify")}</p>}
           <div className="text-foreground">
             <MacroFormula.Provider value={MACRO_ECO}>
-              <ContenutoHtml html={`<p>${escapaTesto(valore)}</p>`} />
+              <ContenutoHtml html={`<p>${testoVersoHtml(valore)}</p>`} />
             </MacroFormula.Provider>
           </div>
         </div>

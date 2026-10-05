@@ -1,9 +1,9 @@
 "use client";
 
+import { CampoConsegna } from "./campo-consegna";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import type { ParteEditor } from "@/lib/esercizi/editor/modello";
 
 type ParteSceltaEditor = Extract<ParteEditor, { tipo: "scelta" }>;
@@ -92,10 +92,7 @@ export function ParteScelta({ parte, onChange, onRimuovi }: ParteSceltaProps) {
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium">{t("consegna")}</label>
-        <Textarea value={parte.consegna} onChange={(e) => onChange({ ...parte, consegna: e.target.value })} />
-      </div>
+      <CampoConsegna valore={parte.consegna} onChange={(consegna) => onChange({ ...parte, consegna })} />
 
       <div className="flex w-24 flex-col gap-1">
         <label className="text-sm font-medium">{t("punti")}</label>
