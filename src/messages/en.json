@@ -1416,7 +1416,16 @@
         "nonTrovato": "This exercise no longer exists.",
         "nonRappresentabile": "This exercise can't be opened in this editor.",
         "versioneInConflitto": "Someone else saved this exercise in the meantime: reload the page and try again.",
-        "generico": "Couldn't save. Please try again."
+        "generico": "Couldn't save. Please try again.",
+        "incompleto": {
+          "titolo": "Before saving, this is still missing:",
+          "titoloEsercizio": "the exercise title;",
+          "argomento": "the topic (set it by opening «Catalog», at the top);",
+          "parti": "at least one part, i.e. the question the student answers («Add part» button);",
+          "parte": "part {numero} is incomplete: check its prompt, marks and correct answer;",
+          "variabile": "variable {numero} is incomplete: it needs a valid name and a definition;",
+          "altro": "another field is not valid: check the exercise data."
+        }
       },
       "elenco": {
         "titolo": "My exercises",

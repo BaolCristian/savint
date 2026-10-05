@@ -147,6 +147,23 @@ describe("EditorEsercizio — salvataggio e il dettaglio del rifiuto", () => {
     expect(screen.queryByText(R.salvato)).toBeNull();
   });
 
+  it("un esercizio incompleto elenca cosa manca, non il generico", async () => {
+    global.fetch = vi.fn(async () => new Response(
+      JSON.stringify({ error: "invalid_body", dettaglio: [{ chiave: "argomento" }, { chiave: "parti" }, { chiave: "parte", numero: 2 }] }),
+      { status: 400 },
+    )) as never;
+    montaggio();
+
+    await userEvent.click(screen.getByRole("button", { name: R.salva }));
+
+    const rifiuto = await screen.findByRole("alert");
+    expect(within(rifiuto).getByText(R.erroreSalvataggio.incompleto.titolo)).toBeInTheDocument();
+    expect(within(rifiuto).getByText(R.erroreSalvataggio.incompleto.argomento)).toBeInTheDocument();
+    expect(within(rifiuto).getByText(R.erroreSalvataggio.incompleto.parti)).toBeInTheDocument();
+    expect(within(rifiuto).getByText(R.erroreSalvataggio.incompleto.parte.replace("{numero}", "2"))).toBeInTheDocument();
+    expect(screen.queryByText(R.erroreSalvataggio.generico)).toBeNull();
+  });
+
   it("un conflitto di versione mostra un messaggio dedicato, non il generico", async () => {
     const fetchMock = vi.fn(async () => new Response(
       JSON.stringify({ error: "versione_in_conflitto", dettaglio: "un altro salvataggio ha già scritto una versione nel frattempo; riprova" }),

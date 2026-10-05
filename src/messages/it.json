@@ -1416,7 +1416,16 @@
         "nonTrovato": "Questo esercizio non esiste più.",
         "nonRappresentabile": "Questo esercizio non può essere aperto in questo editor.",
         "versioneInConflitto": "Qualcun altro ha salvato questo esercizio nel frattempo: ricarica la pagina e riprova.",
-        "generico": "Salvataggio non riuscito. Riprova."
+        "generico": "Salvataggio non riuscito. Riprova.",
+        "incompleto": {
+          "titolo": "Prima di salvare manca ancora:",
+          "titoloEsercizio": "il titolo dell'esercizio;",
+          "argomento": "l'argomento (si sceglie aprendo «Catalogo», in alto);",
+          "parti": "almeno una parte, cioè la domanda a cui risponde lo studente (pulsante «Aggiungi parte»);",
+          "parte": "la parte {numero} è incompleta: controlla consegna, punti e risposta corretta;",
+          "variabile": "la variabile {numero} è incompleta: servono un nome valido e una definizione;",
+          "altro": "un altro campo non è valido: controlla i dati dell'esercizio."
+        }
       },
       "elenco": {
         "titolo": "I miei esercizi",

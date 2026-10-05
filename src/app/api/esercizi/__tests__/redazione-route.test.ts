@@ -103,6 +103,13 @@ describe("POST /api/esercizi/redazione (crea)", () => {
     expect(creaEsercizio).not.toHaveBeenCalled();
   });
 
+  it("400 che dice cosa manca: argomento vuoto e nessuna parte", async () => {
+    const corpoRotto = { editor: { ...editorValido, meta: { ...editorValido.meta, argomento: "" }, parti: [] } };
+    const r = await POST(richiesta(corpoRotto));
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: "invalid_body", dettaglio: [{ chiave: "argomento" }, { chiave: "parti" }] });
+  });
+
   it("429 quando il rate limit scatta", async () => {
     vi.mocked(checkRateLimit).mockResolvedValue({ allowed: false, retryAfterSeconds: 15 });
     const r = await POST(richiesta(corpoValido));
