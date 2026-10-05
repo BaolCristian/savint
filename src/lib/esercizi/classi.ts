@@ -280,8 +280,10 @@ type MotivoAccessoClasse = "non_trovata" | "non_insegni_questa_classe";
  * una classe specifica per conto di un docente, ed entrambe devono
  * rifiutare allo stesso modo — prima se la classe non esiste, poi se chi
  * chiama non la insegna — un docente che prova ad agire su una classe che
- * non è sua. */
-async function verificaInsegnaClasse(
+ * non è sua. Esportata per `andamentoDellaClasse` (statistiche.ts), che
+ * legge i risultati della classe per lo stesso docente e deve rifiutare
+ * con le stesse regole. */
+export async function verificaInsegnaClasse(
   classeId: string,
   teacherId: string,
 ): Promise<{ ok: true } | { ok: false; motivo: MotivoAccessoClasse }> {

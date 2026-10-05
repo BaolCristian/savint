@@ -1334,6 +1334,28 @@
     "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
     "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
     },
+    "statistiche": {
+      "perEsercizioTitolo": "Esercizio per esercizio",
+      "perEsercizioDescrizione": "Per ogni esercizio del compito: quanti studenti iscritti l'hanno completato, quanti l'hanno iniziato senza finirlo e il punteggio medio di chi l'ha completato (sul suo tentativo migliore).",
+      "esercizioCol": "Esercizio",
+      "argomentoCol": "Argomento",
+      "completatiCol": "Completato da",
+      "iniziatiCol": "Iniziato, non finito",
+      "mediaCol": "Punteggio medio",
+      "completatiValore": "{completati} su {iscritti}",
+      "percentuale": "{valore}%",
+      "nessunaMedia": "—",
+      "sottoMeta": "Meno della metà della classe",
+      "linkAndamento": "Andamento per argomento",
+      "tornaClassi": "Torna alle classi",
+      "andamentoTitolo": "Andamento per argomento — {classe}",
+      "andamentoDescrizione": "Tutti i compiti assegnati alla classe (esclusi quelli ritirati), raggruppati per argomento. In cima l'argomento in cui la classe è più debole. Contano solo gli studenti iscritti adesso.",
+      "andamentoRiepilogo": "{compiti, plural, one {# compito} other {# compiti}}, {iscritti, plural, one {# studente iscritto} other {# studenti iscritti}}",
+      "eserciziCol": "Esercizi assegnati",
+      "completamentoCol": "Completamento",
+      "completamentoValore": "{percentuale}% ({completate} su {attese})",
+      "nessunCompito": "Questa classe non ha ancora compiti assegnati."
+    },
     "figura": {
       "rettangolo": "Rettangolo",
       "quadrato": "Quadrato",

@@ -656,8 +656,11 @@ export async function consegneDelCompito(
  * suo commento per il perché della seconda clausola), scritta una volta sola
  * perché leggere le consegne, cambiare le date e ritirare il compito devono
  * rispondere allo stesso modo alla stessa domanda: un docente che vede le
- * consegne di un compito deve poterlo anche correggere, e viceversa. */
-async function haTitoloSulCompito(
+ * consegne di un compito deve poterlo anche correggere, e viceversa.
+ * Esportata per `statisticheDelCompito` (statistiche.ts): le statistiche
+ * per esercizio sono un'altra lettura delle stesse consegne, e devono
+ * rispondere alla stessa domanda allo stesso modo. */
+export async function haTitoloSulCompito(
   compito: { classeId: string; assignedById: string },
   teacherId: string,
 ): Promise<boolean> {
