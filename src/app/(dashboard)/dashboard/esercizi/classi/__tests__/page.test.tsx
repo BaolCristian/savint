@@ -380,4 +380,16 @@ describe("pagina delle classi del docente", () => {
       expect(await screen.findByText("iscrittiVuoto")).toBeInTheDocument();
     });
   });
+
+  // Dalla scheda di ogni classe insegnata si arriva all'andamento per
+  // argomento: è lì che il docente cerca "come va questa classe".
+  it("ogni classe insegnata porta all'andamento per argomento", async () => {
+    vi.mocked(classiDisponibili).mockResolvedValue([{ id: "c1", name: "1A", yearLevel: 1 }]);
+    vi.mocked(classiDelDocente).mockResolvedValue([
+      { id: "c1", name: "1A", yearLevel: 1, studenti: 2, codice: null },
+    ] as never);
+    await rendi();
+    expect(screen.getByRole("link", { name: "statistiche.linkAndamento" }))
+      .toHaveAttribute("href", "/dashboard/esercizi/classi/c1/andamento");
+  });
 });

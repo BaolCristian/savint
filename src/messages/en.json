@@ -1334,6 +1334,28 @@
     "daRaccoltaAiuto": "A prepared assignment chooses how many exercises to draw from collections. Prepare one before assigning it to a class.",
     "nessunaRaccolta": "You have no prepared assignments yet. Prepare one from collections before assigning it."
     },
+    "statistiche": {
+      "perEsercizioTitolo": "Exercise by exercise",
+      "perEsercizioDescrizione": "For each exercise in the assignment: how many enrolled students completed it, how many started it without finishing, and the average score of those who completed it (on their best attempt).",
+      "esercizioCol": "Exercise",
+      "argomentoCol": "Topic",
+      "completatiCol": "Completed by",
+      "iniziatiCol": "Started, not finished",
+      "mediaCol": "Average score",
+      "completatiValore": "{completati} of {iscritti}",
+      "percentuale": "{valore}%",
+      "nessunaMedia": "—",
+      "sottoMeta": "Less than half the class",
+      "linkAndamento": "Progress by topic",
+      "tornaClassi": "Back to classes",
+      "andamentoTitolo": "Progress by topic — {classe}",
+      "andamentoDescrizione": "All assignments given to the class (withdrawn ones excluded), grouped by topic. The topic where the class is weakest comes first. Only currently enrolled students count.",
+      "andamentoRiepilogo": "{compiti, plural, one {# assignment} other {# assignments}}, {iscritti, plural, one {# enrolled student} other {# enrolled students}}",
+      "eserciziCol": "Exercises assigned",
+      "completamentoCol": "Completion",
+      "completamentoValore": "{percentuale}% ({completate} of {attese})",
+      "nessunCompito": "This class has no assignments yet."
+    },
     "figura": {
       "rettangolo": "Rectangle",
       "quadrato": "Square",

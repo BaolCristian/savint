@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/compiti", () => ({ consegneDelCompito: vi.fn() }));
+vi.mock("@/lib/esercizi/statistiche", () => ({ statisticheDelCompito: vi.fn() }));
 vi.mock("@/lib/db/client", () => ({ prisma: { compito: { findUnique: vi.fn() } } }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/esercizi/compiti/comp1",
@@ -24,6 +25,7 @@ vi.mock("next-intl", () => ({
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { consegneDelCompito } from "@/lib/esercizi/compiti";
+import { statisticheDelCompito } from "@/lib/esercizi/statistiche";
 import { prisma } from "@/lib/db/client";
 import { notFound } from "next/navigation";
 import Page from "../[id]/page";
@@ -32,6 +34,7 @@ beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(consegneDelCompito).mockReset();
   vi.mocked(prisma.compito.findUnique).mockReset();
+  vi.mocked(statisticheDelCompito).mockReset().mockResolvedValue({ ok: true, iscritti: 0, righe: [] });
 });
 
 async function rendi(id = "comp1") {
@@ -141,5 +144,81 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
     expect(screen.getByLabelText("apertura")).toHaveValue("2099-01-02");
     expect(screen.getByLabelText("scadenza")).toHaveValue("2099-01-09");
     expect(screen.getByRole("button", { name: "ritira" })).toBeInTheDocument();
+  });
+
+  describe("esercizio per esercizio", () => {
+    const compitoValido = {
+      id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, opensAt: null, dueAt: null, ritiratoAt: null,
+    };
+
+    it("chiede le statistiche per il docente della sessione", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compitoValido as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      await rendi();
+      expect(statisticheDelCompito).toHaveBeenCalledWith("comp1", "doc1");
+    });
+
+    it("mostra titolo, argomento, completati su iscritti, iniziati e punteggio medio di ogni esercizio", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compitoValido as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      vi.mocked(statisticheDelCompito).mockResolvedValue({
+        ok: true,
+        iscritti: 4,
+        righe: [
+          { esercizioId: "e1", titolo: "Somma di frazioni", argomento: "frazioni", completati: 3, iniziati: 1, mediaPercentuale: 72 },
+          { esercizioId: "e2", titolo: "Equazione lineare", argomento: "equazioni", completati: 0, iniziati: 0, mediaPercentuale: null },
+        ],
+      });
+      await rendi();
+
+      const tabella = screen.getByRole("table", { name: "statistiche.perEsercizioTitolo" });
+      const righe = within(tabella).getAllByRole("row").slice(1);
+      expect(within(righe[0]!).getByText("Somma di frazioni")).toBeInTheDocument();
+      expect(within(righe[0]!).getByText("frazioni")).toBeInTheDocument();
+      expect(within(righe[0]!).getByText('statistiche.completatiValore:{"completati":3,"iscritti":4}')).toBeInTheDocument();
+      expect(within(righe[0]!).getByText("1")).toBeInTheDocument();
+      expect(within(righe[0]!).getByText('statistiche.percentuale:{"valore":72}')).toBeInTheDocument();
+      // Nessuna media non è uno 0%: nessuno l'ha completato.
+      expect(within(righe[1]!).getByText("statistiche.nessunaMedia")).toBeInTheDocument();
+    });
+
+    // L'evidenza è un testo, non solo un colore: si legge anche senza
+    // distinguere i colori, e da uno screen reader.
+    it("segnala a parole gli esercizi completati da meno della metà della classe", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compitoValido as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      vi.mocked(statisticheDelCompito).mockResolvedValue({
+        ok: true,
+        iscritti: 4,
+        righe: [
+          { esercizioId: "e1", titolo: "Metà esatta", argomento: "a", completati: 2, iniziati: 0, mediaPercentuale: 50 },
+          { esercizioId: "e2", titolo: "Sotto la metà", argomento: "a", completati: 1, iniziati: 2, mediaPercentuale: 40 },
+        ],
+      });
+      await rendi();
+
+      const righe = within(screen.getByRole("table", { name: "statistiche.perEsercizioTitolo" })).getAllByRole("row").slice(1);
+      expect(within(righe[0]!).queryByText("statistiche.sottoMeta")).toBeNull();
+      expect(within(righe[1]!).getByText("statistiche.sottoMeta")).toBeInTheDocument();
+    });
+
+    it("senza iscritti non mostra la tabella per esercizio", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compitoValido as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      vi.mocked(statisticheDelCompito).mockResolvedValue({
+        ok: true,
+        iscritti: 0,
+        righe: [{ esercizioId: "e1", titolo: "Uno", argomento: "a", completati: 0, iniziati: 0, mediaPercentuale: null }],
+      });
+      await rendi();
+      expect(screen.queryByRole("table", { name: "statistiche.perEsercizioTitolo" })).toBeNull();
+    });
+
+    it("404 se le statistiche rispondono 'non trovato' (ritirato nel frattempo)", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compitoValido as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      vi.mocked(statisticheDelCompito).mockResolvedValue({ ok: false, motivo: "compito_non_trovato" });
+      await expect(Page({ params: Promise.resolve({ id: "comp1" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+    });
   });
 });

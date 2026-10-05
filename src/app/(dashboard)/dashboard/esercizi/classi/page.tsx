@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDisponibili, classiDelDocente, iscrittiDellaClasse } from "@/lib/esercizi/classi";
@@ -17,6 +18,7 @@ export default async function Page() {
   const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.classi");
   const tUi = await getTranslations("teacherExercisesUi");
+  const tE = await getTranslations("esercizi");
 
   const [disponibili, insegnate] = await Promise.all([
     classiDisponibili(),
@@ -95,7 +97,12 @@ export default async function Page() {
           <div className="grid gap-3 sm:grid-cols-2">
             {dettagli.map((c) => (
               <Card key={c.id} className="gap-3 p-4">
-                <p className="font-medium">{c.nome}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">{c.nome}</p>
+                  <Link href={`/dashboard/esercizi/classi/${c.id}/andamento`} className="text-sm text-brand-blue hover:underline">
+                    {tE("statistiche.linkAndamento")}
+                  </Link>
+                </div>
                 {c.codice && <ClasseCodice classeId={c.id} classeNome={c.nome} codiceIniziale={c.codice} />}
                 <div className="space-y-1">
                   <p className="text-sm font-medium">{t("iscrittiTitolo")}</p>
