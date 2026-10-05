@@ -57,7 +57,7 @@ export function CreaClasseForm() {
 
   return (
     <div className="space-y-3 rounded-xl border border-input p-4">
-      <h2 className="text-base font-semibold">{t("creaTitolo")}</h2>
+      <p className="text-base font-semibold">{t("creaTitolo")}</p>
       <form onSubmit={crea} className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="classe-nome" className="text-sm font-medium">

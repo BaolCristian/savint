@@ -65,4 +65,66 @@ describe("ricalcolo lato server", () => {
     const esito = ricalcola(question, "il-mio-seme", statoAltrui, "it");
     expect(esito.state.seed).toBe("il-mio-seme");
   });
+
+  it("segnala allCorrect solo quando tutte le parti interattive top-level sono corrette", () => {
+    const question = JSON.parse(
+      readFileSync(path.join(process.cwd(), "packages/engine/test/fixtures/savint/12-mista-completa.json"), "utf8"),
+    ) as NumbasQuestionJSON;
+    const q = loadQuestion(question, { seed: "tutto-giusto", locale: "it" });
+    q.parts.forEach((part) => {
+      if (part.type !== "information") part.submit(part.correctAnswer());
+    });
+    q.updateScore();
+
+    expect(ricalcola(question, "tutto-giusto", q.toState(), "it").allCorrect).toBe(true);
+  });
+
+  it("allCorrect è falso per risposta sbagliata, vuota o parziale", () => {
+    const question = JSON.parse(
+      readFileSync(path.join(process.cwd(), "packages/engine/test/fixtures/savint/12-mista-completa.json"), "utf8"),
+    ) as NumbasQuestionJSON;
+    const q = loadQuestion(question, { seed: "non-tutto-giusto", locale: "it" });
+    q.getPart("p1")!.submit("risposta sbagliata");
+    q.updateScore();
+    expect(ricalcola(question, "non-tutto-giusto", q.toState(), "it").allCorrect).toBe(false);
+
+    const vuoto = loadQuestion(question, { seed: "vuoto-misto", locale: "it" });
+    expect(ricalcola(question, "vuoto-misto", vuoto.toState(), "it").allCorrect).toBe(false);
+
+    const gapfill = JSON.parse(
+      readFileSync(path.join(process.cwd(), "packages/engine/test/fixtures/savint/07-gapfill-misto.json"), "utf8"),
+    ) as NumbasQuestionJSON;
+    const parziale = loadQuestion(gapfill, { seed: "gap-parziale", locale: "it" });
+    const parte = parziale.getPart("p0")!;
+    const giusta = parte.correctAnswer() as unknown[];
+    parte.submit([giusta[0], null, null] as never);
+    parziale.updateScore();
+    expect(ricalcola(gapfill, "gap-parziale", parziale.toState(), "it").allCorrect).toBe(false);
+  });
+
+  it("non considera una domanda composta solo da informazione come tutta corretta", () => {
+    const question = JSON.parse(
+      readFileSync(path.join(process.cwd(), "packages/engine/test/fixtures/savint/08-informazione-teorema.json"), "utf8"),
+    ) as NumbasQuestionJSON;
+
+    expect(ricalcola(question, "solo-informazione", null, "it").allCorrect).toBe(false);
+  });
+
+  it("allCorrect è ricalcolato dal server e ignora un punteggio dichiarato dal client", () => {
+    const { question } = JSON.parse(
+      readFileSync(path.join(process.cwd(), "content/esercizi/01-equazione-primo-grado.json"), "utf8"),
+    ) as { question: NumbasQuestionJSON };
+    const q = loadQuestion(question, { seed: "punteggio-falso", locale: "it" });
+    q.getPart("p0")!.submit("risposta sbagliata");
+    q.updateScore();
+    const statoFalsificato = q.toState();
+    statoFalsificato.score = 9999;
+    statoFalsificato.marks = 9999;
+    statoFalsificato.parts[0]!.score = 9999;
+    statoFalsificato.parts[0]!.marks = 9999;
+
+    const esito = ricalcola(question, "punteggio-falso", statoFalsificato, "it");
+    expect(esito.score).toBe(0);
+    expect(esito.allCorrect).toBe(false);
+  });
 });

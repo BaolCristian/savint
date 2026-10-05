@@ -5,11 +5,13 @@ import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { contenutoContenitore } from "@/lib/esercizi/contenitori";
 import { prisma } from "@/lib/db/client";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
+import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.contenitori");
   const tBase = await getTranslations("esercizi");
+  const tUi = await getTranslations("teacherExercisesUi");
 
   const { id } = await params;
   const contenitore = await contenutoContenitore(id);
@@ -27,6 +29,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
       <div>
         <Link href="/dashboard/esercizi/contenitori" className="text-sm text-brand-blue hover:underline">
           {t("torna")}
@@ -43,8 +46,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <ContenitoreDetailClient
         contenitoreId={id}
-        dentro={contenitore.esercizi.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e) }))}
-        fuori={disponibili.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e) }))}
+        dentro={contenitore.esercizi.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e), anno: e.yearLevel, argomento: e.topic }))}
+        fuori={disponibili.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e), anno: e.yearLevel, argomento: e.topic }))}
         testi={{
           nessunoDentro: t("nessunEsercizioNelContenitore"),
           rimuovi: t("rimuovi"),
@@ -53,6 +56,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           aggiungi: t("aggiungi"),
           erroreGenerico: t("erroreGenerico"),
           anteprima: t("anteprima"),
+          cerca: tUi("collections.search"),
+          anno: tUi("collections.year"),
+          argomento: tUi("collections.topic"),
+          tutti: tUi("collections.all"),
+          nessunRisultato: tUi("collections.noResults"),
         }}
       />
     </div>

@@ -71,10 +71,10 @@ describe("POST risposta", () => {
   });
 
   it("200 con il punteggio del server", async () => {
-    vi.mocked(applicaRisposta).mockResolvedValue({ ok: true, score: 2, maxScore: 2, feedback: [] });
+    vi.mocked(applicaRisposta).mockResolvedValue({ ok: true, score: 2, maxScore: 2, allCorrect: true, feedback: [] });
     const r = await POST(richiesta(corpoValido), { params });
     expect(r.status).toBe(200);
-    expect(await r.json()).toEqual({ score: 2, maxScore: 2, feedback: [] });
+    expect(await r.json()).toEqual({ score: 2, maxScore: 2, allCorrect: true, feedback: [] });
   });
 
   // Fix round 1, finding 2: due modi con cui uno studente autenticato poteva
@@ -130,7 +130,7 @@ describe("POST risposta", () => {
   });
 
   it("una risposta di lunghezza plausibile passa comunque", async () => {
-    vi.mocked(applicaRisposta).mockResolvedValue({ ok: true, score: 1, maxScore: 2, feedback: [] });
+    vi.mocked(applicaRisposta).mockResolvedValue({ ok: true, score: 1, maxScore: 2, allCorrect: false, feedback: [] });
     const corpo = { ...corpoValido, answer: "(x^2 + 2*x + 1)/(x - 1)".repeat(4) };
     expect((await POST(richiesta(corpo), { params })).status).toBe(200);
   });

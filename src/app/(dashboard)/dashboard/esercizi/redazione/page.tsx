@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
 import { Button } from "@/components/ui/button";
+import { TeacherExercisesNav } from "../teacher-exercises-nav";
 import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-client";
 
 /** L'elenco della redazione: solo due degli otto esercizi seminati sono
@@ -29,6 +30,7 @@ export default async function Page() {
   await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.redazione.elenco");
   const tBase = await getTranslations("esercizi");
+  const tUi = await getTranslations("teacherExercisesUi");
 
   const elenco = await elencoRedazione();
 
@@ -38,6 +40,8 @@ export default async function Page() {
     id: v.id,
     titolo: v.titolo,
     sottotitolo: tBase("annoArgomento", { anno: v.anno, argomento: v.argomento }),
+    anno: v.anno,
+    argomento: v.argomento,
     modificabile: v.modificabile,
     motivo: v.modificabile ? null : (v.motivo ?? t("motivoGenerico")),
     ultimaVersione: t("ultimaVersioneDa", {
@@ -48,6 +52,10 @@ export default async function Page() {
 
   return (
     <div className="space-y-4 p-6">
+      <TeacherExercisesNav labels={{
+        label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
+        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"),
+      }} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
@@ -73,6 +81,15 @@ export default async function Page() {
             duplica: t("duplica"),
             duplicaInCorso: t("duplicaInCorso"),
             duplicaErrore: t("duplicaErrore"),
+            cerca: tUi("catalog.search"),
+            anno: tUi("catalog.year"),
+            argomento: tUi("catalog.topic"),
+            modificabilita: tUi("catalog.editability"),
+            tutti: tUi("catalog.all"),
+            modificabili: tUi("catalog.editable"),
+            solaLettura: tUi("catalog.readOnly"),
+            diagnostica: tUi("catalog.diagnostics"),
+            nessunRisultato: tUi("catalog.noResults"),
           }}
         />
       )}

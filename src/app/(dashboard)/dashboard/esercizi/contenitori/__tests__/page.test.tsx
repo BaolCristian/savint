@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/contenitori", () => ({ elencoContenitori: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi/contenitori", useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -37,6 +37,14 @@ describe("pagina dei contenitori", () => {
     expect(screen.getByText("Equazioni")).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /Equazioni/ });
     expect(link).toHaveAttribute("href", "/dashboard/esercizi/contenitori/cont1");
+  });
+
+  it("porta dalla raccolta alla preparazione di un compito esistente", async () => {
+    vi.mocked(elencoContenitori).mockResolvedValue([]);
+    await rendi();
+    expect(screen.getByRole("link", { name: "collections.prepareAction" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/batterie",
+    );
   });
 
   it("senza contenitori mostra il messaggio vuoto", async () => {

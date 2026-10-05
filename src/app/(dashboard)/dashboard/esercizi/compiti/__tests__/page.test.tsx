@@ -5,7 +5,7 @@ vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/classi", () => ({ classiDelDocente: vi.fn() }));
 vi.mock("@/lib/esercizi/batterie", () => ({ elencoBatterie: vi.fn() }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDellaClasse: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi/compiti", useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -43,6 +43,16 @@ describe("pagina di assegnazione dei compiti", () => {
   it("chiama redirectUnlessTeacher", async () => {
     await rendi();
     expect(redirectUnlessTeacher).toHaveBeenCalled();
+  });
+
+  it("spiega che l'assegnazione usa un compito preparato e porta alla sua preparazione", async () => {
+    vi.mocked(elencoBatterie).mockResolvedValue([]);
+    await rendi();
+
+    expect(screen.getByText("daRaccoltaAiuto")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "preparation.title" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/batterie",
+    );
   });
 
   it("assegna una batteria a una classe tramite l'API", async () => {

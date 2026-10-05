@@ -8,6 +8,7 @@ vi.mock("@/lib/esercizi/redazione", () => ({ elencoRedazione: vi.fn() }));
 // Il modulo di assegnazione ha i suoi test (assegna-form.test.tsx): qui
 // interessa che la pagina lo MONTI nel posto giusto, non come si comporta.
 vi.mock("../assegna-form", () => ({ AssegnaForm: () => <div data-testid="assegna-form" /> }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi" }));
 // getTranslations restituisce la CHIAVE (con il namespace davanti quando non
 // e' quello di base), cosi' le asserzioni parlano di chiavi e non di frasi.
 vi.mock("next-intl/server", () => ({

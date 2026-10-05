@@ -81,6 +81,9 @@ describe("useTastieraSimboli: l'inserimento sostituisce la selezione, su tutte e
     // «xyz» selezionato: il gesto naturale di chi vuole rifare quel pezzo.
     campo.setSelectionRange(2, 5);
 
+    if (Superficie === TestoEsercizio) {
+      await userEvent.click(screen.getByText(CAMPO_TESTO.altriStrumenti));
+    }
     await userEvent.click(screen.getByRole("button", { name: nomeTasto }));
 
     // Ciò che era selezionato è sparito, e al suo posto c'è l'inserimento:

@@ -1,4 +1,52 @@
 {
+  "teacherExercisesUi": {
+    "nav": {
+      "label": "Exercise management",
+      "overview": "Overview",
+      "catalog": "Catalog",
+      "collections": "Collections",
+      "assignments": "Assignments",
+      "classes": "Classes"
+    },
+    "catalog": {
+      "search": "Search the catalog",
+      "year": "Year",
+      "topic": "Topic",
+      "editability": "Editability",
+      "all": "All",
+      "editable": "Editable",
+      "readOnly": "Read-only",
+      "diagnostics": "Compatibility details",
+      "noResults": "No exercises match these filters."
+    },
+    "collections": {
+      "search": "Search exercises to add",
+      "year": "Year",
+      "topic": "Topic",
+      "all": "All",
+      "noResults": "No exercises match these filters.",
+      "selected": "{count, plural, one {# exercise selected} other {# exercises selected}}",
+      "prepareTitle": "Prepare an assignment",
+      "prepareDescription": "A collection organizes exercises. Prepare an assignment by choosing how many exercises to take from each collection, then assign it to a class.",
+      "prepareAction": "Prepare an assignment"
+    },
+    "tasks": {
+      "progressToDo": "To complete",
+      "noScore": "No score"
+    },
+    "classes": {
+      "createSection": "Create a class",
+      "teachingSection": "Classes you teach",
+      "managementSection": "Codes and enrolled students"
+    },
+    "preparation": {
+      "title": "Prepare an assignment",
+      "description": "Choose which collections to draw exercises from and how many to take. When it is ready, assign it to one of your classes from the Assignments page.",
+      "sourceCollection": "Source collection",
+      "preparedTask": "Prepared assignment",
+      "assignAction": "Go to assignments"
+    }
+  },
   "common": {
     "close": "Close",
     "cancel": "Cancel",
@@ -1184,7 +1232,7 @@
       "crea": "Create",
       "elimina": "Delete",
       "nessunContenitore": "You haven't created any collections yet.",
-      "eserciziCount": "{n} exercises",
+    "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
       "erroreInUso": "It can't be deleted: it's used in an assignment.",
       "erroreGenerico": "Something went wrong. Please try again.",
       "torna": "Back to collections",
@@ -1249,7 +1297,7 @@
     "compiti": {
       "titolo": "Assigned work",
       "descrizione": "What you have already given your classes. To assign something new, use “Assign exercises” on the exercises page.",
-      "batteria": "Collection to assign",
+    "batteria": "Prepared assignment",
       "classe": "Class",
       "apertura": "Opening date (optional)",
       "scadenza": "Deadline (optional)",
@@ -1257,7 +1305,7 @@
       "assegnato": "Assignment created.",
       "erroreCapienza": "The container \"{contenitore}\" isn't enough: requested {richiesti}, available {disponibili}.",
       "erroreNonInsegni": "You don't teach this class.",
-      "erroreBatteriaNonTrovata": "The chosen collection no longer exists.",
+    "erroreBatteriaNonTrovata": "The chosen prepared assignment no longer exists.",
       "erroreClasseNonTrovata": "The chosen class no longer exists.",
       "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
       "erroreScadenzaPassata": "The deadline is already in the past.",
@@ -1267,19 +1315,24 @@
       "nessunaClasseInsegnata": "Declare which classes you teach first.",
       "compitoScadenza": "Due on {quando}",
       "nessunaScadenza": "No deadline",
-      "eserciziCount": "{n} exercises",
+    "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
       "torna": "Back to assignments",
       "titoloConsegne": "Submissions — {batteria} ({classe})",
       "nomeCol": "Student",
       "fattiCol": "Exercises done",
       "punteggioCol": "Score",
       "nessunoIscritto": "No students are enrolled in this class.",
-      "daRaccolta": "Assign by choosing the exercises yourself",
-      "daRaccoltaAiuto": "If you have prepared a collection, you can assign it instead of choosing by topic.",
-      "nessunaRaccolta": "You have no collections: exercises are assigned by topic, from “Assign exercises” on the exercises page."
+    "daRaccolta": "Assign a prepared assignment",
+    "daRaccoltaAiuto": "A prepared assignment chooses how many exercises to draw from collections. Prepare one before assigning it to a class.",
+    "nessunaRaccolta": "You have no prepared assignments yet. Prepare one from collections before assigning it."
     },
     "redazione": {
       "titolo": "Exercise editor",
+      "sezioni": {
+        "contenuto": "Content",
+        "azioni": "Exercise actions"
+      },
+      "modificheNonSalvate": "Unsaved changes",
       "meta": {
         "titolo": "Title",
         "descrizione": "Description",
@@ -1294,6 +1347,7 @@
       },
       "catalogo": {
         "titolo": "Catalog",
+        "argomentoVuoto": "Topic not set",
         "riassunto": "Year {anno} · {argomento} · {difficolta}"
       },
       "testo": "Exercise text",
@@ -1301,6 +1355,7 @@
       "suggerimentoAiuto": "Shown to the student after a wrong answer.",
       "variabili": {
         "titolo": "Variables",
+        "aiuto": "How to use variables",
         "spiegazioneVar": "To show a variable's value, write \\var followed by the name in curly braces, as in the example below; inside a simplify command, variables are instead written on their own in curly braces, without \\var in front.",
         "fuoriSimplify": "Outside simplify",
         "dentroSimplify": "Inside simplify",
@@ -1327,6 +1382,7 @@
         "vuoto": "No formula comes out of this drawing: either it is still empty, or it is written in a shape that cannot be converted (an overline, for instance). Write it here another way, or type the formula straight into the field."
       },
       "campoTesto": {
+        "altriStrumenti": "More symbols",
         "barra": "Math tools for {campo}",
         "zonaMatematica": "Math zone",
         "scriviFormula": "Write the formula",
@@ -1384,7 +1440,8 @@
       },
       "anteprima": {
         "titolo": "Preview",
-        "spiegazione": "The same exercise with three different random numbers: open the tabs below to see how three different students would see it. Answers given here don't create any attempt and aren't saved anywhere.",
+        "vuota": "Add a part to see and try the exercise. The preview updates as you write.",
+        "spiegazione": "Try the exercise as a student. Each draw uses different numbers; answers here are not saved.",
         "sorteggio": "Draw {numero}",
         "sorteggioRifiuto": "Draw {numero} — rejected",
         "seme": "Seed: {seme}",
@@ -1447,5 +1504,38 @@
       "senzaVersioneTitolo": "No version saved",
       "senzaVersioneTesto": "This exercise doesn't have a saved version yet: there's nothing to preview."
     }
+  },
+  "studentExercisesUi": {
+    "assignedActiveTitle": "To complete",
+    "assignedCompletedTitle": "Completed",
+    "assignedNotStarted": "Not started",
+    "assignedInProgress": "In progress",
+    "assignedCompleted": "Completed",
+    "assignedToComplete": "To complete",
+    "start": "Start",
+    "continue": "Continue",
+    "startAssignment": "Start assignment",
+    "continueAssignment": "Continue assignment",
+    "exerciseDetails": "Open exercise",
+    "assignmentExercises": "Assignment exercises",
+    "practiceAgain": "Practice again",
+    "catalogSearch": "Search exercises",
+    "catalogTopic": "Topic",
+    "catalogYear": "Year",
+    "catalogAllTopics": "All topics",
+    "catalogAllYears": "All years",
+    "catalogYearValue": "Year {year}",
+    "catalogMetadata": "Year {year} · {topic} · Difficulty {difficulty}",
+    "catalogNoMatches": "No exercises match your search.",
+    "catalogReset": "Reset filters",
+    "signupDisclosure": "Have a class code?",
+    "backToExercises": "Back to exercises",
+    "assignedContext": "Assigned exercise",
+    "freeContext": "Free exercise",
+    "assignmentCompleted": "Assignment completed",
+    "exercisePosition": "Exercise {current} of {total}",
+    "assignmentSuccess": "Great work, moving to the next exercise.",
+    "assignmentCompletionError": "We could not save the completion. Please try again.",
+    "assignmentSummary": "Completed: {completed} of {total}."
   }
 }

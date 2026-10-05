@@ -84,13 +84,27 @@ describe("EditorEsercizio — le parti", () => {
   });
 });
 
+describe("EditorEsercizio — stato delle modifiche", () => {
+  it("rende visibile nell'intestazione quando l'esercizio ha modifiche non salvate", async () => {
+    montaggio();
+
+    await userEvent.type(screen.getByLabelText(R.meta.titolo), "Equazioni");
+
+    expect(screen.getByText(R.modificheNonSalvate)).toBeInTheDocument();
+  });
+});
+
 describe("EditorEsercizio — l'anteprima", () => {
   // Task 2: l'anteprima è un player solo dietro tre linguette (la prova
   // dettagliata delle linguette è in anteprima.test.tsx) — qui si verifica
   // solo che l'integrazione con l'editor arrivi fino al player, non che ci
   // siano tre riquadri affiancati (non più veri dal Task 2 in poi).
-  it("mostra l'anteprima con un solo player montato", () => {
+  it("guida l'esercizio vuoto e mostra un solo player dopo aver aggiunto una parte", async () => {
     montaggio();
+    expect(screen.getByText(R.anteprima.vuota)).toBeInTheDocument();
+    expect(screen.queryByTestId("player-stub")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: R.parti.aggiungi }));
+    expect(screen.queryByText(R.anteprima.vuota)).not.toBeInTheDocument();
     expect(screen.getAllByTestId("player-stub")).toHaveLength(1);
   });
 });

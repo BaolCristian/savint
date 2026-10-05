@@ -5,6 +5,7 @@ vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/contenitori", () => ({ contenutoContenitore: vi.fn() }));
 vi.mock("@/lib/db/client", () => ({ prisma: { esercizio: { findMany: vi.fn() } } }));
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard/esercizi/contenitori/cont1",
   useRouter: () => ({ refresh: vi.fn() }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
@@ -12,6 +13,10 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
+    valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
+}));
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
 }));
 
@@ -60,9 +65,12 @@ describe("pagina di dettaglio di un contenitore", () => {
     // Il gap che questo task chiude: dove il docente sceglie alla cieca —
     // qui, e nella prova gemella sotto per chi è ancora fuori — un link
     // all'anteprima su ciascun esercizio.
-    expect(screen.getByRole("link", { name: "anteprima" })).toHaveAttribute(
+    const preview = screen.getByRole("link", { name: "anteprima" });
+    expect(preview).toHaveAttribute(
       "href", "/dashboard/esercizi/anteprima/e1",
     );
+    expect(preview).toHaveAttribute("target", "_blank");
+    expect(preview).toHaveAttribute("rel", "noreferrer");
   });
 
   it("rimuovere un esercizio chiama la DELETE dell'API", async () => {
@@ -131,5 +139,23 @@ describe("pagina di dettaglio di un contenitore", () => {
     });
     const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0]![1] as RequestInit).body as string);
     expect(body).toEqual({ esercizioIds: ["e2"] });
+  });
+
+  it("mantiene la selezione mentre filtra e apre l'anteprima in una nuova scheda", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({ id: "cont1", name: "Equazioni", description: null, esercizi: [] });
+    vi.mocked(prisma.esercizio.findMany).mockResolvedValue([
+      { id: "e2", title: "Equazione", yearLevel: 1, topic: "algebra", difficulty: 1 },
+      { id: "e3", title: "Triangolo", yearLevel: 2, topic: "geometria", difficulty: 1 },
+    ] as never);
+
+    await rendi();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Equazione/ }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "collections.search" }), { target: { value: "Triangolo" } });
+
+    expect(screen.getByRole("checkbox", { name: /Triangolo/ })).not.toBeChecked();
+    expect(screen.getByText(/collections.selected/).textContent).toContain("1");
+    const preview = screen.getByRole("link", { name: "anteprima" });
+    expect(preview).toHaveAttribute("target", "_blank");
+    expect(preview).toHaveAttribute("rel", "noreferrer");
   });
 });

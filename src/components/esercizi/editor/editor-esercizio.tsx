@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { BookOpenCheck, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { EsercizioEditor, ParteEditor } from "@/lib/esercizi/editor/modello";
@@ -328,7 +329,15 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       // l'esercizio, poi il testo.
       intestazione={
         <>
-          <h1 className="text-xl font-semibold">{t("titolo")}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue-50 text-brand-blue">
+                <BookOpenCheck className="size-5" aria-hidden="true" />
+              </span>
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("titolo")}</h1>
+            </div>
+            {modificato && <span className="rounded-full bg-brand-orange-50 px-3 py-1 text-xs font-medium text-brand-ink">{t("modificheNonSalvate")}</span>}
+          </div>
           <SchedaCatalogo meta={editor.meta} onChange={aggiornaMeta} />
         </>
       }
@@ -336,37 +345,46 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
       // suggerimento, variabili, domande.
       scrittura={
         <>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="redazione-titolo" className="text-xs font-medium text-muted-foreground">
-              {t("meta.titolo")}
-            </label>
-            <Input
-              id="redazione-titolo"
-              value={editor.meta.titolo}
-              onChange={(e) => aggiornaMeta("titolo", e.target.value)}
-            />
-          </div>
+          <section aria-label={t("sezioni.contenuto")} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="flex items-center gap-2 border-b bg-brand-blue-50/60 px-5 py-3">
+              <BookOpenCheck className="size-4 text-brand-blue" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-brand-ink">{t("sezioni.contenuto")}</h2>
+            </div>
+            <div className="space-y-5 p-5">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="redazione-titolo" className="text-sm font-medium">
+                  {t("meta.titolo")}
+                </label>
+                <Input
+                  id="redazione-titolo"
+                  value={editor.meta.titolo}
+                  onChange={(e) => aggiornaMeta("titolo", e.target.value)}
+                  className="h-10 text-base"
+                />
+              </div>
 
-          <div className="space-y-2 rounded-lg border bg-card p-4">
-            <CampoTestoMatematico
-              id="redazione-testo"
-              etichetta={t("testo")}
-              valore={editor.testo}
-              onChange={(testo) => mutaEditor((ed) => ({ ...ed, testo }))}
-              variabili={nomiVariabili}
-            />
-          </div>
+              <div className="border-t pt-5">
+                <CampoTestoMatematico
+                  id="redazione-testo"
+                  etichetta={t("testo")}
+                  valore={editor.testo}
+                  onChange={(testo) => mutaEditor((ed) => ({ ...ed, testo }))}
+                  variabili={nomiVariabili}
+                />
+              </div>
 
-          <div className="space-y-2 rounded-lg border bg-card p-4">
-            <CampoTestoMatematico
-              id="redazione-suggerimento"
-              etichetta={t("suggerimento")}
-              valore={editor.suggerimento}
-              onChange={(suggerimento) => mutaEditor((ed) => ({ ...ed, suggerimento }))}
-              variabili={nomiVariabili}
-            />
-            <p className="text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
-          </div>
+              <div className="border-t pt-5">
+                <CampoTestoMatematico
+                  id="redazione-suggerimento"
+                  etichetta={t("suggerimento")}
+                  valore={editor.suggerimento}
+                  onChange={(suggerimento) => mutaEditor((ed) => ({ ...ed, suggerimento }))}
+                  variabili={nomiVariabili}
+                />
+                <p className="mt-2 text-xs text-muted-foreground">{t("suggerimentoAiuto")}</p>
+              </div>
+            </div>
+          </section>
 
           <div className="rounded-lg border bg-card p-4">
             <PannelloVariabili
@@ -377,17 +395,20 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
             />
           </div>
 
-          <section className="space-y-3 rounded-lg border bg-card p-4">
-            <h2 className="text-base font-semibold">{t("parti.titolo")}</h2>
+          <section aria-label={t("parti.titolo")} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="flex items-center gap-2 border-b bg-brand-orange-50 px-5 py-3">
+              <ListChecks className="size-4 text-brand-orange" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-brand-ink">{t("parti.titolo")}</h2>
+            </div>
 
-            <div className="space-y-4">
+            <div className={editor.parti.length > 0 ? "space-y-5 p-5" : ""}>
               {editor.parti.map((parte, i) => (
                 // `numeroParte` (Task 6/7): tradotto in entrambe le lingue ma
                 // rimasto inutilizzato — un esercizio con più parti non mostrava
                 // nessuna etichetta "Parte N" oltre all'ordine nel DOM
                 // (correzione riportata dalla revisione del task precedente).
-                <div key={i} className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">{t("parti.numeroParte", { numero: i + 1 })}</h3>
+                <div key={i} className="space-y-3 border-b pb-5 last:border-b-0 last:pb-0">
+                  <h3 className="text-sm font-semibold text-brand-ink">{t("parti.numeroParte", { numero: i + 1 })}</h3>
                   {parte.tipo === "numerica" ? (
                     <ParteNumerica
                       parte={parte}
@@ -409,7 +430,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
               ))}
             </div>
 
-            <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-wrap items-end gap-3 border-t bg-muted/20 p-5">
               <div className="flex flex-col gap-1">
                 <label htmlFor="redazione-nuovo-tipo-parte" className="text-xs font-medium text-muted-foreground">
                   {t("parti.tipo")}
@@ -454,16 +475,16 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
           )}
         </>
       }
-      // La barra fissa in fondo: i due pulsanti, lo stato di salvataggio, e
+      // La barra riservata in fondo: i due pulsanti, lo stato di salvataggio, e
       // l'unico avviso abbastanza corto (una riga) da restare qui accanto ai
       // pulsanti che blocca — non il dettaglio del rifiuto, che è nella
       // visione.
       azioni={
-        <section className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
+        <section aria-label={t("sezioni.azioni")} className="flex flex-wrap items-center justify-end gap-3">
+          <Button className="min-h-10 px-4" type="button" variant="outline" onClick={verifica} disabled={verificando || sceltaMancante}>
             {verificando ? t("verificaInCorso") : t("verifica")}
           </Button>
-          <Button type="button" onClick={salva} disabled={salvando || sceltaMancante}>
+          <Button className="min-h-10 min-w-24 px-5" type="button" onClick={salva} disabled={salvando || sceltaMancante}>
             {salvando ? t("salvataggioInCorso") : t("salva")}
           </Button>
           {salvatoOk && <span className="text-sm text-brand-green">{t("salvato")}</span>}

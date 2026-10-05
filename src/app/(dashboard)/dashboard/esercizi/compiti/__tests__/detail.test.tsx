@@ -5,6 +5,7 @@ vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/compiti", () => ({ consegneDelCompito: vi.fn() }));
 vi.mock("@/lib/db/client", () => ({ prisma: { compito: { findUnique: vi.fn() } } }));
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard/esercizi/compiti/comp1",
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -84,6 +85,22 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
     expect(screen.getByText("Mario Rossi")).toBeInTheDocument();
     expect(screen.getByText("2/3")).toBeInTheDocument();
     expect(screen.getByText("7/10")).toBeInTheDocument();
+  });
+
+  it("non presenta un punteggio 0/0 come se fosse una valutazione", async () => {
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, dueAt: null,
+    } as never);
+    vi.mocked(consegneDelCompito).mockResolvedValue({
+      ok: true,
+      righe: [{ studentId: "s1", nome: "Mario Rossi", fatti: 0, totali: 0, punteggio: 0, massimo: 0 }],
+    });
+
+    await rendi();
+
+    expect(screen.queryByText("0/0")).toBeNull();
+    expect(screen.getByText("tasks.progressToDo")).toBeInTheDocument();
+    expect(screen.getByText("tasks.noScore")).toBeInTheDocument();
   });
 
   it("senza studenti iscritti mostra il messaggio vuoto", async () => {

@@ -63,15 +63,18 @@ export function PannelloVariabili({ variabili, onChange, condizione, onChangeCon
     <section className="space-y-3" aria-label={t("titolo")}>
       <h2 className="text-lg font-semibold">{t("titolo")}</h2>
 
-      <div className="space-y-2 rounded-lg bg-muted/40 p-3 text-sm">
-        <p>{t("spiegazioneVar")}</p>
-        <p className="font-mono text-xs">
-          {t("fuoriSimplify")}: <code>{ESEMPIO_FUORI_SIMPLIFY}</code>
-          {"   ·   "}
-          {t("dentroSimplify")}: <code>{ESEMPIO_DENTRO_SIMPLIFY}</code>
-        </p>
-        <p>{t("spiegazioneOrdine")}</p>
-      </div>
+      <details className="rounded-lg bg-muted/40 p-3 text-sm">
+        <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">{t("aiuto")}</summary>
+        <div className="mt-3 space-y-2 leading-relaxed">
+          <p>{t("spiegazioneVar")}</p>
+          <p className="font-mono text-xs">
+            {t("fuoriSimplify")}: <code>{ESEMPIO_FUORI_SIMPLIFY}</code>
+            {"   ·   "}
+            {t("dentroSimplify")}: <code>{ESEMPIO_DENTRO_SIMPLIFY}</code>
+          </p>
+          <p>{t("spiegazioneOrdine")}</p>
+        </div>
+      </details>
 
       {variabili.length === 0 && <p className="text-sm text-muted-foreground">{t("nessuna")}</p>}
 

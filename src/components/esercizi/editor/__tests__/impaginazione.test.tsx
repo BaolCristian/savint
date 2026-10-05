@@ -42,11 +42,30 @@ describe("EditorEsercizio — l'anteprima non è più sepolta sotto i pulsanti",
       </Wrapper>,
     );
 
-    const anteprima = screen.getAllByTestId("player-stub")[0]!;
+    const anteprima = screen.getByRole("region", { name: R.anteprima.titolo });
     const salva = screen.getByRole("button", { name: R.salva });
     expect(anteprima.compareDocumentPosition(salva) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
+
+describe("EditorEsercizio — gerarchia delle aree di lavoro", () => {
+  it("raggruppa contenuto, domande, anteprima e azioni in regioni riconoscibili", () => {
+    montaggioEditorGerarchia();
+
+    expect(screen.getByRole("region", { name: "Contenuto" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: R.parti.titolo })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: R.anteprima.titolo })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Azioni dell'esercizio" })).toBeInTheDocument();
+  });
+});
+
+function montaggioEditorGerarchia() {
+  render(
+    <Wrapper>
+      <EditorEsercizio />
+    </Wrapper>,
+  );
+}
 
 describe("ImpaginazioneEditor — il contenitore puro", () => {
   // Questa resta utile in aggiunta alla prova sopra, non al suo posto:

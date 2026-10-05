@@ -32,22 +32,22 @@ export function SchedaCatalogo({ meta, onChange }: SchedaCatalogoProps) {
 
   const riassunto = t("catalogo.riassunto", {
     anno: meta.anno,
-    argomento: meta.argomento,
+    argomento: meta.argomento.trim() || t("catalogo.argomentoVuoto"),
     difficolta: t(`meta.difficolta${meta.difficolta}`),
   });
 
   return (
-    <details className="group rounded-lg border bg-card p-4">
+    <details className="group border-b pb-3">
       {/* `list-none` toglie il triangolino solo su Chrome/Firefox: Safari
        * (WebKit) ignora `list-style` sui `<summary>` e lo mostra comunque —
        * va spento esplicitamente. Tolto il marcatore nativo, il chevron qui
        * sotto (ruotato via `group-open:` quando la scheda è aperta) resta
        * l'unico segnale — su ogni motore, anche touch, dove `cursor-pointer`
        * non esiste — che «Catalogo» è qualcosa che si apre. */}
-      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-10 cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 rounded-md focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
         <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" aria-hidden="true" />
-        <span className="text-base font-semibold">{t("catalogo.titolo")}</span>
-        <span className="ml-auto text-xs font-medium text-muted-foreground">{riassunto}</span>
+        <span className="text-sm font-medium">{t("catalogo.titolo")}</span>
+        <span className="text-sm text-muted-foreground">{riassunto}</span>
       </summary>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

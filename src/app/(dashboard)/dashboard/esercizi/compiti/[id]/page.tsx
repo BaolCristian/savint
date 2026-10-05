@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { consegneDelCompito } from "@/lib/esercizi/compiti";
 import { prisma } from "@/lib/db/client";
+import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const session = await redirectUnlessTeacher();
@@ -34,9 +35,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!compito) notFound();
 
   const consegne = esito.righe;
+  const tUi = await getTranslations("teacherExercisesUi");
 
   return (
     <div className="space-y-6">
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
       <div>
         <Link href="/dashboard/esercizi/compiti" className="text-sm text-brand-blue hover:underline">
           {t("torna")}
@@ -65,10 +68,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <tr key={r.studentId} className="border-b">
                 <td className="p-2">{r.nome}</td>
                 <td className="p-2">
-                  {r.fatti}/{r.totali}
+                  {r.totali === 0 ? tUi("tasks.progressToDo") : `${r.fatti}/${r.totali}`}
                 </td>
                 <td className="p-2">
-                  {r.punteggio}/{r.massimo}
+                  {r.massimo === 0 ? tUi("tasks.noScore") : `${r.punteggio}/${r.massimo}`}
                 </td>
               </tr>
             ))}

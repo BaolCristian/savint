@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/batterie", () => ({ elencoBatterie: vi.fn() }));
 vi.mock("@/lib/esercizi/contenitori", () => ({ elencoContenitori: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi/batterie", useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -47,6 +47,14 @@ describe("pagina delle batterie", () => {
     vi.mocked(elencoBatterie).mockResolvedValue([]);
     await rendi();
     expect(screen.getByText("nessunaBatteria")).toBeInTheDocument();
+  });
+
+  it("rende raggiungibile l'assegnazione dopo la preparazione", async () => {
+    vi.mocked(elencoBatterie).mockResolvedValue([]);
+    await rendi();
+    expect(screen.getByRole("link", { name: "preparation.assignAction" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/compiti",
+    );
   });
 
   it("crea una batteria con una regola tramite l'API", async () => {

@@ -35,6 +35,18 @@ interface ArgomentoOpzione {
   quanti: number;
 }
 
+interface RisultatoArgomenti {
+  chiave: string;
+  stato: "ok" | "errore";
+  opzioni: ArgomentoOpzione[];
+}
+
+interface RisultatoConteggio {
+  chiave: string;
+  stato: "ok" | "errore";
+  quanti?: number;
+}
+
 interface DettaglioCapienza {
   contenitore: string;
   richiesti: number;
@@ -127,12 +139,12 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   const [classeId, setClasseId] = useState(classi[0]?.id ?? "");
   const [annoManuale, setAnnoManuale] = useState("");
   const [argomento, setArgomento] = useState("");
-  const [argomentiOpzioni, setArgomentiOpzioni] = useState<ArgomentoOpzione[]>([]);
+  const [risultatoArgomenti, setRisultatoArgomenti] = useState<RisultatoArgomenti | null>(null);
   const [quanti, setQuanti] = useState("");
   const [difficoltaMax, setDifficoltaMax] = useState("");
   const [opensAt, setOpensAt] = useState("");
   const [dueAt, setDueAt] = useState("");
-  const [corrispondenti, setCorrispondenti] = useState<number | null>(null);
+  const [risultatoConteggio, setRisultatoConteggio] = useState<RisultatoConteggio | null>(null);
   const [busy, setBusy] = useState(false);
   const [esito, setEsito] = useState<"ok" | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
@@ -140,6 +152,11 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   const classeSelezionata = classi.find((c) => c.id === classeId);
   const mostraAnno = classeSelezionata != null && classeSelezionata.yearLevel == null;
   const annoRisolto = classeSelezionata?.yearLevel ?? (annoManuale ? Number(annoManuale) : undefined);
+  const chiaveArgomenti = JSON.stringify([classeId, annoRisolto ?? null]);
+  const chiaveConteggio = JSON.stringify([classeId, argomento, difficoltaMax, annoRisolto ?? null, mostraAnno]);
+  const risultatoArgomentiCorrente = risultatoArgomenti?.chiave === chiaveArgomenti ? risultatoArgomenti : null;
+  const argomentoCorrenteValido =
+    risultatoArgomentiCorrente?.stato === "ok" && risultatoArgomentiCorrente.opzioni.some((o) => o.argomento === argomento);
 
   // Effetto 1: l'elenco degli argomenti fra cui scegliere (GET senza
   // `argomento`). Dipende dalla classe e, solo quando quella classe non
@@ -160,16 +177,16 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
       .then((res) => (res.ok ? (res.json() as Promise<ArgomentoOpzione[]>) : Promise.reject(res)))
       .then((elenco) => {
         if (annullato) return;
-        setArgomentiOpzioni(elenco);
+        setRisultatoArgomenti({ chiave: chiaveArgomenti, stato: "ok", opzioni: elenco });
         setArgomento((corrente) => (elenco.some((o) => o.argomento === corrente) ? corrente : (elenco[0]?.argomento ?? "")));
       })
       .catch(() => {
-        if (!annullato) setArgomentiOpzioni([]);
+        if (!annullato) setRisultatoArgomenti({ chiave: chiaveArgomenti, stato: "errore", opzioni: [] });
       });
     return () => {
       annullato = true;
     };
-  }, [classeId, annoRisolto, mostraAnno]);
+  }, [classeId, annoRisolto, mostraAnno, chiaveArgomenti]);
 
   // Effetto 2: "quanti esercizi corrispondono" (GET con `argomento`) — LA
   // chiamata debounced di cui parla il brief. Aspetta DEBOUNCE_CONTEGGIO_MS
@@ -180,7 +197,7 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   useEffect(() => {
     // Come sopra: senza argomento non si conta niente, e il valore si
     // deriva nullo (`corrispondentiVisibili`) invece di azzerarlo qui.
-    if (argomento === "" || annoRisolto == null) return;
+    if (!argomentoCorrenteValido || annoRisolto == null) return;
     let annullato = false;
     const timer = setTimeout(() => {
       const query = costruisciQuery({
@@ -192,18 +209,17 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
       fetch(`/api/esercizi/argomenti?${query}`)
         .then((res) => (res.ok ? (res.json() as Promise<{ quanti: number }>) : Promise.reject(res)))
         .then((corpo) => {
-          if (!annullato) setCorrispondenti(corpo.quanti);
+          if (!annullato) setRisultatoConteggio({ chiave: chiaveConteggio, stato: "ok", quanti: corpo.quanti });
         })
         .catch(() => {
-          // Un errore isolato (rete, rate limit) non deve far sparire
-          // l'ultimo conteggio buono: resta quello che c'era.
+          if (!annullato) setRisultatoConteggio({ chiave: chiaveConteggio, stato: "errore" });
         });
     }, DEBOUNCE_CONTEGGIO_MS);
     return () => {
       annullato = true;
       clearTimeout(timer);
     };
-  }, [classeId, argomento, difficoltaMax, annoRisolto, mostraAnno]);
+  }, [argomentoCorrenteValido, classeId, argomento, difficoltaMax, annoRisolto, mostraAnno, chiaveConteggio]);
 
   // Un esercizio qualunque, fra quelli con l'argomento e l'anno scelti, per
   // linkare all'anteprima vera (`/dashboard/esercizi/anteprima/[id]`, già
@@ -213,7 +229,9 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   // per difficoltà (quel dato non è nell'elenco che la pagina passa): è
   // un'anteprima illustrativa, non l'esercizio esatto che la pesca vera
   // sorteggerebbe.
-  const candidatoAnteprima = candidati.find((c) => c.argomento === argomento && c.anno === annoRisolto);
+  const candidatoAnteprima = argomentoCorrenteValido
+    ? candidati.find((c) => c.argomento === argomento && c.anno === annoRisolto)
+    : undefined;
 
   function selezionaClasse(id: string) {
     setClasseId(id);
@@ -225,39 +243,52 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
     setBusy(true);
     setErrore(null);
     setEsito(null);
-    const res = await fetch("/api/esercizi/compiti/diretto", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        classeId,
-        argomento,
-        quanti: Number(quanti),
-        ...(difficoltaMax ? { difficoltaMax: Number(difficoltaMax) } : {}),
-        ...(mostraAnno && annoManuale ? { anno: Number(annoManuale) } : {}),
-        ...(opensAt ? { opensAt: new Date(opensAt).toISOString() } : {}),
-        ...(dueAt ? { dueAt: new Date(dueAt).toISOString() } : {}),
-      }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const corpo = await res.json().catch(() => ({}));
-      setErrore(messaggioErrore(t, corpo));
-      return;
+    try {
+      const res = await fetch("/api/esercizi/compiti/diretto", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          classeId,
+          argomento,
+          quanti: Number(quanti),
+          ...(difficoltaMax ? { difficoltaMax: Number(difficoltaMax) } : {}),
+          ...(mostraAnno && annoManuale ? { anno: Number(annoManuale) } : {}),
+          ...(opensAt ? { opensAt: new Date(opensAt).toISOString() } : {}),
+          ...(dueAt ? { dueAt: new Date(dueAt).toISOString() } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const corpo = await res.json().catch(() => ({}));
+        setErrore(messaggioErrore(t, corpo));
+        return;
+      }
+      setEsito("ok");
+      router.refresh();
+    } catch {
+      setErrore(t("erroreGenerico"));
+    } finally {
+      setBusy(false);
     }
-    setEsito("ok");
-    router.refresh();
   }
 
   const quantiValide = Number(quanti) > 0 && Number.isInteger(Number(quanti));
-  const invioBloccato = busy || classeId === "" || argomento === "" || !quantiValide || (mostraAnno && annoManuale === "");
+  const invioBloccato = busy || classeId === "" || !argomentoCorrenteValido || !quantiValide || (mostraAnno && annoManuale === "");
 
   // Derivati, non azzerati dentro gli effetti (vedi i commenti la sopra):
   // senza classe o senza anno non c'e un elenco da mostrare, senza argomento
   // non c'e un conteggio. Derivarli, oltre a togliere il setState sincrono
   // che il compilatore React vieta, impedisce che il valore resti indietro
   // di un render rispetto ai filtri appena scelti.
-  const opzioniVisibili = classeId === "" || annoRisolto == null ? [] : argomentiOpzioni;
-  const corrispondentiVisibili = argomento === "" || annoRisolto == null ? null : corrispondenti;
+  const opzioniVisibili = classeId === "" || annoRisolto == null || risultatoArgomentiCorrente?.stato !== "ok"
+    ? []
+    : risultatoArgomentiCorrente.opzioni;
+  const argomentiInCaricamento = classeId !== "" && annoRisolto != null && risultatoArgomentiCorrente == null;
+  const argomentiFalliti = risultatoArgomentiCorrente?.stato === "errore";
+  const risultatoConteggioCorrente = risultatoConteggio?.chiave === chiaveConteggio ? risultatoConteggio : null;
+  const corrispondentiVisibili = argomento === "" || annoRisolto == null || risultatoConteggioCorrente?.stato !== "ok"
+    ? null
+    : risultatoConteggioCorrente.quanti ?? null;
+  const conteggioFallito = risultatoConteggioCorrente?.stato === "errore";
 
   // Il docente ha chiesto piu' esercizi di quanti il conteggio ne dichiara.
   // Si SEGNALA (il numero diventa rosso, il campo si marca non valido), non
@@ -265,7 +296,7 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
   // accettati") e l'autorita' resta il rifiuto del server, che porta i due
   // numeri esatti. Bloccare qui sarebbe una seconda fonte di verita'.
   const troppi = corrispondentiVisibili !== null && quantiValide && Number(quanti) > corrispondentiVisibili;
-  const mostraConteggio = argomento !== "";
+  const mostraConteggio = argomentoCorrenteValido;
 
   // Senza classi dichiarate non c'e' niente da assegnare, e il modulo
   // diventava un guscio: tendina vuota, bottone spento, un messaggio che
@@ -343,7 +374,9 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
             className={`${SELECT_PRIMARIO} min-w-44 max-w-xs`}
           >
             {opzioniVisibili.length === 0 ? (
-              <option value="">{t("nessunArgomentoDisponibile")}</option>
+              <option value="">
+                {argomentiFalliti || argomentiInCaricamento ? t(argomentiFalliti ? "erroreGenerico" : "calcolando") : t("nessunArgomentoDisponibile")}
+              </option>
             ) : (
               opzioniVisibili.map((o) => (
                 <option key={o.argomento} value={o.argomento}>
@@ -352,6 +385,11 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
               ))
             )}
           </select>
+          {argomentiFalliti && (
+            <span role="alert" className="text-sm text-destructive">
+              {t("erroreGenerico")}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -385,7 +423,9 @@ export function AssegnaForm({ classi, candidati }: { classi: ClasseOpzione[]; ca
             {mostraConteggio && (
               <p id="assegna-conteggio" aria-live="polite" className="text-sm">
                 <span className={troppi ? "font-semibold text-destructive" : "font-medium"}>
-                  {corrispondentiVisibili === null ? t("calcolando") : t("corrispondenti", { quanti: corrispondentiVisibili })}
+                  {corrispondentiVisibili === null ? (
+                    conteggioFallito ? <span role="alert">{t("erroreGenerico")}</span> : t("calcolando")
+                  ) : t("corrispondenti", { quanti: corrispondentiVisibili })}
                 </span>
                 {candidatoAnteprima && (
                   <>

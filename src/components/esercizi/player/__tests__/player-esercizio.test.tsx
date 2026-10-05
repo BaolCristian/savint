@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { readFileSync } from "fs";
 import path from "path";
@@ -84,19 +85,20 @@ const grigliaConVariabiliFixture = {
   ],
 } as unknown as NumbasQuestionJSON;
 
-function montaggio(props: Partial<React.ComponentProps<typeof PlayerEsercizio>> = {}) {
+function montaggio(props: Partial<React.ComponentProps<typeof PlayerEsercizio>> = {}, strict = false) {
+  const player = <PlayerEsercizio
+    tentativoId="t1"
+    esercizioId="01-equazione-primo-grado"
+    seed="seme-di-prova"
+    content={question}
+    statoIniziale={null}
+    lastActivityAt={new Date("2026-09-01T10:00:00Z")}
+    locale="it"
+    {...props}
+  />;
   return render(
     <NextIntlClientProvider locale="it" messages={messaggiIt}>
-      <PlayerEsercizio
-        tentativoId="t1"
-        esercizioId="01-equazione-primo-grado"
-        seed="seme-di-prova"
-        content={question}
-        statoIniziale={null}
-        lastActivityAt={new Date("2026-09-01T10:00:00Z")}
-        locale="it"
-        {...props}
-      />
+      {strict ? <StrictMode>{player}</StrictMode> : player}
     </NextIntlClientProvider>,
   );
 }
@@ -110,6 +112,14 @@ beforeEach(() => {
 });
 
 describe("PlayerEsercizio", () => {
+  it("mantiene un ritorno all'elenco e il contesto dell'esercizio per lo studente", async () => {
+    montaggio({ titolo: "Equazioni", contesto: "assigned" });
+
+    await waitFor(() => expect(screen.getByText("Equazioni")).toBeInTheDocument());
+    expect(screen.getByText("Esercizio assegnato")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Torna agli esercizi" })).toHaveAttribute("href", "/studente");
+  });
+
   it("mostra il testo della domanda con le variabili sostituite", async () => {
     const { container } = montaggio();
     await waitFor(() => expect(screen.getByText(/Risolvi/)).toBeInTheDocument());
@@ -122,6 +132,117 @@ describe("PlayerEsercizio", () => {
     await userEvent.type(screen.getByRole("textbox"), "3");
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
     await waitFor(() => expect(screen.getByText("Giusto.")).toBeInTheDocument());
+  });
+
+  it("chiude automaticamente la pratica libera solo dopo allCorrect dal server", async () => {
+    global.fetch = vi.fn(async (url: string) => new Response(
+      JSON.stringify(url.includes("/completa")
+        ? { score: 2, maxScore: 2 }
+        : { score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }], allCorrect: true }),
+      { status: 200 },
+    )) as never;
+    montaggio();
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "3");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+
+    await waitFor(() => expect(screen.getByText(messaggiIt.esercizi.tentativoCompletato)).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: messaggiIt.esercizi.completa })).toBeNull();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("dopo allCorrect nel compito registra prima il completamento e annuncia il passaggio", async () => {
+    global.fetch = vi.fn(async (url: string) => new Response(
+      JSON.stringify(url.includes("/completa")
+        ? { score: 2, maxScore: 2 }
+        : { score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }], allCorrect: true }),
+      { status: 200 },
+    )) as never;
+    montaggio({
+      titolo: "Algebra", contesto: "assigned",
+      compito: { id: "c1", indice: 2, totale: 3 },
+    });
+    await waitFor(() => screen.getByRole("textbox"));
+    expect(screen.getByText("Esercizio 2 di 3")).toBeInTheDocument();
+    await userEvent.type(screen.getByRole("textbox"), "3");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Ottimo, passiamo al prossimo esercizio."));
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(messaggiIt.esercizi.tentativoCompletato)).toBeNull();
+  });
+
+  it("se la chiusura fallisce ritenta solo il completamento, senza reinviare la risposta", async () => {
+    let chiusure = 0;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (!url.includes("/completa")) return new Response(JSON.stringify({
+        score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }], allCorrect: true,
+      }), { status: 200 });
+      chiusure += 1;
+      return chiusure === 1
+        ? new Response("errore", { status: 503 })
+        : new Response(JSON.stringify({ score: 2, maxScore: 2 }), { status: 200 });
+    });
+    global.fetch = fetchMock as never;
+    montaggio();
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "3");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Non siamo riusciti"));
+    expect(screen.getByRole("textbox")).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.riprova }));
+    await waitFor(() => expect(screen.getByText(messaggiIt.esercizi.tentativoCompletato)).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[0]![0])).toContain("/risposta");
+    expect(String(fetchMock.mock.calls[1]![0])).toContain("/completa");
+    expect(String(fetchMock.mock.calls[2]![0])).toContain("/completa");
+  });
+
+  it("in StrictMode completa una ripresa gia corretta una sola volta", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ score: 2, maxScore: 2 }), { status: 200 }));
+    global.fetch = fetchMock as never;
+    montaggio({ allCorrectIniziale: true, compito: { id: "c1", indice: 1, totale: 2 } }, true);
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Ottimo, passiamo al prossimo esercizio."));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("non completa o programma avanzamenti se la risposta arriva dopo lo smontaggio", async () => {
+    let risolviRisposta!: (value: Response) => void;
+    const rispostaInAttesa = new Promise<Response>((resolve) => { risolviRisposta = resolve; });
+    const fetchMock = vi.fn(async () => rispostaInAttesa);
+    global.fetch = fetchMock as never;
+    const vista = montaggio({ compito: { id: "c1", indice: 1, totale: 2 } });
+    await waitFor(() => screen.getByRole("textbox"));
+    await userEvent.type(screen.getByRole("textbox"), "3");
+    await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    vista.unmount();
+    risolviRisposta(new Response(JSON.stringify({
+      score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }], allCorrect: true,
+    }), { status: 200 }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("annulla il passaggio automatico quando lo studente lascia la pagina", async () => {
+    const timerSpy = vi.spyOn(globalThis, "setTimeout");
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout");
+    try {
+      const vista = montaggio({ allCorrectIniziale: true, compito: { id: "c1", indice: 1, totale: 2 } });
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Ottimo, passiamo al prossimo esercizio."));
+      const timerIndex = timerSpy.mock.calls.findIndex((call) => call[1] === 700);
+      expect(timerIndex).toBeGreaterThanOrEqual(0);
+      const timer = timerSpy.mock.results[timerIndex]!.value;
+
+      vista.unmount();
+      expect(clearSpy).toHaveBeenCalledWith(timer);
+    } finally {
+      timerSpy.mockRestore();
+      clearSpy.mockRestore();
+    }
   });
 
   it("il punteggio mostrato e' quello del server, non quello locale", async () => {
@@ -279,13 +400,16 @@ describe("PlayerEsercizio", () => {
   // disconnessione, e una ricarica apriva un tentativo nuovo con un altro
   // seme, rendendo irraggiungibile il punteggio appena preso.
   it("il riepilogo offre due uscite: l'elenco e un nuovo tentativo", async () => {
+    global.fetch = vi.fn(async (url: string) => new Response(
+      JSON.stringify(url.includes("/completa")
+        ? { score: 2, maxScore: 2 }
+        : { score: 2, maxScore: 2, feedback: [{ type: "correct", message: "Giusto." }], allCorrect: true }),
+      { status: 200 },
+    )) as never;
     montaggio();
     await waitFor(() => screen.getByRole("textbox"));
     await userEvent.type(screen.getByRole("textbox"), "3");
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
-    await userEvent.click(
-      await screen.findByRole("button", { name: messaggiIt.esercizi.completa }),
-    );
 
     await waitFor(() =>
       expect(screen.getByText(messaggiIt.esercizi.tentativoCompletato)).toBeInTheDocument(),
@@ -364,16 +488,15 @@ describe("PlayerEsercizio", () => {
     expect(screen.queryByRole("button", { name: messaggiIt.esercizi.completa })).toBeNull();
   });
 
-  // La faccia opposta dello stesso flag: una risposta che il motore accetta
-  // deve sbloccare il completamento (nessuna regressione dal punto 1).
-  it("una risposta accettata dal motore sblocca il completamento", async () => {
+  // Il completamento dipende dal segnale persistito dal server, non dal
+  // calcolo locale o dal fatto che una risposta sia stata accettata.
+  it("una risposta accettata senza allCorrect non mostra un completamento manuale", async () => {
     montaggio();
     await waitFor(() => screen.getByRole("textbox"));
     await userEvent.type(screen.getByRole("textbox"), "3");
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: messaggiIt.esercizi.completa })).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("Giusto.")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: messaggiIt.esercizi.completa })).toBeNull();
   });
 
   // Fix round 1, punto 4: nessun esercizio spedito ha variabili nelle righe
@@ -547,7 +670,7 @@ describe("PlayerEsercizio — ripasso dopo un errore", () => {
   // niente. Il player deve tradurla nella scelta corrispondente.
   it("su una parte a scelta singola la risposta attesa è il testo della scelta corretta, non la matrice grezza", async () => {
     global.fetch = vi.fn(async () => rispostaIncorretta()) as never;
-    const { container } = montaggio({ content: scomposizionePolinomi, seed: "seme-02" });
+    montaggio({ content: scomposizionePolinomi, seed: "seme-02" });
     await waitFor(() => screen.getAllByRole("radio"));
     await userEvent.click(screen.getAllByRole("radio")[1]!);
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
@@ -722,6 +845,7 @@ describe("PlayerEsercizio — ricomincia", () => {
     montaggio({ soloLocale: true });
     await waitFor(() => screen.getByRole("textbox"));
     expect(screen.queryByRole("button", { name: messaggiIt.esercizi.ricomincia })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Torna agli esercizi" })).toBeNull();
   });
 
   it("confermare abbandona il tentativo e aggiorna la pagina", async () => {

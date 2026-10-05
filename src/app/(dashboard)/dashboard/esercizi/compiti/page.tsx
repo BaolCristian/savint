@@ -5,10 +5,12 @@ import { classiDelDocente } from "@/lib/esercizi/classi";
 import { elencoBatterie } from "@/lib/esercizi/batterie";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
 import { CompitoForm } from "./compito-form";
+import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 export default async function Page() {
   const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.compiti");
+  const tUi = await getTranslations("teacherExercisesUi");
 
   const [classi, batterie] = await Promise.all([
     classiDelDocente(session.user.id),
@@ -28,6 +30,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
         <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
@@ -46,6 +49,9 @@ export default async function Page() {
         <details className="rounded-xl border border-input p-4">
           <summary className="cursor-pointer text-sm font-medium">{t("daRaccolta")}</summary>
           <p className="mt-2 text-sm text-muted-foreground">{t("daRaccoltaAiuto")}</p>
+          <Link href="/dashboard/esercizi/batterie" className="mt-2 inline-flex text-sm font-medium text-brand-blue hover:underline">
+            {tUi("preparation.title")}
+          </Link>
           <div className="mt-3">
             {batterie.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("nessunaRaccolta")}</p>

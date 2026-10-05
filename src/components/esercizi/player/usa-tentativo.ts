@@ -8,6 +8,9 @@ export interface EsitoRisposta {
   score: number;
   maxScore: number;
   feedback: FeedbackItem[];
+  /** Il server ha ricalcolato e salvato tutte le parti: solo questo segnale
+   * può avviare la chiusura automatica, mai il punteggio nel browser. */
+  allCorrect?: boolean;
 }
 
 /** L'esito del completamento di un tentativo. */

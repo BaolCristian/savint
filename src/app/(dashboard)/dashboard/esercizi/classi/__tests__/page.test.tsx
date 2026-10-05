@@ -14,7 +14,7 @@ vi.mock("@/lib/esercizi/compiti", () => ({ compitiDellaClasse: vi.fn() }));
 // Classe era conosciuta in due posti). Il vecchio commento diceva (per
 // `compitiDellaClasse`): `classiDelDocente` non lo espone nel suo contratto
 // di dominio, che qui non si tocca (task 4).
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi/classi", useRouter: () => ({ refresh: vi.fn() }) }));
 // Il traduttore restituisce chiave e valori: le asserzioni parlano di quale
 // messaggio è stato scelto, non del testo italiano di quel messaggio.
 vi.mock("next-intl/server", () => ({

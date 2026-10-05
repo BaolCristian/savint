@@ -115,5 +115,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (!esito.ok) return NextResponse.json({ error: esito.motivo }, { status: STATI[esito.motivo] ?? 400 });
-  return NextResponse.json({ score: esito.score, maxScore: esito.maxScore, feedback: esito.feedback });
+  return NextResponse.json({
+    score: esito.score,
+    maxScore: esito.maxScore,
+    allCorrect: esito.allCorrect,
+    feedback: esito.feedback,
+  });
 }

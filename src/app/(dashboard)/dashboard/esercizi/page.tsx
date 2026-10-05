@@ -6,6 +6,7 @@ import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
 import { AssegnaForm } from "./assegna-form";
+import { TeacherExercisesNav } from "./teacher-exercises-nav";
 
 // Quanti compiti gia' dati mostrare qui, per classe. La pagina dei compiti
 // li elenca tutti; qui servono gli ultimi, quelli che il docente ha appena
@@ -32,9 +33,10 @@ const COMPITI_RECENTI_PER_CLASSE = 3;
 // conosce già, ma il docente non deve più saperla nominare per assegnare.
 export default async function Page() {
   const session = await redirectUnlessTeacher();
-  const [t, tCompiti, locale] = await Promise.all([
+  const [t, tCompiti, tUi, locale] = await Promise.all([
     getTranslations("esercizi"),
     getTranslations("esercizi.compiti"),
+    getTranslations("teacherExercisesUi"),
     getLocale(),
   ]);
 
@@ -73,6 +75,7 @@ export default async function Page() {
     // ereditato dal body resta quello chiaro; dichiararlo qui lo fa
     // risolvere dentro lo scope scuro, e tutto il resto lo eredita.
     <div className="max-w-4xl space-y-8 text-foreground">
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
       <div>
         {/* Il nome della sezione e' contesto, non il titolo: lo dice gia' la
             barra laterale. Resta un h1 per chi naviga per intestazioni, ma

@@ -3,12 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface EsercizioRiga {
   id: string;
   title: string;
   subtitle: string;
+  anno: number;
+  argomento: string;
 }
 
 /** Gestisce sia la rimozione degli esercizi già dentro il contenitore sia
@@ -36,14 +39,30 @@ export function ContenitoreDetailClient({
      * sceglie alla cieca oggi — dal solo titolo — sia per un esercizio già
      * dentro sia per uno ancora da aggiungere (vedi il brief del task). */
     anteprima: string;
+    cerca: string;
+    anno: string;
+    argomento: string;
+    tutti: string;
+    nessunRisultato: string;
   };
 }) {
+  const tUi = useTranslations("teacherExercisesUi");
   const router = useRouter();
   const [rimuovendo, setRimuovendo] = useState<string | null>(null);
   const [erroreRimozione, setErroreRimozione] = useState<string | null>(null);
   const [selezionati, setSelezionati] = useState<Set<string>>(new Set());
   const [aggiungendo, setAggiungendo] = useState(false);
   const [erroreAggiunta, setErroreAggiunta] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [anno, setAnno] = useState("all");
+  const [argomento, setArgomento] = useState("all");
+  const anni = [...new Set(fuori.map((e) => e.anno))].sort((a, b) => a - b);
+  const argomenti = [...new Set(fuori.map((e) => e.argomento))].sort((a, b) => a.localeCompare(b));
+  const fuoriFiltrati = fuori.filter((e) =>
+    (anno === "all" || e.anno === Number(anno)) &&
+    (argomento === "all" || e.argomento === argomento) &&
+    `${e.title} ${e.subtitle}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+  );
 
   async function rimuovi(esercizioId: string) {
     setRimuovendo(esercizioId);
@@ -97,14 +116,14 @@ export function ContenitoreDetailClient({
             {dentro.map((e) => (
               <li
                 key={e.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-input p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-input p-3"
               >
-                <div>
-                  <p className="font-medium">{e.title}</p>
-                  <p className="text-sm text-muted-foreground">{e.subtitle}</p>
+                <div className="min-w-0">
+                  <p className="break-words font-medium">{e.title}</p>
+                  <p className="break-words text-sm text-muted-foreground">{e.subtitle}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} className="text-sm text-brand-blue hover:underline">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} target="_blank" rel="noreferrer" className="text-sm text-brand-blue hover:underline">
                     {testi.anteprima}
                   </Link>
                   <Button
@@ -129,11 +148,16 @@ export function ContenitoreDetailClient({
           <p className="text-sm text-muted-foreground">{testi.nessunoFuori}</p>
         ) : (
           <>
-            <ul className="grid gap-2">
-              {fuori.map((e) => (
+            <div className="flex flex-wrap gap-2">
+              <input type="search" aria-label={testi.cerca} placeholder={testi.cerca} value={query} onChange={(e) => setQuery(e.target.value)} className="h-9 w-full basis-full flex-none rounded-md border border-input bg-transparent px-2 text-sm sm:min-w-48 sm:flex-1 sm:basis-auto sm:w-auto" />
+              <select aria-label={testi.anno} value={anno} onChange={(e) => setAnno(e.target.value)} className="h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm"><option value="all">{testi.anno}: {testi.tutti}</option>{anni.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+              <select aria-label={testi.argomento} value={argomento} onChange={(e) => setArgomento(e.target.value)} className="h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm"><option value="all">{testi.argomento}: {testi.tutti}</option>{argomenti.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            </div>
+            {fuoriFiltrati.length === 0 ? <p className="py-4 text-sm text-muted-foreground">{testi.nessunRisultato}</p> : <ul className="grid gap-2 pb-16">
+              {fuoriFiltrati.map((e) => (
                 <li
                   key={e.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-input p-3 text-sm hover:bg-muted/50"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-input p-3 text-sm hover:bg-muted/50"
                 >
                   {/* Il link all'anteprima vive FUORI dal `label`: un `<a>`
                       annidato dentro un `label` sarebbe comunque un
@@ -155,13 +179,14 @@ export function ContenitoreDetailClient({
                       <span className="ml-2 text-muted-foreground">{e.subtitle}</span>
                     </span>
                   </label>
-                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} className="text-brand-blue hover:underline">
+                  <Link href={`/dashboard/esercizi/anteprima/${e.id}`} target="_blank" rel="noreferrer" className="text-brand-blue hover:underline">
                     {testi.anteprima}
                   </Link>
                 </li>
               ))}
-            </ul>
-            <div className="flex items-center gap-3">
+            </ul>}
+            <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
+              <span className="text-sm text-muted-foreground">{tUi("collections.selected", { count: selezionati.size })}</span>
               <Button onClick={aggiungi} disabled={aggiungendo || selezionati.size === 0}>
                 {testi.aggiungi}
               </Button>

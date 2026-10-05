@@ -40,7 +40,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">
         {t("torna")}
       </Link>

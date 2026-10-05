@@ -2,14 +2,29 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/auth/config", () => ({ auth: vi.fn(async () => ({ user: { id: "u1", role: "STUDENT" } })) }));
 vi.mock("@/lib/esercizi/tentativo", () => ({ avviaORiprendi: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn(), notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
+vi.mock("@/lib/esercizi/percorso-compito", () => ({ percorsoCompitoStudente: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }), notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
 vi.mock("next-intl/server", () => ({ getLocale: vi.fn(async () => "it") }));
 
 import { avviaORiprendi } from "@/lib/esercizi/tentativo";
-import { notFound } from "next/navigation";
+import { percorsoCompitoStudente } from "@/lib/esercizi/percorso-compito";
+import { notFound, redirect } from "next/navigation";
 import Page from "../[esercizioId]/page";
 
 describe("pagina dell'esercizio", () => {
+  it("non apre un nuovo tentativo da un URL percorso ormai superato", async () => {
+    vi.mocked(percorsoCompitoStudente).mockResolvedValue({
+      titolo: "Algebra", totale: 2, esercizi: [],
+      prossimo: { esercizioId: "e2", titolo: "Secondo", indice: 2, completato: false },
+    });
+
+    await expect(Page({
+      params: Promise.resolve({ esercizioId: "e1" }),
+      searchParams: Promise.resolve({ compitoId: "c1", percorso: "1" }),
+    })).rejects.toThrow("REDIRECT:/studente/compito/c1");
+    expect(avviaORiprendi).not.toHaveBeenCalled();
+    expect(redirect).toHaveBeenCalledWith("/studente/compito/c1");
+  });
   it("404 se l'esercizio non esiste", async () => {
     vi.mocked(avviaORiprendi).mockResolvedValue(null);
     await expect(Page({ params: Promise.resolve({ esercizioId: "boh" }) })).rejects.toThrow("NEXT_NOT_FOUND");
@@ -60,7 +75,7 @@ describe("pagina dell'esercizio", () => {
       params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }),
       searchParams: Promise.resolve({ compitoId: "compito-1" }),
     });
-    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", "compito-1");
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", "compito-1", "it");
   });
 
   it("senza compitoId nei searchParams, avviaORiprendi si comporta come per un esercizio libero", async () => {
@@ -70,7 +85,7 @@ describe("pagina dell'esercizio", () => {
       richiestaCompitoRifiutata: false,
     });
     await Page({ params: Promise.resolve({ esercizioId: "01-equazione-primo-grado" }) });
-    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", undefined);
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "01-equazione-primo-grado", undefined, "it");
   });
 
   // Secondo giro, item 2: la pagina deve inoltrare al player il segnale che

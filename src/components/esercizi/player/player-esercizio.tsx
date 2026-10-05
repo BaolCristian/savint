@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Info, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Info, RotateCcw, XCircle } from "lucide-react";
 import {
   loadQuestion,
   restoreQuestion,
@@ -64,6 +64,15 @@ export interface PlayerEsercizioProps {
    * il percorso dello studente: comportamento invariato, fissato da un test
    * dedicato in player-esercizio.test.tsx. */
   soloLocale?: boolean;
+  /** Titolo e provenienza sono facoltativi perché l'anteprima docente usa lo
+   * stesso player senza una pagina studente da cui tornare. */
+  titolo?: string;
+  contesto?: "assigned" | "free";
+  /** Metadati presenti solo dopo la verifica server del percorso del compito. */
+  compito?: { id: string; indice: number; totale: number };
+  /** Stato ricalcolato dal server per un tentativo ripreso; evita di
+   * richiedere un secondo invio per chiudere un lavoro già corretto. */
+  allCorrectIniziale?: boolean;
 }
 
 /** Un tentativo conta come "ripreso" solo se lo stato salvato contiene
@@ -403,9 +412,10 @@ function SpiegazioneParte({
 
 export function PlayerEsercizio({
   tentativoId, esercizioId, seed, content, statoIniziale, lastActivityAt, richiestaCompitoRifiutata, locale,
-  soloLocale = false,
+  soloLocale = false, titolo, contesto, compito, allCorrectIniziale = false,
 }: PlayerEsercizioProps) {
   const t = useTranslations("esercizi");
+  const studentT = useTranslations("studentExercisesUi");
   const router = useRouter();
   // Lo stato del motore è un oggetto vivo (chiama `submit`, tiene punteggio e
   // storico): un `useRef`, non uno stato React, perché mutarlo non deve
@@ -434,10 +444,16 @@ export function PlayerEsercizio({
   const [feedbackPerParte, setFeedbackPerParte] = useState<Record<string, FeedbackItem[]>>({});
   const [erroriRete, setErroriRete] = useState<Record<string, boolean>>({});
   const [inviando, setInviando] = useState<Record<string, boolean>>({});
+  const [invioInCorso, setInvioInCorso] = useState(false);
   const [rispostoConSuccesso, setRispostoConSuccesso] = useState<Record<string, boolean>>({});
   const [punteggio, setPunteggio] = useState<Punteggio | null>(null);
   const [completando, setCompletando] = useState(false);
   const [erroreCompletamento, setErroreCompletamento] = useState(false);
+  const [passaggioCompito, setPassaggioCompito] = useState(false);
+  const completamentoInCorsoRef = useRef(false);
+  const invioInCorsoRef = useRef(false);
+  const montatoRef = useRef(true);
+  const timerPassaggioRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Il ripasso dopo un errore (`SpiegazioneParte`): `soluzioneRivelata` è UN
   // solo flag per l'intera domanda (la soluzione svolta appartiene alla
   // domanda, non alla parte), `rispostaRivelataPerParte` uno per parte (la
@@ -454,7 +470,22 @@ export function PlayerEsercizio({
   const [ricominciando, setRicominciando] = useState(false);
   const [erroreRicomincio, setErroreRicomincio] = useState(false);
 
+  const intestazione = !soloLocale && (
+    <header className="min-w-0 space-y-5">
+      <Link href="/studente" className="inline-flex min-h-10 items-center gap-2 rounded-md text-sm font-medium text-slate-600 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"><ArrowLeft aria-hidden="true" className="size-4" />{studentT("backToExercises")}</Link>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <p className="mb-2 text-sm font-medium text-brand-blue">{studentT(compito || contesto === "assigned" ? "assignedContext" : "freeContext")}</p>
+        {titolo && <h1 className="break-words text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl">{titolo}</h1>}
+      </div>
+      {compito && <span className="rounded-full border border-brand-blue/20 bg-white px-3 py-1.5 text-sm font-semibold tabular-nums text-brand-blue">{studentT("exercisePosition", { current: compito.indice, total: compito.totale })}</span>}
+      </div>
+      {compito && <div role="progressbar" aria-label={studentT("exercisePosition", { current: compito.indice, total: compito.totale })} aria-valuemin={0} aria-valuemax={compito.totale} aria-valuenow={passaggioCompito ? compito.indice : compito.indice - 1} className="h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-brand-blue motion-safe:transition-[width] motion-safe:duration-300" style={{ width: `${((passaggioCompito ? compito.indice : compito.indice - 1) / compito.totale) * 100}%` }} /></div>}
+    </header>
+  );
+
   useEffect(() => {
+    montatoRef.current = true;
     try {
       const json = content as NumbasQuestionJSON;
       const q = statoIniziale
@@ -492,6 +523,7 @@ export function PlayerEsercizio({
       const totale = q.score();
       setPunteggio({ score: totale.score, maxScore: totale.marks });
       setFase("esercizio");
+      if (allCorrectIniziale && !soloLocale) void completaAutomaticamente();
     } catch (e) {
       console.error("[esercizi/player] impossibile caricare la domanda", e);
       setFase("errore");
@@ -501,7 +533,13 @@ export function PlayerEsercizio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => () => {
+    montatoRef.current = false;
+    if (timerPassaggioRef.current) clearTimeout(timerPassaggioRef.current);
+  }, []);
+
   function cambiaRisposta(path: string, valore: Answer) {
+    if (completamentoInCorsoRef.current || invioInCorsoRef.current) return;
     setRisposte((r) => ({ ...r, [path]: valore }));
     // Il primo segno che lo studente è davvero tornato ed è al lavoro: il
     // banner di ripresa ha fatto il suo compito, non deve restare a
@@ -537,11 +575,13 @@ export function PlayerEsercizio({
   }
 
   async function inviaParte(parte: PartePubblica) {
+    if (completamentoInCorsoRef.current || invioInCorsoRef.current) return;
     const q = domandaRef.current;
     const parteEngine = q?.getPart(parte.path);
     if (!q || !parteEngine) return;
 
     const path = parte.path;
+    invioInCorsoRef.current = true;
     const valoreGrezzo = risposte[path] ?? null;
     // L'ultimo punteggio e feedback CONFERMATI dal server, prima di questo
     // invio: se la richiesta fallisce, si torna esattamente qui, mai al
@@ -554,6 +594,7 @@ export function PlayerEsercizio({
 
     setErroriRete((e) => ({ ...e, [path]: false }));
     setInviando((s) => ({ ...s, [path]: true }));
+    setInvioInCorso(true);
 
     try {
       // Correzione locale immediata, per il feedback ottimistico: mai i
@@ -581,6 +622,7 @@ export function PlayerEsercizio({
       }
 
       const esito = await inviaRisposta(tentativoId, path, valoreGrezzo, q.toState(), locale);
+      if (!montatoRef.current) return;
 
       // Il server sostituisce sempre punteggio e feedback locali: è lui
       // l'autorità (punto 3 del dispaccio). Con una eccezione precisa: se non
@@ -608,6 +650,8 @@ export function PlayerEsercizio({
       // stato del motore, che qui non veniva consultato.
       setRispostoConSuccesso((s) => ({ ...s, [path]: parteRisposta }));
 
+      if (esito.allCorrect === true) await completaAutomaticamente();
+
       if (esito.score !== totaleLocale.score || esito.maxScore !== totaleLocale.marks) {
         // Browser e Node dovrebbero concordare sullo stesso motore: un
         // disallineamento è un segnale che non deve passare inosservato.
@@ -625,11 +669,40 @@ export function PlayerEsercizio({
       setFeedbackPerParte((f) => ({ ...f, [path]: feedbackConfermato ?? [] }));
       setErroriRete((er) => ({ ...er, [path]: true }));
     } finally {
-      setInviando((s) => ({ ...s, [path]: false }));
+      invioInCorsoRef.current = false;
+      if (montatoRef.current) {
+        setInviando((s) => ({ ...s, [path]: false }));
+        setInvioInCorso(false);
+      }
     }
   }
 
-  async function completaEsercizio() {
+  async function completaAutomaticamente(riprova = false) {
+    if (soloLocale || (completamentoInCorsoRef.current && !riprova)) return;
+    completamentoInCorsoRef.current = true;
+    setCompletando(true);
+    setErroreCompletamento(false);
+    try {
+      const esito = await completaTentativo(tentativoId, locale);
+      if (!montatoRef.current) return;
+      setPunteggio({ score: esito.score, maxScore: esito.maxScore });
+      if (compito) {
+        setPassaggioCompito(true);
+        timerPassaggioRef.current = setTimeout(() => {
+          window.location.assign(withBasePath(`/studente/compito/${compito.id}`));
+        }, 700);
+      } else {
+        setFase("riepilogo");
+      }
+    } catch (e) {
+      console.error("[esercizi/player] completamento del tentativo fallito", e);
+      if (montatoRef.current) setErroreCompletamento(true);
+    } finally {
+      if (montatoRef.current) setCompletando(false);
+    }
+  }
+
+  async function completaEsercizioLocale() {
     if (soloLocale) {
       // Nessun tentativo da chiudere sul server: il punteggio finale è
       // quello già confermato localmente da `inviaParte` sopra, non un
@@ -637,18 +710,6 @@ export function PlayerEsercizio({
       // in questa modalità.
       setFase("riepilogo");
       return;
-    }
-    setCompletando(true);
-    setErroreCompletamento(false);
-    try {
-      const esito = await completaTentativo(tentativoId, locale);
-      setPunteggio({ score: esito.score, maxScore: esito.maxScore });
-      setFase("riepilogo");
-    } catch (e) {
-      console.error("[esercizi/player] completamento del tentativo fallito", e);
-      setErroreCompletamento(true);
-    } finally {
-      setCompletando(false);
     }
   }
 
@@ -674,11 +735,11 @@ export function PlayerEsercizio({
   }
 
   if (fase === "caricamento") {
-    return <p>{t("caricamento")}</p>;
+    return <section className="space-y-4">{intestazione}<p>{t("caricamento")}</p></section>;
   }
 
   if (fase === "errore") {
-    return <p role="alert">{t("erroreCaricamento")}</p>;
+    return <section className="space-y-4">{intestazione}<p role="alert">{t("erroreCaricamento")}</p></section>;
   }
 
   if (fase === "riepilogo") {
@@ -689,11 +750,14 @@ export function PlayerEsercizio({
     // irraggiungibile senza che nessuno lo avesse detto. Due uscite
     // esplicite, quindi: l'elenco degli esercizi e un nuovo tentativo.
     return (
-      <section className="space-y-4">
-        <h1 className="text-xl font-semibold">{t("riepilogo")}</h1>
+      <section className="space-y-6">
+        {intestazione}
+        <div className="space-y-4 rounded-2xl border border-emerald-200 bg-white p-6 sm:p-8">
+        <CheckCircle2 aria-hidden="true" className="size-10 text-emerald-600" />
+        <h2 className="text-xl font-semibold">{t("riepilogo")}</h2>
         <p>{t("tentativoCompletato")}</p>
         {punteggio && (
-          <p className="text-lg font-semibold">
+          <p className="text-lg font-semibold tabular-nums text-slate-900">
             {t("punteggio")}: {punteggio.score} / {punteggio.maxScore}
           </p>
         )}
@@ -715,6 +779,7 @@ export function PlayerEsercizio({
             </a>
           </div>
         )}
+        </div>
       </section>
     );
   }
@@ -722,9 +787,11 @@ export function PlayerEsercizio({
   const partiDaRispondere = parti.filter((p) => p.type !== "information");
   const tutteRisposte =
     partiDaRispondere.length > 0 && partiDaRispondere.every((p) => rispostoConSuccesso[p.path]);
+  const bloccato = invioInCorso || completando || passaggioCompito || completamentoInCorsoRef.current;
 
   return (
     <section className="space-y-6">
+      {intestazione}
       {richiestaCompitoRifiutata && (
         // Una riga silenziosa, non un avviso (Secondo giro, item 2): lo
         // studente non ha sbagliato nulla, e mostrarla come un errore
@@ -751,9 +818,10 @@ export function PlayerEsercizio({
           <span>{t("ripresaTentativo", { quando: quandoRipreso })}</span>
         </div>
       )}
-      <ContenutoHtml html={statementHtml} />
+      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-6 text-base leading-relaxed text-slate-800 sm:px-7 sm:py-8 [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden"><ContenutoHtml html={statementHtml} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
       {punteggio && (
-        <p>
+        <p className="text-sm font-medium tabular-nums text-slate-500">
           {t("punteggio")}: {punteggio.score} / {punteggio.maxScore}
         </p>
       )}
@@ -763,13 +831,15 @@ export function PlayerEsercizio({
           senso fuori dalla pagina dello studente: l'anteprima rigenera i
           semi a modo suo, fuori da questo componente. */}
       {!soloLocale && (
-      <div>
+      <div className="text-right">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
+          className="min-h-10 gap-2 text-slate-500 hover:text-slate-900"
           onClick={() => setDialogoRicominciaAperto(true)}
+          disabled={bloccato}
         >
-          {t("ricomincia")}
+          <RotateCcw aria-hidden="true" className="size-4" />{t("ricomincia")}
         </Button>
         {dialogoRicominciaAperto && (
           // Conferma inline, non un bottone unico accanto a "Invia": lo
@@ -780,7 +850,7 @@ export function PlayerEsercizio({
           <div
             role="alertdialog"
             aria-label={t("ricominciaTitolo")}
-            className="mt-2 space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+            className="mt-2 space-y-3 rounded-xl border border-destructive/30 bg-white p-5 text-left"
           >
             <p className="font-medium">{t("ricominciaTitolo")}</p>
             <p className="text-sm text-muted-foreground">{t("ricominciaDescrizione")}</p>
@@ -809,16 +879,17 @@ export function PlayerEsercizio({
         )}
       </div>
       )}
+      </div>
       {parti.map((parte) => (
-        <div key={parte.path} className="space-y-2 rounded-lg border p-4">
+        <div key={parte.path} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 focus-within:border-brand-blue/40 sm:p-7 [&_input]:min-h-11 [&_textarea]:min-h-24">
           <InputParte
             parte={parte}
             valore={risposte[parte.path] ?? null}
             onChange={(v) => cambiaRisposta(parte.path, v)}
-            disabilitato={inviando[parte.path] === true}
+            disabilitato={inviando[parte.path] === true || bloccato}
           />
           {parte.type !== "information" && (
-            <Button onClick={() => inviaParte(parte)} disabled={inviando[parte.path] === true}>
+            <Button className="min-h-11 w-full rounded-xl px-6 text-sm font-semibold sm:w-auto" onClick={() => inviaParte(parte)} disabled={inviando[parte.path] === true || bloccato}>
               {t("invia")}
             </Button>
           )}
@@ -828,7 +899,7 @@ export function PlayerEsercizio({
           {erroriRete[parte.path] && (
             <div role="alert" className="space-y-1">
               <p>{t("erroreRete")}</p>
-              <Button type="button" variant="outline" onClick={() => inviaParte(parte)}>
+              <Button type="button" variant="outline" onClick={() => inviaParte(parte)} disabled={bloccato}>
                 {t("riprova")}
               </Button>
             </div>
@@ -853,12 +924,13 @@ export function PlayerEsercizio({
             })()}
         </div>
       ))}
-      {tutteRisposte && (
-        <Button onClick={completaEsercizio} disabled={completando}>
+      {soloLocale && tutteRisposte && (
+        <Button onClick={completaEsercizioLocale} disabled={completando}>
           {t("completa")}
         </Button>
       )}
-      {erroreCompletamento && <p role="alert">{t("erroreRete")}</p>}
+      {passaggioCompito && <p role="status" className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"><CheckCircle2 aria-hidden="true" className="size-5 shrink-0" />{studentT("assignmentSuccess")}</p>}
+      {erroreCompletamento && <div role="alert" className="space-y-3 rounded-xl border border-destructive/25 bg-white p-4"><p>{studentT("assignmentCompletionError")}</p><Button type="button" variant="outline" disabled={completando} onClick={() => completaAutomaticamente(true)}>{t("riprova")}</Button></div>}
     </section>
   );
 }

@@ -265,43 +265,48 @@ export function CampoTestoMatematico({
           {t("scriviFormula")}
         </button>
 
-        <button
-          type="button"
-          aria-label={t("zonaMatematica")}
-          // Impedisce al tasto di rubare il focus dal campo: senza questo il
-          // `mousedown` sposterebbe il focus prima ancora del `click`, e la
-          // selezione da avvolgere non sarebbe più leggibile.
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => avvolgiSelezione("\\(", "\\)")}
-          className={CLASSE_TASTO}
-        >
-          \( \)
-        </button>
+        <details className="rounded-md border border-input open:w-full open:bg-muted/20">
+          <summary className="min-h-11 cursor-pointer rounded-md px-2.5 py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">{t("altriStrumenti")}</summary>
+          <div className="flex flex-wrap gap-1.5 border-t p-2">
+            <button
+              type="button"
+              aria-label={t("zonaMatematica")}
+              // Impedisce al tasto di rubare il focus dal campo: senza questo il
+              // `mousedown` sposterebbe il focus prima ancora del `click`, e la
+              // selezione da avvolgere non sarebbe più leggibile.
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => avvolgiSelezione("\\(", "\\)")}
+              className={CLASSE_TASTO}
+            >
+              \( \)
+            </button>
 
-        <button
-          type="button"
-          aria-label={t("semplifica")}
-          onMouseDown={(e) => e.preventDefault()}
-          // Il contenuto di `\simplify{}` resta JME, scritto a mano: questo
-          // pulsante non apre nessun editor di formule.
-          onClick={() => avvolgiSelezione("\\simplify{", "}")}
-          className={CLASSE_TASTO}
-        >
-          {"\\simplify{}"}
-        </button>
+            <button
+              type="button"
+              aria-label={t("semplifica")}
+              onMouseDown={(e) => e.preventDefault()}
+              // Il contenuto di `\simplify{}` resta JME, scritto a mano: questo
+              // pulsante non apre nessun editor di formule.
+              onClick={() => avvolgiSelezione("\\simplify{", "}")}
+              className={CLASSE_TASTO}
+            >
+              {"\\simplify{}"}
+            </button>
 
-        {INSERIMENTI.map((strumento) => (
-          <button
-            key={strumento.id}
-            type="button"
-            aria-label={t(strumento.chiave)}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => inserisci(() => strumento)}
-            className={CLASSE_TASTO}
-          >
-            {strumento.glifo}
-          </button>
-        ))}
+            {INSERIMENTI.map((strumento) => (
+              <button
+                key={strumento.id}
+                type="button"
+                aria-label={t(strumento.chiave)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => inserisci(() => strumento)}
+                className={CLASSE_TASTO}
+              >
+                {strumento.glifo}
+              </button>
+            ))}
+          </div>
+        </details>
 
         <select
           aria-label={t("inserisciVariabile")}

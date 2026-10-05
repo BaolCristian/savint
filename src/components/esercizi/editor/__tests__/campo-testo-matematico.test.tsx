@@ -72,7 +72,10 @@ function selezionaNelCampo(campo: HTMLTextAreaElement, inizio: number, fine: num
   campo.setSelectionRange(inizio, fine);
 }
 
-function premi(etichetta: string) {
+async function premi(etichetta: string) {
+  const strumenti = screen.getByText(R.altriStrumenti).closest("details")!;
+  if (!strumenti.open) await userEvent.click(screen.getByText(R.altriStrumenti));
+  expect(strumenti.open).toBe(true);
   return userEvent.click(screen.getByRole("button", { name: etichetta }));
 }
 
@@ -478,7 +481,7 @@ describe("CampoTestoMatematico: il campo resta quello di sempre", () => {
     // chiamarle entrambe «Strumenti matematici» lascerebbe chi naviga a voce
     // senza modo di distinguerle.
     montaggio();
-    expect(screen.getByRole("group")).toHaveAccessibleName("Strumenti matematici per Testo");
+    expect(screen.getByRole("group", { name: "Strumenti matematici per Testo" })).toBeInTheDocument();
   });
 
   it("i pulsanti non alterano un \\simplify{} già scritto", async () => {

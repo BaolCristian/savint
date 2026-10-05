@@ -135,12 +135,21 @@ export function Anteprima({ editor, locale, semeRifiuto }: AnteprimaProps) {
     tabRef.current[prossimo]?.focus();
   }
 
+  if (editor.parti.length === 0 && semeRifiuto === undefined) {
+    return (
+      <section className="space-y-3" aria-label={t("titolo")}>
+        <h2 className="text-lg font-semibold">{t("titolo")}</h2>
+        <p className="rounded-lg border border-dashed bg-card p-5 text-sm leading-relaxed text-muted-foreground">{t("vuota")}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-3" aria-label={t("titolo")}>
       <h2 id={idTitolo} className="text-lg font-semibold">
         {t("titolo")}
       </h2>
-      <p className="text-sm text-muted-foreground">{t("spiegazione")}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{t("spiegazione")}</p>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div role="tablist" aria-labelledby={idTitolo} className="flex gap-1" onKeyDown={alTastoGiu}>

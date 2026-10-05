@@ -4,7 +4,11 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 vi.mock("@/lib/auth/config", () => ({ auth: vi.fn(async () => ({ user: { id: "u1", role: "STUDENT" } })) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn(), useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/lib/db/client", () => ({
-  prisma: { esercizio: { findMany: vi.fn() }, compito: { findMany: vi.fn() } },
+  prisma: {
+    esercizio: { findMany: vi.fn() },
+    compito: { findMany: vi.fn() },
+    tentativo: { findMany: vi.fn() },
+  },
 }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDelloStudente: vi.fn() }));
 // Il traduttore restituisce chiave e valori: così le asserzioni parlano di
@@ -35,6 +39,7 @@ function esercizioCon(tentativi: unknown[]) {
 beforeEach(() => {
   vi.mocked(prisma.esercizio.findMany).mockReset();
   vi.mocked(prisma.compito.findMany).mockReset().mockResolvedValue([]);
+  vi.mocked(prisma.tentativo.findMany).mockReset().mockResolvedValue([]);
   vi.mocked(compitiDelloStudente).mockReset().mockResolvedValue([]);
 });
 
@@ -147,7 +152,7 @@ describe("i compiti dello studente", () => {
     expect(screen.getByText(/compitoScadenza/)).toBeInTheDocument();
   });
 
-  it("l'esercizio di un compito si apre con il compitoId nel link, quello libero no", async () => {
+  it("il compito entra dal resolver, mentre l'esercizio libero resta diretto", async () => {
     vi.mocked(compitiDelloStudente).mockResolvedValue([
       { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es del compito" }], fatti: 0 },
     ] as never);
@@ -155,11 +160,79 @@ describe("i compiti dello studente", () => {
 
     await rendi();
 
-    const linkCompito = screen.getByRole("link", { name: /Es del compito/ });
-    expect(linkCompito).toHaveAttribute("href", "/studente/esercizio/e1?compitoId=c1");
+    expect(screen.getByRole("link", { name: "startAssignment" })).toHaveAttribute("href", "/studente/compito/c1");
+    expect(screen.queryByRole("link", { name: /Es del compito/ })).toBeNull();
 
     const linkLibero = screen.getByRole("link", { name: /Prova/ });
     expect(linkLibero).toHaveAttribute("href", "/studente/esercizio/01-prova");
+  });
+
+  it("un esercizio assegnato mai avviato dichiara lo stato e propone di iniziare", async () => {
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es del compito" }], fatti: 0 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockResolvedValue([
+      { id: "c1", opensAt: null, drawnVersionIds: ["v1"] },
+    ] as never);
+    vi.mocked(prisma.tentativo.findMany).mockResolvedValue([] as never);
+
+    await rendi();
+
+    expect(screen.getByText("assignedNotStarted")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "startAssignment" })).toHaveAttribute("href", "/studente/compito/c1");
+    expect(screen.queryByRole("link", { name: /Es del compito/ })).toBeNull();
+  });
+
+  it("un esercizio assegnato in corso propone di continuare", async () => {
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es del compito" }], fatti: 0 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockResolvedValue([{ id: "c1", opensAt: null, drawnVersionIds: ["v1"] }] as never);
+    vi.mocked(prisma.tentativo.findMany).mockResolvedValue([
+      { compitoId: "c1", esercizioVersioneId: "v1", status: "IN_PROGRESS", versione: { esercizioId: "e1" } },
+    ] as never);
+
+    await rendi();
+
+    expect(screen.getByText("assignedInProgress")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "continueAssignment" })).toHaveAttribute("href", "/studente/compito/c1");
+  });
+
+  it("un completamento resta completato anche se esiste un tentativo piu recente", async () => {
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es del compito" }], fatti: 1 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockResolvedValue([{ id: "c1", opensAt: null, drawnVersionIds: ["v1"] }] as never);
+    vi.mocked(prisma.tentativo.findMany).mockResolvedValue([
+      { compitoId: "c1", esercizioVersioneId: "v1", status: "IN_PROGRESS", versione: { esercizioId: "e1" } },
+      { compitoId: "c1", esercizioVersioneId: "v1", status: "COMPLETED", versione: { esercizioId: "e1" } },
+    ] as never);
+
+    await rendi();
+
+    expect(screen.getByText("assignedCompleted")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Es del compito: practiceAgain/ })).toHaveAttribute(
+      "href", "/studente/esercizio/e1",
+    );
+  });
+
+  it("non attribuisce a un compito un tentativo su una versione pescata da un altro compito", async () => {
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es 1" }], fatti: 0 },
+      { id: "c2", batteria: "Batteria 2", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es 1" }], fatti: 0 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockResolvedValue([
+      { id: "c1", opensAt: null, drawnVersionIds: ["v1"] },
+      { id: "c2", opensAt: null, drawnVersionIds: ["v2"] },
+    ] as never);
+    vi.mocked(prisma.tentativo.findMany).mockResolvedValue([
+      { compitoId: "c1", esercizioVersioneId: "v2", status: "COMPLETED", versione: { esercizioId: "e1" } },
+    ] as never);
+
+    await rendi();
+
+    expect(screen.queryByText("assignedCompleted")).toBeNull();
+    expect(screen.getAllByText("assignedNotStarted")).toHaveLength(2);
   });
 });
 

@@ -1,4 +1,52 @@
 {
+  "teacherExercisesUi": {
+    "nav": {
+      "label": "Gestione esercizi",
+      "overview": "Panoramica",
+      "catalog": "Catalogo",
+      "collections": "Raccolte",
+      "assignments": "Compiti",
+      "classes": "Classi"
+    },
+    "catalog": {
+      "search": "Cerca nel catalogo",
+      "year": "Anno",
+      "topic": "Argomento",
+      "editability": "Modificabilità",
+      "all": "Tutti",
+      "editable": "Modificabili",
+      "readOnly": "Sola lettura",
+      "diagnostics": "Dettagli di compatibilità",
+      "noResults": "Nessun esercizio corrisponde ai filtri."
+    },
+    "collections": {
+      "search": "Cerca esercizi da aggiungere",
+      "year": "Anno",
+      "topic": "Argomento",
+      "all": "Tutti",
+      "noResults": "Nessun esercizio corrisponde ai filtri.",
+      "selected": "{count, plural, one {# esercizio selezionato} other {# esercizi selezionati}}",
+      "prepareTitle": "Prepara un compito",
+      "prepareDescription": "Una raccolta organizza gli esercizi. Prepara un compito scegliendo quanti esercizi prendere da ciascuna raccolta, poi assegnalo a una classe.",
+      "prepareAction": "Prepara un compito"
+    },
+    "tasks": {
+      "progressToDo": "Da completare",
+      "noScore": "Nessun punteggio"
+    },
+    "classes": {
+      "createSection": "Crea una classe",
+      "teachingSection": "Classi che insegni",
+      "managementSection": "Codici e iscritti"
+    },
+    "preparation": {
+      "title": "Prepara un compito",
+      "description": "Scegli da quali raccolte estrarre esercizi e quanti prenderne. Quando il compito è pronto, assegnalo a una delle tue classi dalla pagina Compiti.",
+      "sourceCollection": "Raccolta di partenza",
+      "preparedTask": "Compito preparato",
+      "assignAction": "Vai ai compiti"
+    }
+  },
   "common": {
     "close": "Chiudi",
     "cancel": "Annulla",
@@ -1184,7 +1232,7 @@
       "crea": "Crea",
       "elimina": "Elimina",
       "nessunContenitore": "Non hai ancora creato nessuna raccolta.",
-      "eserciziCount": "{n} esercizi",
+    "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
       "erroreInUso": "Non è possibile eliminarla: è usata in un'assegnazione.",
       "erroreGenerico": "Si è verificato un errore. Riprova.",
       "torna": "Torna alle raccolte",
@@ -1249,7 +1297,7 @@
     "compiti": {
       "titolo": "Compiti assegnati",
       "descrizione": "Quello che hai già dato alle tue classi. Per darne uno nuovo, usa «Assegna esercizi» nella pagina degli esercizi.",
-      "batteria": "Raccolta da assegnare",
+    "batteria": "Compito preparato",
       "classe": "Classe",
       "apertura": "Data di apertura (opzionale)",
       "scadenza": "Scadenza (opzionale)",
@@ -1257,7 +1305,7 @@
       "assegnato": "Compito assegnato.",
       "erroreCapienza": "Il contenitore \"{contenitore}\" non basta: richiesti {richiesti}, disponibili {disponibili}.",
       "erroreNonInsegni": "Non insegni questa classe.",
-      "erroreBatteriaNonTrovata": "La raccolta scelta non esiste più.",
+    "erroreBatteriaNonTrovata": "Il compito preparato scelto non esiste più.",
       "erroreClasseNonTrovata": "La classe scelta non esiste più.",
       "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
       "erroreScadenzaPassata": "La scadenza è già nel passato.",
@@ -1267,19 +1315,24 @@
       "nessunaClasseInsegnata": "Dichiara prima le classi che insegni.",
       "compitoScadenza": "Scade il {quando}",
       "nessunaScadenza": "Nessuna scadenza",
-      "eserciziCount": "{n} esercizi",
+    "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
       "torna": "Torna ai compiti",
       "titoloConsegne": "Consegne — {batteria} ({classe})",
       "nomeCol": "Studente",
       "fattiCol": "Esercizi svolti",
       "punteggioCol": "Punteggio",
       "nessunoIscritto": "Nessuno studente iscritto a questa classe.",
-      "daRaccolta": "Assegnare scegliendo gli esercizi a mano",
-      "daRaccoltaAiuto": "Se hai preparato una raccolta, puoi assegnarla invece di scegliere per argomento.",
-      "nessunaRaccolta": "Non hai raccolte: gli esercizi si assegnano per argomento, da «Assegna esercizi» nella pagina degli esercizi."
+    "daRaccolta": "Assegna un compito preparato",
+    "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
+    "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
     },
     "redazione": {
       "titolo": "Redazione esercizio",
+      "sezioni": {
+        "contenuto": "Contenuto",
+        "azioni": "Azioni dell'esercizio"
+      },
+      "modificheNonSalvate": "Modifiche non salvate",
       "meta": {
         "titolo": "Titolo",
         "descrizione": "Descrizione",
@@ -1294,6 +1347,7 @@
       },
       "catalogo": {
         "titolo": "Catalogo",
+        "argomentoVuoto": "Argomento da definire",
         "riassunto": "{anno}ª · {argomento} · {difficolta}"
       },
       "testo": "Testo dell'esercizio",
@@ -1301,6 +1355,7 @@
       "suggerimentoAiuto": "Mostrato allo studente dopo una risposta sbagliata.",
       "variabili": {
         "titolo": "Variabili",
+        "aiuto": "Come usare le variabili",
         "spiegazioneVar": "Per mostrare il valore di una variabile scrivi \\var seguito dal nome fra parentesi graffe, come nell'esempio qui sotto; dentro un comando simplify le variabili si scrivono invece da sole fra parentesi graffe, senza \\var davanti.",
         "fuoriSimplify": "Fuori da simplify",
         "dentroSimplify": "Dentro simplify",
@@ -1327,6 +1382,7 @@
         "vuoto": "Da questo disegno non esce nessuna formula: o è ancora vuoto, o è scritto in una forma che non si sa convertire (il soprallineato, per esempio). Riscrivilo qui in un altro modo, oppure batti la formula direttamente nel campo."
       },
       "campoTesto": {
+        "altriStrumenti": "Altri simboli",
         "barra": "Strumenti matematici per {campo}",
         "zonaMatematica": "Zona matematica",
         "scriviFormula": "Scrivi la formula",
@@ -1384,7 +1440,8 @@
       },
       "anteprima": {
         "titolo": "Anteprima",
-        "spiegazione": "Lo stesso esercizio con tre numeri casuali diversi: apri le linguette qui sotto per vedere come lo vedrebbero tre studenti diversi. Le risposte date qui non creano nessun tentativo e non vengono salvate da nessuna parte.",
+        "vuota": "Aggiungi una parte per vedere e provare l'esercizio. L'anteprima si aggiorna mentre scrivi.",
+        "spiegazione": "Prova l'esercizio come uno studente. I tre sorteggi usano numeri diversi; le risposte qui non vengono salvate.",
         "sorteggio": "Sorteggio {numero}",
         "sorteggioRifiuto": "Sorteggio {numero} — rifiutato",
         "seme": "Seme: {seme}",
@@ -1447,5 +1504,38 @@
       "senzaVersioneTitolo": "Nessuna versione salvata",
       "senzaVersioneTesto": "Questo esercizio non ha ancora nessuna versione salvata: non c'è niente da mostrare in anteprima."
     }
+  },
+  "studentExercisesUi": {
+    "assignedActiveTitle": "Da completare",
+    "assignedCompletedTitle": "Completati",
+    "assignedNotStarted": "Da iniziare",
+    "assignedInProgress": "In corso",
+    "assignedCompleted": "Completato",
+    "assignedToComplete": "Da completare",
+    "start": "Inizia",
+    "continue": "Continua",
+    "startAssignment": "Inizia compito",
+    "continueAssignment": "Continua compito",
+    "exerciseDetails": "Apri esercizio",
+    "assignmentExercises": "Esercizi del compito",
+    "practiceAgain": "Esercitati ancora",
+    "catalogSearch": "Cerca esercizi",
+    "catalogTopic": "Argomento",
+    "catalogYear": "Classe",
+    "catalogAllTopics": "Tutti gli argomenti",
+    "catalogAllYears": "Tutte le classi",
+    "catalogYearValue": "Classe {year}",
+    "catalogMetadata": "Classe {year} · {topic} · Difficoltà {difficulty}",
+    "catalogNoMatches": "Nessun esercizio corrisponde alla ricerca.",
+    "catalogReset": "Azzera i filtri",
+    "signupDisclosure": "Hai un codice classe?",
+    "backToExercises": "Torna agli esercizi",
+    "assignedContext": "Esercizio assegnato",
+    "freeContext": "Esercizio libero",
+    "assignmentCompleted": "Compito completato",
+    "exercisePosition": "Esercizio {current} di {total}",
+    "assignmentSuccess": "Ottimo, passiamo al prossimo esercizio.",
+    "assignmentCompletionError": "Non siamo riusciti a registrare il completamento. Riprova.",
+    "assignmentSummary": "Completati: {completed} su {total}."
   }
 }

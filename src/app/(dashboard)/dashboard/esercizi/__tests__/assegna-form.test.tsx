@@ -134,6 +134,101 @@ describe("AssegnaForm", () => {
     expect(await screen.findByText("1 esercizio disponibile")).toBeInTheDocument();
   });
 
+  it("mostra un errore di rete per l'assegnazione, riabilita il pulsante e consente di riprovare", async () => {
+    let tentativi = 0;
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/esercizi/compiti/diretto")) {
+        tentativi += 1;
+        if (tentativi === 1) throw new TypeError("rete assente");
+        return rispostaJson({ compitoId: "comp1" }, 201);
+      }
+      if (url.includes("argomento=")) return rispostaJson({ quanti: 8 });
+      return rispostaJson([{ argomento: "Equazioni", quanti: 8 }]);
+    }) as typeof fetch;
+
+    montaggio({ classi: [classeConAnno] });
+    await vi.runOnlyPendingTimersAsync();
+    await screen.findByLabelText(t.argomento);
+
+    fireEvent.change(screen.getByLabelText(t.quanti), { target: { value: "2" } });
+    const pulsante = screen.getByRole("button", { name: t.assegna });
+    fireEvent.click(pulsante);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(t.erroreGenerico);
+    expect(pulsante).not.toBeDisabled();
+
+    fireEvent.click(pulsante);
+    expect(await screen.findByText(t.assegnato)).toBeInTheDocument();
+    expect(tentativi).toBe(2);
+  });
+
+  it("distingue il fallimento di rete degli argomenti da un elenco vuoto", async () => {
+    global.fetch = vi.fn(async () => {
+      throw new TypeError("rete assente");
+    }) as typeof fetch;
+
+    montaggio({ classi: [classeConAnno] });
+    await vi.runOnlyPendingTimersAsync();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(t.erroreGenerico);
+    expect(screen.queryByText(t.nessunArgomentoDisponibile)).toBeNull();
+  });
+
+  it("non consente di inviare il vecchio argomento mentre carica quelli della nuova classe", async () => {
+    const secondaClasse = { id: "c2", name: "2A", yearLevel: 2 };
+    let risolviSecondoElenco: ((risposta: Response) => void) | undefined;
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("classeId=c2") && !url.includes("argomento=")) {
+        return new Promise<Response>((resolve) => {
+          risolviSecondoElenco = resolve;
+        });
+      }
+      if (url.includes("argomento=")) return rispostaJson({ quanti: 8 });
+      return rispostaJson([{ argomento: "Equazioni", quanti: 8 }]);
+    }) as typeof fetch;
+
+    montaggio({ classi: [classeConAnno, secondaClasse] });
+    await vi.runOnlyPendingTimersAsync();
+    await screen.findByLabelText(t.argomento);
+    fireEvent.change(screen.getByLabelText(t.quanti), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText(t.classe), { target: { value: "c2" } });
+
+    const pulsante = screen.getByRole("button", { name: t.assegna });
+    expect(pulsante).toBeDisabled();
+    expect(screen.queryByText("8 esercizi disponibili")).toBeNull();
+    fireEvent.click(pulsante);
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).includes("/api/esercizi/compiti/diretto"))).toBe(false);
+
+    risolviSecondoElenco?.(rispostaJson([{ argomento: "Geometria", quanti: 5 }]));
+    await screen.findByRole("option", { name: "Geometria — 5" });
+    expect(pulsante).not.toBeDisabled();
+  });
+
+  it("nasconde un conteggio precedente quando il filtro cambia e la nuova richiesta fallisce", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("argomento=")) {
+        if (url.includes("difficoltaMax=1")) throw new TypeError("rete assente");
+        return rispostaJson({ quanti: 8 });
+      }
+      return rispostaJson([{ argomento: "Equazioni", quanti: 8 }]);
+    }) as typeof fetch;
+
+    montaggio({ classi: [classeConAnno] });
+    await vi.runOnlyPendingTimersAsync();
+    await screen.findByLabelText(t.argomento);
+    await vi.advanceTimersByTimeAsync(400);
+    expect(await screen.findByText("8 esercizi disponibili")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(t.difficolta), { target: { value: "1" } });
+    await vi.advanceTimersByTimeAsync(400);
+
+    await waitFor(() => expect(screen.queryByText("8 esercizi disponibili")).toBeNull());
+    expect(await screen.findByRole("alert")).toHaveTextContent(t.erroreGenerico);
+  });
+
   it("invia classe, argomento, quanti, apertura e scadenza — senza anno quando la classe ce l'ha già", async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);

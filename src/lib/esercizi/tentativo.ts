@@ -34,6 +34,9 @@ export interface TentativoAperto {
    * non conterà mai come consegna. La pagina non mostrava nulla che
    * permettesse allo studente di accorgersene. */
   richiestaCompitoRifiutata: boolean;
+  /** Vero solo se lo stato già salvato contiene risposte corrette per tutte
+   * le parti interattive top-level, secondo una ricostruzione server-side. */
+  allCorrect?: boolean;
 }
 
 /** Restituisce il tentativo in corso dello studente su quell'esercizio, o ne
@@ -86,6 +89,7 @@ export async function avviaORiprendi(
   studentId: string,
   esercizioId: string,
   compitoId?: string,
+  locale: Locale = "it",
 ): Promise<TentativoAperto | null> {
   const versionePescata = compitoId ? await compitoApribile(compitoId, studentId, esercizioId) : null;
   const compitoIdEffettivo = versionePescata ? compitoId : undefined;
@@ -130,6 +134,9 @@ export async function avviaORiprendi(
   const t = inCorso ?? (await prisma.tentativo.create({
     data: { studentId, esercizioVersioneId: versione.id, seed: randomUUID(), compitoId: compitoIdEffettivo ?? null },
   }));
+  const allCorrect = t.state
+    ? ricalcola(versione.content, t.seed, t.state as unknown as QuestionState, locale).allCorrect
+    : false;
 
   return {
     tentativoId: t.id,
@@ -141,11 +148,12 @@ export async function avviaORiprendi(
     status: t.status,
     lastActivityAt: t.lastActivityAt,
     richiestaCompitoRifiutata,
+    allCorrect,
   };
 }
 
 type EsitoRisposta =
-  | { ok: true; score: number; maxScore: number; feedback: MarkingResult["feedback"] }
+  | { ok: true; score: number; maxScore: number; allCorrect: boolean; feedback: MarkingResult["feedback"] }
   | { ok: false; motivo: "non_trovato" | "non_tuo" | "gia_completato" | "parte_sconosciuta" };
 
 /** Applica una risposta e riscrive il punteggio con quello che calcola il
@@ -185,7 +193,7 @@ export async function applicaRisposta(
     data: { state: esito.state as object, score: esito.score, maxScore: esito.maxScore },
   });
 
-  return { ok: true, score: esito.score, maxScore: esito.maxScore, feedback: parte.items };
+  return { ok: true, score: esito.score, maxScore: esito.maxScore, allCorrect: esito.allCorrect, feedback: parte.items };
 }
 
 /** Chiude il tentativo fissando il punteggio ricalcolato.

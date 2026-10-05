@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ClassiForm } from "./classi-form";
 import { CreaClasseForm } from "./crea-classe-form";
 import { ClasseCodice } from "./classe-codice";
+import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 /** Il docente dichiara quali classi insegna, scegliendo fra TUTTE quelle
  * esistenti (`classiDisponibili`, senza rotta HTTP: qui si legge il dominio
@@ -15,6 +16,7 @@ import { ClasseCodice } from "./classe-codice";
 export default async function Page() {
   const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.classi");
+  const tUi = await getTranslations("teacherExercisesUi");
 
   const [disponibili, insegnate] = await Promise.all([
     classiDisponibili(),
@@ -75,17 +77,21 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
         <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
         <p className="text-sm text-muted-foreground">{t("significato")}</p>
       </div>
 
-      <CreaClasseForm />
+      <section className="space-y-3" aria-labelledby="crea-classe">
+        <h2 id="crea-classe" className="text-lg font-semibold">{tUi("classes.createSection")}</h2>
+        <CreaClasseForm />
+      </section>
 
       {dettagli.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">{t("gestisciTitolo")}</h2>
+          <h2 className="text-lg font-semibold">{tUi("classes.managementSection")}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {dettagli.map((c) => (
               <Card key={c.id} className="gap-3 p-4">
@@ -115,18 +121,21 @@ export default async function Page() {
       {disponibili.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("nessunaClasse")}</p>
       ) : (
-        <ClassiForm
-          classi={disponibili}
-          selezionateIniziali={insegnateIds}
-          confermeRimozione={confermeRimozione}
-          testi={{
-            salva: t("salva"),
-            salvato: t("salvato"),
-            errore: t("erroreSalvataggio"),
-            confermaRimozioneAzione: t("confermaRimozioneAzione"),
-            annulla: t("annulla"),
-          }}
-        />
+        <section className="space-y-3" aria-labelledby="classi-insegnate">
+          <h2 id="classi-insegnate" className="text-lg font-semibold">{tUi("classes.teachingSection")}</h2>
+          <ClassiForm
+            classi={disponibili}
+            selezionateIniziali={insegnateIds}
+            confermeRimozione={confermeRimozione}
+            testi={{
+              salva: t("salva"),
+              salvato: t("salvato"),
+              errore: t("erroreSalvataggio"),
+              confermaRimozioneAzione: t("confermaRimozioneAzione"),
+              annulla: t("annulla"),
+            }}
+          />
+        </section>
       )}
     </div>
   );

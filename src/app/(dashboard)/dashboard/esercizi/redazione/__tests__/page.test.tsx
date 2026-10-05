@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({
@@ -11,7 +11,7 @@ vi.mock("@/lib/esercizi/redazione", () => ({
 // non solo nella prova che clicca il pulsante (stesso schema di
 // `nuovo/__tests__/page.test.tsx`).
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi/redazione", useRouter: () => ({ push, refresh: vi.fn() }) }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -154,6 +154,26 @@ describe("elenco della redazione", () => {
     await rendi();
 
     expect(screen.getByText("motivoGenerico")).toBeInTheDocument();
+  });
+
+  it("permette di restringere il catalogo per testo senza nascondere le azioni della riga", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([
+      {
+        id: "e1", titolo: "Equazioni", argomento: "algebra", anno: 1, ultimaVersione: 1,
+        modificabile: true, motivo: null, autoreNome: "Mario", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+      },
+      {
+        id: "e2", titolo: "Triangoli", argomento: "geometria", anno: 2, ultimaVersione: 1,
+        modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+      },
+    ]);
+
+    await rendi();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "catalog.search" }), { target: { value: "triangoli" } });
+    expect(screen.getByText("Triangoli")).toBeInTheDocument();
+    expect(screen.queryByText("Equazioni")).toBeNull();
+    expect(screen.getByRole("link", { name: "apri" })).toHaveAttribute("href", "/dashboard/esercizi/redazione/e2");
   });
 
   it("senza esercizi mostra il messaggio vuoto", async () => {

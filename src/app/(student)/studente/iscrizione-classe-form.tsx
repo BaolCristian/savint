@@ -35,23 +35,28 @@ export function IscrizioneClasseForm() {
     setBusy(true);
     setErrore(null);
     setSuccesso(null);
-    const res = await fetch("/api/esercizi/classi/iscrizione", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ codice }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const corpo = await res.json().catch(() => ({}));
-      if (corpo.error === "gia_iscritto") setErrore(t("erroreGiaIscritto"));
-      else if (corpo.error === "codice_sconosciuto") setErrore(t("erroreNonValido"));
-      else setErrore(t("erroreGenerico"));
-      return;
+    try {
+      const res = await fetch("/api/esercizi/classi/iscrizione", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ codice }),
+      });
+      if (!res.ok) {
+        const corpo = await res.json().catch(() => ({}));
+        if (corpo.error === "gia_iscritto") setErrore(t("erroreGiaIscritto"));
+        else if (corpo.error === "codice_sconosciuto") setErrore(t("erroreNonValido"));
+        else setErrore(t("erroreGenerico"));
+        return;
+      }
+      const corpo = await res.json();
+      setCodice("");
+      setSuccesso(t("successo", { classe: corpo.classe.nome }));
+      router.refresh();
+    } catch {
+      setErrore(t("erroreGenerico"));
+    } finally {
+      setBusy(false);
     }
-    const corpo = await res.json();
-    setCodice("");
-    setSuccesso(t("successo", { classe: corpo.classe.nome }));
-    router.refresh();
   }
 
   return (
@@ -82,7 +87,11 @@ export function IscrizioneClasseForm() {
           {t("submit")}
         </Button>
         {successo && <span className="text-sm text-brand-green">{successo}</span>}
-        {errore && <span className="text-sm text-destructive">{errore}</span>}
+        {errore && (
+          <span role="alert" className="text-sm text-destructive">
+            {errore}
+          </span>
+        )}
       </form>
     </div>
   );
