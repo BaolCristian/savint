@@ -10,6 +10,7 @@ import {
   type NumbasQuestionJSON,
   type Question,
 } from "@savint/engine";
+import { opzioniMotore } from "../opzioni-motore";
 
 /** Quante volte la verifica prova, per difetto: vedi la nota sotto
  * `verificaSuSemi` sul perche' venti e non un altro numero. */
@@ -525,7 +526,7 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
   for (let seme = 0; seme < quanti; seme++) {
     let caricata;
     try {
-      caricata = loadQuestion(question as NumbasQuestionJSON, { seed: String(seme), locale: "it" });
+      caricata = loadQuestion(question as NumbasQuestionJSON, { seed: String(seme), ...opzioniMotore("it") });
     } catch (e) {
       return { ok: false, seme, fase: "caricamento", messaggio: messaggioConCausa(e) };
     }

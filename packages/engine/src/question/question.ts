@@ -319,11 +319,19 @@ export function loadQuestion(json: NumbasQuestionJSON, opts: LoadOptions): Quest
 export function restoreQuestion(
   json: NumbasQuestionJSON,
   state: QuestionState,
-  opts?: { locale?: LoadOptions["locale"]; allowJavascriptFunctions?: boolean; ignorePreamble?: boolean },
+  opts?: {
+    locale?: LoadOptions["locale"];
+    numberStyle?: string;
+    allowJavascriptFunctions?: boolean;
+    ignorePreamble?: boolean;
+  },
 ): Question {
   const loadOptions: LoadOptions = { seed: state.seed };
   if (opts?.locale !== undefined) {
     loadOptions.locale = opts.locale;
+  }
+  if (opts?.numberStyle !== undefined) {
+    loadOptions.numberStyle = opts.numberStyle;
   }
   if (opts?.allowJavascriptFunctions !== undefined) {
     loadOptions.allowJavascriptFunctions = opts.allowJavascriptFunctions;

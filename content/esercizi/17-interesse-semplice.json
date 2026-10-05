@@ -1,0 +1,106 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Interesse semplice",
+    "description": "Calcolare l'interesse semplice e il montante di un capitale dati il tasso annuo e la durata in anni.",
+    "yearLevel": 2,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "interesse semplice"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Interesse semplice",
+    "statement": "<p>Si depositano \\(\\var{capitale}\\) euro in banca, al tasso di interesse semplice del \\(\\var{tasso}\\%\\) annuo, per \\(\\var{t}\\) anni.</p>",
+    "advice": "<p>Ogni anno il capitale produce il \\(\\var{tasso}\\%\\) di \\(\\var{capitale}\\), cioè \\(\\var{capitale} \\cdot \\var{tasso} \\div 100 = \\var{annuo}\\) euro. In \\(\\var{t}\\) anni l'interesse è \\(I = \\frac{C \\cdot r \\cdot t}{100} = \\frac{\\var{capitale} \\cdot \\var{tasso} \\cdot \\var{t}}{100} = \\var{interesse}\\) euro. Il montante è il capitale più l'interesse: \\(\\var{capitale} + \\var{interesse} = \\var{montante}\\) euro.</p>",
+    "variables": {
+      "capitale": {
+        "name": "capitale",
+        "definition": "100*random(5..50)",
+        "description": "il capitale in euro, multiplo di 100"
+      },
+      "tasso": {
+        "name": "tasso",
+        "definition": "random(1..6)",
+        "description": "il tasso annuo in percentuale"
+      },
+      "t": {
+        "name": "t",
+        "definition": "random(2..5)",
+        "description": "la durata in anni"
+      },
+      "annuo": {
+        "name": "annuo",
+        "definition": "capitale*tasso/100",
+        "description": "l'interesse di un anno"
+      },
+      "interesse": {
+        "name": "interesse",
+        "definition": "capitale*tasso*t/100",
+        "description": "l'interesse totale"
+      },
+      "montante": {
+        "name": "montante",
+        "definition": "capitale + interesse",
+        "description": "il montante"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "capitale",
+      "tasso",
+      "t",
+      "annuo",
+      "interesse",
+      "montante"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti euro di interesse si ottengono in tutto?</p>",
+        "minValue": "interesse",
+        "maxValue": "interesse",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è il montante (capitale più interesse) dopo \\(\\var{t}\\) anni, in euro?</p>",
+        "minValue": "montante",
+        "maxValue": "montante",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

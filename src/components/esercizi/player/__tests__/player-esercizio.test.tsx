@@ -120,6 +120,19 @@ describe("PlayerEsercizio", () => {
     expect(screen.getByRole("link", { name: "Torna agli esercizi" })).toHaveAttribute("href", "/studente");
   });
 
+  // In italiano i decimali mostrati usano la virgola, la stessa che lo
+  // studente scrive nella risposta (vedi src/lib/esercizi/opzioni-motore.ts).
+  it("mostra i decimali del testo con la virgola", async () => {
+    const prezzo = {
+      name: "prezzo",
+      statement: "<p>Un paio di scarpe costa {p} euro.</p>",
+      variables: { p: { name: "p", definition: "48.5" } },
+      parts: [{ type: "numberentry", marks: 1, minValue: "p", maxValue: "p", prompt: "<p>Prezzo:</p>" }],
+    } as unknown as NumbasQuestionJSON;
+    montaggio({ content: prezzo });
+    await waitFor(() => expect(screen.getByText(/costa 48,5 euro/)).toBeInTheDocument());
+  });
+
   it("mostra il testo della domanda con le variabili sostituite", async () => {
     const { container } = montaggio();
     await waitFor(() => expect(screen.getByText(/Risolvi/)).toBeInTheDocument());

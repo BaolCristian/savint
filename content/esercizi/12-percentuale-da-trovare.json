@@ -1,0 +1,88 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Che percentuale è?",
+    "description": "Trovare quale percentuale di un totale rappresenta una parte. Il risultato è sempre intero.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "percentuale da trovare"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Che percentuale è?",
+    "statement": "<p>In una scuola ci sono \\(\\var{b}\\) studenti; \\(\\var{a}\\) di loro vengono a scuola in bicicletta. Che percentuale degli studenti viene a scuola in bicicletta?</p>",
+    "advice": "<p>Si divide la parte per il totale: \\(\\var{a} \\div \\var{b} = \\var{q}\\). Per avere la percentuale si moltiplica per \\(100\\): \\(\\var{q} \\cdot 100 = \\var{p}\\). Quindi \\(\\var{a}\\) su \\(\\var{b}\\) è il \\(\\var{p}\\%\\).</p>",
+    "variables": {
+      "k": {
+        "name": "k",
+        "definition": "random(2..15)",
+        "description": ""
+      },
+      "m": {
+        "name": "m",
+        "definition": "random(1..19)",
+        "description": ""
+      },
+      "b": {
+        "name": "b",
+        "definition": "20*k",
+        "description": "il totale, multiplo di 20"
+      },
+      "p": {
+        "name": "p",
+        "definition": "5*m",
+        "description": "la percentuale cercata, multiplo di 5"
+      },
+      "a": {
+        "name": "a",
+        "definition": "k*m",
+        "description": "la parte: è il p% di b"
+      },
+      "q": {
+        "name": "q",
+        "definition": "p/100",
+        "description": "il rapporto a/b in forma decimale"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "k",
+      "m",
+      "b",
+      "p",
+      "a",
+      "q"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Percentuale (scrivi solo il numero, senza il simbolo \\(\\%\\)):</p>",
+        "minValue": "p",
+        "maxValue": "p",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

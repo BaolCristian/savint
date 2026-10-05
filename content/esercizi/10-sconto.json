@@ -1,0 +1,104 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Lo sconto",
+    "description": "Dato il prezzo e la percentuale di sconto, calcolare il risparmio e il prezzo finale in euro.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "sconto"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Lo sconto",
+    "statement": "<p>Un paio di scarpe costa \\(\\var{prezzo}\\) euro. Durante i saldi il negozio applica uno sconto del \\(\\var{s}\\%\\).</p>",
+    "advice": "<p>Lo sconto è il \\(\\var{s}\\%\\) del prezzo: \\(\\var{prezzo} \\cdot \\var{s} \\div 100 = \\var{dpformat(risp, 2)}\\) euro. Il prezzo finale si ottiene togliendo lo sconto dal prezzo iniziale: \\(\\var{prezzo} - \\var{dpformat(risp, 2)} = \\var{dpformat(fin, 2)}\\) euro. Allo stesso risultato si arriva calcolando direttamente il \\(\\var{100-s}\\%\\) del prezzo: \\(\\var{prezzo} \\cdot \\var{100-s} \\div 100 = \\var{fin}\\).</p>",
+    "variables": {
+      "prezzo": {
+        "name": "prezzo",
+        "definition": "random(20..300)",
+        "description": "il prezzo iniziale in euro (intero)"
+      },
+      "s": {
+        "name": "s",
+        "definition": "random(10, 15, 20, 25, 30, 35, 40, 50)",
+        "description": "lo sconto in percentuale"
+      },
+      "risp": {
+        "name": "risp",
+        "definition": "precround(prezzo*s/100, 2)",
+        "description": "quanto si risparmia, in euro"
+      },
+      "fin": {
+        "name": "fin",
+        "definition": "precround(prezzo - risp, 2)",
+        "description": "il prezzo finale, in euro"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "prezzo",
+      "s",
+      "risp",
+      "fin"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti euro si risparmiano?</p>",
+        "minValue": "risp",
+        "maxValue": "risp",
+        "precision": "2",
+        "precisionType": "dp",
+        "strictPrecision": false,
+        "showPrecisionHint": true,
+        "precisionPartialCredit": 0,
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è il prezzo finale, in euro?</p>",
+        "minValue": "fin",
+        "maxValue": "fin",
+        "precision": "2",
+        "precisionType": "dp",
+        "strictPrecision": false,
+        "showPrecisionHint": true,
+        "precisionPartialCredit": 0,
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

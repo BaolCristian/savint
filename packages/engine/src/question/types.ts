@@ -42,6 +42,10 @@ export interface LoadOptions {
    * cambia più: caricare un'altra domanda in un'altra lingua, o cambiare la
    * predefinita, non tocca le correzioni di questa. */
   locale?: Locale | undefined;
+  /** Lo stile dei numeri MOSTRATI dalla domanda (es. `"plain-eu"`: 48,5).
+   * Se manca, il punto, come upstream. Non tocca la correzione: il codice
+   * JME resta col punto. Vedi DIVERGENCES.md, «Stile dei numeri mostrati». */
+  numberStyle?: string | undefined;
   /** Permettere le funzioni personalizzate scritte in JavaScript
    * (`language: "javascript"`)? Predefinito `true`. */
   allowJavascriptFunctions?: boolean | undefined;

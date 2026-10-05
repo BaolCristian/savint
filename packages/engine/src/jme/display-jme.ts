@@ -630,7 +630,10 @@ export class JMEifier extends Displayer<string> {
         return out;
       }
     } else {
-      out = this.niceNumber(n, { ...options, style: "plain" });
+      // Il JME è codice: lo stile resta "plain" (il punto), tranne quando chi
+      // chiama chiede esplicitamente testo da mostrare (`numberstyle`, vedi
+      // `tokenToDisplayString` e DIVERGENCES.md, «Stile dei numeri mostrati»).
+      out = this.niceNumber(n, { ...options, style: this.settings.numberstyle ?? "plain" });
     }
     if (Math.abs(n) < 1e-15) {
       if (this.settings.nicenumber === false) {
@@ -754,11 +757,19 @@ displayHooks.treeToJME = treeToJME as (tree: Tree, settings: unknown, scope: Sco
 // `Numbas.jme.display.JMEifier` a tempo di chiamata (jme-display.js è
 // caricato dopo); qui il dizionario vive in `subvars.ts`, che non può
 // importare questo modulo (ciclo), quindi le due voci si registrano da qui.
+//
+// SAVINT: lo stile dei numeri mostrati della domanda (`Scope.numberStyle`),
+// se il numero non ne porta già uno. Vedi DIVERGENCES.md, «Stile dei numeri
+// mostrati».
+function conStileMostrato(options: DisplayNumberOptions, scope?: Scope): DisplayNumberOptions {
+  const stile = scope?.numberStyle;
+  return stile === undefined || options.style !== undefined ? options : { ...options, style: stile };
+}
 typeToDisplayString["number"] = function (v, scope) {
   const jmeifier = new JMEifier({}, scope);
-  return jmeifier.niceNumber((v as { value: math.NumbasNumber }).value, number_options(v));
+  return jmeifier.niceNumber((v as { value: math.NumbasNumber }).value, conStileMostrato(number_options(v), scope));
 };
 typeToDisplayString["decimal"] = function (v, scope) {
   const jmeifier = new JMEifier({}, scope);
-  return jmeifier.niceDecimal((v as { value: math.ComplexDecimal }).value, number_options(v));
+  return jmeifier.niceDecimal((v as { value: math.ComplexDecimal }).value, conStileMostrato(number_options(v), scope));
 };

@@ -1,0 +1,126 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Sconti successivi",
+    "description": "Due sconti applicati uno dopo l'altro non si sommano: riconoscere l'errore e calcolare lo sconto totale effettivo.",
+    "yearLevel": 2,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "sconto",
+      "sconti successivi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "Sconti successivi",
+    "statement": "<p>Un giubbotto viene scontato prima del \\(\\var{p}\\%\\); poi, sul prezzo già scontato, viene applicato un ulteriore sconto del \\(\\var{q}\\%\\).</p>",
+    "advice": "<p>Dopo il primo sconto resta il \\(\\var{100-p}\\%\\) del prezzo; il secondo sconto lascia il \\(\\var{100-q}\\%\\) di quello che restava. In tutto resta \\(\\var{a1} \\cdot \\var{a2} = \\var{f}\\), cioè il \\(\\var{resto}\\%\\) del prezzo iniziale. Lo sconto totale è quindi \\(100\\% - \\var{resto}\\% = \\var{tot}\\%\\), meno di \\(\\var{p}\\% + \\var{q}\\% = \\var{p+q}\\%\\): il secondo sconto si calcola sul prezzo già scontato, che è più basso di quello iniziale, e quindi toglie meno euro.</p>",
+    "variables": {
+      "p": {
+        "name": "p",
+        "definition": "5*random(2..8)",
+        "description": "il primo sconto in percentuale"
+      },
+      "q": {
+        "name": "q",
+        "definition": "5*random(2..8)",
+        "description": "il secondo sconto in percentuale"
+      },
+      "a1": {
+        "name": "a1",
+        "definition": "(100-p)/100",
+        "description": "quanto resta dopo il primo sconto, come decimale"
+      },
+      "a2": {
+        "name": "a2",
+        "definition": "(100-q)/100",
+        "description": "quanto resta dopo il secondo sconto, come decimale"
+      },
+      "f": {
+        "name": "f",
+        "definition": "precround(a1*a2, 4)",
+        "description": "quanto resta in tutto, come decimale"
+      },
+      "resto": {
+        "name": "resto",
+        "definition": "precround(100*f, 2)",
+        "description": "quanto resta in tutto, in percentuale"
+      },
+      "tot": {
+        "name": "tot",
+        "definition": "precround(100 - resto, 2)",
+        "description": "lo sconto totale effettivo, in percentuale"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "p",
+      "q",
+      "a1",
+      "a2",
+      "f",
+      "resto",
+      "tot"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Lo sconto totale è del \\(\\var{p+q}\\%\\)?</p>",
+        "choices": [
+          "<p>No, è minore del \\(\\var{p+q}\\%\\).</p>",
+          "<p>Sì, gli sconti si sommano: \\(\\var{p}\\% + \\var{q}\\% = \\var{p+q}\\%\\).</p>",
+          "<p>No, è maggiore del \\(\\var{p+q}\\%\\).</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "È l'errore più comune: il \\(\\var{q}\\%\\) non si calcola sul prezzo iniziale ma su quello già scontato, che è più basso. Il secondo sconto toglie quindi meno euro, e il totale è meno del \\(\\var{p+q}\\%\\).",
+          "Il secondo sconto si calcola su un prezzo già più basso di quello iniziale, quindi toglie meno euro di quanti ne toglierebbe sul prezzo iniziale: il totale è minore della somma, non maggiore."
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 2,
+        "prompt": "<p>b) Qual è lo sconto totale effettivo, in percentuale? (scrivi solo il numero, senza il simbolo \\(\\%\\))</p>",
+        "minValue": "tot",
+        "maxValue": "tot",
+        "precision": "2",
+        "precisionType": "dp",
+        "strictPrecision": false,
+        "showPrecisionHint": true,
+        "precisionPartialCredit": 0,
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

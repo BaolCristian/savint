@@ -186,6 +186,9 @@ export function buildQuestionScope(parsed: ParsedQuestion, opts: LoadOptions, qu
   // figlio (parti, script di correzione, lambda) le eredita.
   // Vedi DIVERGENCES.md.
   const extras: ScopeExtras = { rng: makeRng(opts.seed), locale: opts.locale ?? getLocale() };
+  if (opts.numberStyle !== undefined) {
+    extras.numberStyle = opts.numberStyle;
+  }
   let scope = new Scope([builtinScope, extras]);
   scope.question = question;
 

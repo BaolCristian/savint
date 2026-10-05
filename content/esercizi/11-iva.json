@@ -1,0 +1,99 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Il prezzo con l'IVA",
+    "description": "Dato un prezzo senza IVA, calcolare l'IVA al 22% e il prezzo con IVA in euro.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "aumento percentuale",
+      "IVA"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Il prezzo con l'IVA",
+    "statement": "<p>Un tablet costa \\(\\var{prezzo}\\) euro IVA esclusa. Sul prezzo va aggiunta l'IVA del \\(22\\%\\).</p>",
+    "advice": "<p>L'IVA è il \\(22\\%\\) del prezzo: \\(\\var{prezzo} \\cdot 22 \\div 100 = \\var{dpformat(iva, 2)}\\) euro. Il prezzo con IVA è \\(\\var{prezzo} + \\var{dpformat(iva, 2)} = \\var{dpformat(tot, 2)}\\) euro. In un solo passaggio: aggiungere il \\(22\\%\\) vuol dire prendere il \\(122\\%\\) del prezzo, cioè \\(\\var{prezzo} \\cdot 1{,}22 = \\var{dpformat(tot, 2)}\\).</p>",
+    "variables": {
+      "prezzo": {
+        "name": "prezzo",
+        "definition": "5*random(4..160)",
+        "description": "il prezzo senza IVA in euro, multiplo di 5"
+      },
+      "iva": {
+        "name": "iva",
+        "definition": "precround(prezzo*22/100, 2)",
+        "description": "l'IVA in euro"
+      },
+      "tot": {
+        "name": "tot",
+        "definition": "precround(prezzo + iva, 2)",
+        "description": "il prezzo con IVA in euro"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "prezzo",
+      "iva",
+      "tot"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) A quanti euro ammonta l'IVA?</p>",
+        "minValue": "iva",
+        "maxValue": "iva",
+        "precision": "2",
+        "precisionType": "dp",
+        "strictPrecision": false,
+        "showPrecisionHint": true,
+        "precisionPartialCredit": 0,
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è il prezzo con IVA, in euro?</p>",
+        "minValue": "tot",
+        "maxValue": "tot",
+        "precision": "2",
+        "precisionType": "dp",
+        "strictPrecision": false,
+        "showPrecisionHint": true,
+        "precisionPartialCredit": 0,
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

@@ -247,7 +247,13 @@ export function niceDecimal(n: Decimal, options: NiceNumberOptions = {}): string
         out = n.toString();
     }
     if (style && numberNotationStyles[style]) {
-      out = formatNumberNotation(out, style);
+      // upstream: `formatNumberNotation(out, style)`, senza `syntax`: in una
+      // formula uno stile con la virgola usciva «0,765» invece di «0{,}765»,
+      // e KaTeX spazia la virgola nuda come una punteggiatura. Con lo stile
+      // predefinito (il punto) le due sintassi coincidono, per questo
+      // upstream non se ne accorge. Vedi DIVERGENCES.md, «Stile dei numeri
+      // mostrati».
+      out = formatNumberNotation(out, style, options.syntax);
     }
     return out;
   }

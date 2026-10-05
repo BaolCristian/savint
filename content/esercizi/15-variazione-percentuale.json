@@ -1,0 +1,88 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Variazione percentuale",
+    "description": "Calcolare di quanto per cento è aumentato o diminuito un prezzo. Il risultato è sempre intero.",
+    "yearLevel": 2,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "variazione percentuale"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "Variazione percentuale",
+    "statement": "<p>Il prezzo di un abbonamento passa da \\(\\var{v1}\\) euro a \\(\\var{v2}\\) euro. Di quanto per cento è cambiato il prezzo?</p>",
+    "advice": "<p>La variazione percentuale si calcola dividendo la differenza fra il nuovo e il vecchio valore per il vecchio valore, e moltiplicando per \\(100\\): \\(\\frac{\\var{v2} - \\var{v1}}{\\var{v1}} \\cdot 100 = \\frac{\\var{d}}{\\var{v1}} \\cdot 100 = \\var{c}\\). Il prezzo è quindi cambiato del \\(\\var{c}\\%\\): un numero positivo indica un aumento, uno negativo una diminuzione.</p>",
+    "variables": {
+      "k": {
+        "name": "k",
+        "definition": "random(2..30)",
+        "description": ""
+      },
+      "m": {
+        "name": "m",
+        "definition": "random(-12..12 except 0)",
+        "description": ""
+      },
+      "v1": {
+        "name": "v1",
+        "definition": "20*k",
+        "description": "il prezzo iniziale, multiplo di 20"
+      },
+      "c": {
+        "name": "c",
+        "definition": "5*m",
+        "description": "la variazione percentuale (da -60 a +60, mai 0)"
+      },
+      "d": {
+        "name": "d",
+        "definition": "k*m",
+        "description": "la differenza v2 - v1"
+      },
+      "v2": {
+        "name": "v2",
+        "definition": "v1 + d",
+        "description": "il prezzo finale"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "k",
+      "m",
+      "v1",
+      "c",
+      "d",
+      "v2"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Variazione percentuale (scrivi solo il numero, con il segno meno se il prezzo è diminuito, senza il simbolo \\(\\%\\)):</p>",
+        "minValue": "c",
+        "maxValue": "c",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

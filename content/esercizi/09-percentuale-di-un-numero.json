@@ -1,0 +1,70 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Percentuale di un numero",
+    "description": "Calcolare il p% di un numero. I numeri sono scelti perché il risultato sia intero.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "percentuale di un numero"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Percentuale di un numero",
+    "statement": "<p>Calcola il \\(\\var{p}\\%\\) di \\(\\var{n}\\).</p>",
+    "advice": "<p>Il \\(\\var{p}\\%\\) di un numero è \\(\\frac{\\var{p}}{100}\\) di quel numero: si moltiplica per \\(\\var{p}\\) e si divide per \\(100\\). Quindi \\(\\var{n} \\cdot \\var{p} \\div 100 = \\var{n*p} \\div 100 = \\var{ris}\\).</p>",
+    "variables": {
+      "p": {
+        "name": "p",
+        "definition": "5*random(1..19)",
+        "description": "la percentuale, multiplo di 5"
+      },
+      "n": {
+        "name": "n",
+        "definition": "20*random(2..30)",
+        "description": "il numero, multiplo di 20: così il risultato è intero"
+      },
+      "ris": {
+        "name": "ris",
+        "definition": "n*p/100",
+        "description": "il risultato"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "p",
+      "n",
+      "ris"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Il \\(\\var{p}\\%\\) di \\(\\var{n}\\) è:</p>",
+        "minValue": "ris",
+        "maxValue": "ris",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

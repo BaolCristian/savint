@@ -22,6 +22,7 @@ import { withBasePath } from "@/lib/base-path";
 import { ContenutoHtml } from "./contenuto-html";
 import { InputParte, type PartePubblica } from "./parti";
 import { abbandonaTentativo, completaTentativo, inviaRisposta } from "./usa-tentativo";
+import { opzioniMotore } from "@/lib/esercizi/opzioni-motore";
 
 type Fase = "caricamento" | "esercizio" | "riepilogo" | "errore";
 type PartBase = InstanceType<typeof parts.PartBase>;
@@ -489,8 +490,8 @@ export function PlayerEsercizio({
     try {
       const json = content as NumbasQuestionJSON;
       const q = statoIniziale
-        ? restoreQuestion(json, { ...statoIniziale, seed }, { locale })
-        : loadQuestion(json, { seed, locale });
+        ? restoreQuestion(json, { ...statoIniziale, seed }, opzioniMotore(locale))
+        : loadQuestion(json, { seed, ...opzioniMotore(locale) });
       domandaRef.current = q;
 
       const partiCostruite = q.parts.map(costruisciParte);

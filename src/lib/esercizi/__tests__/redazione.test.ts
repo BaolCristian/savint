@@ -436,7 +436,9 @@ describe("elencoRedazione", () => {
   // si', il resto no) deve valere anche passando dal database, non solo
   // leggendo il file direttamente — e' proprio quel percorso che
   // `elencoRedazione` usa davvero.
-  it("sugli otto esercizi seminati, solo i due strutturalmente fedeli sono modificabili", async () => {
+  // Dal pacchetto «Percentuali» (09-17), scritti con l'editor stesso: tutti
+  // modificabili, come i due originali scritti nella forma dell'editor.
+  it("degli esercizi seminati sono modificabili 01, 02 e tutto il pacchetto delle percentuali", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "redazionetest-corpus-"));
     const corpusDir = path.resolve(process.cwd(), "content/esercizi");
     const nomi = readdirSync(corpusDir).filter((f) => f.endsWith(".json"));
@@ -447,12 +449,21 @@ describe("elencoRedazione", () => {
 
     const elenco = await elencoRedazione();
     const miei = elenco.filter((v) => v.id.startsWith(PREFIX));
-    expect(miei).toHaveLength(8);
+    expect(miei).toHaveLength(17);
 
     const modificabili = miei.filter((v) => v.modificabile).map((v) => v.id).sort();
     expect(modificabili).toEqual([
       `${PREFIX}01-equazione-primo-grado`,
       `${PREFIX}02-scomposizione-polinomi`,
+      `${PREFIX}09-percentuale-di-un-numero`,
+      `${PREFIX}10-sconto`,
+      `${PREFIX}11-iva`,
+      `${PREFIX}12-percentuale-da-trovare`,
+      `${PREFIX}13-totale-dalla-parte`,
+      `${PREFIX}14-percentuali-frazioni-decimali`,
+      `${PREFIX}15-variazione-percentuale`,
+      `${PREFIX}16-sconti-successivi`,
+      `${PREFIX}17-interesse-semplice`,
     ]);
   });
 });
