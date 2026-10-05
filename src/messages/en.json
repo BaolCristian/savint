@@ -1452,6 +1452,7 @@
         "potenza": "Power",
         "indice": "Subscript",
         "comeSiVedra": "How it will look:",
+        "formulaSciolta": "This looks like a formula written outside \\( \\): «{formula}». The student would read it character by character, asterisks and carets included: put it between \\( and \\).",
         "notaSimplify": "Inside a simplify command the text stays as written: what comes out of it depends on the drawn numbers, and you can see that in the preview beside.",
         "vuoto": "The window is empty: there is no formula to insert. Draw one here, or close the window if you changed your mind."
       },

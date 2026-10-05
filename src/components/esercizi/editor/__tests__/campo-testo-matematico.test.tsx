@@ -598,3 +598,10 @@ describe("CampoTestoMatematico: i grafici", () => {
   });
 });
 
+describe("CampoTestoMatematico: formule fuori da \\( \\)", () => {
+  it("avvisa sotto «Come si vedrà»", () => {
+    montaggio({ valoreIniziale: "Risolvi x^2 = 9" });
+    expect(screen.getByRole("status")).toHaveTextContent("x^2");
+  });
+});
+
