@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { testoVersoHtml, htmlVersoTesto, tokenImmagine, tokenGrafico, tokenDiagramma } from "../immagini-testo";
+import { testoVersoHtml, htmlVersoTesto, tokenImmagine, tokenGrafico, tokenDiagramma, tokenFigura } from "../immagini-testo";
 import { versoFile, versoNumbas } from "../verso-numbas";
 import { daNumbas } from "../da-numbas";
 import { verificaSuSemi } from "../verifica";
@@ -153,5 +153,36 @@ describe("diagrammi statistici nel testo del docente", () => {
   it("tokenDiagramma scrive la forma canonica", () => {
     expect(tokenDiagramma({ tipo: "barre", valori: "dati", etichette: "giorni" })).toBe("[diagramma: barre | valori: dati | etichette: giorni]");
     expect(tokenDiagramma({ tipo: "torta", valori: "voti", etichette: null })).toBe("[diagramma: torta | valori: voti]");
+  });
+});
+
+describe("figure geometriche nel testo del docente", () => {
+  it("il segnaposto diventa uno <span> con tipo, misure, unità e incognite", () => {
+    expect(testoVersoHtml("[figura: triangolo rettangolo | misure: a, b | unità: cm | incognite: 3]")).toBe(
+      '<span data-savint-figura="triangolo rettangolo" data-misure="a, b" data-unita="cm" data-incognite="3"></span>',
+    );
+    expect(testoVersoHtml("[figura: cerchio | misure: r]")).toBe('<span data-savint-figura="cerchio" data-misure="r"></span>');
+  });
+
+  it("andata e ritorno restituiscono il testo", () => {
+    for (const testo of [
+      "[figura: rettangolo | misure: b, h | unità: cm]",
+      "[figura: triangolo | misure: a, b, c | incognite: 1, 2]",
+      "[figura: quadrato | misure: l | unità: m² | incognite: 1]",
+    ]) {
+      expect(htmlVersoTesto(testoVersoHtml(testo))).toBe(testo);
+    }
+  });
+
+  it("un segnaposto non valido resta testo", () => {
+    for (const testo of ["[figura: esagono | misure: a]", "[figura: rettangolo | misure: a]"]) {
+      expect(testoVersoHtml(testo)).not.toContain("<span");
+    }
+  });
+
+  it("tokenFigura scrive la forma canonica", () => {
+    expect(tokenFigura({ tipo: "rettangolo", misure: ["b", "h"], unita: "cm", incognite: [] })).toBe(
+      "[figura: rettangolo | misure: b, h | unità: cm]",
+    );
   });
 });

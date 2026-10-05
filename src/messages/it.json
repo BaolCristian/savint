@@ -1326,6 +1326,22 @@
     "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
     "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
     },
+    "figura": {
+      "rettangolo": "Rettangolo",
+      "quadrato": "Quadrato",
+      "triangoloRettangolo": "Triangolo rettangolo",
+      "triangolo": "Triangolo",
+      "cerchio": "Cerchio",
+      "base": "base",
+      "altezza": "altezza",
+      "lato": "lato",
+      "cateto": "cateto",
+      "ipotenusa": "ipotenusa",
+      "raggio": "raggio",
+      "descrizione": "{tipo}: {misure}",
+      "segnaposto": "{tipo} con le misure {misure}: si vede nell'anteprima, con i numeri estratti.",
+      "errore": "Questa figura non si può disegnare."
+    },
     "diagramma": {
       "barre": "Diagramma a barre",
       "istogramma": "Istogramma",
@@ -1481,6 +1497,23 @@
         "faseTesto": "testo",
         "faseCaricamento": "caricamento",
         "faseRisposta": "risposta"
+      },
+      "figura": {
+        "inserisci": "Inserisci figura",
+        "titolo": "Inserisci una figura geometrica",
+        "spiegazione": "La figura è disegnata in scala con i numeri di ogni studente. Le misure si scrivono con le variabili dell'esercizio, separate da virgole.",
+        "tipo": "Figura",
+        "misure": "Misure",
+        "unita": "Unità (facoltativa)",
+        "incognite": "Mostra «?» al posto del valore di",
+        "aiutoRettangolo": "base, altezza",
+        "aiutoQuadrato": "lato",
+        "aiutoTriangoloRettangolo": "cateto 1, cateto 2 (l'ipotenusa si calcola)",
+        "aiutoTriangolo": "i tre lati: AB, BC, CA",
+        "aiutoCerchio": "raggio",
+        "conferma": "Inserisci",
+        "annulla": "Annulla",
+        "nonValido": "Controlla le misure: servono tante espressioni quante ne chiede la figura, separate da virgole, senza graffe né parentesi quadre."
       },
       "diagramma": {
         "inserisci": "Inserisci diagramma",

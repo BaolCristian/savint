@@ -74,6 +74,36 @@ describe("verificaSuSemi", () => {
     });
   });
 
+  describe("le figure geometriche", () => {
+    const conFigura = (segnaposto: string, variabili: EsercizioEditor["variabili"]): EsercizioEditor => ({
+      ...base,
+      testo: `Guarda ${segnaposto}`,
+      variabili: [...base.variabili, ...variabili],
+    });
+
+    it("misure valide passano", () => {
+      const e = conFigura("[figura: triangolo rettangolo | misure: c1, c2 | unità: cm | incognite: 3]", [
+        { nome: "c1", definizione: "random(3..9)", descrizione: "" },
+        { nome: "c2", definizione: "random(3..9)", descrizione: "" },
+      ]);
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+
+    // Tre lati casuali formano un triangolo solo a volte: la verifica lo
+    // scopre su un sorteggio, prima che lo veda uno studente.
+    it("lati che su qualche sorteggio non formano un triangolo non passano", () => {
+      const e = conFigura("[figura: triangolo | misure: l1, l2, l3]", [
+        { nome: "l1", definizione: "random(1..10)", descrizione: "" },
+        { nome: "l2", definizione: "random(1..10)", descrizione: "" },
+        { nome: "l3", definizione: "random(1..10)", descrizione: "" },
+      ]);
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (esito.ok) return;
+      expect(esito.messaggio).toContain("figura");
+    });
+  });
+
   // JME non distingue maiuscole e minuscole: il motore legge `N` e `n` come
   // la stessa variabile. Il controllo statico invece confrontava i nomi
   // esatti e rifiutava «la variabile "n" … non è dichiarata» per un `N`

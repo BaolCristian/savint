@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PulsanteImmagine } from "./pulsante-immagine";
 import { PulsanteGrafico } from "./pulsante-grafico";
 import { PulsanteDiagramma } from "./pulsante-diagramma";
+import { PulsanteFigura } from "./pulsante-figura";
 
 export interface CampoConsegnaProps {
   valore: string;
@@ -13,7 +14,7 @@ export interface CampoConsegnaProps {
 }
 
 /** La consegna di una parte: un'area di testo, come prima, più i pulsanti
- * «Inserisci immagine», «Inserisci grafico» e «Inserisci diagramma», che mettono il segnaposto dove
+ * «Inserisci immagine», «… grafico», «… diagramma» e «… figura», che mettono il segnaposto dove
  * sta il cursore (in fondo, se il campo non è mai stato toccato). Comune alle
  * tre parti dell'editor. */
 export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
@@ -32,10 +33,11 @@ export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
     <div className="flex flex-col gap-1">
       <div className="flex items-end justify-between gap-2">
         <label htmlFor={id} className="text-sm font-medium">{t("consegna")}</label>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap justify-end gap-1.5">
           <PulsanteImmagine onInserisci={inserisci} />
           <PulsanteGrafico onInserisci={inserisci} />
           <PulsanteDiagramma onInserisci={inserisci} />
+          <PulsanteFigura onInserisci={inserisci} />
         </div>
       </div>
       <Textarea id={id} ref={campo} value={valore} onChange={(e) => onChange(e.target.value)} />

@@ -1326,6 +1326,22 @@
     "daRaccoltaAiuto": "A prepared assignment chooses how many exercises to draw from collections. Prepare one before assigning it to a class.",
     "nessunaRaccolta": "You have no prepared assignments yet. Prepare one from collections before assigning it."
     },
+    "figura": {
+      "rettangolo": "Rectangle",
+      "quadrato": "Square",
+      "triangoloRettangolo": "Right triangle",
+      "triangolo": "Triangle",
+      "cerchio": "Circle",
+      "base": "base",
+      "altezza": "height",
+      "lato": "side",
+      "cateto": "leg",
+      "ipotenusa": "hypotenuse",
+      "raggio": "radius",
+      "descrizione": "{tipo}: {misure}",
+      "segnaposto": "{tipo} with measures {misure}: it appears in the preview, with drawn values.",
+      "errore": "This figure cannot be drawn."
+    },
     "diagramma": {
       "barre": "Bar chart",
       "istogramma": "Histogram",
@@ -1481,6 +1497,23 @@
         "faseTesto": "text",
         "faseCaricamento": "loading",
         "faseRisposta": "answer"
+      },
+      "figura": {
+        "inserisci": "Insert figure",
+        "titolo": "Insert a geometric figure",
+        "spiegazione": "The figure is drawn to scale with each student's values. Write the measures with the exercise variables, separated by commas.",
+        "tipo": "Figure",
+        "misure": "Measures",
+        "unita": "Unit (optional)",
+        "incognite": "Show «?» instead of the value of",
+        "aiutoRettangolo": "base, height",
+        "aiutoQuadrato": "side",
+        "aiutoTriangoloRettangolo": "leg 1, leg 2 (the hypotenuse is computed)",
+        "aiutoTriangolo": "the three sides: AB, BC, CA",
+        "aiutoCerchio": "radius",
+        "conferma": "Insert",
+        "annulla": "Cancel",
+        "nonValido": "Check the measures: as many expressions as the figure needs, separated by commas, without braces or square brackets."
       },
       "diagramma": {
         "inserisci": "Insert chart",

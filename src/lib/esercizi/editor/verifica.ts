@@ -1,5 +1,6 @@
 import { campiona } from "../grafici";
-import { diagrammiNelHtml, graficiNelHtml } from "./immagini-testo";
+import { diagrammiNelHtml, figureNelHtml, graficiNelHtml } from "./immagini-testo";
+import { valutaFigura } from "../figure";
 import { valutaDiagramma } from "../diagrammi";
 import {
   EngineError,
@@ -594,6 +595,23 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
             seme,
             fase: "testo",
             messaggio: `il diagramma ${campo.descrizione} non si può disegnare: ${e instanceof Error ? e.message : String(e)}`,
+          };
+        }
+      }
+    }
+
+    // E per le figure geometriche: misure non positive, o tre lati che non
+    // formano un triangolo — anche solo su qualche sorteggio.
+    for (const campo of campiConGrafici(question as NumbasQuestionJSON)) {
+      for (const figura of figureNelHtml(campo.testo)) {
+        try {
+          valutaFigura(caricata.scope, figura);
+        } catch (e) {
+          return {
+            ok: false,
+            seme,
+            fase: "testo",
+            messaggio: `la figura ${campo.descrizione} non si può disegnare: ${e instanceof Error ? e.message : String(e)}`,
           };
         }
       }
