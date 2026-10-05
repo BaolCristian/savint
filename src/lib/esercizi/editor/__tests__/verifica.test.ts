@@ -570,6 +570,47 @@ describe("verificaSuSemi", () => {
     });
   });
 
+  // La scelta multipla con più risposte giuste (m_n_2) passa per gli stessi
+  // controlli della scelta singola: le sue risposte e spiegazioni restano
+  // grezze nel motore come quelle di 1_n_2, e senza estendere
+  // `campiSceltaGrezzi` a questo tipo un difetto in una di esse arriverebbe
+  // intatto davanti allo studente.
+  describe("la scelta multipla con più risposte giuste", () => {
+    it("un esercizio sano, con variabili nelle risposte, passa venti semi", () => {
+      const e: EsercizioEditor = { ...base,
+        parti: [{ tipo: "sceltaMultipla", consegna: "Quali valgono più di zero?", punti: 2,
+          risposte: ["\\(\\var{a}\\)", "\\(-\\var{a}\\)", "\\(\\var{a}+1\\)"],
+          corrette: [true, false, true],
+          spiegazioni: ["", "\\(-\\var{a}\\) è negativo", ""] }] };
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+
+    it("\\simplify{sqrt()} in una risposta proposta viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "sceltaMultipla", consegna: "Quali?", punti: 2,
+          risposte: ["\\(\\simplify{sqrt()}\\)", "altro"], corrette: [false, true] }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("risposta 1 della parte 1");
+      }
+    });
+
+    it("\\simplify{sqrt()} nella spiegazione di una risposta viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "sceltaMultipla", consegna: "Quali?", punti: 2,
+          risposte: ["giusta", "sbagliata"], corrette: [true, false],
+          spiegazioni: ["", "\\(\\simplify{sqrt()}\\)"] }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("spiegazione");
+      }
+    });
+  });
+
   // I2 (Onda di correzioni finale): il revisore ha dimostrato con sedici
   // mutazioni usa-e-getta, mai committate, che diversi controlli non
   // facevano fallire NESSUN test esistente se rimossi — fra queste, rendere

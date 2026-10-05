@@ -11,6 +11,7 @@ import { CampoTestoMatematico } from "./campo-testo-matematico";
 import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
 import { ParteScelta, NESSUNA_RISPOSTA_CORRETTA } from "./parte-scelta";
+import { ParteSceltaMultipla, senzaRisposteCorrette } from "./parte-scelta-multipla";
 import { ParteEspressione } from "./parte-espressione";
 import { Anteprima } from "./anteprima";
 import { ImpaginazioneEditor } from "./impaginazione";
@@ -29,7 +30,15 @@ export const ESERCIZIO_VUOTO: EsercizioEditor = {
 };
 
 type TipoParte = ParteEditor["tipo"];
-const TIPI_PARTE: TipoParte[] = ["numerica", "scelta", "espressione"];
+const TIPI_PARTE: TipoParte[] = ["numerica", "scelta", "sceltaMultipla", "espressione"];
+
+/** La voce del menu «Tipo» per ogni tipo di parte. */
+const ETICHETTA_TIPO: Record<TipoParte, string> = {
+  numerica: "parti.tipoNumerica",
+  scelta: "parti.tipoScelta",
+  sceltaMultipla: "parti.tipoSceltaMultipla",
+  espressione: "parti.tipoEspressione",
+};
 
 function parteVuota(tipo: TipoParte): ParteEditor {
   switch (tipo) {
@@ -37,6 +46,11 @@ function parteVuota(tipo: TipoParte): ParteEditor {
       return { tipo: "numerica", consegna: "", punti: 1, valore: "", tolleranza: { tipo: "esatta" } };
     case "scelta":
       return { tipo: "scelta", consegna: "", punti: 1, risposte: ["", ""], indiceGiusta: 0 };
+    case "sceltaMultipla":
+      // Nessuna risposta segnata come corretta: quali lo siano lo decide il
+      // docente, e finché non ne spunta una il salvataggio resta bloccato
+      // (vedi `sceltaMancante` più sotto).
+      return { tipo: "sceltaMultipla", consegna: "", punti: 1, risposte: ["", ""], corrette: [false, false] };
     case "espressione":
       return { tipo: "espressione", consegna: "", punti: 1, risposta: "" };
   }
@@ -272,8 +286,13 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
   // `indiceGiusta` fuori dai vincoli dello schema del dominio) restano
   // disabilitati — mai solo un avviso accanto a un pulsante che funziona lo
   // stesso.
+  // Lo stesso vale per una parte a più risposte giuste senza nessuna
+  // casella «corretta» spuntata: corretta tutto o niente, darebbe punti
+  // pieni a chi non spunta nulla.
   const sceltaMancante = editor.parti.some(
-    (p) => p.tipo === "scelta" && p.indiceGiusta === NESSUNA_RISPOSTA_CORRETTA,
+    (p) =>
+      (p.tipo === "scelta" && p.indiceGiusta === NESSUNA_RISPOSTA_CORRETTA) ||
+      (p.tipo === "sceltaMultipla" && senzaRisposteCorrette(p)),
   );
 
   function aggiornaMeta<K extends keyof EsercizioEditor["meta"]>(campo: K, valore: EsercizioEditor["meta"][K]) {
@@ -452,6 +471,12 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
                     />
                   ) : parte.tipo === "scelta" ? (
                     <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+                  ) : parte.tipo === "sceltaMultipla" ? (
+                    <ParteSceltaMultipla
+                      parte={parte}
+                      onChange={(p) => aggiornaParte(i, p)}
+                      onRimuovi={() => rimuoviParte(i)}
+                    />
                   ) : (
                     <ParteEspressione
                       parte={parte}
@@ -477,7 +502,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
                 >
                   {TIPI_PARTE.map((tipo) => (
                     <option key={tipo} value={tipo}>
-                      {t(`parti.tipo${tipo === "numerica" ? "Numerica" : tipo === "scelta" ? "Scelta" : "Espressione"}`)}
+                      {t(ETICHETTA_TIPO[tipo])}
                     </option>
                   ))}
                 </select>

@@ -67,6 +67,30 @@ describe("scelta multipla", () => {
   });
 });
 
+describe("scelta multipla con più risposte giuste", () => {
+  const e: EsercizioEditor = { ...base, parti: [{ tipo: "sceltaMultipla",
+    consegna: "Quali sono pari?", punti: 3,
+    risposte: ["2", "3", "4"], corrette: [true, false, true] }] };
+
+  it("produce una parte m_n_2 a caselle, corretta tutto o niente", () => {
+    const p = parte(versoNumbas(e));
+    expect(p.type).toBe("m_n_2");
+    expect(p.displayType).toBe("checkbox");
+    expect(p.markingMethod).toBe("all-or-nothing");
+    // I punti stanno in `marks`, non nella matrice: con la correzione
+    // tutto o niente la matrice dice solo quali caselle vanno spuntate.
+    expect(p.marks).toBe(3);
+    expect(p.matrix).toEqual(["1", "0", "1"]);
+    expect(p.choices).toEqual(["<p>2</p>", "<p>3</p>", "<p>4</p>"]);
+    expect(p.shuffleChoices).toBe(true);
+    expect(p.distractors).toEqual(["", "", ""]);
+  });
+
+  it("non scrive maxMarks, che per m_n_2 il motore leggerebbe al posto di marks", () => {
+    expect(parte(versoNumbas(e))).not.toHaveProperty("maxMarks");
+  });
+});
+
 describe("espressione", () => {
   it("porta la risposta come answer di una parte jme", () => {
     const e: EsercizioEditor = { ...base, parti: [{ tipo: "espressione",

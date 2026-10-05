@@ -39,6 +39,24 @@ export type ParteEditor =
       // restano valide senza doverlo aggiungere ovunque.
       spiegazioni?: string[];
     }
+  | {
+      // Scelta multipla con più risposte giuste (Numbas `m_n_2`, caselle di
+      // spunta), corretta tutto o niente: punti pieni solo a chi spunta
+      // esattamente le risposte giuste (vedi verso-numbas.ts).
+      tipo: "sceltaMultipla";
+      consegna: string;
+      punti: number;
+      risposte: string[];
+      // Una casella per risposta, allineata a `risposte`: `true` dove la
+      // risposta è giusta. Non un insieme di indici, che ammetterebbe
+      // doppioni e ordini diversi per lo stesso significato — e l'andata e
+      // ritorno con Numbas non sarebbe più byte per byte.
+      corrette: boolean[];
+      // Come per "scelta": il commento che lo studente legge quando sbaglia
+      // QUELLA risposta (la spunta senza che sia giusta, o non la spunta
+      // pur essendolo). Assente = nessuna spiegazione.
+      spiegazioni?: string[];
+    }
   | { tipo: "espressione"; consegna: string; punti: number; risposta: string };
 
 /** Una parte da zero punti non ha senso in un esercizio: per una parte a
@@ -73,6 +91,31 @@ const parteSceltaSchema = z
     path: ["spiegazioni"],
   });
 
+const parteSceltaMultiplaSchema = z
+  .object({
+    tipo: z.literal("sceltaMultipla"),
+    consegna: testoLibero,
+    punti: puntiSchema,
+    risposte: z.array(testoLibero).min(2).max(8),
+    corrette: z.array(z.boolean()),
+    spiegazioni: z.array(testoLibero).optional(),
+  })
+  .refine((v) => v.corrette.length === v.risposte.length, {
+    message: "corrette deve avere una voce per ogni risposta",
+    path: ["corrette"],
+  })
+  // Con la correzione tutto o niente, una parte senza risposte giuste
+  // darebbe punti pieni a chi non spunta nulla: non è un esercizio, è un
+  // errore di scrittura.
+  .refine((v) => v.corrette.some((c) => c), {
+    message: "almeno una risposta deve essere segnata come corretta",
+    path: ["corrette"],
+  })
+  .refine((v) => v.spiegazioni === undefined || v.spiegazioni.length === v.risposte.length, {
+    message: "spiegazioni, se presente, deve avere una voce per ogni risposta",
+    path: ["spiegazioni"],
+  });
+
 const parteEspressioneSchema = z.object({
   tipo: z.literal("espressione"),
   consegna: testoLibero,
@@ -83,6 +126,7 @@ const parteEspressioneSchema = z.object({
 const parteEditorSchema: z.ZodType<ParteEditor> = z.union([
   parteNumericaSchema,
   parteSceltaSchema,
+  parteSceltaMultiplaSchema,
   parteEspressioneSchema,
 ]);
 
