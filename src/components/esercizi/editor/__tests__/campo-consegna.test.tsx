@@ -35,3 +35,46 @@ describe("CampoConsegna", () => {
     await waitFor(() => expect(campo.value).toBe(`![figura](${FILE})Quanto vale x?`));
   });
 });
+
+describe("CampoConsegna: come si vedrà", () => {
+  const C = messaggiIt.esercizi.redazione.campoTesto;
+
+  function Con({ iniziale }: { iniziale: string }) {
+    const [v, setV] = useState(iniziale);
+    return <CampoConsegna valore={v} onChange={setV} />;
+  }
+
+  function monta(iniziale: string) {
+    return render(
+      <NextIntlClientProvider locale="it" messages={messaggiIt}>
+        <Con iniziale={iniziale} />
+      </NextIntlClientProvider>,
+    );
+  }
+
+  it("mostra la consegna come la vedrà lo studente, formule comprese", () => {
+    const { container } = monta("Risolvi \\(3x^2-6=0\\)");
+    expect(screen.getByText(C.comeSiVedra)).toBeInTheDocument();
+    expect(container.querySelector(".katex")).not.toBeNull();
+  });
+
+  // Il caso del docente: «3*x^2-6=0» scritto come testo.
+  it("avvisa quando una formula è scritta fuori da \\( \\)", () => {
+    monta("Calcola la soluzione di questa equazione: 3*x^2-6=0");
+    expect(screen.getByRole("status")).toHaveTextContent("3*x^2-6=0");
+  });
+
+  it("una variabile in una formula si vede come lettera, non come errore", () => {
+    const { container } = monta("Quanto vale \\(x = \\var{a}\\)?");
+    // Senza la macro dell'eco KaTeX non conosce \\var e la formula ricade
+    // nel riquadro grigio col sorgente (`<code>`).
+    expect(container.querySelector(".katex")).not.toBeNull();
+    expect(container.querySelector("code")).toBeNull();
+  });
+
+  it("nessun avviso quando la formula è dentro \\( \\)", () => {
+    monta("Risolvi \\(3x^2-6=0\\)");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+

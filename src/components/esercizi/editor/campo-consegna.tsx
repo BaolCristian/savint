@@ -7,6 +7,11 @@ import { PulsanteImmagine } from "./pulsante-immagine";
 import { PulsanteGrafico } from "./pulsante-grafico";
 import { PulsanteDiagramma } from "./pulsante-diagramma";
 import { PulsanteFigura } from "./pulsante-figura";
+import { ContenutoHtml } from "@/components/esercizi/player/contenuto-html";
+import { testoVersoHtml } from "@/lib/esercizi/editor/immagini-testo";
+import { AvvisoFormulaSciolta } from "./avviso-formula-sciolta";
+import { MacroFormula } from "@/components/esercizi/player/formula";
+import { MACRO_ECO } from "./campo-testo-matematico";
 
 export interface CampoConsegnaProps {
   valore: string;
@@ -19,6 +24,7 @@ export interface CampoConsegnaProps {
  * tre parti dell'editor. */
 export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
   const t = useTranslations("esercizi.redazione.parti");
+  const tTesto = useTranslations("esercizi.redazione.campoTesto");
   const id = useId();
   const campo = useRef<HTMLTextAreaElement>(null);
 
@@ -41,6 +47,20 @@ export function CampoConsegna({ valore, onChange }: CampoConsegnaProps) {
         </div>
       </div>
       <Textarea id={id} ref={campo} value={valore} onChange={(e) => onChange(e.target.value)} />
+      {/* Come per il testo dell'esercizio: la consegna così come la vedrà lo
+          studente, e un avviso se c'è una formula fuori da \( \). Senza, un
+          «3*x^2-6=0» scritto come testo si scopriva solo nell'anteprima. */}
+      {valore.trim() !== "" && (
+        <div className="mt-1 space-y-1 text-sm text-muted-foreground">
+          <p>{tTesto("comeSiVedra")}</p>
+          <div className="text-foreground">
+            <MacroFormula.Provider value={MACRO_ECO}>
+              <ContenutoHtml html={`<p>${testoVersoHtml(valore)}</p>`} />
+            </MacroFormula.Provider>
+          </div>
+          <AvvisoFormulaSciolta testo={valore} />
+        </div>
+      )}
     </div>
   );
 }

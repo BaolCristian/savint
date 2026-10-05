@@ -13,6 +13,7 @@ import { testoVersoHtml } from "@/lib/esercizi/editor/immagini-testo";
 import { useTastieraSimboli, type InserimentoNelCampo } from "@/components/esercizi/tastiera-simboli";
 import { FinestraFormula } from "./finestra-formula";
 import { PulsanteImmagine } from "./pulsante-immagine";
+import { AvvisoFormulaSciolta } from "./avviso-formula-sciolta";
 import { PulsanteGrafico } from "./pulsante-grafico";
 import { PulsanteDiagramma } from "./pulsante-diagramma";
 import { PulsanteFigura } from "./pulsante-figura";
@@ -50,7 +51,7 @@ const CLASSE_TASTO =
  * `\var{a}` allo stesso modo, o l'eco mentirebbe sull'altra. E vale solo
  * qui: vedi il commento su `MacroFormula` per il motivo per cui lo studente
  * non deve averla. */
-const MACRO_ECO: Readonly<Record<string, string>> = { "\\var": "\\mathit{#1}" };
+export const MACRO_ECO: Readonly<Record<string, string>> = { "\\var": "\\mathit{#1}" };
 
 /** Le zone matematiche del testo, nell'ordine, coi loro confini.
  *
@@ -426,6 +427,7 @@ export function CampoTestoMatematico({
               <ContenutoHtml html={`<p>${testoVersoHtml(valore)}</p>`} />
             </MacroFormula.Provider>
           </div>
+          <AvvisoFormulaSciolta testo={valore} />
         </div>
       )}
     </div>
