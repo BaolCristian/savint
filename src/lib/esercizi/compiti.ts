@@ -27,6 +27,32 @@ export type EsitoAssegna =
   | { ok: true; compitoId: string }
   | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown };
 
+type MotivoDate = "scadenza_prima_apertura" | "scadenza_nel_passato";
+
+/** Le regole sulle date di un compito, condivise da `assegna` e da
+ * `modificaDateCompito`: una sola copia, perché una finestra rifiutata
+ * all'assegnazione non deve poter entrare dalla porta della modifica.
+ *
+ * Una scadenza prima dell'apertura non ha senso (la finestra sarebbe già
+ * chiusa quando si apre), e una scadenza già nel passato produce un compito
+ * "scaduto all'arrivo" — probabilmente un anno digitato male — senza che
+ * nessuno, dominio, rotta o form, se ne accorga.
+ *
+ * `scadenzaNuova` dice se `dueAt` è una scelta fatta ADESSO: il controllo
+ * "nel passato" vale solo per quella. In una modifica, una scadenza già
+ * salvata e lasciata com'è può essere passata da tempo (il compito è
+ * scaduto, il docente ne sposta solo l'apertura): rifiutarla obbligherebbe
+ * a inventare una scadenza nuova per correggere tutt'altro. */
+function motivoDateNonValide(
+  opensAt: Date | null,
+  dueAt: Date | null,
+  scadenzaNuova: boolean,
+): MotivoDate | null {
+  if (opensAt && dueAt && dueAt < opensAt) return "scadenza_prima_apertura";
+  if (scadenzaNuova && dueAt && dueAt < new Date()) return "scadenza_nel_passato";
+  return null;
+}
+
 /** Assegna una batteria a una classe: pesca UNA volta, con un seme nuovo, e
  * fissa il risultato nel Compito. Da quel momento in poi nessuna modifica al
  * contenitore, alle versioni degli esercizi o una nuova assegnazione della
@@ -71,17 +97,9 @@ export async function assegna(
   opzioni?: { opensAt?: Date; dueAt?: Date },
 ): Promise<EsitoAssegna> {
   // Controllo di forma sulle date, prima di qualunque interrogazione: non
-  // richiede il database, quindi è il più economico da fare per primo. Una
-  // scadenza prima dell'apertura non ha senso (la finestra sarebbe già
-  // chiusa quando si apre), e una scadenza già nel passato produce un
-  // compito "scaduto all'arrivo" — probabilmente un anno digitato male —
-  // senza che nessuno, dominio, rotta o form, se ne accorga.
-  if (opzioni?.opensAt && opzioni?.dueAt && opzioni.dueAt < opzioni.opensAt) {
-    return { ok: false, motivo: "scadenza_prima_apertura" };
-  }
-  if (opzioni?.dueAt && opzioni.dueAt < new Date()) {
-    return { ok: false, motivo: "scadenza_nel_passato" };
-  }
+  // richiede il database, quindi è il più economico da fare per primo.
+  const date = motivoDateNonValide(opzioni?.opensAt ?? null, opzioni?.dueAt ?? null, true);
+  if (date) return { ok: false, motivo: date };
 
   const batteria = await prisma.batteria.findUnique({
     where: { id: batteriaId },
@@ -376,7 +394,8 @@ export async function assegnaDiretto(input: {
  * `avviaORiprendi` (tentativo.ts), che chiama questa funzione e non fida mai
  * del valore ricevuto.
  *
- * Quattro condizioni, tutte necessarie: il compito esiste; è già aperto
+ * Quattro condizioni, tutte necessarie: il compito esiste (e non è stato
+ * ritirato); è già aperto
  * (`opensAt` assente o passato); lo studente è iscritto ORA alla sua classe;
  * l'esercizio che sta aprendo è fra quelli che l'assegnazione ha davvero
  * pescato (`drawnVersionIds`), non uno qualunque. Senza l'ultimo controllo
@@ -411,7 +430,10 @@ export async function compitoApribile(
   esercizioId: string,
 ): Promise<string | null> {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
-  if (!compito) return null;
+  // Un compito ritirato (soft delete, vedi `ritiraCompito`) esiste ancora
+  // come riga, ma per lo studente non c'è più: un `compitoId` scritto a
+  // mano nell'indirizzo non deve poter legargli un tentativo nuovo.
+  if (!compito || compito.ritiratoAt != null) return null;
   if (compito.opensAt && compito.opensAt > new Date()) return null;
   if (compito.drawnVersionIds.length === 0) return null;
 
@@ -432,7 +454,10 @@ export async function compitiDellaClasse(
   classeId: string,
 ): Promise<{ id: string; batteria: string; dueAt: Date | null; esercizi: number }[]> {
   const righe = await prisma.compito.findMany({
-    where: { classeId },
+    // I compiti ritirati spariscono dagli elenchi del docente (questa
+    // funzione alimenta la pagina dei compiti, quella d'ingresso e la
+    // conferma di rimozione di una classe): restano solo nel database.
+    where: { classeId, ritiratoAt: null },
     include: { batteria: true },
     orderBy: { createdAt: "desc" },
   });
@@ -456,7 +481,8 @@ export async function compitiDelloStudente(studentId: string): Promise<
   if (classeIds.length === 0) return [];
 
   const compiti = await prisma.compito.findMany({
-    where: { classeId: { in: classeIds } },
+    // Un compito ritirato non è più "da fare": non compare, e non conta.
+    where: { classeId: { in: classeIds }, ritiratoAt: null },
     include: { batteria: true },
     orderBy: { createdAt: "desc" },
   });
@@ -539,13 +565,10 @@ export async function consegneDelCompito(
   | { ok: false; motivo: "non_insegni_questa_classe" }
 > {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
-  if (!compito) return { ok: true, righe: [] };
+  // Ritirato = inesistente, anche qui: stessa risposta di un id che non c'è.
+  if (!compito || compito.ritiratoAt != null) return { ok: true, righe: [] };
 
-  const insegna = await prisma.classeDocente.findUnique({
-    where: { classeId_teacherId: { classeId: compito.classeId, teacherId } },
-  });
-  const autorizzato = insegna != null || compito.assignedById === teacherId;
-  if (!autorizzato) return { ok: false, motivo: "non_insegni_questa_classe" };
+  if (!(await haTitoloSulCompito(compito, teacherId))) return { ok: false, motivo: "non_insegni_questa_classe" };
 
   const iscritti = await prisma.classeStudente.findMany({
     where: { classeId: compito.classeId },
@@ -626,4 +649,99 @@ export async function consegneDelCompito(
     });
   }
   return { ok: true, righe };
+}
+
+/** Chi può agire su un compito già assegnato: chi insegna OGGI la sua classe
+ * OPPURE chi l'ha assegnato. È la regola di `consegneDelCompito` (vedi il
+ * suo commento per il perché della seconda clausola), scritta una volta sola
+ * perché leggere le consegne, cambiare le date e ritirare il compito devono
+ * rispondere allo stesso modo alla stessa domanda: un docente che vede le
+ * consegne di un compito deve poterlo anche correggere, e viceversa. */
+async function haTitoloSulCompito(
+  compito: { classeId: string; assignedById: string },
+  teacherId: string,
+): Promise<boolean> {
+  if (compito.assignedById === teacherId) return true;
+  const insegna = await prisma.classeDocente.findUnique({
+    where: { classeId_teacherId: { classeId: compito.classeId, teacherId } },
+  });
+  return insegna != null;
+}
+
+/** Un solo motivo per "non esiste", "è ritirato" e "non è tuo": le rotte lo
+ * traducono in 404 e, distinguendo i tre casi nel corpo della risposta,
+ * confermerebbero a chi sonda un id altrui che quel compito esiste — la
+ * stessa ragione per cui il progetto risponde 404 e non 403. */
+export type EsitoGestioneCompito =
+  | { ok: true }
+  | { ok: false; motivo: "compito_non_trovato" | MotivoDate };
+
+/** Il compito, se `teacherId` può agire su di lui e non è già ritirato. */
+async function compitoGestibile(compitoId: string, teacherId: string) {
+  const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
+  if (!compito || compito.ritiratoAt != null) return null;
+  if (!(await haTitoloSulCompito(compito, teacherId))) return null;
+  return compito;
+}
+
+/** Cambia apertura e scadenza di un compito già assegnato (una scadenza
+ * sbagliata non deve restare per sempre). `null` toglie la data.
+ *
+ * Gli esercizi pescati NON cambiano, ed è voluto: sono congelati in
+ * `drawnVersionIds` (vedi `assegna`) e gli studenti possono averci già
+ * lavorato — cambiare le date non deve cambiare cosa la classe ha ricevuto.
+ *
+ * Stesse regole di `assegna` sulle date (`motivoDateNonValide`), con
+ * un'unica differenza, spiegata lì: una scadenza passata ma INVARIATA non è
+ * un errore di battitura fatto adesso, quindi non si rifiuta.
+ *
+ * La scrittura è un `updateMany` condizionato a `ritiratoAt: null`, non un
+ * `update` per id: un ritiro arrivato fra la lettura qui sopra e la
+ * scrittura (un collega, un'altra scheda) non viene "resuscitato" da una
+ * modifica di date che risponderebbe pure di successo. */
+export async function modificaDateCompito(
+  compitoId: string,
+  teacherId: string,
+  date: { opensAt: Date | null; dueAt: Date | null },
+): Promise<EsitoGestioneCompito> {
+  const compito = await compitoGestibile(compitoId, teacherId);
+  if (!compito) return { ok: false, motivo: "compito_non_trovato" };
+
+  const scadenzaNuova = date.dueAt?.getTime() !== compito.dueAt?.getTime();
+  const motivo = motivoDateNonValide(date.opensAt, date.dueAt, scadenzaNuova);
+  if (motivo) return { ok: false, motivo };
+
+  const { count } = await prisma.compito.updateMany({
+    where: { id: compitoId, ritiratoAt: null },
+    data: { opensAt: date.opensAt, dueAt: date.dueAt },
+  });
+  if (count === 0) return { ok: false, motivo: "compito_non_trovato" };
+  return { ok: true };
+}
+
+/** Ritira un compito (dato alla classe sbagliata, o per errore): sparisce
+ * dalla pagina degli studenti, dagli elenchi del docente e da ogni via che
+ * lo apre o lo conta — `compitiDellaClasse`, `compitiDelloStudente`,
+ * `compitoApribile` (quindi `avviaORiprendi`), `consegneDelCompito`,
+ * `percorsoCompitoStudente` lo trattano tutte come inesistente.
+ *
+ * Soft delete (`ritiratoAt`), non una cancellazione: i tentativi già svolti
+ * restano nel database e restano legati al compito (`onDelete: SetNull` li
+ * avrebbe staccati, perdendo di quale assegnazione erano consegna), e la
+ * batteria resta "in uso" per `eliminaBatteria`, che il vincolo `Restrict`
+ * obbligherebbe comunque.
+ *
+ * Ritirare un compito già ritirato risponde "non trovato" e non sposta la
+ * data del primo ritiro: lo stesso `updateMany` condizionato di
+ * `modificaDateCompito`, così due ritiri concorrenti ne registrano uno. */
+export async function ritiraCompito(compitoId: string, teacherId: string): Promise<EsitoGestioneCompito> {
+  const compito = await compitoGestibile(compitoId, teacherId);
+  if (!compito) return { ok: false, motivo: "compito_non_trovato" };
+
+  const { count } = await prisma.compito.updateMany({
+    where: { id: compitoId, ritiratoAt: null },
+    data: { ritiratoAt: new Date() },
+  });
+  if (count === 0) return { ok: false, motivo: "compito_non_trovato" };
+  return { ok: true };
 }

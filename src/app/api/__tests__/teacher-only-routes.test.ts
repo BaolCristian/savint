@@ -64,6 +64,7 @@ const routes: Entry[] = [
   { name: "esercizi/batterie/[id]", load: () => import("@/app/api/esercizi/batterie/[id]/route"), methods: ["DELETE"] },
   { name: "esercizi/compiti", load: () => import("@/app/api/esercizi/compiti/route"), methods: ["POST"] },
   { name: "esercizi/compiti/diretto", load: () => import("@/app/api/esercizi/compiti/diretto/route"), methods: ["POST"] },
+  { name: "esercizi/compiti/[id]", load: () => import("@/app/api/esercizi/compiti/[id]/route"), methods: ["PATCH", "DELETE"] },
   { name: "esercizi/argomenti", load: () => import("@/app/api/esercizi/argomenti/route"), methods: ["GET"] },
   { name: "esercizi/redazione", load: () => import("@/app/api/esercizi/redazione/route"), methods: ["GET", "POST"] },
   { name: "esercizi/redazione/[id]", load: () => import("@/app/api/esercizi/redazione/[id]/route"), methods: ["GET", "PUT"] },

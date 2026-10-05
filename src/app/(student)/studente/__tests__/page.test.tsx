@@ -124,6 +124,22 @@ describe("i compiti dello studente", () => {
     expect(screen.getByText("Batteria 1")).toBeInTheDocument();
   });
 
+  // Difesa in profondità: `compitiDelloStudente` esclude già i compiti
+  // ritirati, ma la pagina rilegge le righe per id per decidere cosa
+  // mostrare — anche quella rilettura deve escluderli, non fidarsi di chi le
+  // ha passato gli id. Il mock imita il database: restituisce la riga solo
+  // se la query non chiede `ritiratoAt: null`.
+  it("un compito ritirato non si vede, anche se gli id arrivassero dal dominio", async () => {
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria ritirata", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es 1" }], fatti: 0 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockImplementation((async (args: { where?: { ritiratoAt?: unknown } }) =>
+      args?.where?.ritiratoAt === null ? [] : [{ id: "c1", opensAt: null }]) as never);
+
+    await rendi();
+    expect(screen.queryByText("Batteria ritirata")).toBeNull();
+  });
+
   it("un compito con opensAt futuro non si vede", async () => {
     vi.mocked(compitiDelloStudente).mockResolvedValue([
       { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es 1" }], fatti: 0 },

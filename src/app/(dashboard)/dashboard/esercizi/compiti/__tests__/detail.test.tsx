@@ -6,6 +6,7 @@ vi.mock("@/lib/esercizi/compiti", () => ({ consegneDelCompito: vi.fn() }));
 vi.mock("@/lib/db/client", () => ({ prisma: { compito: { findUnique: vi.fn() } } }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/esercizi/compiti/comp1",
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -13,6 +14,12 @@ vi.mock("next/navigation", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
+}));
+
+// Il modulo per date e ritiro (client component) traduce da sé: stesso
+// schema chiave:valori del mock server-side qui sopra.
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (chiave: string) => chiave),
 }));
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
@@ -110,5 +117,29 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
     vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
     await rendi();
     expect(screen.getByText("nessunoIscritto")).toBeInTheDocument();
+  });
+
+  // Il ritiro è un soft delete: la riga esiste ancora, e una lettura per id
+  // la troverebbe. La pagina deve trattarla come inesistente, non mostrarne
+  // le consegne né il modulo per cambiarle le date.
+  it("404 se il compito è stato ritirato", async () => {
+    vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, dueAt: null, opensAt: null,
+      ritiratoAt: new Date(),
+    } as never);
+    await expect(Page({ params: Promise.resolve({ id: "comp1" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+
+  it("offre il modulo per cambiare le date, precompilato, e il pulsante per ritirarlo", async () => {
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" },
+      opensAt: new Date("2099-01-02T00:00:00.000Z"), dueAt: new Date("2099-01-09T00:00:00.000Z"), ritiratoAt: null,
+    } as never);
+    vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+    await rendi();
+    expect(screen.getByLabelText("apertura")).toHaveValue("2099-01-02");
+    expect(screen.getByLabelText("scadenza")).toHaveValue("2099-01-09");
+    expect(screen.getByRole("button", { name: "ritira" })).toBeInTheDocument();
   });
 });
