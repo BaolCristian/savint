@@ -138,7 +138,11 @@ export function tokenToDisplayString(v: Token, scope: Scope): string {
   if (f) {
     return f(v, scope);
   }
-  return requireHook("treeToJME")({ tok: v }, {}, scope);
+  // SAVINT: lo stile dei numeri mostrati della domanda (vedi
+  // DIVERGENCES.md, «Stile dei numeri mostrati»). Qui il risultato è testo
+  // per lo studente, mai codice da rileggere.
+  const settings = scope.numberStyle === undefined ? {} : { numberstyle: scope.numberStyle };
+  return requireHook("treeToJME")({ tok: v }, settings, scope);
 }
 
 // jme.js:553-588

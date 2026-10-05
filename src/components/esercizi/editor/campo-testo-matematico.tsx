@@ -336,7 +336,13 @@ export function CampoTestoMatematico({
             // Dentro `\simplify{}` una variabile si scrive `{a}`; fuori,
             // `\var{a}`. Il menu sceglie da sé, guardando dove sta il cursore.
             const inizio = campoRef.current?.selectionStart ?? valore.length;
-            const comando = dentroSimplify(valore, inizio) ? `{${nome}}` : `\\var{${nome}}`;
+            // E `\var{a}` funziona solo dentro `\( \)`: fuori da una
+            // formula il menu apre la zona da sé, come `\simplify{}`.
+            const comando = dentroSimplify(valore, inizio)
+              ? `{${nome}}`
+              : dentroZonaMatematica(valore, inizio)
+                ? `\\var{${nome}}`
+                : `\\(\\var{${nome}}\\)`;
             inserisci(() => ({ inserisci: comando, offsetCaret: comando.length }));
           }}
           className="min-h-11 rounded-md border border-input bg-transparent px-2.5 text-sm transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"

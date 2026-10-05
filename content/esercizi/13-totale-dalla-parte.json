@@ -1,0 +1,70 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Il totale dalla parte",
+    "description": "Conoscendo una parte e la percentuale che rappresenta, risalire al totale.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "totale dalla percentuale"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "Il totale dalla parte",
+    "statement": "<p>Un negozio ha venduto \\(\\var{x}\\) magliette, cioè il \\(\\var{p}\\%\\) delle magliette che aveva in magazzino. Quante magliette c'erano in magazzino?</p>",
+    "advice": "<p>Se \\(\\var{x}\\) magliette sono il \\(\\var{p}\\%\\) del totale, l'\\(1\\%\\) del totale è \\(\\var{x} \\div \\var{p}\\) e il totale, cioè il \\(100\\%\\), è \\(\\var{x} \\div \\var{p} \\cdot 100 = \\var{x*100} \\div \\var{p} = \\var{totale}\\). Controllo: il \\(\\var{p}\\%\\) di \\(\\var{totale}\\) è \\(\\var{totale} \\cdot \\var{p} \\div 100 = \\var{x}\\).</p>",
+    "variables": {
+      "p": {
+        "name": "p",
+        "definition": "5*random(1..19)",
+        "description": "la percentuale, multiplo di 5"
+      },
+      "totale": {
+        "name": "totale",
+        "definition": "20*random(2..40)",
+        "description": "il totale cercato, multiplo di 20"
+      },
+      "x": {
+        "name": "x",
+        "definition": "totale*p/100",
+        "description": "la parte venduta (intera)"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "p",
+      "totale",
+      "x"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Magliette in magazzino:</p>",
+        "minValue": "totale",
+        "maxValue": "totale",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

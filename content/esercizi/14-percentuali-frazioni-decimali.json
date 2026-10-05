@@ -1,0 +1,123 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "Percentuali, frazioni e decimali",
+    "description": "Riconoscere il numero decimale e la frazione equivalenti a una percentuale.",
+    "yearLevel": 1,
+    "topic": "percentuali",
+    "tags": [
+      "percentuali",
+      "INVALSI",
+      "Numeri",
+      "equivalenze",
+      "frazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "Percentuali, frazioni e decimali",
+    "statement": "<p>Considera la percentuale \\(\\var{p}\\%\\).</p>",
+    "advice": "<p>Una percentuale è una frazione con denominatore \\(100\\): \\(\\var{p}\\% = \\frac{\\var{p}}{100}\\). Dividendo per \\(100\\) si ottiene il numero decimale \\(\\var{d}\\); semplificando la frazione si ottiene \\(\\frac{\\var{num}}{\\var{den}}\\).</p>",
+    "variables": {
+      "i": {
+        "name": "i",
+        "definition": "random(0..4)",
+        "description": "quale percentuale si sceglie dall'elenco"
+      },
+      "p": {
+        "name": "p",
+        "definition": "[5, 20, 25, 40, 50][i]",
+        "description": "la percentuale"
+      },
+      "num": {
+        "name": "num",
+        "definition": "[1, 1, 1, 2, 1][i]",
+        "description": "numeratore della frazione ridotta"
+      },
+      "den": {
+        "name": "den",
+        "definition": "[20, 5, 4, 5, 2][i]",
+        "description": "denominatore della frazione ridotta"
+      },
+      "d": {
+        "name": "d",
+        "definition": "p/100",
+        "description": "il numero decimale equivalente"
+      }
+    },
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [
+      "i",
+      "p",
+      "num",
+      "den",
+      "d"
+    ],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale numero decimale è uguale a \\(\\var{p}\\%\\)?</p>",
+        "choices": [
+          "<p>\\(\\var{d}\\)</p>",
+          "<p>\\(\\var{p/10}\\)</p>",
+          "<p>\\(\\var{p}\\)</p>",
+          "<p>\\(\\var{100/p}\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "Hai diviso per \\(10\\) invece che per \\(100\\): \\(\\var{p}\\%\\) vuol dire \\(\\var{p}\\) centesimi.",
+          "Hai tolto il simbolo di percentuale senza dividere per \\(100\\): \\(\\var{p}\\%\\) vale \\(\\var{p} \\div 100\\), non \\(\\var{p}\\).",
+          "Hai calcolato \\(100 \\div \\var{p}\\), cioè il contrario: la percentuale si divide per \\(100\\), non il contrario."
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Quale frazione è uguale a \\(\\var{p}\\%\\)?</p>",
+        "choices": [
+          "<p>\\(\\frac{\\var{num}}{\\var{den}}\\)</p>",
+          "<p>\\(\\frac{\\var{p}}{10}\\)</p>",
+          "<p>\\(\\frac{1}{\\var{p}}\\)</p>",
+          "<p>\\(\\frac{\\var{p}}{1000}\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "Il denominatore di una percentuale è sempre \\(100\\), non \\(10\\): \\(\\var{p}\\% = \\frac{\\var{p}}{100}\\).",
+          "\\(\\frac{1}{\\var{p}}\\) è l'inverso di \\(\\var{p}\\), non la sua percentuale: \\(\\var{p}\\% = \\frac{\\var{p}}{100}\\).",
+          "Il denominatore di una percentuale è \\(100\\), non \\(1000\\) (quello sarebbe il per mille)."
+        ]
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { jme, loadQuestion, variables, type NumbasQuestionJSON, type Question } from "@savint/engine";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { opzioniMotore } from "@/lib/esercizi/opzioni-motore";
 
 export interface ValoriSorteggiatiProps {
   content: NumbasQuestionJSON;
@@ -76,7 +77,7 @@ function parteCheDecide(content: NumbasQuestionJSON): NumbasQuestionJSON {
 function valoriDelSeme(content: NumbasQuestionJSON, seme: string, nomi: string[]): string[] | undefined {
   let caricata: Question;
   try {
-    caricata = loadQuestion(content, { seed: seme, locale: "it" });
+    caricata = loadQuestion(content, { seed: seme, ...opzioniMotore("it") });
   } catch {
     return undefined;
   }

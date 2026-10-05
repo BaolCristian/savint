@@ -71,6 +71,7 @@ export interface ScopeExtras {
   caseSensitive?: boolean;
   rng?: Rng;
   locale?: Locale;
+  numberStyle?: string;
   question?: unknown;
 }
 
@@ -185,6 +186,14 @@ export class Scope {
    * predefinita del processo" (`getLocale()`), che resta il comportamento per
    * chi non ne indica nessuna. Vedi DIVERGENCES.md. */
   declare locale?: Locale;
+  /** Lo stile con cui MOSTRARE i numeri (es. `"plain-eu"`, la virgola
+   * decimale), letto da `Texifier`, da `tokenToDisplayString` e da
+   * `dpformat`/`sigformat` senza stile esplicito. Mai dal codice JME che il
+   * motore rilegge. Viaggia come `locale`.
+   *
+   * upstream: non esiste — i numeri si mostrano sempre col punto. Vedi
+   * DIVERGENCES.md, «Stile dei numeri mostrati». */
+  declare numberStyle?: string;
   /** La domanda a cui appartiene lo scope: riferimento opaco, riempito dal
    * Task 9. */
   declare question?: unknown;
@@ -229,6 +238,9 @@ export class Scope {
       if (this.parent.locale !== undefined) {
         this.locale = this.parent.locale;
       }
+      if (this.parent.numberStyle !== undefined) {
+        this.numberStyle = this.parent.numberStyle;
+      }
       // il figlio eredita il generatore casuale del genitore, per riferimento:
       // le estrazioni continuano la stessa sequenza.
       this.rng = this.parent.rng;
@@ -271,6 +283,9 @@ export class Scope {
       if (extras.locale !== undefined) {
         this.locale = extras.locale;
       }
+      if (extras.numberStyle !== undefined) {
+        this.numberStyle = extras.numberStyle;
+      }
     }
   }
 
@@ -293,6 +308,9 @@ export class Scope {
     }
     if (this.locale !== undefined) {
       scope.locale = this.locale;
+    }
+    if (this.numberStyle !== undefined) {
+      scope.numberStyle = this.numberStyle;
     }
     scope.rng = this.rng;
     return scope;

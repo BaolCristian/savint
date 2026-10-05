@@ -259,12 +259,18 @@ export class NumberEntryPart extends PartBase {
   }
 
   // numberentry.js:270-276
-  /** Ripulisce la risposta dello studente: per ora solo gli spazi ai bordi. */
+  /** Ripulisce la risposta dello studente: gli spazi ai bordi e, divergenza
+   * di SAVINT, un solo «%» finale (vedi DIVERGENCES.md, «Simbolo di
+   * percentuale nelle risposte numeriche»). «15%» si legge 15, non 0,15: il
+   * simbolo si toglie, non diventa una divisione. Un «%» da solo, o un
+   * secondo «%», restano e rendono la risposta non valida. */
   cleanAnswer(answer: unknown): string {
     if (answer === undefined) {
       return "";
     }
-    return String(answer).trim();
+    const pulita = String(answer).trim();
+    const senzaPercento = /^([^%]*\S)\s*%$/.exec(pulita);
+    return senzaPercento ? (senzaPercento[1] as string) : pulita;
   }
 
   // numberentry.js:279-281

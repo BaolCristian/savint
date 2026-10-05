@@ -33,18 +33,44 @@ const Decimal = math.Decimal;
 /** Un token numerico che può portare l'informazione di precisione. */
 type WithPrecision = { precisionType?: "dp" | "sigfig" | undefined; precision?: number | undefined };
 
+/** Il risultato di `dpformat`/`sigformat` su un numero. Upstream lo segna
+ * come LaTeX (`latex: true`), e in una formula entra così com'è. Con lo stile
+ * della domanda (SAVINT, `Scope.numberStyle`) la stringa può contenere una
+ * virgola, che in modalità matematica KaTeX spazia come una punteggiatura
+ * («0, 765»): allora NON la si segna come LaTeX, e una formula la mostra come
+ * testo, con la virgola al suo posto. Senza stile, il comportamento upstream. */
+function stringaNumerica(testo: string, s: Scope): TString {
+  const t = new TString(testo);
+  if (s.numberStyle === undefined) {
+    t.latex = true;
+  }
+  return t;
+}
+
+/** `dpformat`/`sigformat` su un decimale esatto: upstream `toFixed`/
+ * `toPrecision`, cioè sempre il punto. Con lo stile della domanda il numero
+ * reale si riscrive in quello stile (vedi `stringaNumerica`). */
+function stileDecimale(testo: string, a: math.ComplexDecimal, s: Scope): TString {
+  if (s.numberStyle === undefined || !a.isReal()) {
+    return new TString(testo);
+  }
+  return new TString(math.formatNumberNotation(testo, s.numberStyle));
+}
+
 // jme-builtins.js:1917-1990
 /** `dpformat`, `sigformat`, `formatnumber`, `string`, `parsenumber`,
  * `with_precision`, `imprecise`. */
 export function registerNumberFormatting(scope: Scope): void {
-  add(
-    scope,
-    "dpformat",
-    [TNum, TNum],
-    TString,
-    (n: math.NumbasNumber, p: number) => math.niceNumber(n, { precisionType: "dp", precision: p }),
-    { latex: true },
-  );
+  // SAVINT: senza uno stile esplicito, `dpformat` e `sigformat` usano lo
+  // stile dei numeri mostrati della domanda (`Scope.numberStyle`), così un
+  // importo nel testo esce «41,20» e non «41.20». Vedi DIVERGENCES.md, «Stile
+  // dei numeri mostrati». Uno stile scritto dall'autore vince sempre.
+  add(scope, "dpformat", [TNum, TNum], TString, null, {
+    evaluate: (args, s) => {
+      const [n, p] = (args as Token[]).map((a) => unwrapValue(a)) as [math.NumbasNumber, number];
+      return stringaNumerica(math.niceNumber(n, { precisionType: "dp", precision: p, style: s.numberStyle }), s);
+    },
+  });
   add(
     scope,
     "dpformat",
@@ -54,15 +80,18 @@ export function registerNumberFormatting(scope: Scope): void {
       math.niceNumber(n, { precisionType: "dp", precision: p, style: style }),
     { latex: true },
   );
-  add(scope, "dpformat", [TDecimal, TNum], TString, (a: math.ComplexDecimal, dp: number) => a.toFixed(dp));
-  add(
-    scope,
-    "sigformat",
-    [TNum, TNum],
-    TString,
-    (n: math.NumbasNumber, p: number) => math.niceNumber(n, { precisionType: "sigfig", precision: p }),
-    { latex: true },
-  );
+  add(scope, "dpformat", [TDecimal, TNum], TString, null, {
+    evaluate: (args, s) => {
+      const [a, dp] = (args as Token[]).map((x) => unwrapValue(x)) as [math.ComplexDecimal, number];
+      return stileDecimale(a.toFixed(dp), a, s);
+    },
+  });
+  add(scope, "sigformat", [TNum, TNum], TString, null, {
+    evaluate: (args, s) => {
+      const [n, p] = (args as Token[]).map((a) => unwrapValue(a)) as [math.NumbasNumber, number];
+      return stringaNumerica(math.niceNumber(n, { precisionType: "sigfig", precision: p, style: s.numberStyle }), s);
+    },
+  });
   add(
     scope,
     "sigformat",
@@ -72,7 +101,12 @@ export function registerNumberFormatting(scope: Scope): void {
       math.niceNumber(n, { precisionType: "sigfig", precision: p, style: style }),
     { latex: true },
   );
-  add(scope, "sigformat", [TDecimal, TNum], TString, (a: math.ComplexDecimal, sf: number) => a.toPrecision(sf));
+  add(scope, "sigformat", [TDecimal, TNum], TString, null, {
+    evaluate: (args, s) => {
+      const [a, sf] = (args as Token[]).map((x) => unwrapValue(x)) as [math.ComplexDecimal, number];
+      return stileDecimale(a.toPrecision(sf), a, s);
+    },
+  });
   add(scope, "formatnumber", [TDecimal, TString], TString, (n: math.ComplexDecimal, style: string) =>
     math.niceComplexDecimal(n, { style: style }),
   );

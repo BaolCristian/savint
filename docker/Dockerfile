@@ -35,6 +35,13 @@ COPY public ./public
 COPY src ./src
 COPY prisma ./prisma
 COPY next.config.ts tsconfig.json prisma.config.ts components.json postcss.config.mjs ./
+# Gli esercizi pronti e lo script che li carica, con il motore che lo script
+# importa (alias `@savint/engine` in tsconfig.json). Su un'installazione:
+#   docker compose exec app npx tsx scripts/seed-esercizi.ts
+# aggiunge solo gli esercizi che mancano (vedi scripts/seed-esercizi.ts).
+COPY packages/engine/src ./packages/engine/src
+COPY content/esercizi ./content/esercizi
+COPY scripts/seed-esercizi.ts ./scripts/seed-esercizi.ts
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3000

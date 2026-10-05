@@ -174,7 +174,7 @@ describe("CampoTestoMatematico: i quattro inserimenti LaTeX", () => {
 });
 
 describe("CampoTestoMatematico: il menu delle variabili", () => {
-  it("elenca i nomi dichiarati nel pannello, e inserisce \\var{nome}", async () => {
+  it("elenca i nomi dichiarati nel pannello, e fuori da una formula inserisce \\(\\var{nome}\\)", async () => {
     montaggio({ variabili: ["a", "b"] });
     const campo = campoDi();
     const menu = screen.getByLabelText(R.inserisciVariabile);
@@ -189,8 +189,20 @@ describe("CampoTestoMatematico: il menu delle variabili", () => {
 
     await userEvent.selectOptions(menu, "a");
 
-    expect(campo.value).toBe("\\var{a}");
-    expect(campo.selectionStart).toBe("\\var{a}".length);
+    // `\var{}` funziona solo dentro una zona matematica: scritto in mezzo al
+    // testo, lo studente leggerebbe «\var48.5».
+    expect(campo.value).toBe("\\(\\var{a}\\)");
+    expect(campo.selectionStart).toBe("\\(\\var{a}\\)".length);
+  });
+
+  it("dentro una formula inserisce \\var{nome} nudo", async () => {
+    montaggio({ valoreIniziale: "\\(x = \\)", variabili: ["a"] });
+    const campo = campoDi();
+    selezionaNelCampo(campo, "\\(x = ".length);
+
+    await userEvent.selectOptions(screen.getByLabelText(R.inserisciVariabile), "a");
+
+    expect(campo.value).toBe("\\(x = \\var{a}\\)");
   });
 
   it("resta scelto il segnaposto dopo l'inserimento: la stessa variabile si può inserire due volte", async () => {
@@ -202,7 +214,7 @@ describe("CampoTestoMatematico: il menu delle variabili", () => {
     selezionaNelCampo(campo, campo.value.length);
     await userEvent.selectOptions(menu, "a");
 
-    expect(campo.value).toBe("\\var{a}\\var{a}");
+    expect(campo.value).toBe("\\(\\var{a}\\)\\(\\var{a}\\)");
   });
 
   // Dentro `\simplify{}` la sintassi è `{a}`, non `\var{a}`: il menu deve

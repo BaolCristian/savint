@@ -2,6 +2,7 @@ import {
   loadQuestion, restoreQuestion,
   type NumbasQuestionJSON, type QuestionState, type MarkingResult, type Locale,
 } from "@savint/engine";
+import { opzioniMotore } from "./opzioni-motore";
 
 export interface EsitoRicalcolo {
   score: number;
@@ -25,8 +26,8 @@ export function ricalcola(
 ): EsitoRicalcolo {
   const json = content as NumbasQuestionJSON;
   const q = state
-    ? restoreQuestion(json, { ...state, seed }, { locale })
-    : loadQuestion(json, { seed, locale });
+    ? restoreQuestion(json, { ...state, seed }, opzioniMotore(locale))
+    : loadQuestion(json, { seed, ...opzioniMotore(locale) });
 
   q.updateScore();
   const punteggio = q.score();

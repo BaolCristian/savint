@@ -4,7 +4,15 @@ import { loadQuestion, type NumbasQuestionJSON } from "@savint/engine";
 import { prisma } from "@/lib/db/client";
 import { esercizioFileSchema, hashContenuto, type EsercizioFile } from "./format/schema";
 
-export interface RisultatoSeed { creati: number; aggiornati: number; invariati: number }
+export interface RisultatoSeed { creati: number; aggiornati: number; invariati: number; lasciati: number }
+
+/** `soloNuovi`: crea gli esercizi che mancano e lascia com'è ogni esercizio
+ * già presente — versioni, titolo, argomento, etichette. È il modo sicuro su
+ * un'installazione in uso: le versioni non registrano chi le ha scritte, e un
+ * file cambiato sopra un esercizio corretto da un docente cancellerebbe la sua
+ * correzione con una versione nuova. Senza l'opzione, il comportamento di
+ * sempre (utile in sviluppo): un file cambiato aggiorna l'esercizio. */
+export interface OpzioniSeed { soloNuovi?: boolean }
 
 /** Un file dell'esercizio, già validato: involucro conforme allo schema e
  * contenuto caricabile dal motore. */
@@ -45,7 +53,7 @@ function valida(dir: string, nome: string): EsercizioValidato {
  * fallimenti della prima passata (invece di fermarsi al primo) così il
  * messaggio nomina ogni file rotto, non solo il primo incontrato; solo se
  * quella passata è completamente pulita si passa alla seconda, che scrive. */
-export async function seedEsercizi(dir: string): Promise<RisultatoSeed> {
+export async function seedEsercizi(dir: string, opzioni: OpzioniSeed = {}): Promise<RisultatoSeed> {
   const nomi = readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
 
   const validati: EsercizioValidato[] = [];
@@ -61,7 +69,22 @@ export async function seedEsercizi(dir: string): Promise<RisultatoSeed> {
     throw new Error(errori.join("\n"));
   }
 
-  const out: RisultatoSeed = { creati: 0, aggiornati: 0, invariati: 0 };
+  const out: RisultatoSeed = { creati: 0, aggiornati: 0, invariati: 0, lasciati: 0 };
+
+  if (opzioni.soloNuovi) {
+    const esistenti = new Set(
+      (await prisma.esercizio.findMany({
+        where: { id: { in: validati.map((v) => v.chiave) } },
+        select: { id: true },
+      })).map((e) => e.id),
+    );
+    for (let i = validati.length - 1; i >= 0; i--) {
+      if (esistenti.has(validati[i]!.chiave)) {
+        validati.splice(i, 1);
+        out.lasciati++;
+      }
+    }
+  }
 
   for (const { chiave, savint, question, hash } of validati) {
     const esercizio = await prisma.esercizio.upsert({

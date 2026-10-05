@@ -87,6 +87,10 @@ export interface DisplaySettings {
   store_precision?: boolean;
   /** Rende `dec("...")` come numero nudo. */
   plaindecimal?: boolean;
+  /** Lo stile dei numeri mostrati (es. `"plain-eu"`), se un numero non ne
+   * porta già uno suo. Divergenza di SAVINT: vedi DIVERGENCES.md, «Stile dei
+   * numeri mostrati». */
+  numberstyle?: string;
   [k: string]: unknown;
 }
 
@@ -186,9 +190,24 @@ export abstract class Displayer<TOut> {
   /** Rende un numero come decimale. */
   abstract real_number(n: number, options: DisplayNumberOptions): TOut;
 
+  /** Lo stile predefinito dei numeri mostrati: quello delle impostazioni.
+   * Il `JMEifier` produce anche codice che il motore rilegge, quindi lo usa
+   * solo se chi lo chiama lo chiede (`tokenToDisplayString`); il `Texifier`,
+   * che produce solo LaTeX da mostrare, ripiega su quello dello scope. */
+  protected defaultNumberStyle(): string | undefined {
+    return this.settings.numberstyle;
+  }
+
+  /** Le opzioni di un numero con lo stile predefinito, se non ne hanno uno. */
+  protected withNumberStyle(options: DisplayNumberOptions): DisplayNumberOptions {
+    const stile = this.defaultNumberStyle();
+    return stile === undefined || options.style !== undefined ? options : { ...options, style: stile };
+  }
+
   // jme-display.js:973-989
   /** Rende un numero, scegliendo fra complesso, frazione e decimale. */
   number(n: math.NumbasNumber, options: DisplayNumberOptions = {}): TOut {
+    options = this.withNumberStyle(options);
     if (math.isComplex(n)) {
       return this.complex_number(n, options);
     } else {
@@ -209,6 +228,7 @@ export abstract class Displayer<TOut> {
   // jme-display.js:1030-1044
   /** Rende un decimale, scegliendo fra complesso, frazione e decimale. */
   decimal(n: math.ComplexDecimal | math.Decimal, options: DisplayNumberOptions = {}): TOut {
+    options = this.withNumberStyle(options);
     const isComplexDecimal = n instanceof math.ComplexDecimal;
     if (isComplexDecimal && !n.isReal()) {
       return this.complex_decimal(n, options);
@@ -335,6 +355,10 @@ export class Texifier extends Displayer<string> {
   typeToTeX: Record<string, TypeToTexFn> = typeToTeX;
   /** Le rese TeX di operatori e funzioni. */
   texOps: Record<string, TexOpFn> = texOps;
+
+  protected override defaultNumberStyle(): string | undefined {
+    return this.settings.numberstyle ?? this.scope.numberStyle;
+  }
 
   // jme-display.js:1057-1098
   override render(tree: Tree | Token | null | undefined): string {

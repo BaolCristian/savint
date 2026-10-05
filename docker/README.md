@@ -48,6 +48,21 @@ Le migrazioni del database vengono applicate automaticamente all'avvio.
 I dati (database e immagini caricate) vivono nei volume Docker
 `savint-db-data` e `savint-uploads` e sopravvivono agli aggiornamenti.
 
+### Esercizi pronti
+
+L'immagine contiene gli esercizi di esempio (`content/esercizi`, tra cui il
+pacchetto sulle percentuali). Per aggiungerli al catalogo dell'installazione:
+
+```bash
+docker compose exec app npx tsx scripts/seed-esercizi.ts
+```
+
+Il comando aggiunge **solo gli esercizi che mancano**: quelli già presenti,
+anche se un docente li ha modificati, restano come sono. Si può rilanciare dopo
+ogni aggiornamento. Con `--aggiorna` riporta invece ogni esercizio al contenuto
+del suo file, creando una versione nuova: da usare solo se nessuno li ha
+modificati.
+
 ## HTTPS (opzionale)
 
 1. Procurati certificato e chiave (es. con certbot sull'host) e copiali in

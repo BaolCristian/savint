@@ -44,7 +44,7 @@ describe("seed degli esercizi", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "es-"));
     scriviEsercizio(dir, "01-prova.json", "Prova", domanda);
     const r = await seedEsercizi(dir);
-    expect(r).toEqual({ creati: 1, aggiornati: 0, invariati: 0 });
+    expect(r).toEqual({ creati: 1, aggiornati: 0, invariati: 0, lasciati: 0 });
     const versioni = await prisma.esercizioVersione.findMany({ where: { esercizioId: { startsWith: PREFIX } } });
     expect(versioni).toHaveLength(1);
     expect(versioni[0]!.version).toBe(1);
@@ -55,7 +55,7 @@ describe("seed degli esercizi", () => {
     scriviEsercizio(dir, "01-prova.json", "Prova", domanda);
     await seedEsercizi(dir);
     const r = await seedEsercizi(dir);
-    expect(r).toEqual({ creati: 0, aggiornati: 0, invariati: 1 });
+    expect(r).toEqual({ creati: 0, aggiornati: 0, invariati: 1, lasciati: 0 });
     expect(await prisma.esercizioVersione.count({ where: { esercizioId: { startsWith: PREFIX } } })).toBe(1);
   });
 
@@ -65,12 +65,36 @@ describe("seed degli esercizi", () => {
     await seedEsercizi(dir);
     scriviEsercizio(dir, "01-prova.json", "Prova", { ...domanda, statement: "<p>Cambiato</p>" });
     const r = await seedEsercizi(dir);
-    expect(r).toEqual({ creati: 0, aggiornati: 1, invariati: 0 });
+    expect(r).toEqual({ creati: 0, aggiornati: 1, invariati: 0, lasciati: 0 });
     const versioni = await prisma.esercizioVersione.findMany({
       where: { esercizioId: { startsWith: PREFIX } },
       orderBy: { version: "asc" },
     });
     expect(versioni.map((v) => v.version)).toEqual([1, 2]);
+  });
+
+  // In un'installazione in uso un docente può aver corretto un esercizio
+  // seminato: le versioni non registrano chi le ha scritte, quindi il seed non
+  // sa distinguere una sua modifica da una versione vecchia del file. Con
+  // `soloNuovi` crea quello che manca e non tocca niente di esistente —
+  // né le versioni né titolo, argomento ed etichette.
+  it("con soloNuovi crea solo gli esercizi che mancano e lascia intatti gli altri", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "es-"));
+    scriviEsercizio(dir, "01-prova.json", "Prova", domanda);
+    await seedEsercizi(dir);
+    // Il docente ha cambiato l'argomento, e il file nel frattempo è cambiato.
+    await prisma.esercizio.update({ where: { id: `${PREFIX}01-prova` }, data: { topic: "scelto dal docente" } });
+    scriviEsercizio(dir, "01-prova.json", "Prova nuova", { ...domanda, statement: "<p>Cambiato</p>" });
+    scriviEsercizio(dir, "02-nuovo.json", "Nuovo", domanda);
+
+    const r = await seedEsercizi(dir, { soloNuovi: true });
+
+    expect(r).toEqual({ creati: 1, aggiornati: 0, invariati: 0, lasciati: 1 });
+    const esistente = await prisma.esercizio.findUniqueOrThrow({ where: { id: `${PREFIX}01-prova` } });
+    expect(esistente.topic).toBe("scelto dal docente");
+    expect(esistente.title).toBe("Prova");
+    expect(await prisma.esercizioVersione.count({ where: { esercizioId: `${PREFIX}01-prova` } })).toBe(1);
+    expect(await prisma.esercizioVersione.count({ where: { esercizioId: `${PREFIX}02-nuovo` } })).toBe(1);
   });
 
   it("rifiuta un file che il motore non sa caricare", async () => {
