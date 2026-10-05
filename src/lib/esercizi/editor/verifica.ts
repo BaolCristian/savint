@@ -122,7 +122,11 @@ function nomiDichiarati(question: NumbasQuestionJSON): Set<string> {
   const nomi = new Set<string>();
   for (const def of Object.values(question.variables ?? {})) {
     for (const nome of variables.splitVariableNames(def.name ?? "")) {
-      nomi.add(nome);
+      // JME non distingue maiuscole e minuscole (`N` e `n` sono la stessa
+      // variabile per il motore), e gli identificatori del testo arrivano
+      // già in minuscolo: il confronto si fa in minuscolo, o un `N`
+      // dichiarato risulterebbe «non dichiarato».
+      nomi.add(nome.toLowerCase());
     }
   }
   return nomi;
@@ -159,7 +163,7 @@ function erroreTestoStatico(question: NumbasQuestionJSON): EsitoVerifica | undef
       // aspetta un valore su cui decidere.
       return { ok: false, seme: 0, fase: "testo", messaggio: `${campo.descrizione}: ${errorMessageIn(e, "it")}` };
     }
-    const nome = identificatori.find((n) => !dichiarati.has(n));
+    const nome = identificatori.find((n) => !dichiarati.has(n.toLowerCase()));
     if (nome !== undefined) {
       return {
         ok: false,
