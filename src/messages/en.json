@@ -1326,6 +1326,11 @@
     "daRaccoltaAiuto": "A prepared assignment chooses how many exercises to draw from collections. Prepare one before assigning it to a class.",
     "nessunaRaccolta": "You have no prepared assignments yet. Prepare one from collections before assigning it."
     },
+    "grafico": {
+      "descrizione": "Graph of a function for x from {da} to {a}",
+      "segnaposto": "Graph of y = {espressione}, for x from {da} to {a}: it appears in the preview, with drawn values.",
+      "errore": "This graph cannot be drawn."
+    },
     "redazione": {
       "titolo": "Exercise editor",
       "sezioni": {
@@ -1468,6 +1473,21 @@
         "faseTesto": "text",
         "faseCaricamento": "loading",
         "faseRisposta": "answer"
+      },
+      "grafico": {
+        "inserisci": "Insert graph",
+        "titolo": "Insert the graph of a function",
+        "spiegazione": "Write the function with the exercise variables: each student will see the graph with their own values. The formula is not shown in the graph.",
+        "funzione": "y =",
+        "funzioneAiuto": "For example a*x + b, or x^2 - c. Write variables without braces.",
+        "xDa": "x from",
+        "xA": "x to",
+        "yAutomatico": "Automatic y range",
+        "yDa": "y from",
+        "yA": "y to",
+        "conferma": "Insert",
+        "annulla": "Cancel",
+        "nonValido": "Check the function (no braces) and the ranges: the first bound must be less than the second."
       },
       "immagine": {
         "inserisci": "Insert image",

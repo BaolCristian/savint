@@ -25,6 +25,31 @@ describe("verificaSuSemi", () => {
     expect(verificaSuSemi(versoNumbas(base))).toEqual({ ok: true });
   });
 
+  describe("i grafici di funzione", () => {
+    const conGrafico = (funzione: string, intervallo = "-5..5"): EsercizioEditor => ({
+      ...base,
+      testo: `Guarda [grafico: ${funzione} | x: ${intervallo}] e rispondi`,
+    });
+
+    it("un grafico che si calcola passa", () => {
+      expect(verificaSuSemi(versoNumbas(conGrafico("a*x+b")))).toEqual({ ok: true });
+    });
+
+    // Senza questo controllo l'errore comparirebbe solo davanti allo
+    // studente, come un riquadro rosso al posto del grafico.
+    it("una funzione con una variabile non dichiarata non passa, e il messaggio lo dice", () => {
+      const esito = verificaSuSemi(versoNumbas(conGrafico("a*x+c")));
+      expect(esito.ok).toBe(false);
+      if (esito.ok) return;
+      expect(esito.messaggio).toContain("grafico");
+    });
+
+    it("una funzione che non esiste in nessun punto dell'intervallo non passa", () => {
+      const esito = verificaSuSemi(versoNumbas(conGrafico("sqrt(x)", "-5..-1")));
+      expect(esito.ok).toBe(false);
+    });
+  });
+
   // JME non distingue maiuscole e minuscole: il motore legge `N` e `n` come
   // la stessa variabile. Il controllo statico invece confrontava i nomi
   // esatti e rifiutava «la variabile "n" … non è dichiarata» per un `N`

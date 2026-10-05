@@ -1,3 +1,5 @@
+import { campiona } from "../grafici";
+import { graficiNelHtml } from "./immagini-testo";
 import {
   EngineError,
   errorMessageIn,
@@ -111,6 +113,19 @@ function campiTesto(question: NumbasQuestionJSON): CampoTesto[] {
     });
   });
   return campi;
+}
+
+/** I campi in cui l'editor ammette i grafici di funzione: enunciato,
+ * suggerimento e consegne (vedi immagini-testo.ts). */
+function campiConGrafici(question: NumbasQuestionJSON): CampoTesto[] {
+  return [
+    { descrizione: "nel testo dell'esercizio", testo: question.statement ?? "" },
+    { descrizione: "nel suggerimento", testo: question.advice ?? "" },
+    ...(question.parts ?? []).map((parte, i) => ({
+      descrizione: `nella consegna della parte ${i + 1}`,
+      testo: parte.prompt ?? "",
+    })),
+  ];
 }
 
 /** I nomi di variabile dichiarati da `question.variables`: la fonte
@@ -533,6 +548,35 @@ export function verificaSuSemi(question: unknown, quanti: number = SEMI_PREDEFIN
       caricata = loadQuestion(question as NumbasQuestionJSON, { seed: String(seme), ...opzioniMotore("it") });
     } catch (e) {
       return { ok: false, seme, fase: "caricamento", messaggio: messaggioConCausa(e) };
+    }
+
+    // Ogni grafico di funzione deve potersi disegnare con i numeri di
+    // questo seme: un'espressione che non si compila, o che non ha nessun
+    // punto nell'intervallo (una variabile non dichiarata, una radice di
+    // numeri negativi), comparirebbe allo studente come un riquadro
+    // d'errore al posto del grafico.
+    for (const campo of campiConGrafici(question as NumbasQuestionJSON)) {
+      for (const grafico of graficiNelHtml(campo.testo)) {
+        let punti;
+        try {
+          punti = campiona(caricata.scope, grafico.espressione, grafico.x);
+        } catch (e) {
+          return {
+            ok: false,
+            seme,
+            fase: "testo",
+            messaggio: `il grafico di y = ${grafico.espressione} ${campo.descrizione} non si può calcolare: ${messaggioConCausa(e)}`,
+          };
+        }
+        if (punti.every((p) => p.y === null)) {
+          return {
+            ok: false,
+            seme,
+            fase: "testo",
+            messaggio: `il grafico di y = ${grafico.espressione} ${campo.descrizione} non ha nessun punto per x da ${grafico.x[0]} a ${grafico.x[1]}: controlla la funzione e le variabili che usa`,
+          };
+        }
+      }
     }
 
     // Nessuno dei testi GIÀ sostituiti (enunciato, suggerimento, consegna
