@@ -18,25 +18,30 @@ const TARGET_KEYS = [
 ] as const;
 
 /** Due schede: Quiz (il prompt per il file Excel, di partenza) ed Esercizi
- * (il prompt per gli esercizi di matematica da importare in JSON). */
+ * (il prompt per gli esercizi di matematica da importare in JSON). Il
+ * titolo h1 è della pagina, sopra le schede: vale per tutte e due. */
 export default function AiPromptsPage() {
   const t = useTranslations("ai");
 
   return (
-    <Tabs defaultValue="quiz" className="max-w-3xl mx-auto gap-6">
+    <div className="max-w-3xl mx-auto space-y-6">
+      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t("titoloPagina")}</h1>
+      <Tabs defaultValue="quiz" className="gap-6">
       <TabsList aria-label={t("schede.etichetta")}>
         <TabsTrigger value="quiz">{t("schede.quiz")}</TabsTrigger>
         <TabsTrigger value="esercizi">{t("schede.esercizi")}</TabsTrigger>
       </TabsList>
       {/* TabsContent porta `text-sm`: `text-base` lascia i testi della
-          scheda Quiz alla dimensione di prima. */}
-      <TabsContent value="quiz" className="text-base">
+          scheda Quiz alla dimensione di prima. `keepMounted`: cambiando
+          scheda i campi già compilati non si perdono. */}
+      <TabsContent value="quiz" className="text-base" keepMounted>
         <SchedaQuiz />
       </TabsContent>
-      <TabsContent value="esercizi" className="text-base">
+      <TabsContent value="esercizi" className="text-base" keepMounted>
         <PromptEsercizi />
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }
 
@@ -93,9 +98,10 @@ function SchedaQuiz() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+        {/* h2: l'h1 è il titolo della pagina, sopra le schede. */}
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
           {t("title")}
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
           {t("instruction")}{" "}
           {t("importHint")}

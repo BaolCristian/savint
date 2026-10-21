@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
 import messaggiEn from "@/messages/en.json";
@@ -66,6 +66,15 @@ describe("PromptEsercizi", () => {
     );
   });
 
+  it("se la copia negli appunti non riesce lo dice", async () => {
+    writeText.mockRejectedValueOnce(new Error("negato"));
+    monta();
+    fireEvent.click(screen.getByRole("button", { name: testi.copia }));
+    expect(await screen.findByText(testi.copiaNonRiuscita)).toBeInTheDocument();
+    // Il pulsante non finge di aver copiato.
+    expect(screen.queryByText(testi.copiato)).toBeNull();
+  });
+
   it("c'è il link alla pagina di import", () => {
     monta();
     const link = screen.getByRole("link", { name: testi.importa });
@@ -88,6 +97,12 @@ describe("PromptEsercizi", () => {
 });
 
 describe("pagina Prompt IA", () => {
+  /** Il campo Argomento della scheda Quiz, cercato nella sola scheda
+   * visibile: con `keepMounted` anche quella Esercizi ha un "Argomento". */
+  function argomentoQuiz() {
+    return within(screen.getByRole("tabpanel")).getByLabelText(messaggiIt.ai.topicLabel);
+  }
+
   function montaPagina() {
     return render(
       <NextIntlClientProvider locale="it" messages={messaggiIt}>
@@ -100,11 +115,32 @@ describe("pagina Prompt IA", () => {
     montaPagina();
     const quiz = screen.getByRole("tab", { name: messaggiIt.ai.schede.quiz });
     expect(quiz.getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByLabelText(messaggiIt.ai.topicLabel)).toBeTruthy();
-    expect(screen.queryByTestId("prompt-esercizi")).toBeNull();
+    expect(argomentoQuiz()).toBeTruthy();
+    // `keepMounted`: la scheda Esercizi c'è già, ma nascosta.
+    expect(screen.getByTestId("prompt-esercizi")).not.toBeVisible();
 
     fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
-    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
+  });
+
+  it("un solo titolo h1 per la pagina, visibile in entrambe le schede", async () => {
+    montaPagina();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(messaggiIt.ai.titoloPagina);
+
+    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
+    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(messaggiIt.ai.titoloPagina);
+  });
+
+  it("i campi della scheda Quiz restano compilati dopo un giro nella scheda Esercizi", async () => {
+    montaPagina();
+    fireEvent.change(argomentoQuiz(), { target: { value: "Fotosintesi" } });
+    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
+    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
+    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.quiz }));
+    await waitFor(() => expect(argomentoQuiz()).toBeVisible());
+    expect(argomentoQuiz()).toHaveValue("Fotosintesi");
   });
 });
 
@@ -112,5 +148,6 @@ describe("messaggi della scheda Esercizi", () => {
   it("hanno le stesse chiavi in italiano e in inglese", () => {
     expect(Object.keys(messaggiEn.ai.esercizi).sort()).toEqual(Object.keys(messaggiIt.ai.esercizi).sort());
     expect(Object.keys(messaggiEn.ai.schede).sort()).toEqual(Object.keys(messaggiIt.ai.schede).sort());
+    expect(typeof messaggiEn.ai.titoloPagina).toBe("string");
   });
 });

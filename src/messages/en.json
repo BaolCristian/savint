@@ -626,6 +626,7 @@
     "tip": "Tip: after generating the Excel file with the chatbot, download it and import it from the My Quizzes page using the \"Import Excel\" button. SAVINT will validate the file and show you any errors before importing.",
     "downloadError": "Download error",
     "downloadTemplateError": "Error downloading template",
+    "titoloPagina": "Create with AI",
     "schede": {
       "etichetta": "Prompt type",
       "quiz": "Quiz",
@@ -643,6 +644,7 @@
       "quantiAiuto": "From 1 to 30.",
       "copia": "Copy the prompt",
       "copiato": "Copied",
+      "copiaNonRiuscita": "Copy failed",
       "importa": "Import the exercises",
       "importaSuggerimento": "Once the chatbot has replied, open the import page: you can check and try each exercise before saving it."
     },

@@ -37,7 +37,7 @@ export function PromptEsercizi() {
   // Il campo tiene il testo scritto (si può svuotarlo per riscriverlo);
   // il prompt usa sempre il numero riportato fra 1 e 30.
   const [quantiTesto, setQuantiTesto] = useState(String(QUANTI_DI_PARTENZA));
-  const [copiato, setCopiato] = useState(false);
+  const [copia, setCopia] = useState<"no" | "fatta" | "fallita">("no");
 
   const quanti = quantiNeiLimiti(quantiTesto);
   const testoPrompt = useMemo(
@@ -49,10 +49,16 @@ export function PromptEsercizi() {
     [argomento, classe, quanti, locale, t],
   );
 
-  async function copia() {
-    await navigator.clipboard.writeText(testoPrompt);
-    setCopiato(true);
-    setTimeout(() => setCopiato(false), 2000);
+  async function copiaPrompt() {
+    try {
+      await navigator.clipboard.writeText(testoPrompt);
+      setCopia("fatta");
+    } catch {
+      // Appunti negati dal browser (permessi, pagina non sicura): lo si dice,
+      // come nella pagina di import, invece di far credere di aver copiato.
+      setCopia("fallita");
+    }
+    setTimeout(() => setCopia("no"), 2000);
   }
 
   return (
@@ -131,9 +137,9 @@ export function PromptEsercizi() {
       </div>
 
       <div className="relative">
-        <div className="absolute top-3 right-3 z-10">
-          <Button variant="outline" size="sm" onClick={copia} className="bg-white dark:bg-slate-800">
-            {copiato ? (
+        <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
+          <Button variant="outline" size="sm" onClick={copiaPrompt} className="bg-white dark:bg-slate-800">
+            {copia === "fatta" ? (
               <>
                 <Check className="size-4 mr-1.5 text-emerald-600" />
                 {t("copiato")}
@@ -145,6 +151,7 @@ export function PromptEsercizi() {
               </>
             )}
           </Button>
+          {copia === "fallita" && <p className="text-xs text-destructive">{t("copiaNonRiuscita")}</p>}
         </div>
         <pre
           data-testid="prompt-esercizi"
