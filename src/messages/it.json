@@ -87,7 +87,16 @@
     "darkMode": "Modalita scura",
     "logout": "Esci",
     "openMenu": "Apri menu",
-    "navigationMenu": "Menu di navigazione"
+    "navigationMenu": "Menu di navigazione",
+    "sectionQuiz": "Quiz",
+    "sectionExercises": "Esercizi",
+    "createQuizWithAI": "Crea quiz con l'IA",
+    "exercisesOverview": "Panoramica",
+    "myExercises": "I miei esercizi",
+    "createExercisesWithAI": "Crea esercizi con l'IA",
+    "importExercises": "Importa esercizi",
+    "assignments": "Compiti",
+    "classes": "Classi"
   },
   "login": {
     "loginWithSchoolAccount": "Accedi con il tuo account scolastico",
@@ -626,13 +635,8 @@
     "tip": "Suggerimento: dopo aver generato il file Excel con il chatbot, scaricalo e importalo dalla pagina I miei Quiz usando il bottone \"Importa Excel\". SAVINT validera il file e ti mostrerà eventuali errori prima dell'importazione.",
     "downloadError": "Errore nel download",
     "downloadTemplateError": "Errore nel download del template",
-    "titoloPagina": "Crea con l'IA",
-    "schede": {
-      "etichetta": "Tipo di prompt",
-      "quiz": "Quiz",
-      "esercizi": "Esercizi"
-    },
     "esercizi": {
+      "titoloPagina": "Crea esercizi con l'IA",
       "titolo": "Esercizi di matematica con l'IA",
       "istruzioni": "Scegli argomento, classe e quanti esercizi, copia il prompt e incollalo nel tuo chatbot preferito (ChatGPT, Gemini, Claude, Copilot...). Il chatbot risponderà con un JSON: copialo e incollalo nella pagina di import.",
       "argomento": "Argomento",

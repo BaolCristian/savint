@@ -14,7 +14,7 @@ const QUANTI_MIN = 1;
 const QUANTI_MAX = 30;
 const QUANTI_DI_PARTENZA = 5;
 
-/** `promptEsercizi` non controlla i limiti: lo fa la scheda. Un campo vuoto
+/** `promptEsercizi` non controlla i limiti: lo fa questo modulo. Un campo vuoto
  * o illeggibile vale il minimo, così il prompt mostrato è sempre sensato. */
 function quantiNeiLimiti(valore: string): number {
   const n = Math.trunc(Number(valore));
@@ -25,9 +25,9 @@ function quantiNeiLimiti(valore: string): number {
 const CLASSE_CAMPO =
   "w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
-/** La scheda "Esercizi" della pagina Prompt IA: il docente sceglie argomento,
- * classe e quanti esercizi, copia il prompt per un'IA esterna e poi importa
- * il JSON che ne esce dalla pagina di import della redazione. */
+/** Il modulo della pagina "Crea esercizi con l'IA": il docente sceglie
+ * argomento, classe e quanti esercizi, copia il prompt per un'IA esterna e
+ * poi importa il JSON che ne esce dalla pagina di import della redazione. */
 export function PromptEsercizi() {
   const t = useTranslations("ai.esercizi");
   const locale = useLocale() === "en" ? "en" : "it";

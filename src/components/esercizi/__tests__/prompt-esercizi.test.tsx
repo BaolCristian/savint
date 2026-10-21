@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
 import messaggiEn from "@/messages/en.json";
 import { promptEsercizi } from "@/lib/esercizi/importa/prompt";
 
 import { PromptEsercizi } from "../prompt-esercizi";
-import AiPromptsPage from "../page";
 
 const testi = messaggiIt.ai.esercizi;
 const writeText = vi.fn();
@@ -96,58 +95,8 @@ describe("PromptEsercizi", () => {
   });
 });
 
-describe("pagina Prompt IA", () => {
-  /** Il campo Argomento della scheda Quiz, cercato nella sola scheda
-   * visibile: con `keepMounted` anche quella Esercizi ha un "Argomento". */
-  function argomentoQuiz() {
-    return within(screen.getByRole("tabpanel")).getByLabelText(messaggiIt.ai.topicLabel);
-  }
-
-  function montaPagina() {
-    return render(
-      <NextIntlClientProvider locale="it" messages={messaggiIt}>
-        <AiPromptsPage />
-      </NextIntlClientProvider>,
-    );
-  }
-
-  it("parte dalla scheda Quiz, e la scheda Esercizi mostra il prompt degli esercizi", async () => {
-    montaPagina();
-    const quiz = screen.getByRole("tab", { name: messaggiIt.ai.schede.quiz });
-    expect(quiz.getAttribute("aria-selected")).toBe("true");
-    expect(argomentoQuiz()).toBeTruthy();
-    // `keepMounted`: la scheda Esercizi c'è già, ma nascosta.
-    expect(screen.getByTestId("prompt-esercizi")).not.toBeVisible();
-
-    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
-    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
-  });
-
-  it("un solo titolo h1 per la pagina, visibile in entrambe le schede", async () => {
-    montaPagina();
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(messaggiIt.ai.titoloPagina);
-
-    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
-    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(messaggiIt.ai.titoloPagina);
-  });
-
-  it("i campi della scheda Quiz restano compilati dopo un giro nella scheda Esercizi", async () => {
-    montaPagina();
-    fireEvent.change(argomentoQuiz(), { target: { value: "Fotosintesi" } });
-    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.esercizi }));
-    await waitFor(() => expect(screen.getByTestId("prompt-esercizi")).toBeVisible());
-    fireEvent.click(screen.getByRole("tab", { name: messaggiIt.ai.schede.quiz }));
-    await waitFor(() => expect(argomentoQuiz()).toBeVisible());
-    expect(argomentoQuiz()).toHaveValue("Fotosintesi");
-  });
-});
-
-describe("messaggi della scheda Esercizi", () => {
+describe("messaggi della pagina Crea esercizi con l'IA", () => {
   it("hanno le stesse chiavi in italiano e in inglese", () => {
     expect(Object.keys(messaggiEn.ai.esercizi).sort()).toEqual(Object.keys(messaggiIt.ai.esercizi).sort());
-    expect(Object.keys(messaggiEn.ai.schede).sort()).toEqual(Object.keys(messaggiIt.ai.schede).sort());
-    expect(typeof messaggiEn.ai.titoloPagina).toBe("string");
   });
 });
