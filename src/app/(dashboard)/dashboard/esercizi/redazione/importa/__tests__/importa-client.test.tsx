@@ -83,8 +83,44 @@ describe("ImportaClient", () => {
     incolla("questo non è json");
     fireEvent.click(screen.getByRole("button", { name: testi.controlla }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(testi.erroreTesto.non_json);
+    expect((await screen.findByRole("alert")).textContent).toMatch(/^Il testo non è JSON valido: \S/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("con le virgolette tipografiche l'errore è una sola frase, tradotta, con il dettaglio e il consiglio", async () => {
+    let dettaglio = "";
+    try {
+      JSON.parse("{“esercizi”: []}");
+    } catch (e) {
+      dettaglio = (e as Error).message;
+    }
+    monta();
+    incolla("{“esercizi”: []}");
+    fireEvent.click(screen.getByRole("button", { name: testi.controlla }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(
+      `Il testo non è JSON valido: ${dettaglio} Controlla le virgolette: devono essere " e non “ ”.`,
+    );
+    expect(alert.textContent!.match(/non è JSON valido/g)).toHaveLength(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("se la copia negli appunti non riesce lo dice", async () => {
+    writeText.mockRejectedValueOnce(new Error("negato"));
+    await controllaTre();
+    const scheda = screen.getAllByRole("article")[1]!;
+    fireEvent.click(within(scheda).getByRole("button", { name: testi.copiaErrore }));
+    expect(await within(scheda).findByText(testi.copiaNonRiuscita)).toBeInTheDocument();
+  });
+
+  it("durante il controllo il testo non si può cambiare", async () => {
+    fetchMock.mockImplementationOnce(() => new Promise<Response>(() => {}));
+    monta();
+    incolla(JSON.stringify(ELEMENTI));
+    fireEvent.click(screen.getByRole("button", { name: testi.controlla }));
+    await waitFor(() => expect(screen.getByLabelText(testi.incolla)).toHaveAttribute("readonly"));
+    expect(screen.getByLabelText(testi.file)).toBeDisabled();
   });
 
   it("un file .json scelto riempie l'area di testo", async () => {

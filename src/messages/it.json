@@ -1642,7 +1642,8 @@
         "controlloInCorso": "Controllo in corso…",
         "erroreTesto": {
           "vuoto": "Non c'è nessun esercizio: incolla il JSON generato dall'IA.",
-          "non_json": "Il testo non è JSON valido.",
+          "non_json": "Il testo non è JSON valido: {dettaglio}",
+          "virgolette": "Controlla le virgolette: devono essere \" e non “ ”.",
           "troppi": "Troppi esercizi in un colpo solo: al massimo {max} per import. Dividi il file."
         },
         "erroreFile": "Non è stato possibile leggere il file.",
@@ -1663,6 +1664,7 @@
         "giaNelFile": "Ripete l'esercizio «{titolo}» di questo stesso file",
         "copiaErrore": "Copia l'errore per l'IA",
         "copiato": "Copiato",
+        "copiaNonRiuscita": "Copia non riuscita",
         "seme": "Sorteggio {seme}",
         "altriNumeri": "Altri numeri",
         "importa": "{n, plural, one {Importa # esercizio} other {Importa # esercizi}}",

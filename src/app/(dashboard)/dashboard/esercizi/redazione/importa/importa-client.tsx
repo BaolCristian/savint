@@ -17,7 +17,8 @@ type ErroreServer = "invalid_body" | "troppo_grande" | "rate_limited" | "non_aut
 /** L'errore mostrato sopra l'elenco: o del testo (prima di chiamare il
  * server, da `estraiEsercizi`) o della risposta di una rotta. */
 type Errore =
-  | { tipo: "testo"; motivo: "vuoto" | "non_json" | "troppi"; dettaglio: string }
+  | { tipo: "testo"; motivo: "vuoto" | "troppi" }
+  | { tipo: "testo"; motivo: "non_json"; dettaglio: string; virgolette: boolean }
   | { tipo: "file" }
   | { tipo: "server"; codice: ErroreServer };
 
@@ -103,7 +104,7 @@ function SchedaEsito({
   const t = useTranslations("esercizi.redazione.importa");
   const tBase = useTranslations("esercizi");
   const tMeta = useTranslations("esercizi.redazione.meta");
-  const [copiato, setCopiato] = useState(false);
+  const [copia, setCopia] = useState<"no" | "fatta" | "fallita">("no");
 
   const titolo = esito.titolo ?? t("esercizioNumero", { numero: esito.indice + 1 });
   const meta = metaGrezza(elemento);
@@ -115,11 +116,17 @@ function SchedaEsito({
     gia_presente: { testo: t("statoGiaPresente"), classe: "bg-brand-orange/15 text-brand-orange" },
   }[esito.stato];
 
-  async function copia() {
+  async function copiaErrore() {
     if (esito.stato === "ok") return;
-    await navigator.clipboard.writeText(testoErrorePerIA(esito));
-    setCopiato(true);
-    setTimeout(() => setCopiato(false), 2000);
+    try {
+      await navigator.clipboard.writeText(testoErrorePerIA(esito));
+      setCopia("fatta");
+    } catch {
+      // Appunti negati dal browser (permessi, pagina non sicura): lo si dice,
+      // invece di lasciar credere che il testo sia stato copiato.
+      setCopia("fallita");
+    }
+    setTimeout(() => setCopia("no"), 2000);
   }
 
   return (
@@ -172,9 +179,12 @@ function SchedaEsito({
       )}
 
       {esito.stato !== "ok" && (
-        <Button type="button" variant="outline" size="sm" onClick={copia}>
-          {copiato ? t("copiato") : t("copiaErrore")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={copiaErrore}>
+            {copia === "fatta" ? t("copiato") : t("copiaErrore")}
+          </Button>
+          {copia === "fallita" && <p className="text-xs text-destructive">{t("copiaNonRiuscita")}</p>}
+        </div>
       )}
     </article>
   );
@@ -219,7 +229,13 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
     setControllo(null);
     const estratto = estraiEsercizi(testo);
     if (!estratto.ok) {
-      setErrore({ tipo: "testo", motivo: estratto.motivo, dettaglio: estratto.messaggio });
+      // `messaggio` di estrai è in italiano: qui si traduce, prendendo da
+      // estrai solo il dettaglio tecnico e il segnale delle virgolette.
+      setErrore(
+        estratto.motivo === "non_json"
+          ? { tipo: "testo", motivo: "non_json", dettaglio: estratto.dettaglio, virgolette: estratto.virgolette }
+          : { tipo: "testo", motivo: estratto.motivo },
+      );
       return;
     }
     setControlloInCorso(true);
@@ -288,7 +304,10 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
         ? errore.motivo === "troppi"
           ? t("erroreTesto.troppi", { max: MAX_ESERCIZI_IMPORT })
           : errore.motivo === "non_json"
-            ? `${t("erroreTesto.non_json")} ${errore.dettaglio}`
+            ? [
+                t("erroreTesto.non_json", { dettaglio: errore.dettaglio }),
+                errore.virgolette ? t("erroreTesto.virgolette") : null,
+              ].filter(Boolean).join(" ")
             : t("erroreTesto.vuoto")
         : errore.tipo === "file"
           ? t("erroreFile")
@@ -303,6 +322,9 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
             id="importa-file"
             type="file"
             accept=".json,application/json"
+            // Durante il controllo il testo resta quello mandato al server:
+            // così le schede corrispondono sempre al testo che si vede.
+            disabled={controlloInCorso}
             className="block text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1 file:text-sm"
             onChange={(e) => void caricaFile(e.target.files?.[0])}
           />
@@ -314,6 +336,7 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
             value={testo}
             onChange={(e) => cambiaTesto(e.target.value)}
             spellCheck={false}
+            readOnly={controlloInCorso}
             className="max-h-96 min-h-40 font-mono text-xs"
           />
         </div>

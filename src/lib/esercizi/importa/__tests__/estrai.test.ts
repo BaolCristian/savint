@@ -20,6 +20,25 @@ describe("estraiEsercizi", () => {
     expect(r).toMatchObject({ ok: false, motivo: "non_json" });
     expect((r as { messaggio: string }).messaggio).toMatch(/JSON/);
   });
+  // Per il client, che traduce: il dettaglio grezzo di JSON.parse e se nel
+  // JSON ci sono virgolette tipografiche, separati dalla frase italiana.
+  it("non_json porta il dettaglio di JSON.parse e il segnale delle virgolette", () => {
+    let atteso = "";
+    try {
+      JSON.parse("{“esercizi”: []}");
+    } catch (e) {
+      atteso = (e as Error).message;
+    }
+    expect(estraiEsercizi("{“esercizi”: []}")).toMatchObject({
+      ok: false, motivo: "non_json", dettaglio: atteso, virgolette: true,
+    });
+  });
+  it("non_json senza virgolette tipografiche nel JSON → virgolette: false", () => {
+    // Le virgolette nella frase di cortesia fuori dal JSON non contano.
+    expect(estraiEsercizi("Ecco “il file”: {\"a\": 1,}")).toMatchObject({
+      ok: false, motivo: "non_json", virgolette: false,
+    });
+  });
   it("più di 30 → troppi", () =>
     expect(estraiEsercizi(JSON.stringify(Array(31).fill(es)))).toMatchObject({ ok: false, motivo: "troppi" }));
   it("array vuoto → vuoto", () => expect(estraiEsercizi("[]")).toMatchObject({ ok: false, motivo: "vuoto" }));

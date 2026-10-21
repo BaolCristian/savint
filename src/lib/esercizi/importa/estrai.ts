@@ -13,7 +13,10 @@ export const MAX_ESERCIZI_IMPORT = 30;
 
 export type EsitoEstrazione =
   | { ok: true; elementi: unknown[] }
-  | { ok: false; motivo: "vuoto" | "non_json" | "troppi"; messaggio: string };
+  | { ok: false; motivo: "vuoto" | "troppi"; messaggio: string }
+  // `dettaglio` (il messaggio grezzo di JSON.parse) e `virgolette` servono al
+  // client, che traduce la frase invece di mostrare `messaggio`, in italiano.
+  | { ok: false; motivo: "non_json"; messaggio: string; dettaglio: string; virgolette: boolean };
 
 /** Il primo blocco recintato ```...``` (con o senza `json`): le IA spesso
  * avvolgono il JSON in un blocco di codice con una frase prima e dopo. */
@@ -44,15 +47,24 @@ export function estraiEsercizi(testo: string): EsitoEstrazione {
     return { ok: false, motivo: "vuoto", messaggio: "Il testo è vuoto: incolla il JSON generato dall'IA." };
   }
 
+  const ritaglio = ritagliaJson(pulito);
   let valore: unknown;
   try {
-    valore = JSON.parse(ritagliaJson(pulito));
+    valore = JSON.parse(ritaglio);
   } catch (e) {
     const dettaglio = e instanceof Error ? e.message : String(e);
     // Le virgolette tipografiche sono l'errore più comune quando il testo
     // passa da un programma di videoscrittura: vale la pena dirlo esplicito.
     const virgolette = /[“”]/.test(pulito) ? " — controlla le virgolette: devono essere \" e non “ ”" : "";
-    return { ok: false, motivo: "non_json", messaggio: `Il testo non è JSON valido: ${dettaglio}${virgolette}` };
+    return {
+      ok: false,
+      motivo: "non_json",
+      messaggio: `Il testo non è JSON valido: ${dettaglio}${virgolette}`,
+      dettaglio,
+      // Sul solo pezzo JSON: le virgolette tipografiche nelle frasi di
+      // cortesia attorno non sono un errore.
+      virgolette: /[“”]/.test(ritaglio),
+    };
   }
 
   // Tre forme accettate: l'involucro { "esercizi": [...] }, l'array nudo,
