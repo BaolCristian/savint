@@ -116,9 +116,10 @@ TIPI DI PARTE (scegli tu il tipo più adatto a ogni domanda). Ogni parte ha "tip
   "risposte": da 2 a 6 stringhe; "indiceGiusta": posizione della risposta giusta, contando da 0 (0 = la prima). Le risposte vengono mescolate per lo studente.
   Facoltativo "spiegazioni": array lungo quanto "risposte", con il commento per chi sceglie quella risposta ("" per la risposta giusta).
 - "sceltaMultipla": più risposte giuste, corretta tutto o niente.
-  "risposte": da 2 a 8 stringhe; "corrette": array di true/false lungo esattamente quanto "risposte", con almeno un true. Facoltativo "spiegazioni" come sopra.
+  "risposte": da 2 a 8 stringhe; "corrette": array di true/false lungo esattamente quanto "risposte", con almeno un true. Facoltativo "spiegazioni": array lungo quanto "risposte", con il commento mostrato a chi sbaglia QUELLA risposta (la spunta se è falsa o non la spunta se è giusta), quindi anche una risposta giusta può averne uno; "" dove non serve.
 - "espressione": la risposta è un'espressione o un polinomio.
   "risposta": l'espressione corretta in sintassi JME (es. "2*x^2 - 3*x"); viene confrontata numericamente, quindi le forme equivalenti sono accettate.
+  In "risposta" ogni variabile casuale va SEMPRE tra graffe, così viene sostituita dal suo valore: "{a}*x + {b}", non "a*x + b" (senza graffe la risposta attesa resterebbe con le lettere e lo studente che scrive i numeri giusti verrebbe corretto come sbagliato). Le lettere senza graffe (qui x) sono le incognite che lo studente scrive.
 
 VARIABILI CASUALI (sintassi JME di Numbas)
 Ogni studente riceve numeri diversi. Una variabile ha un "nome" (lettere, cifre e _, inizia con una lettera; maiuscole e minuscole NON contano, quindi non usare due nomi che differiscono solo per le maiuscole, e non usare nomi riservati come e, i, pi, x se x è l'incognita), una "definizione" e una "descrizione".
@@ -130,7 +131,7 @@ Preferisci costruire l'esercizio a ritroso, partendo dalla soluzione, così che 
 "condizione" scarta i sorteggi degeneri e il motore risorteggia: per esempio "x1 <> x2 or y1 <> y2" esclude A = B; "a <> 0", "delta > 0". Lascia "" se non serve. Non renderla troppo stretta: deve essere vera per buona parte dei sorteggi.
 
 COME SCRIVERE I TESTI ("testo", "suggerimento", "consegna", "risposte", "spiegazioni")
-- Testo semplice in italiano: niente HTML, niente Markdown.
+- Testo semplice in italiano: niente HTML, niente Markdown. Ogni campo è un solo paragrafo: gli a capo vengono ignorati.
 - Ogni formula, numero con segno o variabile va tra \( e \), in LaTeX: \(x^2 - 4 = 0\), \(\dfrac{a}{b}\), \(\sqrt{2}\).
 - Il valore di una variabile si scrive \var{nome}, SEMPRE dentro \( \): \(\var{a}\). Fuori da \( \) non viene sostituito. Dentro \var{} puoi mettere un'espressione: \(\var{x2 - x1}\), \(\var{dpformat(d, 2)}\) (2 cifre decimali).
 - Per un polinomio con coefficienti casuali usa \simplify{ } con ogni variabile tra graffe: \(\simplify{ {a}x + {b} } = 0\) (sistema da solo segni e coefficienti 1).
@@ -181,9 +182,10 @@ PART TYPES (choose the most suitable type for each question). Every part has "ti
   "risposte": 2 to 6 strings; "indiceGiusta": position of the correct answer, counting from 0 (0 = the first). Answers are shuffled for the student.
   Optional "spiegazioni": array as long as "risposte", with the comment for whoever picks that answer ("" for the correct one).
 - "sceltaMultipla": several correct answers, marked all or nothing.
-  "risposte": 2 to 8 strings; "corrette": array of true/false exactly as long as "risposte", with at least one true. Optional "spiegazioni" as above.
+  "risposte": 2 to 8 strings; "corrette": array of true/false exactly as long as "risposte", with at least one true. Optional "spiegazioni": array as long as "risposte", with the comment shown to whoever gets THAT answer wrong (ticks it when false, or leaves it unticked when true), so even a correct answer may have one; "" where not needed.
 - "espressione": the answer is an expression or polynomial.
   "risposta": the correct expression in JME syntax (e.g. "2*x^2 - 3*x"); it is compared numerically, so equivalent forms are accepted.
+  In "risposta" ALWAYS put every random variable in braces, so it is replaced by its value: "{a}*x + {b}", not "a*x + b" (without braces the expected answer would keep the letters and a student typing the right numbers would be marked wrong). Letters without braces (here x) are the unknowns the student types.
 
 RANDOM VARIABLES (Numbas JME syntax)
 Every student gets different numbers. A variable has a "nome" (letters, digits and _, starting with a letter; names are case-insensitive, so never use two names differing only in case, and avoid reserved names such as e, i, pi, or x when x is the unknown), a "definizione" and a "descrizione".
@@ -195,7 +197,7 @@ Prefer building the exercise backwards from the solution so the numbers come out
 "condizione" discards degenerate draws and the engine draws again: e.g. "x1 <> x2 or y1 <> y2" excludes A = B; "a <> 0", "delta > 0". Leave "" if not needed. Do not make it too strict: it must hold for most draws.
 
 HOW TO WRITE THE TEXTS ("testo", "suggerimento", "consegna", "risposte", "spiegazioni")
-- Plain text: no HTML, no Markdown.
+- Plain text: no HTML, no Markdown. Each field is a single paragraph: line breaks are ignored.
 - Every formula, signed number or variable goes between \( and \), in LaTeX: \(x^2 - 4 = 0\), \(\dfrac{a}{b}\), \(\sqrt{2}\).
 - A variable's value is written \var{name}, ALWAYS inside \( \): \(\var{a}\). Outside \( \) it is not substituted. Inside \var{} you may put an expression: \(\var{x2 - x1}\), \(\var{dpformat(d, 2)}\) (2 decimal places).
 - For a polynomial with random coefficients use \simplify{ } with every variable in braces: \(\simplify{ {a}x + {b} } = 0\) (it tidies signs and coefficients equal to 1).
