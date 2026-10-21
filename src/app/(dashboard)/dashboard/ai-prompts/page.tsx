@@ -5,6 +5,8 @@ import { Copy, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslations } from "next-intl";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PromptEsercizi } from "./prompt-esercizi";
 
 const TARGET_KEYS = [
   "primarySchool",
@@ -15,7 +17,31 @@ const TARGET_KEYS = [
   "adultEducation",
 ] as const;
 
+/** Due schede: Quiz (il prompt per il file Excel, di partenza) ed Esercizi
+ * (il prompt per gli esercizi di matematica da importare in JSON). */
 export default function AiPromptsPage() {
+  const t = useTranslations("ai");
+
+  return (
+    <Tabs defaultValue="quiz" className="max-w-3xl mx-auto gap-6">
+      <TabsList aria-label={t("schede.etichetta")}>
+        <TabsTrigger value="quiz">{t("schede.quiz")}</TabsTrigger>
+        <TabsTrigger value="esercizi">{t("schede.esercizi")}</TabsTrigger>
+      </TabsList>
+      {/* TabsContent porta `text-sm`: `text-base` lascia i testi della
+          scheda Quiz alla dimensione di prima. */}
+      <TabsContent value="quiz" className="text-base">
+        <SchedaQuiz />
+      </TabsContent>
+      <TabsContent value="esercizi" className="text-base">
+        <PromptEsercizi />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+/** La scheda Quiz: la pagina com'era prima delle schede, invariata. */
+function SchedaQuiz() {
   const t = useTranslations("ai");
   const tc = useTranslations("common");
   const promptTemplate = t("prompt");
