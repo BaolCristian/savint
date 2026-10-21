@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-client";
 
+/** Un conteggio da `searchParams`: solo un intero non negativo, altrimenti
+ * `null` (l'URL lo scrive chiunque, l'avviso non deve mostrare "NaN"). */
+function conteggio(valore: string | undefined): number | null {
+  if (valore === undefined || !/^\d+$/.test(valore)) return null;
+  return Number(valore);
+}
+
 /** L'elenco della redazione: solo due degli otto esercizi seminati sono
  * modificabili con questo editor — gli altri usano costrutti che non sa
  * ricostruire fedelmente, e il rifiuto di `daNumbas` porta con sé il
@@ -26,21 +33,15 @@ import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-clien
  * "Duplica" (`testi.duplica*`, sotto) è di nuovo offerto — solo sulle righe
  * già modificabili, non su quelle di sola lettura: vedi il commento in
  * `redazione-elenco-client.tsx`. */
-/** Un conteggio da `searchParams`: solo un intero non negativo, altrimenti
- * `null` (l'URL lo scrive chiunque, l'avviso non deve mostrare "NaN"). */
-function conteggio(valore: string | undefined): number | null {
-  if (valore === undefined || !/^\d+$/.test(valore)) return null;
-  return Number(valore);
-}
-
 export default async function Page({
   searchParams,
 }: {
   searchParams?: Promise<{ importati?: string; saltati?: string }>;
 } = {}) {
   await redirectUnlessTeacher();
-  // `?importati=N&saltati=M`: ci torna la pagina di import a lavoro finito
-  // (importa/importa-client.tsx), per dire com'è andata.
+  // `?importati=N&saltati=M`: ci torna la pagina di import quando tutti gli
+  // esercizi mandati sono stati salvati (importa/importa-client.tsx); se
+  // qualcuno non lo è, la pagina di import resta aperta e lo elenca.
   const parametri = (await searchParams) ?? {};
   const importati = conteggio(parametri.importati);
   const saltati = conteggio(parametri.saltati) ?? 0;

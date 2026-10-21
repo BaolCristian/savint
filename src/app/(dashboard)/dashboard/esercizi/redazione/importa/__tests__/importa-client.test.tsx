@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
+import messaggiEn from "@/messages/en.json";
 
 // Il player vero monta il motore Numbas: qui serve solo sapere che riceve il
 // `content` della verifica, in modalità locale, e che "Altri numeri" cambia
@@ -191,6 +192,53 @@ describe("ImportaClient", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("se qualche esercizio non si salva resta sulla pagina e lo elenca, con il link all'elenco", async () => {
+    // Due esercizi ok al controllo: all'import il primo si crea, il secondo no.
+    fetchMock.mockImplementationOnce(() =>
+      risposta(200, {
+        esiti: [
+          ESITI_CONTROLLO[1],
+          { indice: 1, stato: "ok", titolo: "Secondo", content: {} },
+          { indice: 2, stato: "ok", titolo: "Terzo", content: {} },
+        ],
+      }),
+    );
+    monta();
+    incolla(JSON.stringify({ esercizi: ELEMENTI }));
+    fireEvent.click(screen.getByRole("button", { name: testi.controlla }));
+    await screen.findByText("Terzo");
+
+    // Il server numera gli esiti sull'array mandato (solo gli ok): 0 e 1.
+    fetchMock.mockImplementationOnce(() =>
+      risposta(200, {
+        esiti: [
+          { indice: 0, stato: "creato", titolo: "Secondo", esercizioId: "e1" },
+          { indice: 1, stato: "errore", titolo: "Terzo", messaggio: "salvataggio non riuscito, riprova" },
+        ],
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Importa 2 esercizi" }));
+
+    expect(await screen.findByText(testi.erroreSalvataggio)).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+    const schede = screen.getAllByRole("article");
+    expect(schede).toHaveLength(2);
+    expect(within(schede[0]!).getByText("Secondo")).toBeInTheDocument();
+    expect(within(schede[0]!).getByText(testi.statoCreato)).toBeInTheDocument();
+    expect(within(schede[1]!).getByText("Terzo")).toBeInTheDocument();
+    expect(within(schede[1]!).getByText(testi.statoErrore)).toBeInTheDocument();
+    // Un errore di salvataggio non è da correggere con l'IA: niente copia.
+    expect(within(schede[1]!).queryByRole("button", { name: testi.copiaErrore })).toBeNull();
+    expect(screen.getByText("1 esercizio importato, 1 non importato.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: testi.tornaElenco })).toHaveAttribute(
+      "href",
+      "/dashboard/esercizi/redazione",
+    );
+    // Il testo resta: "Controlla" di nuovo è il modo di riprovare.
+    expect(screen.getByLabelText(testi.incolla)).toHaveValue(JSON.stringify({ esercizi: ELEMENTI }));
+    expect(screen.getByRole("button", { name: testi.controlla })).toBeEnabled();
+  });
+
   it("senza esercizi ok il pulsante Importa è disabilitato", async () => {
     fetchMock.mockImplementationOnce(() => risposta(200, { esiti: [ESITI_CONTROLLO[1]] }));
     monta();
@@ -212,5 +260,20 @@ describe("ImportaClient", () => {
     await controllaTre();
     incolla("[]");
     expect(screen.queryAllByRole("article")).toHaveLength(0);
+  });
+});
+
+describe("messaggi della pagina di import", () => {
+  /** Tutte le chiavi, anche annidate, come percorsi "a.b". */
+  function chiavi(oggetto: object, prefisso = ""): string[] {
+    return Object.entries(oggetto).flatMap(([k, v]) =>
+      typeof v === "object" && v !== null ? chiavi(v, `${prefisso}${k}.`) : [`${prefisso}${k}`],
+    );
+  }
+
+  it("hanno le stesse chiavi in italiano e in inglese", () => {
+    expect(chiavi(messaggiEn.esercizi.redazione.importa).sort()).toEqual(
+      chiavi(messaggiIt.esercizi.redazione.importa).sort(),
+    );
   });
 });

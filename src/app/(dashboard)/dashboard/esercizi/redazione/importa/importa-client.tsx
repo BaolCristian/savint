@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { PlayerEsercizioLazy } from "@/components/esercizi/player/player-esercizio-lazy";
@@ -92,12 +93,15 @@ function AnteprimaImport({ indice, content, locale }: { indice: number; content:
   );
 }
 
+/** Una scheda per esito: del controllo (prima dell'import) o dell'import
+ * (`creato` ed `errore` esistono solo lì, quando qualcosa non è andato e la
+ * pagina resta aperta per dirlo). */
 function SchedaEsito({
   esito,
   elemento,
   locale,
 }: {
-  esito: EsitoControllo;
+  esito: EsitoControllo | EsitoImport;
   elemento: unknown;
   locale: "it" | "en";
 }) {
@@ -114,10 +118,17 @@ function SchedaEsito({
     invalido: { testo: t("statoInvalido"), classe: "bg-destructive/10 text-destructive" },
     verifica_fallita: { testo: t("statoVerificaFallita"), classe: "bg-destructive/10 text-destructive" },
     gia_presente: { testo: t("statoGiaPresente"), classe: "bg-brand-orange/15 text-brand-orange" },
+    creato: { testo: t("statoCreato"), classe: "bg-brand-green/15 text-brand-green" },
+    errore: { testo: t("statoErrore"), classe: "bg-destructive/10 text-destructive" },
   }[esito.stato];
 
+  // Da far correggere all'IA solo i rifiuti dell'esercizio: un `errore` è
+  // un salvataggio fallito, non colpa del JSON (vedi tipi.ts).
+  const daCorreggere =
+    esito.stato === "invalido" || esito.stato === "verifica_fallita" || esito.stato === "gia_presente";
+
   async function copiaErrore() {
-    if (esito.stato === "ok") return;
+    if (!daCorreggere) return;
     try {
       await navigator.clipboard.writeText(testoErrorePerIA(esito));
       setCopia("fatta");
@@ -178,7 +189,10 @@ function SchedaEsito({
         </p>
       )}
 
-      {esito.stato !== "ok" && (
+      {/* Il `messaggio` del server è in italiano: qui il testo tradotto. */}
+      {esito.stato === "errore" && <p className="text-sm">{t("erroreSalvataggio")}</p>}
+
+      {daCorreggere && (
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={copiaErrore}>
             {copia === "fatta" ? t("copiato") : t("copiaErrore")}
@@ -203,6 +217,9 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
   const [controlloInCorso, setControlloInCorso] = useState(false);
   const [controllo, setControllo] = useState<{ elementi: unknown[]; esiti: EsitoControllo[] } | null>(null);
   const [importInCorso, setImportInCorso] = useState(false);
+  // Gli esiti dell'import quando non tutti sono `creato`: la pagina resta
+  // aperta per elencarli, invece di tornare all'elenco con un conteggio.
+  const [risultato, setRisultato] = useState<{ elementi: unknown[]; esiti: EsitoImport[] } | null>(null);
   // Il guardiano vero contro il doppio clic: lo stato `importInCorso`
   // disabilita il pulsante solo al rendering successivo.
   const importAvviato = useRef(false);
@@ -212,6 +229,7 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
     // Gli esiti valgono per il testo controllato: se cambia, vanno rifatti,
     // altrimenti "Importa" manderebbe gli elementi del testo di prima.
     setControllo(null);
+    setRisultato(null);
     setErrore(null);
   }
 
@@ -227,6 +245,7 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
   async function controlla() {
     setErrore(null);
     setControllo(null);
+    setRisultato(null);
     const estratto = estraiEsercizi(testo);
     if (!estratto.ok) {
       // `messaggio` di estrai è in italiano: qui si traduce, prendendo da
@@ -279,9 +298,20 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
         return;
       }
       const corpo = (await res.json()) as { esiti: EsitoImport[] };
-      const creati = corpo.esiti.filter((e) => e.stato === "creato").length;
-      // Saltati: quelli scartati al controllo più quelli che il server ha
-      // rifiutato all'import (doppioni nel frattempo, errori di salvataggio).
+      // Il server numera gli esiti sull'array mandato (i soli `ok`): si
+      // riportano agli indici del testo, perché le schede leggano l'elemento
+      // giusto e un esercizio senza titolo abbia il numero che ha nel file.
+      const esiti = corpo.esiti.map((e) => ({ ...e, indice: daImportare[e.indice]?.indice ?? e.indice }));
+      const creati = esiti.filter((e) => e.stato === "creato").length;
+      if (creati < daImportare.length) {
+        // Qualcuno non è stato salvato (errore, doppione nel frattempo,
+        // verifica fallita): si resta qui a dirlo. Il testo resta com'è, e
+        // "Controlla" di nuovo è il modo di riprovare.
+        setControllo(null);
+        setRisultato({ elementi: controllo.elementi, esiti });
+        return;
+      }
+      // Saltati: quelli scartati al controllo.
       const saltati = controllo.esiti.length - creati;
       finito = true;
       router.push(`/dashboard/esercizi/redazione?importati=${creati}&saltati=${saltati}`);
@@ -349,6 +379,33 @@ export function ImportaClient({ locale }: { locale: "it" | "en" }) {
         <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {testoErrore}
         </p>
+      )}
+
+      {risultato && (
+        <>
+          <div className="space-y-1 rounded-lg border p-4" role="status">
+            <p className="font-medium">
+              {t("risultato", {
+                importati: risultato.esiti.filter((e) => e.stato === "creato").length,
+                nonImportati: risultato.esiti.filter((e) => e.stato !== "creato").length,
+              })}
+            </p>
+            <p className="text-sm text-muted-foreground">{t("riprova")}</p>
+          </div>
+          <div className="space-y-3">
+            {risultato.esiti.map((esito) => (
+              <SchedaEsito
+                key={esito.indice}
+                esito={esito}
+                elemento={risultato.elementi[esito.indice]}
+                locale={locale}
+              />
+            ))}
+          </div>
+          <Link href="/dashboard/esercizi/redazione" className={buttonVariants({ variant: "outline" })}>
+            {t("tornaElenco")}
+          </Link>
+        </>
       )}
 
       {controllo && (
