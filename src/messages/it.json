@@ -1629,7 +1629,45 @@
         "motivoGenerico": "Questo esercizio non può essere aperto in questo editor.",
         "nonModificabileTitolo": "Non modificabile in questo editor",
         "nessunEsercizio": "Nessun esercizio ancora.",
-        "anteprima": "Anteprima"
+        "anteprima": "Anteprima",
+        "importa": "Importa da file",
+        "importati": "{importati, plural, =0 {Nessun esercizio importato} one {# esercizio importato} other {# esercizi importati}}{saltati, plural, =0 {.} one {, # saltato (non valido, già presente o non salvato).} other {, # saltati (non validi, già presenti o non salvati).}}"
+      },
+      "importa": {
+        "titolo": "Importa esercizi da JSON",
+        "spiegazione": "Incolla il JSON generato dall'IA, oppure carica il file .json. Savint controlla ogni esercizio con la stessa verifica dell'editor e ti mostra l'anteprima prima di importarlo.",
+        "file": "Carica un file .json",
+        "incolla": "Oppure incolla qui il JSON",
+        "controlla": "Controlla",
+        "controlloInCorso": "Controllo in corso…",
+        "erroreTesto": {
+          "vuoto": "Non c'è nessun esercizio: incolla il JSON generato dall'IA.",
+          "non_json": "Il testo non è JSON valido.",
+          "troppi": "Troppi esercizi in un colpo solo: al massimo {max} per import. Dividi il file."
+        },
+        "erroreFile": "Non è stato possibile leggere il file.",
+        "erroreServer": {
+          "invalid_body": "La richiesta non è valida: ricontrolla il JSON e riprova.",
+          "troppo_grande": "Il JSON è troppo grande (massimo 1 MB): dividilo in più import.",
+          "rate_limited": "Troppe richieste in poco tempo: aspetta un minuto e riprova.",
+          "non_autorizzato": "La sessione è scaduta o non hai i permessi: rientra come docente.",
+          "generico": "Qualcosa è andato storto. Riprova."
+        },
+        "esercizioNumero": "Esercizio n. {numero}",
+        "statoOk": "Pronto da importare",
+        "statoInvalido": "Non valido",
+        "statoVerificaFallita": "Non supera la verifica",
+        "statoGiaPresente": "Già presente",
+        "verificaFallita": "Fase «{fase}», seme {seme}: {messaggio}",
+        "giaImportato": "Già importato come «{titolo}»",
+        "giaNelFile": "Ripete l'esercizio «{titolo}» di questo stesso file",
+        "copiaErrore": "Copia l'errore per l'IA",
+        "copiato": "Copiato",
+        "seme": "Sorteggio {seme}",
+        "altriNumeri": "Altri numeri",
+        "importa": "{n, plural, one {Importa # esercizio} other {Importa # esercizi}}",
+        "importaInCorso": "Importazione in corso…",
+        "saltati": "{n, plural, one {# esercizio con problemi verrà saltato.} other {# esercizi con problemi verranno saltati.}}"
       }
     },
     "anteprimaDocente": {
