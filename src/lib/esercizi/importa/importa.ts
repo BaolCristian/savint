@@ -115,7 +115,9 @@ async function controlla(elementi: unknown[]): Promise<Controllato[]> {
   });
   const titoloPerHash = new Map(esistenti.map((v) => [v.hash, v.esercizio.title]));
 
-  // Dentro lo stesso import, il primo vince e i successivi sono doppioni.
+  // Dentro lo stesso import, il primo vince e i successivi sono doppioni
+  // (`nelFile`: il gemello è nel file stesso, non già salvato in Savint).
+  const primoNelFile = new Map<string, string>();
   return risultati.map((r) => {
     const hash = hashPerIndice.get(r.esito.indice);
     if (hash === undefined || r.esito.stato !== "ok") return r;
@@ -123,7 +125,13 @@ async function controlla(elementi: unknown[]): Promise<Controllato[]> {
     if (titoloEsistente !== undefined) {
       return { esito: { indice: r.esito.indice, stato: "gia_presente", titolo: r.esito.titolo, titoloEsistente } };
     }
-    titoloPerHash.set(hash, r.esito.titolo);
+    const gemello = primoNelFile.get(hash);
+    if (gemello !== undefined) {
+      return {
+        esito: { indice: r.esito.indice, stato: "gia_presente", titolo: r.esito.titolo, titoloEsistente: gemello, nelFile: true },
+      };
+    }
+    primoNelFile.set(hash, r.esito.titolo);
     return r;
   });
 }
@@ -148,7 +156,24 @@ export async function importaEsercizi(elementi: unknown[], authorId: string): Pr
       continue;
     }
     if (input === undefined) throw new Error("esito ok senza input: non dovrebbe succedere");
-    const creato = await creaEsercizio(input, authorId);
+    // `creaEsercizio` trasforma in valore solo il rifiuto della verifica:
+    // la sua transazione può comunque lanciare (database irraggiungibile,
+    // vincolo violato...). Un'eccezione qui interromperebbe il ciclo a metà,
+    // con gli esercizi precedenti già scritti e nessun resoconto per il
+    // docente: la si chiude invece sull'elemento, e il ciclo prosegue.
+    let creato: Awaited<ReturnType<typeof creaEsercizio>>;
+    try {
+      creato = await creaEsercizio(input, authorId);
+    } catch (e) {
+      console.error(`[importa] salvataggio dell'esercizio n. ${esito.indice + 1} non riuscito`, e);
+      esiti.push({
+        indice: esito.indice,
+        stato: "errore",
+        titolo: esito.titolo,
+        messaggio: "salvataggio non riuscito, riprova",
+      });
+      continue;
+    }
     if (creato.ok) {
       esiti.push({ indice: esito.indice, stato: "creato", titolo: esito.titolo, esercizioId: creato.esercizioId });
       continue;

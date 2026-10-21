@@ -16,10 +16,14 @@ export type EsitoControllo =
       titolo: string;
       dettaglio: { seme: number; fase: string; messaggio: string };
     }
-  | { indice: number; stato: "gia_presente"; titolo: string; titoloEsistente: string };
+  | { indice: number; stato: "gia_presente"; titolo: string; titoloEsistente: string; nelFile?: true };
 
 export type EsitoImport =
   | { indice: number; stato: "creato"; titolo: string; esercizioId: string }
+  // Il salvataggio è fallito per un motivo che non dipende dall'esercizio
+  // (database, rete...): non è un errore da far correggere all'IA, per
+  // questo `testoErrorePerIA` non lo accetta.
+  | { indice: number; stato: "errore"; titolo: string; messaggio: string }
   | Exclude<EsitoControllo, { stato: "ok" }>;
 
 const CHIUSURA = "Correggi l'esercizio e rimandami tutto il JSON, non solo l'esercizio corretto.";
@@ -39,10 +43,11 @@ export function testoErrorePerIA(esito: Exclude<EsitoControllo, { stato: "ok" }>
       const { seme, fase, messaggio } = esito.dettaglio;
       return `${nome} non supera la verifica automatica (fase "${fase}", seme ${seme}): ${messaggio}\n${CHIUSURA}`;
     }
-    case "gia_presente":
-      return (
-        `${nome} è identico a un esercizio già presente ("${esito.titoloEsistente}"). ` +
-        `Sostituiscilo con un esercizio diverso e rimandami tutto il JSON.`
-      );
+    case "gia_presente": {
+      const dove = esito.nelFile
+        ? `ripete un esercizio precedente dello stesso JSON ("${esito.titoloEsistente}")`
+        : `è identico a un esercizio già presente in Savint ("${esito.titoloEsistente}")`;
+      return `${nome} ${dove}. Sostituiscilo con un esercizio diverso e rimandami tutto il JSON.`;
+    }
   }
 }

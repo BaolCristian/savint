@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { prisma } from "@/lib/db/client";
 import { controllaImport, importaEsercizi } from "../importa/importa";
 import { testoErrorePerIA } from "../importa/tipi";
@@ -12,6 +12,23 @@ import type { EsercizioEditor } from "../editor/modello";
 // con quello di un esercizio di un altro file: il controllo dei doppioni
 // interroga TUTTE le versioni salvate.
 const PREFIX = "importatest-";
+
+// Per provare un salvataggio che LANCIA (database, vincoli...) senza
+// rompere davvero il database: `creaEsercizio` vero per tutti, tranne che
+// per un titolo che contiene questo marcatore. `authorId` non ha una chiave
+// esterna nello schema, quindi un autore inesistente non basterebbe.
+const ESPLODE = "ESPLODE";
+vi.mock("../redazione", async (importOriginal) => {
+  const originale = await importOriginal<typeof import("../redazione")>();
+  return {
+    ...originale,
+    creaEsercizio: async (...args: Parameters<typeof originale.creaEsercizio>) => {
+      // Letterale e non `ESPLODE`: `vi.mock` è sollevato sopra le costanti.
+      if (args[0].meta.titolo.includes("ESPLODE")) throw new Error("connessione al database persa");
+      return originale.creaEsercizio(...args);
+    },
+  };
+});
 
 let docenteId: string;
 
@@ -92,7 +109,8 @@ describe("controllaImport", () => {
   it("stesso esercizio due volte nel file → il secondo gia_presente", async () => {
     const r = await controllaImport([valido("F"), valido("F")]);
     expect(r.map((x) => x.stato)).toEqual(["ok", "gia_presente"]);
-    expect(r[1]).toMatchObject({ titoloEsistente: `${PREFIX}F` });
+    expect(r[1]).toMatchObject({ titoloEsistente: `${PREFIX}F`, nelFile: true });
+    expect(r[0]).not.toHaveProperty("nelFile");
   });
 });
 
@@ -138,6 +156,19 @@ describe("importaEsercizi", () => {
     });
   });
 
+  it("un salvataggio che lancia diventa errore e gli altri vengono creati", async () => {
+    const spia = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await importaEsercizi([valido(`${ESPLODE}-I`), valido("J")], docenteId);
+    expect(r.map((x) => x.stato)).toEqual(["errore", "creato"]);
+    expect(r[0]).toMatchObject({ indice: 0, titolo: `${PREFIX}${ESPLODE}-I`, messaggio: "salvataggio non riuscito, riprova" });
+    // Il testo grezzo del database resta nel log del server, non arriva al docente.
+    expect(JSON.stringify(r[0])).not.toContain("connessione");
+    expect(spia).toHaveBeenCalled();
+    spia.mockRestore();
+    const riga = await prisma.esercizio.findFirst({ where: { title: `${PREFIX}J` } });
+    expect(riga?.authorId).toBe(docenteId);
+  });
+
   it("un elemento rotto non blocca gli altri", async () => {
     const r = await importaEsercizi([null, valido("H")], docenteId);
     expect(r.map((x) => x.stato)).toEqual(["invalido", "creato"]);
@@ -169,6 +200,10 @@ describe("testoErrorePerIA", () => {
     expect(v).toMatch(/tutto il JSON/);
     const g = testoErrorePerIA({ indice: 0, stato: "gia_presente", titolo: "T", titoloEsistente: "Vecchio" });
     expect(g).toContain("Vecchio");
+    expect(g).toContain("Savint");
     expect(g).toMatch(/tutto il JSON/);
+    const f = testoErrorePerIA({ indice: 1, stato: "gia_presente", titolo: "T", titoloEsistente: "T", nelFile: true });
+    expect(f).toMatch(/stesso JSON/);
+    expect(f).not.toContain("Savint");
   });
 });
