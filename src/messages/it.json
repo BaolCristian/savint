@@ -626,6 +626,28 @@
     "tip": "Suggerimento: dopo aver generato il file Excel con il chatbot, scaricalo e importalo dalla pagina I miei Quiz usando il bottone \"Importa Excel\". SAVINT validera il file e ti mostrerà eventuali errori prima dell'importazione.",
     "downloadError": "Errore nel download",
     "downloadTemplateError": "Errore nel download del template",
+    "titoloPagina": "Crea con l'IA",
+    "schede": {
+      "etichetta": "Tipo di prompt",
+      "quiz": "Quiz",
+      "esercizi": "Esercizi"
+    },
+    "esercizi": {
+      "titolo": "Esercizi di matematica con l'IA",
+      "istruzioni": "Scegli argomento, classe e quanti esercizi, copia il prompt e incollalo nel tuo chatbot preferito (ChatGPT, Gemini, Claude, Copilot...). Il chatbot risponderà con un JSON: copialo e incollalo nella pagina di import.",
+      "argomento": "Argomento",
+      "argomentoPlaceholder": "es. piano cartesiano, equazioni di secondo grado...",
+      "argomentoSegnaposto": "[ARGOMENTO]",
+      "classe": "Classe",
+      "classeOpzione": "{anno}ª superiore",
+      "quanti": "Quanti esercizi",
+      "quantiAiuto": "Da 1 a 30.",
+      "copia": "Copia il prompt",
+      "copiato": "Copiato",
+      "copiaNonRiuscita": "Copia non riuscita",
+      "importa": "Importa gli esercizi",
+      "importaSuggerimento": "Quando il chatbot ha risposto, apri la pagina di import: potrai controllare e provare ogni esercizio prima di salvarlo."
+    },
     "prompt": "Sei un assistente per la creazione di quiz didattici. Devi generare un file Excel (.xlsx) compatibile con la piattaforma SAVINT.\n\nIl file deve contenere 6 fogli, uno per ogni tipo di domanda. Usa ESATTAMENTE i nomi dei fogli e delle colonne indicati qui sotto.\n\n---\n\n📋 FOGLIO 1: \"Scelta Multipla\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Opzione1 | Opzione2 | Opzione3 | Opzione4 | Opzione5 | Opzione6 | Corretta\n\n- Da 2 a 6 opzioni per domanda\n- \"Corretta\" indica il numero dell'opzione corretta (es. \"1\" oppure \"1,3\" se più di una è corretta)\n- Tempo in secondi (default: 30), Punti (default: 1000), Confidenza: S o N (default: N)\n\n📋 FOGLIO 2: \"Vero o Falso\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Risposta (V/F)\n\n- Risposta: \"V\" per vero, \"F\" per falso\n\n📋 FOGLIO 3: \"Risposta Aperta\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Risposta1 | Risposta2 | Risposta3\n\n- Inserisci le risposte accettate (il confronto è case-insensitive)\n- Almeno una risposta obbligatoria\n\n📋 FOGLIO 4: \"Ordinamento\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Elemento1 | Elemento2 | Elemento3 | Elemento4 | Elemento5 | Elemento6\n\n- Inserisci gli elementi NELL'ORDINE CORRETTO (da 2 a 6 elementi)\n- La piattaforma li mescolerà automaticamente durante il quiz\n\n📋 FOGLIO 5: \"Stima Numerica\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Valore Corretto | Tolleranza | Range Massimo | Unità\n\n- Valore Corretto: il numero esatto\n- Tolleranza: margine entro cui il punteggio è pieno\n- Range Massimo: oltre questo margine il punteggio è zero\n- Unità: opzionale (es. \"km\", \"milioni\", \"°C\")\n\n📋 FOGLIO 6: \"Abbinamenti\"\nColonne: Domanda | Tempo (sec) | Punti | Confidenza (S/N) | Sinistra1 | Destra1 | Sinistra2 | Destra2 | Sinistra3 | Destra3 | Sinistra4 | Destra4\n\n- Inserisci le coppie di abbinamento affiancate (Sinistra1-Destra1 è la prima coppia, ecc.)\n- Servono almeno 2 coppie, massimo 4\n- La piattaforma mescolerà gli elementi di destra durante il quiz\n\n---\n\nREGOLE IMPORTANTI:\n- La prima riga di ogni foglio DEVE essere l'intestazione con i nomi delle colonne esatti\n- La seconda riga è un esempio (verrà ignorata all'importazione)\n- I dati delle domande partono dalla riga 3\n- Le colonne Tempo, Punti e Confidenza sono opzionali (verranno usati i default)\n- I fogli vuoti vengono ignorati, non serve riempirli tutti\n- Genera il file .xlsx, NON un file .csv\n\nOra crea un quiz sull'argomento: [ARGOMENTO]\nDestinatari: [TARGET, es. scuola primaria, scuola media, scuola superiore (biennio), scuola superiore (triennio), università, formazione adulti]\nLingua delle domande e risposte: [LINGUA, es. italiano, inglese, francese...]\n\nAdatta il livello di difficoltà, il linguaggio e la complessità delle domande al target indicato. Genera almeno 10 domande distribuite su diversi tipi. Usa un mix di difficoltà adeguato al livello. Scrivi TUTTE le domande, le opzioni di risposta e le risposte nella lingua indicata."
   },
   "questionHelp": {
@@ -1629,7 +1651,53 @@
         "motivoGenerico": "Questo esercizio non può essere aperto in questo editor.",
         "nonModificabileTitolo": "Non modificabile in questo editor",
         "nessunEsercizio": "Nessun esercizio ancora.",
-        "anteprima": "Anteprima"
+        "anteprima": "Anteprima",
+        "importa": "Importa da file",
+        "importati": "{importati, plural, =0 {Nessun esercizio importato} one {# esercizio importato} other {# esercizi importati}}{saltati, plural, =0 {.} one {, # saltato (non valido, già presente o non salvato).} other {, # saltati (non validi, già presenti o non salvati).}}"
+      },
+      "importa": {
+        "titolo": "Importa esercizi da JSON",
+        "spiegazione": "Incolla il JSON generato dall'IA, oppure carica il file .json. Savint controlla ogni esercizio con la stessa verifica dell'editor e ti mostra l'anteprima prima di importarlo.",
+        "file": "Carica un file .json",
+        "incolla": "Oppure incolla qui il JSON",
+        "controlla": "Controlla",
+        "controlloInCorso": "Controllo in corso…",
+        "erroreTesto": {
+          "vuoto": "Non c'è nessun esercizio: incolla il JSON generato dall'IA.",
+          "non_json": "Il testo non è JSON valido: {dettaglio}",
+          "virgolette": "Controlla le virgolette: devono essere \" e non “ ”.",
+          "troppi": "Troppi esercizi in un colpo solo: al massimo {max} per import. Dividi il file."
+        },
+        "erroreFile": "Non è stato possibile leggere il file.",
+        "erroreServer": {
+          "invalid_body": "La richiesta non è valida: ricontrolla il JSON e riprova.",
+          "troppo_grande": "Il JSON è troppo grande (massimo 1 MB): dividilo in più import.",
+          "rate_limited": "Troppe richieste in poco tempo: aspetta un minuto e riprova.",
+          "non_autorizzato": "La sessione è scaduta o non hai i permessi: rientra come docente.",
+          "generico": "Qualcosa è andato storto. Riprova."
+        },
+        "esercizioNumero": "Esercizio n. {numero}",
+        "statoOk": "Pronto da importare",
+        "statoInvalido": "Non valido",
+        "statoVerificaFallita": "Non supera la verifica",
+        "statoGiaPresente": "Già presente",
+        "statoCreato": "Importato",
+        "statoErrore": "Non salvato",
+        "erroreSalvataggio": "Non salvato per un problema del server: riprova.",
+        "risultato": "{importati, plural, one {# esercizio importato} other {# esercizi importati}}, {nonImportati, plural, one {# non importato} other {# non importati}}.",
+        "riprova": "Per riprovare premi di nuovo «Controlla»: gli esercizi già importati risulteranno «Già presente».",
+        "tornaElenco": "Torna all'elenco",
+        "verificaFallita": "Fase «{fase}», seme {seme}: {messaggio}",
+        "giaImportato": "Già importato come «{titolo}»",
+        "giaNelFile": "Ripete l'esercizio «{titolo}» di questo stesso file",
+        "copiaErrore": "Copia l'errore per l'IA",
+        "copiato": "Copiato",
+        "copiaNonRiuscita": "Copia non riuscita",
+        "seme": "Sorteggio {seme}",
+        "altriNumeri": "Altri numeri",
+        "importa": "{n, plural, one {Importa # esercizio} other {Importa # esercizi}}",
+        "importaInCorso": "Importazione in corso…",
+        "saltati": "{n, plural, one {# esercizio con problemi verrà saltato.} other {# esercizi con problemi verranno saltati.}}"
       }
     },
     "anteprimaDocente": {

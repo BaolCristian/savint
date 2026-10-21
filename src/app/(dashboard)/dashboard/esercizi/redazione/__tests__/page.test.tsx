@@ -27,8 +27,8 @@ beforeEach(() => {
   push.mockReset();
 });
 
-async function rendi() {
-  render(await Page());
+async function rendi(parametri?: { importati?: string; saltati?: string }) {
+  render(await Page(parametri ? { searchParams: Promise.resolve(parametri) } : {}));
 }
 
 // Task 8: l'elenco della redazione. Deve distinguere a vista modificabile
@@ -180,5 +180,27 @@ describe("elenco della redazione", () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();
     expect(screen.getByText("nessunEsercizio")).toBeInTheDocument();
+  });
+
+  // Import da JSON: il pulsante accanto a "Nuovo esercizio", e l'avviso con
+  // cui la pagina di import riporta qui il docente.
+  it("offre il link alla pagina di import", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([]);
+    await rendi();
+    expect(screen.getByRole("link", { name: "importa" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/redazione/importa",
+    );
+  });
+
+  it("dopo un import mostra l'avviso con i conteggi", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([]);
+    await rendi({ importati: "3", saltati: "1" });
+    expect(screen.getByRole("status")).toHaveTextContent('importati:{"importati":3,"saltati":1}');
+  });
+
+  it("senza parametri di import non mostra nessun avviso", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([]);
+    await rendi();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });
