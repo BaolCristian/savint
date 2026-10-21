@@ -87,7 +87,16 @@
     "darkMode": "Dark mode",
     "logout": "Log out",
     "openMenu": "Open menu",
-    "navigationMenu": "Navigation menu"
+    "navigationMenu": "Navigation menu",
+    "sectionQuiz": "Quizzes",
+    "sectionExercises": "Exercises",
+    "createQuizWithAI": "Create quizzes with AI",
+    "exercisesOverview": "Overview",
+    "myExercises": "My exercises",
+    "createExercisesWithAI": "Create exercises with AI",
+    "importExercises": "Import exercises",
+    "assignments": "Assignments",
+    "classes": "Classes"
   },
   "login": {
     "loginWithSchoolAccount": "Sign in with your school account",
@@ -626,13 +635,8 @@
     "tip": "Tip: after generating the Excel file with the chatbot, download it and import it from the My Quizzes page using the \"Import Excel\" button. SAVINT will validate the file and show you any errors before importing.",
     "downloadError": "Download error",
     "downloadTemplateError": "Error downloading template",
-    "titoloPagina": "Create with AI",
-    "schede": {
-      "etichetta": "Prompt type",
-      "quiz": "Quiz",
-      "esercizi": "Exercises"
-    },
     "esercizi": {
+      "titoloPagina": "Create exercises with AI",
       "titolo": "Maths exercises with AI",
       "istruzioni": "Choose the topic, the class and how many exercises, copy the prompt and paste it into your favourite chatbot (ChatGPT, Gemini, Claude, Copilot...). The chatbot will reply with JSON: copy it and paste it into the import page.",
       "argomento": "Topic",

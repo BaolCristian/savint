@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, Library, LogOut, Moon, Sun, ShieldCheck, Globe, Sigma } from "lucide-react";
+import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, Library, LogOut, Moon, Sun, ShieldCheck, Globe, Sigma, FileUp, ClipboardList, Users, type LucideIcon } from "lucide-react";
 import { useTheme } from "@/components/dashboard/theme-provider";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslations } from "next-intl";
@@ -15,23 +15,48 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+type VoceMenu = { href: string; label: string; icon: LucideIcon };
+/** Una sezione del menu: con `titolo` diventa un gruppo con intestazione. */
+type SezioneMenu = { titolo?: string; voci: VoceMenu[] };
+
 function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigate?: () => void; hubEnabled?: boolean }) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const t = useTranslations("sidebar");
 
-  const navItems = [
-    { href: "/dashboard", label: "Home", icon: Home },
-    { href: "/dashboard/quiz", label: t("myQuizzes"), icon: BookOpen },
-    { href: "/dashboard/esercizi", label: t("exercises"), icon: Sigma },
-    { href: "/dashboard/sessions", label: t("sessions"), icon: Play },
-    { href: "/dashboard/stats", label: t("statistics"), icon: BarChart3 },
-    { href: "/dashboard/share", label: t("shares"), icon: Share2 },
-    { href: "/dashboard/library", label: t("library"), icon: Library },
-    { href: "/dashboard/ai-prompts", label: t("createWithAI"), icon: Sparkles },
-    ...(hubEnabled
-      ? [{ href: "/dashboard/hub", label: t("browseRepository"), icon: Globe }]
-      : []),
+  // Home in cima, poi due sezioni — quiz ed esercizi — ciascuna con il suo
+  // prompt per l'IA; in fondo le voci che non appartengono a nessuna delle
+  // due (repository del hub, amministrazione).
+  const sezioni: SezioneMenu[] = [
+    { voci: [{ href: "/dashboard", label: "Home", icon: Home }] },
+    {
+      titolo: t("sectionQuiz"),
+      voci: [
+        { href: "/dashboard/quiz", label: t("myQuizzes"), icon: BookOpen },
+        { href: "/dashboard/sessions", label: t("sessions"), icon: Play },
+        { href: "/dashboard/stats", label: t("statistics"), icon: BarChart3 },
+        { href: "/dashboard/share", label: t("shares"), icon: Share2 },
+        { href: "/dashboard/library", label: t("library"), icon: Library },
+        { href: "/dashboard/ai-prompts", label: t("createQuizWithAI"), icon: Sparkles },
+      ],
+    },
+    {
+      titolo: t("sectionExercises"),
+      voci: [
+        { href: "/dashboard/esercizi", label: t("exercisesOverview"), icon: Sigma },
+        { href: "/dashboard/esercizi/redazione", label: t("myExercises"), icon: BookOpen },
+        { href: "/dashboard/esercizi/prompt-ia", label: t("createExercisesWithAI"), icon: Sparkles },
+        { href: "/dashboard/esercizi/redazione/importa", label: t("importExercises"), icon: FileUp },
+        { href: "/dashboard/esercizi/compiti", label: t("assignments"), icon: ClipboardList },
+        { href: "/dashboard/esercizi/classi", label: t("classes"), icon: Users },
+      ],
+    },
+    {
+      voci: [
+        ...(hubEnabled ? [{ href: "/dashboard/hub", label: t("browseRepository"), icon: Globe }] : []),
+        ...(user?.role === "ADMIN" ? [{ href: "/dashboard/admin", label: "Admin", icon: ShieldCheck }] : []),
+      ],
+    },
   ];
 
   return (
@@ -45,24 +70,37 @@ function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigat
       </div>
 
       {/* Nav */}
-      <nav className="space-y-1 flex-1">
-        {[...navItems, ...(user?.role === "ADMIN" ? [{ href: "/dashboard/admin", label: "Admin", icon: ShieldCheck }] : [])].map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
+      <nav className="space-y-4 flex-1 overflow-y-auto">
+        {sezioni.filter((s) => s.voci.length > 0).map((s, i) => {
+          const voci = s.voci.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={isActive ? "page" : undefined}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-brand-blue-50 dark:bg-brand-blue/10 text-brand-blue dark:text-blue-300 shadow-sm border border-brand-blue/15 dark:border-brand-blue/20"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                <Icon className={`h-5 w-5 ${isActive ? "text-brand-blue dark:text-blue-400" : "text-slate-400 dark:text-slate-500"}`} />
+                {item.label}
+              </Link>
+            );
+          });
+          if (!s.titolo) return <div key={i} className="space-y-1">{voci}</div>;
+          const idTitolo = `sezione-menu-${i}`;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-brand-blue-50 dark:bg-brand-blue/10 text-brand-blue dark:text-blue-300 shadow-sm border border-brand-blue/15 dark:border-brand-blue/20"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-            >
-              <Icon className={`h-5 w-5 ${isActive ? "text-brand-blue dark:text-blue-400" : "text-slate-400 dark:text-slate-500"}`} />
-              {item.label}
-            </Link>
+            <div key={i} role="group" aria-labelledby={idTitolo} className="space-y-1">
+              <p id={idTitolo} className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                {s.titolo}
+              </p>
+              {voci}
+            </div>
           );
         })}
       </nav>
