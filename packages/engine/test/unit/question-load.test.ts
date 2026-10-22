@@ -16,6 +16,7 @@ import { JmeError } from "../../src/jme/errors";
 import { loadQuestion } from "../../src/question";
 import { engineErrorKeys } from "../../src/errors";
 import type { NumbasQuestionJSON } from "../../src/question";
+import { markPart } from "./parts-helpers";
 
 /** La domanda minima del brief: due variabili dipendenti e una parte che le usa. */
 const minimalQuestion: NumbasQuestionJSON = {
@@ -224,6 +225,33 @@ describe("loadQuestion", () => {
       { seed: "s1" },
     );
     expect(q.parts[0]?.promptHtml).toBe("<p>vale 7</p>");
+  });
+
+  // Le spiegazioni delle risposte sbagliate (`distractors`) arrivano allo
+  // studente come feedback della correzione: senza sostituzione mostrava
+  // `\var{a}` letterale.
+  it("le spiegazioni delle scelte (`distractors`) sono sostituite con le variabili", () => {
+    const q = loadQuestion(
+      {
+        variables: { a: { name: "a", definition: "17" } },
+        parts: [
+          {
+            type: "1_n_2",
+            marks: 1,
+            choices: ["{a}+1", "2*{a}"],
+            matrix: [1, 0],
+            distractors: ["", "raddoppi solo $\\var{a}$"],
+          },
+        ],
+      },
+      { seed: "s1" },
+    );
+    const distrattori = (q.parts[0]?.settings as unknown as { distractors: string[][] }).distractors;
+    expect(distrattori[1]?.[0]).toContain("17");
+    expect(distrattori[1]?.[0]).not.toContain("\\var");
+    const messaggi = markPart(q.parts[0]!, 1).states.map((s) => (s as { message?: string }).message ?? "").join(" ");
+    expect(messaggi).toContain("17");
+    expect(messaggi).not.toContain("\\var");
   });
 
   // Giro di correzioni 1: `substituteHtml` va chiamata avvolta da

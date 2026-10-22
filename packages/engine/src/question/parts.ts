@@ -86,6 +86,26 @@ export function substitutePartPrompts(
         error("question.error in part prompt", { path: p.path }, e);
       }
     }
+    // Le spiegazioni delle scelte (`distractors`) delle parti a scelta: il
+    // tema upstream le passa per `contentsubvars` quando le mostra; qui
+    // diventano il messaggio di feedback della correzione, quindi vanno
+    // sostituite ora, come la consegna — altrimenti lo studente legge
+    // `\var{a}` letterale. Una spiegazione che non si sostituisce resta
+    // com'è invece di far fallire il caricamento: è la verifica dell'editor
+    // (fase "testo") a rifiutarla con un messaggio che nomina la spiegazione.
+    const impostazioni = p.settings as unknown as { distractors?: unknown };
+    if (Array.isArray(impostazioni.distractors)) {
+      impostazioni.distractors = (impostazioni.distractors as string[][]).map((riga) =>
+        riga.map((d) => {
+          if (!d) return d;
+          try {
+            return substituteHtml(d, p.getScope());
+          } catch {
+            return d;
+          }
+        }),
+      );
+    }
     p.gaps.forEach(visit);
     p.alternatives.forEach(visit);
   };
