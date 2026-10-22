@@ -609,8 +609,11 @@ model Esercizio {
   id            String                  @id @default(cuid())
   title         String
   description   String?
-  // Il proprietario. Se il suo account sparisce l'esercizio resta alla
-  // scuola, senza autore: non si perde il lavoro fatto.
+  // Il proprietario. Se il suo account sparisce l'esercizio resta, senza
+  // autore (SetNull): non si perde il lavoro fatto, ma NON passa alla
+  // scuola. Uno privato resta privato e senza proprietario: oltre alle
+  // condivisioni nominate rimaste, lo vede e lo gestisce solo l'ADMIN (che
+  // può trasferirlo); argomenti e raccolte non lo trasmettono più.
   authorId      String?
   yearLevel     Int
   topic         String
