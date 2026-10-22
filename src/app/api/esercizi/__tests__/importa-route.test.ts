@@ -146,7 +146,7 @@ describe("POST /api/esercizi/redazione/importa/verifica (esito)", () => {
     );
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ esiti });
-    expect(controllaImport).toHaveBeenCalledWith([elem1, elem2]);
+    expect(controllaImport).toHaveBeenCalledWith([elem1, elem2], { id: "docente1", admin: false });
     expect(importaEsercizi).not.toHaveBeenCalled();
   });
 });
@@ -165,7 +165,7 @@ describe("POST /api/esercizi/redazione/importa (esito)", () => {
     );
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ esiti });
-    expect(importaEsercizi).toHaveBeenCalledWith([elem1, elem2], "docente1");
+    expect(importaEsercizi).toHaveBeenCalledWith([elem1, elem2], { id: "docente1", admin: false });
     expect(controllaImport).not.toHaveBeenCalled();
   });
 });

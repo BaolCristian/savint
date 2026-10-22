@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerAnteprima } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { AnteprimaDocenteClient } from "./anteprima-docente-client";
 
 /** L'anteprima del docente su QUALUNQUE esercizio del bacino, modificabile
@@ -19,13 +20,17 @@ import { AnteprimaDocenteClient } from "./anteprima-docente-client";
  * `non_trovato` resta un 404 vero (come nella pagina di modifica): un id
  * che non corrisponde a nessun esercizio non è un caso da spiegare in
  * pagina. `senza_versione` invece lo è — capita nel bacino seminato — e va
- * detto chiaramente, mai un player montato su un contenuto assente. */
+ * detto chiaramente, mai un player montato su un contenuto assente.
+ *
+ * Un esercizio che il docente non vede (privato di un collega, mai
+ * condiviso con lui) è `non_trovato` anche lui: stesso 404, nessun indizio
+ * che esista. */
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.anteprimaDocente");
   const { id } = await params;
 
-  const esito = await caricaPerAnteprima(id);
+  const esito = await caricaPerAnteprima(id, utenteDaSessione(session));
   if (!esito.ok && esito.motivo === "non_trovato") notFound();
 
   const locale = (await getLocale()) === "en" ? "en" : "it";

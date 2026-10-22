@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { duplicaEsercizio } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 
 // `duplicaEsercizio` rifiuta solo con `non_trovato`: non chiama mai
 // `verificaSuSemi` (copia il contenuto grezzo dell'ultima versione così
 // com'è, vedi il commento su `duplicaEsercizio` in redazione.ts), quindi
-// niente 422 qui.
+// niente 422 qui. Basta vedere l'originale per duplicarlo: chi non lo vede
+// riceve lo stesso `non_trovato` di un id inesistente.
 const STATI: Record<string, number> = {
   non_trovato: 404,
 };
@@ -26,7 +28,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     });
   }
 
-  const esito = await duplicaEsercizio(id, teacherId);
+  const esito = await duplicaEsercizio(id, utenteDaSessione(gate.session));
   if (!esito.ok) {
     return NextResponse.json(
       { error: esito.motivo, ...(esito.dettaglio !== undefined ? { dettaglio: esito.dettaglio } : {}) },

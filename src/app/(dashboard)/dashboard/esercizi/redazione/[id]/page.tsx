@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerEditor } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { ModificaEsercizioClient } from "./modifica-esercizio-client";
 
 /** La modifica di un esercizio esistente. Chi arriva dall'elenco (Task 8)
@@ -13,16 +14,22 @@ import { ModificaEsercizioClient } from "./modifica-esercizio-client";
  * esercizio inesistente), `non_rappresentabile` mostra lo stesso motivo del
  * dominio invece dell'editor — mai "duplica" qui: duplicare non
  * cambierebbe il verdetto (vedi il commento su `duplicaEsercizio`,
- * redazione.ts), lasciando solo un'altra copia di sola lettura. */
+ * redazione.ts), lasciando solo un'altra copia di sola lettura.
+ *
+ * L'accesso passa da qui per primo: chi non vede l'esercizio riceve lo
+ * stesso 404 di un id inesistente; chi lo vede senza poterlo modificare
+ * (visualizzatore, commentatore) viene portato all'anteprima, che è la
+ * pagina dell'esercizio per lui — non un muro "non puoi". */
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.redazione.elenco");
   const { id } = await params;
 
-  const esito = await caricaPerEditor(id);
+  const esito = await caricaPerEditor(id, utenteDaSessione(session));
 
   if (!esito.ok) {
     if (esito.motivo === "non_trovato") notFound();
+    if (esito.motivo === "sola_lettura") redirect(`/dashboard/esercizi/anteprima/${id}`);
     return (
       <div className="space-y-4 p-6">
         <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">

@@ -18,6 +18,14 @@ vi.mock("@/lib/db/client", () => ({
   },
 }));
 
+// Il ruolo di chi salva non è l'oggetto di questo test (lo provano
+// redazione.test.ts e accesso.test.ts sul database vero): qui il chiamante è
+// sempre un editor, così `salvaNuovaVersione` arriva fino alla transazione.
+vi.mock("../accesso", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../accesso")>()),
+  ruoloEsercizio: vi.fn(async () => "EDITOR"),
+}));
+
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { salvaNuovaVersione } from "../redazione";
@@ -38,6 +46,8 @@ const base: EsercizioEditor = {
   parti: [{ tipo: "numerica", consegna: "\\(x=\\)", punti: 2, valore: "-b/a", tolleranza: { tipo: "esatta" } }],
 };
 
+const chi = { id: "docente1", admin: false };
+
 describe("salvaNuovaVersione: due salvataggi concorrenti sullo stesso esercizio", () => {
   it("un vincolo unico violato (P2002) diventa un rifiuto strutturato, non un'eccezione", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
@@ -47,7 +57,7 @@ describe("salvaNuovaVersione: due salvataggi concorrenti sullo stesso esercizio"
       ),
     );
 
-    const esito = await salvaNuovaVersione("e1", base);
+    const esito = await salvaNuovaVersione("e1", base, chi);
     expect(esito.ok).toBe(false);
     if (esito.ok) throw new Error("atteso un rifiuto");
     expect(esito.motivo).toBe("versione_in_conflitto");
@@ -56,6 +66,6 @@ describe("salvaNuovaVersione: due salvataggi concorrenti sullo stesso esercizio"
   it("un errore diverso da un vincolo unico continua a propagarsi (non viene inghiottito)", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(new Error("guasto imprevisto"));
 
-    await expect(salvaNuovaVersione("e1", base)).rejects.toThrow("guasto imprevisto");
+    await expect(salvaNuovaVersione("e1", base, chi)).rejects.toThrow("guasto imprevisto");
   });
 });

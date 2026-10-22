@@ -63,11 +63,14 @@ describe("GET /api/esercizi/redazione", () => {
     // non lo è, ed è la ragione che la pagina mostra al docente senza più
     // rileggere l'esercizio (Onda finale, I5).
     const voce = { id: "e1", titolo: "T", argomento: "algebra", anno: 1, ultimaVersione: 2,
-      modificabile: true, motivo: null, autoreNome: "Prof", aggiornatoIl: new Date("2026-01-01") };
+      modificabile: true, motivo: null, autoreNome: "Prof", aggiornatoIl: new Date("2026-01-01"),
+      ruolo: "PROPRIETARIO" as const, proprietarioId: "docente1", proprietarioNome: "Prof", accesso: "privato" as const };
     vi.mocked(elencoRedazione).mockResolvedValue([voce]);
     const r = await GET();
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual([{ ...voce, aggiornatoIl: voce.aggiornatoIl.toISOString() }]);
+    // L'elenco è quello che vede il docente della sessione, non tutto il bacino.
+    expect(elencoRedazione).toHaveBeenCalledWith({ id: "docente1", admin: false });
   });
 
   void richiesta;
@@ -182,6 +185,24 @@ describe("GET /api/esercizi/redazione/[id]", () => {
     expect(await r.json()).toEqual({ error: "non_trovato", dettaglio: "nessun esercizio con id \"es1\"" });
   });
 
+  // Un esercizio che il docente non vede risponde come uno inesistente:
+  // mai un 403 che ne riveli l'esistenza.
+  it("404 per un estraneo: caricaPerEditor riceve il docente della sessione", async () => {
+    vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "non_trovato", dettaglio: "nessun esercizio con id \"es1\"" });
+    const r = await GET_ID(richiesta(), { params });
+    expect(r.status).toBe(404);
+    expect(caricaPerEditor).toHaveBeenCalledWith("es1", { id: "docente1", admin: false });
+  });
+
+  // Chi lo vede ma non può modificarlo ne conosce già l'esistenza: qui, e
+  // solo qui, il rifiuto è un 403.
+  it("403 se il docente lo vede ma non può modificarlo (sola_lettura)", async () => {
+    vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "sola_lettura", dettaglio: "x" });
+    const r = await GET_ID(richiesta(), { params });
+    expect(r.status).toBe(403);
+    expect((await r.json()).error).toBe("sola_lettura");
+  });
+
   it("409 con il dettaglio se l'esercizio non e' rappresentabile", async () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "non_rappresentabile", dettaglio: "contiene gapfill" });
     const r = await GET_ID(richiesta(), { params });
@@ -199,7 +220,7 @@ describe("GET /api/esercizi/redazione/[id]", () => {
     expect(await r.json()).toEqual({
       editor: editorValido, versione: 3, autoreNome: "Prof", aggiornatoIl: aggiornatoIl.toISOString(),
     });
-    expect(caricaPerEditor).toHaveBeenCalledWith("es1");
+    expect(caricaPerEditor).toHaveBeenCalledWith("es1", { id: "docente1", admin: false });
   });
 });
 
@@ -248,6 +269,12 @@ describe("PUT /api/esercizi/redazione/[id] (salva)", () => {
     expect(r.status).toBe(404);
   });
 
+  it("403 se il docente non può modificarlo (sola_lettura)", async () => {
+    vi.mocked(salvaNuovaVersione).mockResolvedValue({ ok: false, motivo: "sola_lettura", dettaglio: "x" });
+    const r = await PUT(richiesta(corpoValido), { params });
+    expect(r.status).toBe(403);
+  });
+
   // Stesso caso critico della POST di creazione, sul percorso di salvataggio.
   it("422 con il dettaglio della verifica (seme, fase, messaggio) nel corpo", async () => {
     vi.mocked(salvaNuovaVersione).mockResolvedValue({
@@ -284,7 +311,7 @@ describe("PUT /api/esercizi/redazione/[id] (salva)", () => {
     const r = await PUT(richiesta(corpoValido), { params });
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ esercizioId: "es1", versione: 2 });
-    expect(salvaNuovaVersione).toHaveBeenCalledWith("es1", editorValido);
+    expect(salvaNuovaVersione).toHaveBeenCalledWith("es1", editorValido, { id: "docente1", admin: false });
   });
 });
 
@@ -331,7 +358,7 @@ describe("POST /api/esercizi/redazione/[id]/duplica", () => {
     const r = await POST_DUPLICA(richiesta(), { params });
     expect(r.status).toBe(201);
     expect(await r.json()).toEqual({ esercizioId: "e2", versione: 1 });
-    expect(duplicaEsercizio).toHaveBeenCalledWith("es1", "docente-vero");
+    expect(duplicaEsercizio).toHaveBeenCalledWith("es1", { id: "docente-vero", admin: false });
   });
 });
 

@@ -341,7 +341,7 @@ describe("C2 — editare un esercizio dentro un compito assegnato non deve tocca
     // qui, prima che il docente corregga nulla, sono la stessa cosa.
     expect(rigaPrima.esercizioVersioneId).toBe(versionePescata);
 
-    const esitoSalvataggio = await salvaNuovaVersione(ESERCIZIO_ID, nuovoInput);
+    const esitoSalvataggio = await salvaNuovaVersione(ESERCIZIO_ID, nuovoInput, { id: teacherId, admin: false });
     if (!esitoSalvataggio.ok) throw new Error("salvataggio della nuova versione fallito nel setup del test");
     expect(esitoSalvataggio.versione).toBe(2);
 

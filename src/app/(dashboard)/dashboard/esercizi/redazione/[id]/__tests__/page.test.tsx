@@ -9,6 +9,9 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  }),
 }));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
@@ -22,7 +25,7 @@ vi.mock("@/components/esercizi/editor/editor-esercizio", () => ({
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerEditor } from "@/lib/esercizi/redazione";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Page from "../page";
 
 const EDITOR_VALIDO = {
@@ -58,6 +61,7 @@ describe("pagina di modifica di un esercizio esistente", () => {
       ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario Rossi", aggiornatoIl: new Date(),
     });
     await rendi("e1");
+    expect(caricaPerEditor).toHaveBeenCalledWith("e1", { id: "doc1", admin: false });
     const stub = screen.getByTestId("editor-stub");
     expect(stub).toHaveAttribute("data-esercizio-id", "e1");
     expect(stub).toHaveAttribute("data-ha-valore-iniziale", "true");
@@ -67,6 +71,14 @@ describe("pagina di modifica di un esercizio esistente", () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "non_trovato", dettaglio: "boh" });
     await expect(Page({ params: Promise.resolve({ id: "boh" }) })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFound).toHaveBeenCalled();
+  });
+
+  // Chi vede l'esercizio ma non può modificarlo non trova un muro: la sua
+  // pagina dell'esercizio è l'anteprima.
+  it("un esercizio in sola lettura porta all'anteprima", async () => {
+    vi.mocked(caricaPerEditor).mockResolvedValue({ ok: false, motivo: "sola_lettura", dettaglio: "x" });
+    await expect(Page({ params: Promise.resolve({ id: "e3" }) })).rejects.toThrow("NEXT_REDIRECT /dashboard/esercizi/anteprima/e3");
+    expect(redirect).toHaveBeenCalledWith("/dashboard/esercizi/anteprima/e3");
   });
 
   // Item I4 dell'onda di correzioni: "duplica" è sparito anche da qui, ed è

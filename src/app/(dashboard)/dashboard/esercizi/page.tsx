@@ -5,6 +5,7 @@ import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { AssegnaForm } from "./assegna-form";
 import { TeacherExercisesNav } from "./teacher-exercises-nav";
 
@@ -44,9 +45,11 @@ export default async function Page() {
   // hanno almeno una versione salvata: senza versione l'anteprima direbbe
   // "nessuna versione salvata" invece di mostrare qualcosa, quindi il filtro
   // sta qui e non nel modulo (che riceve gia' solo candidati validi).
+  // `elencoRedazione` da' solo gli esercizi che il docente vede: un
+  // esercizio privato di un collega non si puo' assegnare.
   const [insegnate, esercizi] = await Promise.all([
     classiDelDocente(session.user.id),
-    elencoRedazione(),
+    elencoRedazione(utenteDaSessione(session)),
   ]);
   const candidati = esercizi
     .filter((e) => e.ultimaVersione > 0)

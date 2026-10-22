@@ -8,6 +8,7 @@ import { esercizioEditorSchema, type EsercizioEditor } from "../editor/modello";
 import { versoNumbas } from "../editor/verso-numbas";
 import { creaEsercizio, verificaEsercizio } from "../redazione";
 import { hashContenuto } from "../format/schema";
+import { ruoliEsercizi, type Ruolo, type Utente } from "../accesso";
 import { normalizza } from "./estrai";
 import type { EsitoControllo, EsitoImport, Problema } from "./tipi";
 
@@ -72,7 +73,7 @@ export function variabiliSenzaGraffe(input: EsercizioEditor): Problema[] {
 
 type Controllato = { esito: EsitoControllo; input?: EsercizioEditor };
 
-async function controlla(elementi: unknown[]): Promise<Controllato[]> {
+async function controlla(elementi: unknown[], chi: Utente): Promise<Controllato[]> {
   const risultati: Controllato[] = elementi.map((grezzo, indice) => {
     const analisi = esercizioEditorSchema.safeParse(normalizza(grezzo));
     if (!analisi.success) {
@@ -102,7 +103,10 @@ async function controlla(elementi: unknown[]): Promise<Controllato[]> {
   });
 
   // Doppioni: una sola query per tutti gli hash, contro OGNI versione
-  // salvata (anche quelle vecchie di un esercizio poi corretto).
+  // salvata (anche quelle vecchie di un esercizio poi corretto) — ma solo
+  // degli esercizi che chi importa vede. Un esercizio privato di un collega
+  // non conta: "già presente" ne rivelerebbe l'esistenza e il titolo, e
+  // impedirebbe di importare un contenuto che per chi importa non c'è.
   const hashPerIndice = new Map<number, string>();
   for (const { esito } of risultati) {
     if (esito.stato === "ok") hashPerIndice.set(esito.indice, hashContenuto(esito.content));
@@ -111,9 +115,14 @@ async function controlla(elementi: unknown[]): Promise<Controllato[]> {
 
   const esistenti = await prisma.esercizioVersione.findMany({
     where: { hash: { in: [...new Set(hashPerIndice.values())] } },
-    select: { hash: true, esercizio: { select: { title: true } } },
+    select: { hash: true, esercizioId: true, esercizio: { select: { title: true } } },
   });
-  const titoloPerHash = new Map(esistenti.map((v) => [v.hash, v.esercizio.title]));
+  // `ruoliEsercizi` carica tutti gli esercizi: lo si chiama solo se c'è
+  // davvero qualche hash in comune da filtrare.
+  const visibili = esistenti.length > 0 ? await ruoliEsercizi(chi) : new Map<string, Ruolo>();
+  const titoloPerHash = new Map(
+    esistenti.filter((v) => visibili.has(v.esercizioId)).map((v) => [v.hash, v.esercizio.title]),
+  );
 
   // Dentro lo stesso import, il primo vince e i successivi sono doppioni
   // (`nelFile`: il gemello è nel file stesso, non già salvato in Savint).
@@ -137,18 +146,19 @@ async function controlla(elementi: unknown[]): Promise<Controllato[]> {
 }
 
 /** Controlla ogni elemento senza scrivere nulla: è l'anteprima dell'import.
- * Un elemento rotto non ferma gli altri. */
-export async function controllaImport(elementi: unknown[]): Promise<EsitoControllo[]> {
-  return (await controlla(elementi)).map((r) => r.esito);
+ * Un elemento rotto non ferma gli altri. `chi` è chi importa: i doppioni si
+ * cercano solo fra gli esercizi che vede. */
+export async function controllaImport(elementi: unknown[], chi: Utente): Promise<EsitoControllo[]> {
+  return (await controlla(elementi, chi)).map((r) => r.esito);
 }
 
 /** Importa gli elementi che passano il controllo, uno dopo l'altro, con
- * `authorId` come autore. Gli altri restano nel risultato col loro esito.
+ * `chi` come autore (gli esercizi nascono suoi e privati, da `creaEsercizio`). Gli altri restano nel risultato col loro esito.
  * Se `creaEsercizio` rifiuta (la verifica sui semi è casuale e potrebbe
  * cogliere un seme che il controllo non aveva visto), l'esito diventa
  * `verifica_fallita` col suo dettaglio. */
-export async function importaEsercizi(elementi: unknown[], authorId: string): Promise<EsitoImport[]> {
-  const controllati = await controlla(elementi);
+export async function importaEsercizi(elementi: unknown[], chi: Utente): Promise<EsitoImport[]> {
+  const controllati = await controlla(elementi, chi);
   const esiti: EsitoImport[] = [];
   for (const { esito, input } of controllati) {
     if (esito.stato !== "ok") {
@@ -163,7 +173,7 @@ export async function importaEsercizi(elementi: unknown[], authorId: string): Pr
     // docente: la si chiude invece sull'elemento, e il ciclo prosegue.
     let creato: Awaited<ReturnType<typeof creaEsercizio>>;
     try {
-      creato = await creaEsercizio(input, authorId);
+      creato = await creaEsercizio(input, chi.id);
     } catch (e) {
       console.error(`[importa] salvataggio dell'esercizio n. ${esito.indice + 1} non riuscito`, e);
       esiti.push({

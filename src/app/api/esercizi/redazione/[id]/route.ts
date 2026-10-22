@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { salvaNuovaVersione, caricaPerEditor } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { esercizioEditorSchema } from "@/lib/esercizi/editor/modello";
 import { dettaglioCorpoNonValido } from "@/lib/esercizi/editor/completezza";
 
@@ -11,8 +12,13 @@ const bodySchema = z.object({ editor: esercizioEditorSchema });
 // Vedi il commento gemello in ../route.ts: stessa mappatura, stessa
 // ragione. `non_rappresentabile` qui può arrivare anche dal GET (un
 // esercizio scritto a mano che l'editor non sa aprire), non solo dal PUT.
+// Un esercizio che il docente non vede è `non_trovato` (404, come uno che
+// non esiste); `sola_lettura` è il 403 per chi lo vede ma non può
+// modificarlo — l'unico caso in cui un rifiuto d'accesso è un 403, perché
+// l'esistenza dell'esercizio quel docente la conosce già.
 const STATI: Record<string, number> = {
   non_trovato: 404,
+  sola_lettura: 403,
   non_rappresentabile: 409,
   verifica_fallita: 422,
   versione_in_conflitto: 409,
@@ -23,7 +29,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
-  const esito = await caricaPerEditor(id);
+  const esito = await caricaPerEditor(id, utenteDaSessione(gate.session));
   if (!esito.ok) {
     return NextResponse.json({ error: esito.motivo, dettaglio: esito.dettaglio }, { status: STATI[esito.motivo] ?? 400 });
   }
@@ -56,7 +62,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "invalid_body", ...dettaglioCorpoNonValido(corpo) }, { status: 400 });
   }
 
-  const esito = await salvaNuovaVersione(id, parsed.data.editor);
+  const esito = await salvaNuovaVersione(id, parsed.data.editor, utenteDaSessione(gate.session));
   if (!esito.ok) {
     return NextResponse.json(
       { error: esito.motivo, ...(esito.dettaglio !== undefined ? { dettaglio: esito.dettaglio } : {}) },

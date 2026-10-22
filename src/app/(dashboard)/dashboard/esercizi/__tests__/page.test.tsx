@@ -55,6 +55,12 @@ describe("hub della sezione esercizi del docente", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
+  // I candidati da assegnare sono solo gli esercizi che il docente vede.
+  it("prende i candidati dall'elenco del docente della sessione", async () => {
+    await rendi();
+    expect(elencoRedazione).toHaveBeenCalledWith({ id: "doc1", admin: false });
+  });
+
   it("mostra il blocco per assegnare, con dentro il modulo vero, senza una frase-istruzione sopra", async () => {
     await rendi();
     const titolo = screen.getByText("assegnaTitolo");

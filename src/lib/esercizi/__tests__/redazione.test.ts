@@ -13,6 +13,7 @@ import { creaContenitore, aggiungiEsercizi } from "../contenitori";
 import { assegna, consegneDelCompito } from "../compiti";
 import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import type { EsercizioEditor } from "../editor/modello";
+import type { Utente } from "../accesso";
 
 // Prefisso unico di questo file: Vitest esegue i file di test in parallelo
 // sulle stesse tabelle (vedi il commento gemello in compiti.test.ts e
@@ -26,7 +27,12 @@ const PREFIX = "redazionetest-";
 
 let docenteId: string;
 let altroDocenteId: string;
+let estraneoId: string;
 let classeId: string;
+// Le stesse persone viste dalla regola di accesso: nessuno è ADMIN.
+let docente: Utente;
+let altroDocente: Utente;
+let estraneo: Utente;
 
 const base: EsercizioEditor = {
   meta: { titolo: `${PREFIX}Equazione`, descrizione: "", anno: 1, argomento: "equazioni", tag: [], difficolta: 1 },
@@ -81,6 +87,10 @@ beforeEach(async () => {
   await pulisci();
   docenteId = (await prisma.user.create({ data: { email: `${PREFIX}d@test.it`, name: "Docente", role: "TEACHER" } })).id;
   altroDocenteId = (await prisma.user.create({ data: { email: `${PREFIX}d2@test.it`, name: "Docente Due", role: "TEACHER" } })).id;
+  estraneoId = (await prisma.user.create({ data: { email: `${PREFIX}d3@test.it`, name: "Estraneo", role: "TEACHER" } })).id;
+  docente = { id: docenteId, admin: false };
+  altroDocente = { id: altroDocenteId, admin: false };
+  estraneo = { id: estraneoId, admin: false };
   classeId = (await prisma.classe.create({
     data: { googleGroupEmail: `${PREFIX}classe@scuola.it`, name: "Classe", yearLevel: 1 },
   })).id;
@@ -122,7 +132,7 @@ describe("salvaNuovaVersione", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const esito = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "cambiato davvero" });
+    const esito = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "cambiato davvero" }, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.versione).toBe(2);
@@ -144,7 +154,7 @@ describe("salvaNuovaVersione", () => {
       ...base,
       meta: { ...base.meta, titolo: `${PREFIX}Titolo Nuovo`, anno: 3, argomento: "goniometria", difficolta: 2, tag: ["a", "b"] },
     };
-    const esito = await salvaNuovaVersione(creato.esercizioId, nuovoInput);
+    const esito = await salvaNuovaVersione(creato.esercizioId, nuovoInput, docente);
     expect(esito.ok).toBe(true);
 
     const riga = await prisma.esercizio.findUniqueOrThrow({ where: { id: creato.esercizioId } });
@@ -156,7 +166,7 @@ describe("salvaNuovaVersione", () => {
   });
 
   it("un esercizio inesistente non si salva", async () => {
-    const esito = await salvaNuovaVersione("non-esiste", base);
+    const esito = await salvaNuovaVersione("non-esiste", base, docente);
     expect(esito).toMatchObject({ ok: false, motivo: "non_trovato" });
   });
 
@@ -164,7 +174,7 @@ describe("salvaNuovaVersione", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const esito = await salvaNuovaVersione(creato.esercizioId, { ...inputRotto, meta: { ...inputRotto.meta, titolo: `${PREFIX}Non deve arrivare` } });
+    const esito = await salvaNuovaVersione(creato.esercizioId, { ...inputRotto, meta: { ...inputRotto.meta, titolo: `${PREFIX}Non deve arrivare` } }, docente);
     expect(esito.ok).toBe(false);
     if (esito.ok) return;
     expect(esito.motivo).toBe("verifica_fallita");
@@ -227,7 +237,7 @@ describe("salvaNuovaVersione", () => {
     const rigaPrima = await prisma.tentativo.findUniqueOrThrow({ where: { id: primoTentativo!.tentativoId } });
     expect(rigaPrima.esercizioVersioneId).toBe(prima[0]);
 
-    const esito = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "cambiato" });
+    const esito = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "cambiato" }, docente);
     expect(esito.ok).toBe(true);
 
     const compitoDopo = await prisma.compito.findUniqueOrThrow({ where: { id: assegnazione.compitoId } });
@@ -275,7 +285,11 @@ describe("duplicaEsercizio", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const esito = await duplicaEsercizio(creato.esercizioId, altroDocenteId);
+    // Un esercizio nuovo è privato: perché il collega lo veda (e quindi
+    // possa duplicarlo) lo si apre alla scuola, come gli esercizi di prima.
+    await prisma.esercizio.update({ where: { id: creato.esercizioId }, data: { accessoScuola: "EDITOR" } });
+
+    const esito = await duplicaEsercizio(creato.esercizioId, altroDocente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.versione).toBe(1);
@@ -303,7 +317,7 @@ describe("duplicaEsercizio", () => {
   it("duplica anche un esercizio che l'editor non sa rappresentare, benché l'elenco non offra il pulsante per queste righe", async () => {
     // Costruito a mano: un tipo di parte (m_n_2) che daNumbas rifiuta.
     const originale = await prisma.esercizio.create({
-      data: { title: `${PREFIX}Non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, authorId: docenteId },
+      data: { title: `${PREFIX}Non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, authorId: docenteId, accessoScuola: "EDITOR" },
     });
     await prisma.esercizioVersione.create({
       data: {
@@ -313,7 +327,7 @@ describe("duplicaEsercizio", () => {
       },
     });
 
-    const esito = await duplicaEsercizio(originale.id, altroDocenteId);
+    const esito = await duplicaEsercizio(originale.id, altroDocente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     const versioneCopia = await prisma.esercizioVersione.findUniqueOrThrow({ where: { esercizioId_version: { esercizioId: esito.esercizioId, version: 1 } } });
@@ -321,14 +335,14 @@ describe("duplicaEsercizio", () => {
   });
 
   it("un esercizio inesistente non si duplica", async () => {
-    const esito = await duplicaEsercizio("non-esiste", docenteId);
+    const esito = await duplicaEsercizio("non-esiste", docente);
     expect(esito).toMatchObject({ ok: false, motivo: "non_trovato" });
   });
 });
 
 describe("caricaPerEditor", () => {
   it("un esercizio inesistente restituisce non_trovato", async () => {
-    const esito = await caricaPerEditor("non-esiste");
+    const esito = await caricaPerEditor("non-esiste", docente);
     expect(esito).toMatchObject({ ok: false, motivo: "non_trovato" });
   });
 
@@ -336,7 +350,7 @@ describe("caricaPerEditor", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const esito = await caricaPerEditor(creato.esercizioId);
+    const esito = await caricaPerEditor(creato.esercizioId, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.editor).toEqual(base);
@@ -360,7 +374,7 @@ describe("caricaPerEditor", () => {
       data: { title: `${PREFIX}Titolo Corretto Dopo` },
     });
 
-    const esito = await caricaPerEditor(creato.esercizioId);
+    const esito = await caricaPerEditor(creato.esercizioId, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.editor.meta.titolo).toBe(`${PREFIX}Titolo Corretto Dopo`);
@@ -369,7 +383,7 @@ describe("caricaPerEditor", () => {
 
   it("un esercizio non rappresentabile restituisce il rifiuto col dettaglio, mai un modello parziale", async () => {
     const esercizio = await prisma.esercizio.create({
-      data: { title: `${PREFIX}Non modificabile 2`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+      data: { title: `${PREFIX}Non modificabile 2`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     });
     await prisma.esercizioVersione.create({
       data: {
@@ -379,7 +393,7 @@ describe("caricaPerEditor", () => {
       },
     });
 
-    const esito = await caricaPerEditor(esercizio.id);
+    const esito = await caricaPerEditor(esercizio.id, docente);
     expect(esito.ok).toBe(false);
     if (esito.ok) return;
     expect(esito.motivo).toBe("non_rappresentabile");
@@ -394,7 +408,7 @@ describe("elencoRedazione", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const elenco = await elencoRedazione();
+    const elenco = await elencoRedazione(docente);
     const voce = elenco.find((v) => v.id === creato.esercizioId);
     expect(voce).toBeDefined();
     expect(voce!.titolo).toBe(base.meta.titolo);
@@ -413,7 +427,7 @@ describe("elencoRedazione", () => {
   // commento su `VoceRedazione.motivo`.
   it("marca non modificabile un esercizio che daNumbas rifiuta e ne porta il motivo", async () => {
     const esercizio = await prisma.esercizio.create({
-      data: { title: `${PREFIX}Elenco non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+      data: { title: `${PREFIX}Elenco non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     });
     await prisma.esercizioVersione.create({
       data: {
@@ -423,7 +437,7 @@ describe("elencoRedazione", () => {
       },
     });
 
-    const elenco = await elencoRedazione();
+    const elenco = await elencoRedazione(docente);
     const voce = elenco.find((v) => v.id === esercizio.id);
     expect(voce).toBeDefined();
     expect(voce!.modificabile).toBe(false);
@@ -447,7 +461,7 @@ describe("elencoRedazione", () => {
     }
     await seedEsercizi(dir);
 
-    const elenco = await elencoRedazione();
+    const elenco = await elencoRedazione(docente);
     const miei = elenco.filter((v) => v.id.startsWith(PREFIX));
     expect(miei).toHaveLength(17);
 
@@ -477,16 +491,16 @@ describe("elencoRedazione", () => {
 // esercizio non rappresentabile qui è comunque `ok: true`.
 describe("caricaPerAnteprima", () => {
   it("un esercizio inesistente restituisce non_trovato", async () => {
-    const esito = await caricaPerAnteprima("non-esiste");
+    const esito = await caricaPerAnteprima("non-esiste", docente);
     expect(esito).toEqual({ ok: false, motivo: "non_trovato" });
   });
 
   it("un esercizio senza nessuna versione salvata restituisce senza_versione, mai un player vuoto", async () => {
     const esercizio = await prisma.esercizio.create({
-      data: { title: `${PREFIX}Senza versione`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+      data: { title: `${PREFIX}Senza versione`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     });
 
-    const esito = await caricaPerAnteprima(esercizio.id);
+    const esito = await caricaPerAnteprima(esercizio.id, docente);
     expect(esito).toEqual({ ok: false, motivo: "senza_versione" });
   });
 
@@ -494,7 +508,7 @@ describe("caricaPerAnteprima", () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
 
-    const esito = await caricaPerAnteprima(creato.esercizioId);
+    const esito = await caricaPerAnteprima(creato.esercizioId, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.titolo).toBe(base.meta.titolo);
@@ -509,14 +523,14 @@ describe("caricaPerAnteprima", () => {
   // l'anteprima esiste.
   it("un esercizio che l'editor non sa ricostruire viene comunque restituito, col contenuto grezzo", async () => {
     const esercizio = await prisma.esercizio.create({
-      data: { title: `${PREFIX}Anteprima non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1 },
+      data: { title: `${PREFIX}Anteprima non modificabile`, yearLevel: 1, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     });
     const contenutoGrezzo = { name: "x", statement: "<p>x</p>", variables: {}, parts: [{ type: "m_n_2", marks: 1 }] };
     await prisma.esercizioVersione.create({
       data: { esercizioId: esercizio.id, version: 1, content: contenutoGrezzo, hash: "hash-anteprima-non-modificabile" },
     });
 
-    const esito = await caricaPerAnteprima(esercizio.id);
+    const esito = await caricaPerAnteprima(esercizio.id, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.content).toEqual(contenutoGrezzo);
@@ -525,13 +539,151 @@ describe("caricaPerAnteprima", () => {
   it("con più versioni salvate restituisce sempre l'ultima, mai la prima", async () => {
     const creato = await creaEsercizio(base, docenteId);
     if (!creato.ok) throw new Error("creazione fallita");
-    const salvato = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "seconda versione" });
+    const salvato = await salvaNuovaVersione(creato.esercizioId, { ...base, testo: "seconda versione" }, docente);
     expect(salvato.ok).toBe(true);
 
-    const esito = await caricaPerAnteprima(creato.esercizioId);
+    const esito = await caricaPerAnteprima(creato.esercizioId, docente);
     expect(esito.ok).toBe(true);
     if (!esito.ok) return;
     expect(esito.versione).toBe(2);
     expect((esito.content as { statement: string }).statement).toContain("seconda versione");
+  });
+});
+
+// Proprietà e condivisione (spec "Il modello di accesso"): ogni funzione di
+// questo modulo passa dal ruolo di chi chiede. Un esercizio che non vedi
+// "non esiste" (mai un rifiuto che ne riveli l'esistenza); uno che vedi ma
+// non puoi modificare è `sola_lettura`. Si guardano solo i propri id:
+// `ruoliEsercizi` vede tutte le righe del database, anche degli altri file.
+describe("proprietà e ruoli", () => {
+  // Un esercizio privato del docente (come nasce oggi ogni esercizio).
+  async function privatoDelDocente(): Promise<string> {
+    const creato = await creaEsercizio(base, docenteId);
+    if (!creato.ok) throw new Error("creazione fallita");
+    return creato.esercizioId;
+  }
+
+  async function condividi(esercizioId: string, userId: string, ruolo: "VISUALIZZATORE" | "COMMENTATORE" | "EDITOR") {
+    await prisma.condivisioneEsercizio.create({ data: { esercizioId, userId, ruolo } });
+  }
+
+  it("un esercizio nuovo nasce privato (accessoScuola null)", async () => {
+    const id = await privatoDelDocente();
+    const riga = await prisma.esercizio.findUniqueOrThrow({ where: { id } });
+    expect(riga.accessoScuola).toBeNull();
+  });
+
+  it("l'elenco di un collega non contiene l'esercizio privato; dopo una condivisione sì, col suo ruolo", async () => {
+    const id = await privatoDelDocente();
+    expect((await elencoRedazione(altroDocente)).find((v) => v.id === id)).toBeUndefined();
+
+    await condividi(id, altroDocenteId, "VISUALIZZATORE");
+    const voce = (await elencoRedazione(altroDocente)).find((v) => v.id === id);
+    expect(voce).toMatchObject({
+      ruolo: "VISUALIZZATORE",
+      proprietarioId: docenteId,
+      proprietarioNome: "Docente",
+      accesso: "condiviso",
+    });
+    // Chi non ha nessuna strada continua a non vederlo.
+    expect((await elencoRedazione(estraneo)).find((v) => v.id === id)).toBeUndefined();
+  });
+
+  it("per il proprietario l'accesso dice privato, condiviso o scuola", async () => {
+    const id = await privatoDelDocente();
+    const voce = async () => (await elencoRedazione(docente)).find((v) => v.id === id);
+    expect(await voce()).toMatchObject({ ruolo: "PROPRIETARIO", proprietarioId: docenteId, accesso: "privato" });
+
+    await condividi(id, altroDocenteId, "EDITOR");
+    expect((await voce())!.accesso).toBe("condiviso");
+
+    await prisma.esercizio.update({ where: { id }, data: { accessoScuola: "VISUALIZZATORE" } });
+    expect((await voce())!.accesso).toBe("scuola");
+  });
+
+  it("condiviso anche per argomento (senza differenza di maiuscole)", async () => {
+    const id = await privatoDelDocente();
+    await prisma.condivisioneArgomento.create({
+      data: { ownerId: docenteId, chiave: "equazioni", argomento: "Equazioni", userId: altroDocenteId, ruolo: "COMMENTATORE" },
+    });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("condiviso");
+    expect((await elencoRedazione(altroDocente)).find((v) => v.id === id)!.ruolo).toBe("COMMENTATORE");
+  });
+
+  it("condiviso se l'autore l'ha messo in una raccolta condivisa; non se ce l'ha messo un altro", async () => {
+    const id = await privatoDelDocente();
+    const raccolta = await prisma.contenitore.create({
+      data: { name: `${PREFIX}Raccolta condivisa`, createdById: altroDocenteId, accessoScuola: "VISUALIZZATORE" },
+    });
+    // Messo da chi non ne è l'autore: la raccolta non lo trasmette.
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: raccolta.id, esercizioId: id, addedById: altroDocenteId } });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("privato");
+
+    await prisma.contenitoreEsercizio.update({
+      where: { contenitoreId_esercizioId: { contenitoreId: raccolta.id, esercizioId: id } },
+      data: { addedById: docenteId },
+    });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("condiviso");
+  });
+
+  it("caricaPerEditor: sola_lettura per un visualizzatore, non_trovato per un estraneo", async () => {
+    const id = await privatoDelDocente();
+    await condividi(id, altroDocenteId, "VISUALIZZATORE");
+    expect(await caricaPerEditor(id, altroDocente)).toMatchObject({ ok: false, motivo: "sola_lettura" });
+    expect(await caricaPerEditor(id, estraneo)).toMatchObject({ ok: false, motivo: "non_trovato" });
+  });
+
+  it("caricaPerEditor: un editor nominato apre l'editor", async () => {
+    const id = await privatoDelDocente();
+    await condividi(id, altroDocenteId, "EDITOR");
+    expect((await caricaPerEditor(id, altroDocente)).ok).toBe(true);
+  });
+
+  it("salvaNuovaVersione: un visualizzatore viene rifiutato e non nasce nessuna versione", async () => {
+    const id = await privatoDelDocente();
+    await condividi(id, altroDocenteId, "COMMENTATORE");
+    expect(await salvaNuovaVersione(id, { ...base, testo: "non deve arrivare" }, altroDocente))
+      .toMatchObject({ ok: false, motivo: "sola_lettura" });
+    expect(await salvaNuovaVersione(id, { ...base, testo: "non deve arrivare" }, estraneo))
+      .toMatchObject({ ok: false, motivo: "non_trovato" });
+    expect(await prisma.esercizioVersione.count({ where: { esercizioId: id } })).toBe(1);
+  });
+
+  it("salvaNuovaVersione: un editor nominato salva", async () => {
+    const id = await privatoDelDocente();
+    await condividi(id, altroDocenteId, "EDITOR");
+    expect(await salvaNuovaVersione(id, { ...base, testo: "dal collega" }, altroDocente))
+      .toMatchObject({ ok: true, versione: 2 });
+  });
+
+  it("duplicaEsercizio: un visualizzatore ottiene una copia sua e privata; un estraneo non_trovato", async () => {
+    const id = await privatoDelDocente();
+    await prisma.esercizio.update({ where: { id }, data: { accessoScuola: "VISUALIZZATORE" } });
+    expect(await duplicaEsercizio(id, estraneo)).toMatchObject({ ok: true });
+
+    // L'esercizio torna privato e condiviso col solo collega.
+    await prisma.esercizio.update({ where: { id }, data: { accessoScuola: null } });
+    await condividi(id, altroDocenteId, "VISUALIZZATORE");
+    const esito = await duplicaEsercizio(id, altroDocente);
+    if (!esito.ok) throw new Error("duplicazione rifiutata");
+    const copia = await prisma.esercizio.findUniqueOrThrow({ where: { id: esito.esercizioId } });
+    expect(copia.authorId).toBe(altroDocenteId);
+    expect(copia.accessoScuola).toBeNull();
+    expect(await duplicaEsercizio(id, estraneo)).toMatchObject({ ok: false, motivo: "non_trovato" });
+  });
+
+  it("caricaPerAnteprima: non_trovato per un estraneo, il ruolo per chi lo vede", async () => {
+    const id = await privatoDelDocente();
+    expect(await caricaPerAnteprima(id, estraneo)).toEqual({ ok: false, motivo: "non_trovato" });
+    await condividi(id, altroDocenteId, "VISUALIZZATORE");
+    expect(await caricaPerAnteprima(id, altroDocente)).toMatchObject({ ok: true, ruolo: "VISUALIZZATORE" });
+    expect(await caricaPerAnteprima(id, docente)).toMatchObject({ ok: true, ruolo: "PROPRIETARIO" });
+  });
+
+  it("l'ADMIN vede e modifica anche un esercizio privato altrui", async () => {
+    const id = await privatoDelDocente();
+    const admin: Utente = { id: estraneoId, admin: true };
+    expect((await elencoRedazione(admin)).find((v) => v.id === id)).toMatchObject({ ruolo: "PROPRIETARIO" });
+    expect((await caricaPerEditor(id, admin)).ok).toBe(true);
   });
 });

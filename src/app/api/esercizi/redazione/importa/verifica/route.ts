@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { controllaImport } from "@/lib/esercizi/importa/importa";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { MAX_ESERCIZI_IMPORT } from "@/lib/esercizi/importa/estrai";
 
 // Il tetto del corpo, in byte UTF-8 del testo ricevuto: trenta esercizi
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
 
-  const esiti = await controllaImport(parsed.data.esercizi);
+  // I doppioni si cercano solo fra gli esercizi che il docente vede.
+  const esiti = await controllaImport(parsed.data.esercizi, utenteDaSessione(gate.session));
   return NextResponse.json({ esiti });
 }

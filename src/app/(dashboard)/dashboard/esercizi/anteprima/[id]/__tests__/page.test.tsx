@@ -46,7 +46,7 @@ async function rendi(id = "e1") {
 
 describe("pagina di anteprima del docente su un esercizio", () => {
   it("chiama redirectUnlessTeacher", async () => {
-    vi.mocked(caricaPerAnteprima).mockResolvedValue({ ok: true, titolo: "Prova", versione: 1, content: { a: 1 } });
+    vi.mocked(caricaPerAnteprima).mockResolvedValue({ ok: true, titolo: "Prova", versione: 1, content: { a: 1 }, ruolo: "VISUALIZZATORE" });
     await rendi();
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
@@ -55,9 +55,11 @@ describe("pagina di anteprima del docente su un esercizio", () => {
   // rifiuta deve comunque montare il player qui, col suo contenuto grezzo.
   it("un esercizio con una versione salvata monta il player col suo contenuto, anche se l'editor lo rifiuterebbe", async () => {
     vi.mocked(caricaPerAnteprima).mockResolvedValue({
-      ok: true, titolo: "Griglia complessa", versione: 3, content: { a: 1 },
+      ok: true, titolo: "Griglia complessa", versione: 3, content: { a: 1 }, ruolo: "PROPRIETARIO",
     });
     await rendi("e1");
+    // L'esito dipende da chi guarda: il docente della sessione.
+    expect(caricaPerAnteprima).toHaveBeenCalledWith("e1", { id: "doc1", admin: false });
     const stub = screen.getByTestId("anteprima-client");
     expect(stub).toHaveAttribute("data-esercizio-id", "e1");
     expect(stub).toHaveAttribute("data-ha-contenuto", "true");

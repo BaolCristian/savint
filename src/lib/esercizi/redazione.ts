@@ -6,12 +6,13 @@ import { versoNumbas } from "./editor/verso-numbas";
 import { daNumbas } from "./editor/da-numbas";
 import { verificaSuSemi, type EsitoVerifica } from "./editor/verifica";
 import { hashContenuto, type EsercizioFile } from "./format/schema";
+import { chiaveArgomento, puo, ruoliEsercizi, ruoloEsercizio, type Ruolo, type Utente } from "./accesso";
 
 export type EsitoRedazione =
   | { ok: true; esercizioId: string; versione: number }
   | {
       ok: false;
-      motivo: "non_trovato" | "non_rappresentabile" | "verifica_fallita" | "versione_in_conflitto";
+      motivo: "non_trovato" | "sola_lettura" | "non_rappresentabile" | "verifica_fallita" | "versione_in_conflitto";
       dettaglio?: unknown;
     };
 
@@ -34,7 +35,41 @@ export type VoceRedazione = {
    * più misurati su 24 esercizi. Conservarlo qui elimina quel secondo
    * giro senza cambiare cosa il docente vede. */
   motivo: string | null;
+  /** Il ruolo di chi chiede l'elenco su questo esercizio (spec "Il modello
+   * di accesso"): l'elenco contiene solo esercizi visibili, quindi c'è
+   * sempre. */
+  ruolo: Ruolo;
+  /** Il proprietario (`authorId`) e il suo nome; null per gli esercizi
+   * seminati, che non ne hanno uno. `autoreNome` sopra resta per chi lo usa
+   * già: è lo stesso nome. */
+  proprietarioId: string | null;
+  proprietarioNome: string | null;
+  /** Quanto l'esercizio è aperto agli altri, per l'etichetta del
+   * proprietario: "scuola" se ha un accesso di scuola, "condiviso" se ha
+   * almeno una strada verso qualcuno (condivisione nominata, argomento
+   * condiviso del suo autore, raccolta condivisa in cui l'autore stesso l'ha
+   * messo), altrimenti "privato". Calcolato su ogni riga allo stesso modo:
+   * ha senso da mostrare solo su quelle proprie, ma non costa di più. */
+  accesso: "privato" | "condiviso" | "scuola";
 };
+
+/** Il rifiuto comune dei punti d'ingresso per un esercizio che chi chiede
+ * non vede: identico a quello di un id inesistente, così né il messaggio né
+ * lo status rivelano che l'esercizio c'è (spec: "non trovato", mai 403). */
+function nonTrovato(esercizioId: string) {
+  return { ok: false as const, motivo: "non_trovato" as const, dettaglio: `nessun esercizio con id "${esercizioId}"` };
+}
+
+/** Il rifiuto per chi l'esercizio lo vede ma non può modificarlo: qui sì un
+ * motivo proprio (la rotta risponde 403), perché l'esistenza la conosce già
+ * dal catalogo. */
+function solaLettura() {
+  return {
+    ok: false as const,
+    motivo: "sola_lettura" as const,
+    dettaglio: "puoi vedere e duplicare questo esercizio, ma non modificarlo",
+  };
+}
 
 /** I campi della colonna `Esercizio` necessari per ricostruire il blocco
  * `savint` di un `EsercizioFile`. La colonna è la SOLA fonte per questi
@@ -144,7 +179,11 @@ async function nomeAutore(authorId: string | null): Promise<string | null> {
 /** Crea un esercizio nuovo: verifica PRIMA di scrivere, poi la riga e la sua
  * prima versione insieme, in una sola transazione. Un fallimento della
  * verifica non tocca il database — nessuna query è stata ancora eseguita a
- * quel punto. */
+ * quel punto.
+ *
+ * La riga nasce privata: `accessoScuola` resta al suo default null (solo
+ * l'autore la vede finché non la condivide). Lo stesso vale per l'import,
+ * che passa da qui, e per `duplicaEsercizio` sotto. */
 export async function creaEsercizio(input: EsercizioEditor, authorId: string): Promise<EsitoRedazione> {
   const question = versoNumbas(input);
   const esito = verificaInSicurezza(question);
@@ -194,11 +233,18 @@ export async function creaEsercizio(input: EsercizioEditor, authorId: string): P
  * strutturato, mai un errore del server. Un docente con due schede aperte
  * sullo stesso esercizio deve poter riprovare, non vedere un errore
  * generico. */
-export async function salvaNuovaVersione(esercizioId: string, input: EsercizioEditor): Promise<EsitoRedazione> {
-  const esistente = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
-  if (!esistente) {
-    return { ok: false, motivo: "non_trovato", dettaglio: `nessun esercizio con id "${esercizioId}"` };
-  }
+export async function salvaNuovaVersione(
+  esercizioId: string,
+  input: EsercizioEditor,
+  chi: Utente,
+): Promise<EsitoRedazione> {
+  // Il ruolo prima di tutto, anche della verifica: chi non vede l'esercizio
+  // riceve "non trovato" (null anche per un id inesistente), chi lo vede
+  // senza poterlo modificare un rifiuto suo — in nessuno dei due casi nasce
+  // una versione.
+  const ruolo = await ruoloEsercizio(chi, esercizioId);
+  if (!ruolo) return nonTrovato(esercizioId);
+  if (!puo(ruolo, "modificare")) return solaLettura();
 
   const question = versoNumbas(input);
   const esito = verificaInSicurezza(question);
@@ -259,12 +305,18 @@ export async function salvaNuovaVersione(esercizioId: string, input: EsercizioEd
  * Il titolo della copia porta " (copia)" in coda (stessa convenzione di
  * `/api/quiz/duplicate`): senza, la riga nuova avrebbe lo stesso titolo
  * identico dell'originale nell'elenco — due righe indistinguibili a
- * vista, che si differenziano solo aprendole. */
-export async function duplicaEsercizio(esercizioId: string, authorId: string): Promise<EsitoRedazione> {
+ * vista, che si differenziano solo aprendole.
+ *
+ * Basta vedere l'esercizio (anche un visualizzatore duplica: è il modo di
+ * averne una versione propria da cambiare). La copia è di chi duplica e
+ * nasce privata — `accessoScuola` al default null — qualunque fosse la
+ * condivisione dell'originale: non eredita né il proprietario né le
+ * condivisioni. */
+export async function duplicaEsercizio(esercizioId: string, chi: Utente): Promise<EsitoRedazione> {
+  const ruolo = await ruoloEsercizio(chi, esercizioId);
+  if (!puo(ruolo, "vedere")) return nonTrovato(esercizioId);
   const originale = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
-  if (!originale) {
-    return { ok: false, motivo: "non_trovato", dettaglio: `nessun esercizio con id "${esercizioId}"` };
-  }
+  if (!originale) return nonTrovato(esercizioId);
 
   const versione = await prisma.esercizioVersione.findFirst({
     where: { esercizioId },
@@ -279,7 +331,7 @@ export async function duplicaEsercizio(esercizioId: string, authorId: string): P
       data: {
         title: `${originale.title} (copia)`,
         description: originale.description,
-        authorId,
+        authorId: chi.id,
         yearLevel: originale.yearLevel,
         topic: originale.topic,
         tags: originale.tags,
@@ -306,22 +358,76 @@ export async function duplicaEsercizio(esercizioId: string, authorId: string): P
  * veniva scartato qui e ricalcolato dal chiamante rileggendo ogni
  * esercizio non modificabile con `caricaPerEditor` — la stessa chiamata a
  * `daNumbas`, sugli stessi dati, una seconda volta. Non c'è nessun motivo
- * per un esercizio modificabile (`ok: true` non ne porta uno). */
-export async function elencoRedazione(): Promise<VoceRedazione[]> {
+ * per un esercizio modificabile (`ok: true` non ne porta uno).
+ *
+ * Solo gli esercizi che `chi` vede, ciascuno col suo ruolo: `ruoliEsercizi`
+ * una volta sola per tutta la richiesta (carica tutti gli esercizi, mai per
+ * riga). Anche `accesso` si calcola a query fisse, qualunque sia il numero
+ * di righe: le condivisioni nominate, gli argomenti condivisi dei
+ * proprietari e le raccolte condivise che contengono questi esercizi. */
+export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
+  const ruoli = await ruoliEsercizi(chi);
+  const ids = [...ruoli.keys()];
+  if (ids.length === 0) return [];
+
   const esercizi = await prisma.esercizio.findMany({
+    where: { id: { in: ids } },
     orderBy: { title: "asc" },
     include: { versions: { orderBy: { version: "desc" }, take: 1 } },
   });
 
   const authorIds = [...new Set(esercizi.map((e) => e.authorId).filter((id): id is string => id !== null))];
-  const autori = authorIds.length
-    ? await prisma.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, name: true } })
-    : [];
+  const [autori, dirette, argomenti, inRaccolte] = await Promise.all([
+    authorIds.length
+      ? prisma.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, name: true } })
+      : Promise.resolve([]),
+    prisma.condivisioneEsercizio.findMany({
+      where: { esercizioId: { in: ids } },
+      select: { esercizioId: true },
+      distinct: ["esercizioId"],
+    }),
+    authorIds.length
+      ? prisma.condivisioneArgomento.findMany({
+          where: { ownerId: { in: authorIds } },
+          select: { ownerId: true, chiave: true },
+        })
+      : Promise.resolve([]),
+    // Le raccolte aperte a qualcuno (scuola o almeno un collega nominato):
+    // trasmettono l'esercizio solo se ce l'ha messo il suo autore, la stessa
+    // regola di `ruoliEsercizi` (accesso.ts).
+    prisma.contenitoreEsercizio.findMany({
+      where: {
+        esercizioId: { in: ids },
+        addedById: { not: null },
+        contenitore: { OR: [{ accessoScuola: { not: null } }, { condivisioni: { some: {} } }] },
+      },
+      select: { esercizioId: true, addedById: true },
+    }),
+  ]);
   const nomePerId = new Map(autori.map((a) => [a.id, a.name]));
+  const conDiretta = new Set(dirette.map((d) => d.esercizioId));
+  const argomentiCondivisi = new Set(argomenti.map((a) => `${a.ownerId}\u0000${chiaveArgomento(a.chiave)}`));
+  const aggiuntoDa = new Map<string, Set<string>>();
+  for (const { esercizioId, addedById } of inRaccolte) {
+    const autoriAggiunta = aggiuntoDa.get(esercizioId) ?? new Set<string>();
+    autoriAggiunta.add(addedById!);
+    aggiuntoDa.set(esercizioId, autoriAggiunta);
+  }
+
+  const accessoDi = (e: (typeof esercizi)[number]): VoceRedazione["accesso"] => {
+    if (e.accessoScuola) return "scuola";
+    if (conDiretta.has(e.id)) return "condiviso";
+    if (e.authorId) {
+      if (argomentiCondivisi.has(`${e.authorId}\u0000${chiaveArgomento(e.topic)}`)) return "condiviso";
+      if (aggiuntoDa.get(e.id)?.has(e.authorId)) return "condiviso";
+    }
+    return "privato";
+  };
 
   return esercizi.map((e) => {
     const ultima = e.versions[0];
     const lettura = ultima ? daNumbas({ savint: savintPerLettura(e, ultima.content), question: ultima.content }) : null;
+    const proprietarioNome = e.authorId ? (nomePerId.get(e.authorId) ?? null) : null;
     return {
       id: e.id,
       titolo: e.title,
@@ -330,8 +436,12 @@ export async function elencoRedazione(): Promise<VoceRedazione[]> {
       ultimaVersione: ultima?.version ?? 0,
       modificabile: lettura?.ok ?? false,
       motivo: lettura && !lettura.ok ? lettura.dettaglio : null,
-      autoreNome: e.authorId ? (nomePerId.get(e.authorId) ?? null) : null,
+      autoreNome: proprietarioNome,
       aggiornatoIl: e.updatedAt,
+      ruolo: ruoli.get(e.id)!,
+      proprietarioId: e.authorId,
+      proprietarioNome,
+      accesso: accessoDi(e),
     };
   });
 }
@@ -348,15 +458,20 @@ export async function elencoRedazione(): Promise<VoceRedazione[]> {
  * che `versoNumbas` scrive nel blocco Numbas, per esempio) — è ciò che
  * contenitori, filtri e ricerche interrogano, quindi se l'editor mostrasse
  * altro un docente correggerebbe un titolo, salverebbe, e lo vedrebbe
- * tornare indietro. */
-export async function caricaPerEditor(esercizioId: string): Promise<
+ * tornare indietro.
+ *
+ * L'editor si apre solo a chi può modificare (editor o proprietario): chi
+ * non vede l'esercizio riceve `non_trovato`, chi lo vede soltanto
+ * `sola_lettura` (la pagina lo manda all'anteprima). */
+export async function caricaPerEditor(esercizioId: string, chi: Utente): Promise<
   | { ok: true; editor: EsercizioEditor; versione: number; autoreNome: string | null; aggiornatoIl: Date }
-  | { ok: false; motivo: "non_trovato" | "non_rappresentabile"; dettaglio: string }
+  | { ok: false; motivo: "non_trovato" | "sola_lettura" | "non_rappresentabile"; dettaglio: string }
 > {
+  const ruolo = await ruoloEsercizio(chi, esercizioId);
+  if (!ruolo) return nonTrovato(esercizioId);
+  if (!puo(ruolo, "modificare")) return solaLettura();
   const esercizio = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
-  if (!esercizio) {
-    return { ok: false, motivo: "non_trovato", dettaglio: `nessun esercizio con id "${esercizioId}"` };
-  }
+  if (!esercizio) return nonTrovato(esercizioId);
 
   const versione = await prisma.esercizioVersione.findFirst({
     where: { esercizioId },
@@ -393,7 +508,7 @@ export async function caricaPerEditor(esercizioId: string): Promise<
 }
 
 export type EsitoAnteprima =
-  | { ok: true; titolo: string; versione: number; content: unknown }
+  | { ok: true; titolo: string; versione: number; content: unknown; ruolo: Ruolo }
   | { ok: false; motivo: "non_trovato" | "senza_versione" };
 
 /** Carica un esercizio per l'anteprima del docente: SEMPRE il contenuto
@@ -410,8 +525,14 @@ export type EsitoAnteprima =
  * mano, mai passate da `creaEsercizio`) — un player montato su
  * `content: undefined` sarebbe uno schermo muto travestito da anteprima,
  * mai la scelta giusta quando si può dire chiaramente che non c'è niente
- * da mostrare. */
-export async function caricaPerAnteprima(esercizioId: string): Promise<EsitoAnteprima> {
+ * da mostrare.
+ *
+ * Basta vedere l'esercizio; chi non lo vede riceve `non_trovato` come per un
+ * id inesistente. `ruolo` accompagna l'esito perché la pagina sappia cosa
+ * offrire accanto all'anteprima (modificare, commentare...). */
+export async function caricaPerAnteprima(esercizioId: string, chi: Utente): Promise<EsitoAnteprima> {
+  const ruolo = await ruoloEsercizio(chi, esercizioId);
+  if (!ruolo) return { ok: false, motivo: "non_trovato" };
   const esercizio = await prisma.esercizio.findUnique({ where: { id: esercizioId } });
   if (!esercizio) {
     return { ok: false, motivo: "non_trovato" };
@@ -425,5 +546,5 @@ export async function caricaPerAnteprima(esercizioId: string): Promise<EsitoAnte
     return { ok: false, motivo: "senza_versione" };
   }
 
-  return { ok: true, titolo: esercizio.title, versione: versione.version, content: versione.content };
+  return { ok: true, titolo: esercizio.title, versione: versione.version, content: versione.content, ruolo };
 }

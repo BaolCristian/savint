@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { creaEsercizio, elencoRedazione } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { esercizioEditorSchema } from "@/lib/esercizi/editor/modello";
 import { dettaglioCorpoNonValido } from "@/lib/esercizi/editor/completezza";
 
@@ -19,6 +20,7 @@ const bodySchema = z.object({ editor: esercizioEditorSchema });
 // riportato dalla revisione del task precedente, vedi `redazione.ts`).
 const STATI: Record<string, number> = {
   non_trovato: 404,
+  sola_lettura: 403,
   non_rappresentabile: 409,
   verifica_fallita: 422,
   versione_in_conflitto: 409,
@@ -28,7 +30,8 @@ export async function GET() {
   const gate = await requireTeacher();
   if (!gate.ok) return gate.response;
 
-  const elenco = await elencoRedazione();
+  // Solo gli esercizi che il docente vede, ciascuno col suo ruolo.
+  const elenco = await elencoRedazione(utenteDaSessione(gate.session));
   return NextResponse.json(elenco);
 }
 

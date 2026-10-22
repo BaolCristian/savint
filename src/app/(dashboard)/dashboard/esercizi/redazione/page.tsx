@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { Button } from "@/components/ui/button";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-client";
@@ -38,7 +39,7 @@ export default async function Page({
 }: {
   searchParams?: Promise<{ importati?: string; saltati?: string }>;
 } = {}) {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   // `?importati=N&saltati=M`: ci torna la pagina di import quando tutti gli
   // esercizi mandati sono stati salvati (importa/importa-client.tsx); se
   // qualcuno non lo è, la pagina di import resta aperta e lo elenca.
@@ -49,7 +50,8 @@ export default async function Page({
   const tBase = await getTranslations("esercizi");
   const tUi = await getTranslations("teacherExercisesUi");
 
-  const elenco = await elencoRedazione();
+  // Solo gli esercizi che il docente vede (suoi, condivisi, della scuola).
+  const elenco = await elencoRedazione(utenteDaSessione(session));
 
   const formattaData = (d: Date) => d.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
 

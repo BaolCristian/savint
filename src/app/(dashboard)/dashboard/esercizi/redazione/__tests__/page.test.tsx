@@ -21,6 +21,12 @@ import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
 import Page from "../page";
 
+// Il ruolo e la proprietà di ogni voce (Task 3 della condivisione): questa
+// pagina non li mostra ancora, ma `VoceRedazione` li porta sempre.
+const ACCESSO = {
+  ruolo: "EDITOR" as const, proprietarioId: null, proprietarioNome: null, accesso: "scuola" as const,
+};
+
 beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(elencoRedazione).mockReset();
@@ -67,7 +73,7 @@ describe("elenco della redazione", () => {
         modificabile: true,
         motivo: null,
         autoreNome: "Mario Rossi",
-        aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+        aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
       },
     ]);
     await rendi();
@@ -112,7 +118,7 @@ describe("elenco della redazione", () => {
         motivo:
           "Contiene un tipo di parte (gapfill) che l'editor non sa ricostruire. Può essere modificato solo intervenendo direttamente nel repository dei contenuti.",
         autoreNome: null,
-        aggiornatoIl: new Date("2026-02-01T08:00:00Z"),
+        aggiornatoIl: new Date("2026-02-01T08:00:00Z"), ...ACCESSO,
       },
     ]);
 
@@ -147,7 +153,7 @@ describe("elenco della redazione", () => {
         modificabile: false,
         motivo: null,
         autoreNome: null,
-        aggiornatoIl: new Date("2026-02-01T08:00:00Z"),
+        aggiornatoIl: new Date("2026-02-01T08:00:00Z"), ...ACCESSO,
       },
     ]);
 
@@ -160,11 +166,11 @@ describe("elenco della redazione", () => {
     vi.mocked(elencoRedazione).mockResolvedValue([
       {
         id: "e1", titolo: "Equazioni", argomento: "algebra", anno: 1, ultimaVersione: 1,
-        modificabile: true, motivo: null, autoreNome: "Mario", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+        modificabile: true, motivo: null, autoreNome: "Mario", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
       },
       {
         id: "e2", titolo: "Triangoli", argomento: "geometria", anno: 2, ultimaVersione: 1,
-        modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+        modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
       },
     ]);
 
@@ -181,7 +187,7 @@ describe("elenco della redazione", () => {
   it("raggruppa gli esercizi per argomento", async () => {
     const voce = (id: string, titolo: string, argomento: string) => ({
       id, titolo, argomento, anno: 2, ultimaVersione: 1,
-      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
     });
     vi.mocked(elencoRedazione).mockResolvedValue([
       voce("e1", "Sconti", "percentuali"),
