@@ -50,6 +50,7 @@ export default async function Page({
   const t = await getTranslations("esercizi.redazione.elenco");
   const tBase = await getTranslations("esercizi");
   const tUi = await getTranslations("teacherExercisesUi");
+  const tCommenti = await getTranslations("esercizi.commenti");
 
   // Solo gli esercizi che il docente vede (suoi, condivisi, della scuola).
   const chi = utenteDaSessione(session);
@@ -82,6 +83,8 @@ export default async function Page({
     diChi: diChi(v),
     etichetta: etichetta(v),
     motivo: v.modificabile ? null : (v.motivo ?? t("motivoGenerico")),
+    commentiAperti: v.commentiAperti,
+    commentiApertiTesto: tCommenti("contatore", { n: v.commentiAperti }),
     ultimaVersione: t("ultimaVersioneDa", {
       autore: v.autoreNome ?? t("autoreSconosciuto"),
       data: formattaData(v.aggiornatoIl),

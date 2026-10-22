@@ -64,7 +64,7 @@ describe("GET /api/esercizi/redazione", () => {
     // rileggere l'esercizio (Onda finale, I5).
     const voce = { id: "e1", titolo: "T", argomento: "algebra", anno: 1, ultimaVersione: 2,
       modificabile: true, motivo: null, autoreNome: "Prof", aggiornatoIl: new Date("2026-01-01"),
-      ruolo: "PROPRIETARIO" as const, proprietarioId: "docente1", proprietarioNome: "Prof", accesso: "privato" as const };
+      ruolo: "PROPRIETARIO" as const, proprietarioId: "docente1", proprietarioNome: "Prof", accesso: "privato" as const, commentiAperti: 0 };
     vi.mocked(elencoRedazione).mockResolvedValue([voce]);
     const r = await GET();
     expect(r.status).toBe(200);

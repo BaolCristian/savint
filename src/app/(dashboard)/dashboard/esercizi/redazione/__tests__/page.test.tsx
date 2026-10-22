@@ -24,7 +24,7 @@ import Page from "../page";
 // Il ruolo e la proprietà di ogni voce (Task 3 della condivisione): di norma
 // un esercizio della scuola su cui il docente è editor.
 const ACCESSO = {
-  ruolo: "EDITOR" as const, proprietarioId: null, proprietarioNome: null, accesso: "scuola" as const,
+  ruolo: "EDITOR" as const, proprietarioId: null, proprietarioNome: null, accesso: "scuola" as const, commentiAperti: 0,
 };
 
 beforeEach(() => {
@@ -266,6 +266,20 @@ describe("elenco della redazione", () => {
       expect(screen.getByText("catalog.yoursPrivate")).toBeInTheDocument();
       expect(screen.getByText("catalog.yoursSchool")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "condividiArgomento" })).toBeInTheDocument();
+    });
+
+    // Commenti (Task 8): il contatore dei commenti aperti compare solo
+    // quando ce n'è almeno uno, e porta all'anteprima dove si leggono.
+    it("il contatore dei commenti aperti compare solo sopra lo zero", async () => {
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "PROPRIETARIO", proprietarioId: "doc1", proprietarioNome: "Io", accesso: "privato", commentiAperti: 2 }),
+        voce("e2", "Aumenti", { ruolo: "PROPRIETARIO", proprietarioId: "doc1", proprietarioNome: "Io", accesso: "privato", commentiAperti: 0 }),
+      ]);
+      await rendi();
+      const contatore = screen.getByRole("link", { name: 'contatore:{"n":2}' });
+      expect(contatore).toHaveTextContent("2");
+      expect(contatore).toHaveAttribute("href", "/dashboard/esercizi/anteprima/e1");
+      expect(screen.queryByRole("link", { name: 'contatore:{"n":0}' })).toBeNull();
     });
 
     it("un editor ha Apri ma non Condividi; senza proprietario lo dice", async () => {

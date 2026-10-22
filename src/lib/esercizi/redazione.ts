@@ -7,6 +7,7 @@ import { daNumbas } from "./editor/da-numbas";
 import { verificaSuSemi, type EsitoVerifica } from "./editor/verifica";
 import { hashContenuto, type EsercizioFile } from "./format/schema";
 import { chiaveArgomento, puo, ruoliEsercizi, ruoloEsercizio, type Ruolo, type Utente } from "./accesso";
+import { commentiApertiPer } from "./commenti";
 
 export type EsitoRedazione =
   | { ok: true; esercizioId: string; versione: number }
@@ -44,6 +45,10 @@ export type VoceRedazione = {
    * già: è lo stesso nome. */
   proprietarioId: string | null;
   proprietarioNome: string | null;
+  /** I commenti di primo livello non ancora risolti, per il contatore del
+   * catalogo: solo sulle righe di chi può condividere l'esercizio
+   * (proprietario, ADMIN), altrimenti 0. */
+  commentiAperti: number;
   /** Quanto l'esercizio è aperto agli altri, per l'etichetta del
    * proprietario: "scuola" se ha un accesso di scuola, "condiviso" se ha
    * almeno una strada verso qualcuno (condivisione nominata, argomento
@@ -377,11 +382,15 @@ export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
   });
 
   const authorIds = [...new Set(esercizi.map((e) => e.authorId).filter((id): id is string => id !== null))];
-  const [autori, accessi] = await Promise.all([
+  // Il contatore dei commenti aperti: una sola query raggruppata, sui soli
+  // esercizi che chi chiede può condividere.
+  const condivisibili = esercizi.filter((e) => puo(ruoli.get(e.id), "condividere")).map((e) => e.id);
+  const [autori, accessi, aperti] = await Promise.all([
     authorIds.length
       ? prisma.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, name: true } })
       : Promise.resolve([]),
     accessoEsercizi(esercizi),
+    commentiApertiPer(condivisibili),
   ]);
   const nomePerId = new Map(autori.map((a) => [a.id, a.name]));
 
@@ -403,6 +412,7 @@ export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
       proprietarioId: e.authorId,
       proprietarioNome,
       accesso: accessi.get(e.id)!,
+      commentiAperti: aperti.get(e.id) ?? 0,
     };
   });
 }

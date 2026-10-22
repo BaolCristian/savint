@@ -6,6 +6,7 @@ import { caricaPerAnteprima } from "@/lib/esercizi/redazione";
 import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
 import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
 import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
+import { SezioneCommenti } from "@/components/esercizi/commenti/sezione-commenti";
 import { AnteprimaDocenteClient } from "./anteprima-docente-client";
 
 /** L'anteprima del docente su QUALUNQUE esercizio del bacino, modificabile
@@ -45,20 +46,27 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </Link>
 
       {esito.ok ? (
-        <>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold">{esito.titolo}</h1>
-              <p className="text-sm text-muted-foreground">{t("versione", { numero: esito.versione })}</p>
+        // I commenti accanto all'esercizio sugli schermi larghi, sotto su
+        // quelli stretti.
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-semibold">{esito.titolo}</h1>
+                <p className="text-sm text-muted-foreground">{t("versione", { numero: esito.versione })}</p>
+              </div>
+              {/* "Condividi" solo al proprietario (o all'ADMIN). */}
+              {puo(esito.ruolo, "condividere") && (
+                <CondividiDialog risorsa={{ tipo: "esercizio", id }} titolo={esito.titolo} testi={await testiCondivisione()} admin={chi.admin} />
+              )}
             </div>
-            {/* "Condividi" solo al proprietario (o all'ADMIN). */}
-            {puo(esito.ruolo, "condividere") && (
-              <CondividiDialog risorsa={{ tipo: "esercizio", id }} titolo={esito.titolo} testi={await testiCondivisione()} admin={chi.admin} />
-            )}
+            <p className="text-sm text-muted-foreground">{t("spiegazione")}</p>
+            <AnteprimaDocenteClient esercizioId={id} content={esito.content} locale={locale} />
           </div>
-          <p className="text-sm text-muted-foreground">{t("spiegazione")}</p>
-          <AnteprimaDocenteClient esercizioId={id} content={esito.content} locale={locale} />
-        </>
+          <aside className="min-w-0 border-t pt-4 xl:sticky xl:top-4 xl:border-t-0 xl:pt-0">
+            <SezioneCommenti esercizioId={id} chi={chi} ruolo={esito.ruolo} />
+          </aside>
+        </div>
       ) : (
         <div className="space-y-2">
           <h1 className="text-xl font-semibold">{t("senzaVersioneTitolo")}</h1>

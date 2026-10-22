@@ -1798,6 +1798,30 @@
       "erroreNonTrovato": "Non puoi condividere questo elemento.",
       "erroreDestinatario": "Uno dei colleghi scelti non può ricevere la condivisione.",
       "erroreGenerico": "Salvataggio non riuscito. Riprova."
+    },
+    "commenti": {
+      "titolo": "Commenti",
+      "nessuno": "Ancora nessun commento.",
+      "scrivi": "Scrivi un commento",
+      "invia": "Commenta",
+      "invioInCorso": "Invio…",
+      "rispondi": "Rispondi",
+      "scriviRisposta": "Scrivi una risposta",
+      "inviaRisposta": "Invia risposta",
+      "annulla": "Annulla",
+      "segnaRisolto": "Segna come risolto",
+      "riapri": "Riapri",
+      "risolti": "Risolti ({n})",
+      "elimina": "Elimina",
+      "confermaElimina": "Eliminare questo commento?",
+      "eliminaConRisposte": "Elimina anche le risposte",
+      "tu": "tu",
+      "erroreTesto": "Il commento deve avere tra 1 e 2000 caratteri.",
+      "erroreNonPermesso": "Non hai il permesso per questa azione.",
+      "erroreNonTrovato": "Questo commento non c'è più. Ricarica la pagina.",
+      "erroreTroppi": "Troppe azioni di seguito: aspetta un minuto e riprova.",
+      "erroreGenerico": "Qualcosa è andato storto. Riprova.",
+      "contatore": "{n, plural, one {# commento aperto} other {# commenti aperti}}"
     }
   },
   "eserciziIngresso": {

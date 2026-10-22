@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { MessageSquareIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CondividiDialog, type TestiCondivisione } from "@/components/esercizi/condivisione/condividi-dialog";
@@ -38,6 +39,10 @@ export interface VoceElenco {
    * component non riceve una funzione di formattazione come prop (stesso
    * motivo di `eserciziLabel` in ContenitoriClient). */
   ultimaVersione: string;
+  /** I commenti aperti, solo per chi può condividere (altrimenti 0), e la
+   * loro descrizione già tradotta dalla pagina ("2 commenti aperti"). */
+  commentiAperti: number;
+  commentiApertiTesto: string;
 }
 
 interface Testi extends DuplicaButtonTesti {
@@ -172,6 +177,17 @@ export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: Vo
                           <p className="text-sm text-muted-foreground">{v.classe}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5">
+                          {v.commentiAperti > 0 && (
+                            <Link
+                              href={`/dashboard/esercizi/anteprima/${v.id}`}
+                              title={v.commentiApertiTesto}
+                              aria-label={v.commentiApertiTesto}
+                              className="inline-flex items-center gap-1 rounded-full border border-brand-orange/40 bg-brand-orange-50 px-2 py-0.5 text-xs font-medium text-brand-ink hover:bg-brand-orange/20"
+                            >
+                              <MessageSquareIcon className="size-3.5 text-brand-orange" aria-hidden />
+                              {v.commentiAperti}
+                            </Link>
+                          )}
                           <Badge variant={v.diChi === "miei" ? "secondary" : "outline"}>{v.etichetta}</Badge>
                           <Badge variant={apribile(v) ? "default" : "outline"}>
                             {apribile(v) ? testi.modificabile : testi.soloLettura}

@@ -13,6 +13,14 @@ vi.mock("next/navigation", () => ({
     throw new Error(`NEXT_REDIRECT ${url}`);
   }),
 }));
+// La sezione "Commenti" è un server component asincrono che legge il
+// database: qui basta sapere che la pagina la monta, col ruolo giusto
+// (il comportamento è provato in commenti-esercizio.test.tsx).
+vi.mock("@/components/esercizi/commenti/sezione-commenti", () => ({
+  SezioneCommenti: (props: { esercizioId: string; ruolo: string }) => (
+    <div data-testid="sezione-commenti" data-esercizio-id={props.esercizioId} data-ruolo={props.ruolo} />
+  ),
+}));
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -122,5 +130,7 @@ describe("pagina di modifica di un esercizio esistente", () => {
     });
     await rendi();
     expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
+    // Commenti (Task 8): la sezione accanto all'editor, col ruolo.
+    expect(screen.getByTestId("sezione-commenti")).toHaveAttribute("data-ruolo", "EDITOR");
   });
 });

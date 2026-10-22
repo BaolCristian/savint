@@ -6,6 +6,7 @@ import { caricaPerEditor } from "@/lib/esercizi/redazione";
 import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
 import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
 import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
+import { SezioneCommenti } from "@/components/esercizi/commenti/sezione-commenti";
 import { ModificaEsercizioClient } from "./modifica-esercizio-client";
 
 /** La modifica di un esercizio esistente. Chi arriva dall'elenco (Task 8)
@@ -65,7 +66,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           />
         )}
       </div>
-      <ModificaEsercizioClient esercizioId={id} valoreIniziale={esito.editor} />
+      {/* I commenti accanto all'editor sugli schermi molto larghi (l'editor
+          ha già due colonne sue); sotto altrimenti, chiusi di partenza e in
+          un riquadro che scorre, per non togliere spazio all'editor. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 2xl:flex-row 2xl:gap-5">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <ModificaEsercizioClient esercizioId={id} valoreIniziale={esito.editor} />
+        </div>
+        <aside className="max-h-[40vh] shrink-0 overflow-y-auto border-t pt-3 2xl:max-h-none 2xl:w-80 2xl:border-l 2xl:border-t-0 2xl:pl-5 2xl:pt-0">
+          <SezioneCommenti esercizioId={id} chi={chi} ruolo={esito.ruolo} richiudibile />
+        </aside>
+      </div>
     </div>
   );
 }

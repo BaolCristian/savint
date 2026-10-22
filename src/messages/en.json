@@ -1798,6 +1798,30 @@
       "erroreNonTrovato": "You can't share this item.",
       "erroreDestinatario": "One of the chosen colleagues can't receive the share.",
       "erroreGenerico": "Saving failed. Try again."
+    },
+    "commenti": {
+      "titolo": "Comments",
+      "nessuno": "No comments yet.",
+      "scrivi": "Write a comment",
+      "invia": "Comment",
+      "invioInCorso": "Sending…",
+      "rispondi": "Reply",
+      "scriviRisposta": "Write a reply",
+      "inviaRisposta": "Send reply",
+      "annulla": "Cancel",
+      "segnaRisolto": "Mark as resolved",
+      "riapri": "Reopen",
+      "risolti": "Resolved ({n})",
+      "elimina": "Delete",
+      "confermaElimina": "Delete this comment?",
+      "eliminaConRisposte": "Also delete the replies",
+      "tu": "you",
+      "erroreTesto": "A comment must be between 1 and 2000 characters.",
+      "erroreNonPermesso": "You are not allowed to do this.",
+      "erroreNonTrovato": "This comment no longer exists. Reload the page.",
+      "erroreTroppi": "Too many actions in a row: wait a minute and try again.",
+      "erroreGenerico": "Something went wrong. Please try again.",
+      "contatore": "{n, plural, one {# open comment} other {# open comments}}"
     }
   },
   "eserciziIngresso": {
