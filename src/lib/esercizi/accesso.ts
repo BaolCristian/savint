@@ -130,7 +130,7 @@ async function calcolaRuoliEsercizi(chi: Utente | "scuola", soloId?: string): Pr
         },
         esercizi: {
           where: soloId ? { esercizioId: soloId } : {},
-          select: { esercizioId: true },
+          select: { esercizioId: true, addedById: true },
         },
       },
     }),
@@ -141,21 +141,22 @@ async function calcolaRuoliEsercizi(chi: Utente | "scuola", soloId?: string): Pr
   // Le condivisioni per argomento possono ripetersi: vale la più ampia.
   const perArgomento = new Map<string, Ruolo>();
   for (const a of argomenti) {
-    const k = `${a.ownerId}\u0000${a.chiave}`;
+    const k = `${a.ownerId}\u0000${chiaveArgomento(a.chiave)}`;
     perArgomento.set(k, ruoloMassimo(perArgomento.get(k), a.ruolo)!);
   }
 
   // Per ogni esercizio, le raccolte che lo contengono: ciascuna col ruolo di
-  // chi chiede e i suoi contributori (proprietario + editor nominati). Un
-  // ruolo di scuola fa ricevere, non contribuire.
-  const perRaccolta = new Map<string, { ruolo: Ruolo; contributori: Set<string> }[]>();
+  // chi chiede, i suoi contributori (proprietario + editor nominati) e chi ve
+  // l'ha messo. Un ruolo di scuola fa ricevere, non contribuire.
+  type Voce = { ruolo: Ruolo; contributori: Set<string>; addedById: string | null };
+  const perRaccolta = new Map<string, Voce[]>();
   for (const r of raccolte) {
     const ruolo = ruoloSuRaccolta(chi, r);
     if (!ruolo) continue;
     const contributori = new Set([r.createdById]);
     for (const c of r.condivisioni) if (c.ruolo === "EDITOR") contributori.add(c.userId);
-    const voce = { ruolo: versoEsercizi(ruolo), contributori };
-    for (const { esercizioId } of r.esercizi) {
+    for (const { esercizioId, addedById } of r.esercizi) {
+      const voce: Voce = { ruolo: versoEsercizi(ruolo), contributori, addedById };
       const lista = perRaccolta.get(esercizioId);
       if (lista) lista.push(voce);
       else perRaccolta.set(esercizioId, [voce]);
@@ -169,8 +170,11 @@ async function calcolaRuoliEsercizi(chi: Utente | "scuola", soloId?: string): Pr
     ruolo = ruoloMassimo(ruolo, e.accessoScuola);
     if (e.authorId) {
       ruolo = ruoloMassimo(ruolo, perArgomento.get(`${e.authorId}\u0000${chiaveArgomento(e.topic)}`));
+      // La raccolta trasmette solo ciò che l'autore stesso, contributore, ci
+      // ha messo: chi ha ricevuto un esercizio non può girarlo ad altri
+      // mettendolo in una raccolta, nemmeno se ne nomina editor l'autore.
       for (const v of perRaccolta.get(e.id) ?? []) {
-        if (v.contributori.has(e.authorId)) ruolo = ruoloMassimo(ruolo, v.ruolo);
+        if (v.addedById === e.authorId && v.contributori.has(e.authorId)) ruolo = ruoloMassimo(ruolo, v.ruolo);
       }
     }
     if (ruolo) ruoli.set(e.id, ruolo);

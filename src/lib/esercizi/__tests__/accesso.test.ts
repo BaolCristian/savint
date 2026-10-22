@@ -28,6 +28,11 @@ async function raccolta(ownerId: string, nome: string, accessoScuola?: "VISUALIZ
   return (await prisma.contenitore.create({ data: { name: `${P}${nome}`, createdById: ownerId, accessoScuola } })).id;
 }
 
+// Mette un esercizio in una raccolta, ricordando chi ce l'ha messo.
+async function metti(contenitoreId: string, esercizioId: string, addedById: string) {
+  await prisma.contenitoreEsercizio.create({ data: { contenitoreId, esercizioId, addedById } });
+}
+
 beforeEach(async () => {
   // Condivisioni e righe di raccolta spariscono a cascata con esercizi,
   // raccolte e utenti; le raccolte vanno tolte prima degli utenti.
@@ -86,7 +91,7 @@ describe("accesso: ruolo sugli esercizi", () => {
     const r = await raccolta(A.id, "R");
     await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: B.id, ruolo: "EDITOR" } });
     const es = await esercizio("di-b", B.id);
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    await metti(r, es, B.id);
     expect(await ruoloEsercizio(A, es)).toBe("EDITOR");
     expect((await ruoliEsercizi(A)).get(es)).toBe("EDITOR");
     expect(await ruoloEsercizio(B, es)).toBe("PROPRIETARIO");
@@ -98,7 +103,7 @@ describe("accesso: ruolo sugli esercizi", () => {
     await prisma.condivisioneEsercizio.create({ data: { esercizioId: es, userId: B.id, ruolo: "VISUALIZZATORE" } });
     const r = await raccolta(B.id, "R");
     await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: A.id, ruolo: "EDITOR" } });
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    await metti(r, es, B.id);
     expect(await ruoloEsercizio(A, es)).toBeNull();
     expect((await ruoliEsercizi(A)).has(es)).toBe(false);
     expect(await ruoloEsercizio(B, es)).toBe("VISUALIZZATORE");
@@ -107,7 +112,7 @@ describe("accesso: ruolo sugli esercizi", () => {
   it("raccolta con accesso scuola EDITOR: l'esercizio privato di un non nominato non si vede", async () => {
     const r = await raccolta(A.id, "R", "EDITOR");
     const es = await esercizio("di-d", D.id);
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    await metti(r, es, D.id);
     expect(await ruoloEsercizio(B, es)).toBeNull();
     expect((await ruoliEsercizi(B)).has(es)).toBe(false);
     expect((await ruoliEsercizi("scuola")).has(es)).toBe(false);
@@ -116,7 +121,7 @@ describe("accesso: ruolo sugli esercizi", () => {
   it("raccolta con accesso scuola: gli esercizi del proprietario arrivano a tutti, anche a \"scuola\", mai come PROPRIETARIO", async () => {
     const r = await raccolta(A.id, "R", "COMMENTATORE");
     const es = await esercizio("di-a", A.id);
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    await metti(r, es, A.id);
     expect(await ruoloEsercizio(B, es)).toBe("COMMENTATORE");
     expect((await ruoliEsercizi("scuola")).get(es)).toBe("COMMENTATORE");
   });
@@ -126,9 +131,72 @@ describe("accesso: ruolo sugli esercizi", () => {
     await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: B.id, ruolo: "EDITOR" } });
     await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: C.id, ruolo: "VISUALIZZATORE" } });
     const es = await esercizio("di-b", B.id);
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    await metti(r, es, B.id);
     expect(await ruoloEsercizio(A, es)).toBe("EDITOR");
     expect(await ruoloEsercizio(C, es)).toBe("VISUALIZZATORE");
+  });
+
+  it("niente escalation: A mette nella sua raccolta l'esercizio che B gli ha dato in lettura, anche nominando B editor", async () => {
+    const x = await esercizio("x", B.id);
+    await prisma.condivisioneEsercizio.create({ data: { esercizioId: x, userId: A.id, ruolo: "VISUALIZZATORE" } });
+    const r = await raccolta(A.id, "R", "EDITOR");
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: B.id, ruolo: "EDITOR" } });
+    await metti(r, x, A.id);
+    expect(await ruoloEsercizio(A, x)).toBe("VISUALIZZATORE");
+    expect((await ruoliEsercizi(A)).get(x)).toBe("VISUALIZZATORE");
+    expect(await ruoloEsercizio(C, x)).toBeNull();
+    expect((await ruoliEsercizi("scuola")).has(x)).toBe(false);
+  });
+
+  it("una riga di raccolta senza addedById (nata prima) non trasmette niente", async () => {
+    const r = await raccolta(A.id, "R", "EDITOR");
+    const es = await esercizio("vecchio", A.id);
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: r, esercizioId: es } });
+    expect(await ruoloEsercizio(B, es)).toBeNull();
+  });
+
+  it("l'autore che è solo VISUALIZZATORE o COMMENTATORE della raccolta non vi trasmette i suoi esercizi", async () => {
+    const r = await raccolta(A.id, "R");
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: B.id, ruolo: "VISUALIZZATORE" } });
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: C.id, ruolo: "COMMENTATORE" } });
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: D.id, ruolo: "EDITOR" } });
+    const diB = await esercizio("di-b", B.id);
+    const diC = await esercizio("di-c", C.id);
+    await metti(r, diB, B.id);
+    await metti(r, diC, C.id);
+    expect(await ruoloEsercizio(A, diB)).toBeNull();
+    expect(await ruoloEsercizio(D, diB)).toBeNull();
+    expect(await ruoloEsercizio(A, diC)).toBeNull();
+    expect(await ruoloEsercizio(B, diC)).toBeNull();
+  });
+
+  it("se l'editor nominato perde il ruolo o viene declassato, i suoi esercizi smettono di arrivare", async () => {
+    const r = await raccolta(A.id, "R");
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: B.id, ruolo: "EDITOR" } });
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: r, userId: C.id, ruolo: "VISUALIZZATORE" } });
+    const es = await esercizio("di-b", B.id);
+    await metti(r, es, B.id);
+    expect(await ruoloEsercizio(C, es)).toBe("VISUALIZZATORE");
+    await prisma.condivisioneContenitore.update({
+      where: { contenitoreId_userId: { contenitoreId: r, userId: B.id } }, data: { ruolo: "COMMENTATORE" },
+    });
+    expect(await ruoloEsercizio(A, es)).toBeNull();
+    expect(await ruoloEsercizio(C, es)).toBeNull();
+    await prisma.condivisioneContenitore.update({
+      where: { contenitoreId_userId: { contenitoreId: r, userId: B.id } }, data: { ruolo: "EDITOR" },
+    });
+    expect(await ruoloEsercizio(C, es)).toBe("VISUALIZZATORE");
+    await prisma.condivisioneContenitore.delete({ where: { contenitoreId_userId: { contenitoreId: r, userId: B.id } } });
+    expect(await ruoloEsercizio(A, es)).toBeNull();
+    expect((await ruoliEsercizi(C)).has(es)).toBe(false);
+  });
+
+  it("una chiave d'argomento salvata non normalizzata vale lo stesso", async () => {
+    await prisma.condivisioneArgomento.create({
+      data: { ownerId: A.id, chiave: " Geometria", argomento: "Geometria", userId: B.id, ruolo: "VISUALIZZATORE" },
+    });
+    const es = await esercizio("geo", A.id, "geometria");
+    expect(await ruoloEsercizio(B, es)).toBe("VISUALIZZATORE");
   });
 
   it("un esercizio senza autore non è mai PROPRIETARIO per un docente", async () => {

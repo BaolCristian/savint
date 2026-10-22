@@ -138,6 +138,7 @@ model User {
   condivisioniContenitori CondivisioneContenitore[]
   argomentiCondivisi      CondivisioneArgomento[]   @relation("argomentiCondivisi")
   argomentiRicevuti       CondivisioneArgomento[]   @relation("argomentiRicevuti")
+  eserciziAggiunti        ContenitoreEsercizio[]    @relation("eserciziAggiunti")
   commentiEsercizi        CommentoEsercizio[]       @relation("commentiScritti")
   commentiRisolti         CommentoEsercizio[]       @relation("commentiRisolti")
 }
@@ -815,8 +816,13 @@ model ContenitoreEsercizio {
   contenitoreId String
   esercizioId   String
   addedAt       DateTime    @default(now())
+  // Chi ha messo l'esercizio nella raccolta. La raccolta trasmette ai suoi
+  // membri un esercizio solo se ce l'ha messo il suo autore (ed è un
+  // contributore): null, come per le righe nate prima, non trasmette niente.
+  addedById     String?
   contenitore   Contenitore @relation(fields: [contenitoreId], references: [id], onDelete: Cascade)
   esercizio     Esercizio   @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
+  addedBy       User?       @relation("eserciziAggiunti", fields: [addedById], references: [id], onDelete: SetNull)
 
   @@id([contenitoreId, esercizioId])
 }
