@@ -131,6 +131,7 @@ model User {
   contenitoriCreati Contenitore[]
   batterieCreate    Batteria[]
   compitiAssegnati  Compito[]
+  estrazioni        EstrazioneStudente[]
 
   // Proprietà, condivisione e commenti degli esercizi
   eserciziScritti         Esercizio[]
@@ -781,9 +782,9 @@ model ClasseStudente {
   classeId  String
   studentId String
   origine   OrigineIscrizione @default(GRUPPO)
-  joinedAt  DateTime @default(now())
-  classe    Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
-  studente  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime          @default(now())
+  classe    Classe            @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  studente  User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([classeId, studentId])
 }
@@ -831,20 +832,25 @@ model ContenitoreEsercizio {
 }
 
 model Batteria {
-  id          String           @id @default(cuid())
-  name        String
-  description String?
-  createdById String
+  id               String           @id @default(cuid())
+  name             String
+  description      String?
+  createdById      String
   // Task 1 (docente-via-veloce): marca le batterie generate dal sistema per
   // un'assegnazione diretta (per argomento, non per raccolta). Non
   // compaiono in elencoBatterie — sono provenienza di un Compito, non
   // contenuto che un docente componga o gestisca a mano. Default false:
   // ogni batteria esistente, creata a mano da creaBatteria, resta tale.
-  automatica  Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  createdBy   User             @relation(fields: [createdById], references: [id])
-  regole      BatteriaRegola[]
-  compiti     Compito[]
+  automatica       Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  createdBy        User             @relation(fields: [createdById], references: [id])
+  regole           BatteriaRegola[]
+  compiti          Compito[]
+  // Nuovo compito: i compiti nati da questo modello ("Usa questo modello").
+  // Solo un riferimento per contare "usato N volte": la relazione `compiti`
+  // qui sopra resta quella della copia automatica che ogni compito porta con
+  // sé, quindi eliminare un modello non tocca mai i compiti già assegnati.
+  compitiDaModello Compito[]        @relation("CompitiDaModello")
 }
 
 // Task 1 (docente-via-veloce): una regola ha IL CONTENITORE (pesca da una
@@ -864,6 +870,13 @@ model BatteriaRegola {
   difficoltaMax Int?
   order         Int
   count         Int
+  // Nuovo compito: blocco "scelti a mano". Gli id degli esercizi scelti dal
+  // docente, tutti assegnati: in questa forma contenitoreId e argomento sono
+  // nulli e count è il numero di esercizi scelti. Per i blocchi "raccolta" e
+  // "argomento" resta vuoto (default), quindi le regole esistenti non cambiano.
+  // Id di Esercizio, non chiavi esterne: un esercizio reso privato o eliminato
+  // rende il blocco insufficiente, non cancella la regola.
+  esercizioIds  String[]     @default([])
   batteria      Batteria     @relation(fields: [batteriaId], references: [id], onDelete: Cascade)
   contenitore   Contenitore? @relation(fields: [contenitoreId], references: [id], onDelete: Restrict)
 
@@ -871,7 +884,7 @@ model BatteriaRegola {
 }
 
 model Compito {
-  id              String      @id @default(cuid())
+  id              String               @id @default(cuid())
   batteriaId      String
   classeId        String
   assignedById    String
@@ -887,11 +900,53 @@ model Compito {
   // in compiti.ts e percorso-compito.ts tratta un ritiratoAt non nullo come
   // "compito inesistente".
   ritiratoAt      DateTime?
-  createdAt       DateTime    @default(now())
-  batteria        Batteria    @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
-  classe          Classe      @relation(fields: [classeId], references: [id], onDelete: Cascade)
-  assignedBy      User        @relation(fields: [assignedById], references: [id])
+  // Nuovo compito: come si estraggono gli esercizi. CLASSE ("stesse domande")
+  // = tutti gli studenti hanno drawnVersionIds; STUDENTE ("diverse per
+  // studente") = ognuno ha la propria EstrazioneStudente. Default CLASSE:
+  // ogni compito già assegnato resta esattamente com'era.
+  modo            ModoEstrazione       @default(CLASSE)
+  // Solo modo STUDENTE: il bacino congelato al momento di assegnare, un
+  // elemento per blocco nell'ordine dei blocchi, forma
+  // { count: number; versionIds: string[] }[] — le versioni candidate
+  // (visibili a chi ha assegnato, ultima versione di ogni esercizio) e quante
+  // pescarne. Le estrazioni per studente pescano solo da qui, con seme
+  // `${drawSeed}:${studentId}`, così non dipendono più da chi ha assegnato né
+  // dalle modifiche successive agli esercizi. Null nel modo CLASSE.
+  bacini          Json?
+  // Il modello (Batteria non automatica) da cui il compito è nato, se c'è:
+  // serve solo a contare "usato N volte". SetNull: eliminare il modello lo
+  // azzera e il compito resta intatto (i suoi blocchi sono nella `batteria`).
+  modelloId       String?
+  createdAt       DateTime             @default(now())
+  batteria        Batteria             @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
+  modello         Batteria?            @relation("CompitiDaModello", fields: [modelloId], references: [id], onDelete: SetNull)
+  classe          Classe               @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  assignedBy      User                 @relation(fields: [assignedById], references: [id])
   tentativi       Tentativo[]
+  estrazioni      EstrazioneStudente[]
 
   @@index([classeId, dueAt])
+}
+
+// Nuovo compito: come si estraggono gli esercizi di un Compito.
+enum ModoEstrazione {
+  CLASSE // stesse domande per tutta la classe (Compito.drawnVersionIds)
+  STUDENTE // diverse per studente (una EstrazioneStudente ciascuno)
+}
+
+// Nuovo compito, modo STUDENTE: l'estrazione di uno studente, calcolata la
+// prima volta che serve (all'assegnazione per gli iscritti, alla prima
+// apertura o anteprima per chi arriva dopo) dal bacino congelato in
+// Compito.bacini, e da quel momento fissa: non si ricalcola più. versionIds
+// sono id di EsercizioVersione nell'ordine dei blocchi, come drawnVersionIds.
+// Sparisce con il compito o con lo studente.
+model EstrazioneStudente {
+  compitoId  String
+  studentId  String
+  versionIds String[]
+  createdAt  DateTime @default(now())
+  compito    Compito  @relation(fields: [compitoId], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([compitoId, studentId])
 }
