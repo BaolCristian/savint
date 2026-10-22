@@ -17,7 +17,8 @@
       "editable": "Modificabili",
       "readOnly": "Sola lettura",
       "diagnostics": "Dettagli di compatibilità",
-      "noResults": "Nessun esercizio corrisponde ai filtri."
+      "noResults": "Nessun esercizio corrisponde ai filtri.",
+      "classe": "Classe {anno}"
     },
     "collections": {
       "search": "Cerca esercizi da aggiungere",

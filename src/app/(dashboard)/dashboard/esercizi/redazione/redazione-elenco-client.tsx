@@ -10,6 +10,8 @@ export interface VoceElenco {
   id: string;
   titolo: string;
   sottotitolo: string;
+  /** "Classe 2": il sottotitolo dentro il gruppo, dove l'argomento è già il titolo. */
+  classe: string;
   anno: number;
   argomento: string;
   modificabile: boolean;
@@ -63,6 +65,22 @@ interface Testi extends DuplicaButtonTesti {
  * modificabile (la ragione dietro l'item I4 dell'onda di correzioni, che
  * però lo aveva tolto anche dalle righe modificabili: quella parte era una
  * correzione eccessiva, corretta qui). */
+type Gruppo = { argomento: string; voci: VoceElenco[] };
+
+/** Gli esercizi per argomento, in ordine alfabetico. "Percentuali" e
+ * "percentuali " finiscono nello stesso gruppo: l'argomento lo scrive a mano
+ * chi redige, e il catalogo non deve spezzarlo per una maiuscola. */
+function perArgomento(voci: VoceElenco[]): Gruppo[] {
+  const gruppi = new Map<string, Gruppo>();
+  for (const v of voci) {
+    const chiave = v.argomento.trim().toLocaleLowerCase();
+    const gruppo = gruppi.get(chiave) ?? { argomento: v.argomento.trim(), voci: [] };
+    gruppo.voci.push(v);
+    gruppi.set(chiave, gruppo);
+  }
+  return [...gruppi.values()].sort((a, b) => a.argomento.localeCompare(b.argomento, "it"));
+}
+
 export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; testi: Testi }) {
   const [query, setQuery] = useState("");
   const [anno, setAnno] = useState("all");
@@ -95,46 +113,58 @@ export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; tes
           <option value="readonly">{testi.solaLettura}</option>
         </select>
       </div>
-      {filtrate.length === 0 ? <p className="text-sm text-muted-foreground">{testi.nessunRisultato}</p> : <ul className="divide-y divide-border border-y border-border">
-      {filtrate.map((v) => (
-        <li key={v.id}>
-          <article className="space-y-2 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="font-medium">{v.titolo}</p>
-                <p className="text-sm text-muted-foreground">{v.sottotitolo}</p>
-              </div>
-              <Badge variant={v.modificabile ? "default" : "outline"}>
-                {v.modificabile ? testi.modificabile : testi.soloLettura}
-              </Badge>
-            </div>
+      {filtrate.length === 0 ? <p className="text-sm text-muted-foreground">{testi.nessunRisultato}</p> : (
+        <div className="space-y-6">
+          {perArgomento(filtrate).map((g) => (
+            <section key={g.argomento} aria-label={g.argomento} className="rounded-xl border border-border bg-card shadow-sm">
+              <h2 className="flex items-center justify-between gap-2 rounded-t-xl border-b border-border border-l-4 border-l-brand-blue bg-muted/50 px-4 py-2.5 text-lg font-semibold">
+                <span className="first-letter:uppercase">{g.argomento}</span>
+                <span className="rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-sm font-medium text-brand-blue">{g.voci.length}</span>
+              </h2>
+              <ul className="divide-y divide-border px-4">
+                {g.voci.map((v) => (
+                  <li key={v.id}>
+                    <article className="space-y-2 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-medium">{v.titolo}</p>
+                          <p className="text-sm text-muted-foreground">{v.classe}</p>
+                        </div>
+                        <Badge variant={v.modificabile ? "default" : "outline"}>
+                          {v.modificabile ? testi.modificabile : testi.soloLettura}
+                        </Badge>
+                      </div>
 
-            <p className="text-xs text-muted-foreground">{v.ultimaVersione}</p>
+                      <p className="text-xs text-muted-foreground">{v.ultimaVersione}</p>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Link href={`/dashboard/esercizi/anteprima/${v.id}`} className="text-sm text-brand-blue hover:underline">
-                {testi.anteprima}
-              </Link>
-              {v.modificabile && (
-                <>
-                  <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
-                    {testi.apri}
-                  </Link>
-                  <DuplicaButton esercizioId={v.id} testi={testi} />
-                </>
-              )}
-            </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Link href={`/dashboard/esercizi/anteprima/${v.id}`} className="text-sm text-brand-blue hover:underline">
+                          {testi.anteprima}
+                        </Link>
+                        {v.modificabile && (
+                          <>
+                            <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
+                              {testi.apri}
+                            </Link>
+                            <DuplicaButton esercizioId={v.id} testi={testi} />
+                          </>
+                        )}
+                      </div>
 
-            {!v.modificabile && (
-              <details className="text-sm text-muted-foreground">
-                <summary className="cursor-pointer">{testi.diagnostica}</summary>
-                <p className="text-sm text-muted-foreground">{v.motivo}</p>
-              </details>
-            )}
-          </article>
-        </li>
-      ))}
-      </ul>}
+                      {!v.modificabile && (
+                        <details className="text-sm text-muted-foreground">
+                          <summary className="cursor-pointer">{testi.diagnostica}</summary>
+                          <p className="text-sm text-muted-foreground">{v.motivo}</p>
+                        </details>
+                      )}
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

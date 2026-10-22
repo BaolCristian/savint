@@ -57,6 +57,7 @@ export default async function Page({
     id: v.id,
     titolo: v.titolo,
     sottotitolo: tBase("annoArgomento", { anno: v.anno, argomento: v.argomento }),
+    classe: tUi("catalog.classe", { anno: v.anno }),
     anno: v.anno,
     argomento: v.argomento,
     modificabile: v.modificabile,

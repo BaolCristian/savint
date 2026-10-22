@@ -17,7 +17,8 @@
       "editable": "Editable",
       "readOnly": "Read-only",
       "diagnostics": "Compatibility details",
-      "noResults": "No exercises match these filters."
+      "noResults": "No exercises match these filters.",
+      "classe": "Year {anno}"
     },
     "collections": {
       "search": "Search exercises to add",

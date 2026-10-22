@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({
@@ -174,6 +174,27 @@ describe("elenco della redazione", () => {
     expect(screen.getByText("Triangoli")).toBeInTheDocument();
     expect(screen.queryByText("Equazioni")).toBeNull();
     expect(screen.getByRole("link", { name: "apri" })).toHaveAttribute("href", "/dashboard/esercizi/redazione/e2");
+  });
+
+  // Il catalogo raggruppa per argomento: un riquadro per argomento, in ordine
+  // alfabetico, col numero di esercizi; maiuscole e spazi non spezzano un gruppo.
+  it("raggruppa gli esercizi per argomento", async () => {
+    const voce = (id: string, titolo: string, argomento: string) => ({
+      id, titolo, argomento, anno: 2, ultimaVersione: 1,
+      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+    });
+    vi.mocked(elencoRedazione).mockResolvedValue([
+      voce("e1", "Sconti", "percentuali"),
+      voce("e2", "Area del cerchio", "geometria"),
+      voce("e3", "Aumenti", "Percentuali "),
+    ]);
+    await rendi();
+
+    const gruppi = screen.getAllByRole("region");
+    expect(gruppi.map((g) => within(g).getByRole("heading").textContent)).toEqual(["geometria1", "percentuali2"]);
+    expect(within(gruppi[1]).getByText("Sconti")).toBeInTheDocument();
+    expect(within(gruppi[1]).getByText("Aumenti")).toBeInTheDocument();
+    expect(within(gruppi[1]).getAllByText('catalog.classe:{"anno":2}')).toHaveLength(2);
   });
 
   it("senza esercizi mostra il messaggio vuoto", async () => {
