@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Check, CheckCircle2 } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth/config";
 import { percorsoCompitoStudente } from "@/lib/esercizi/percorso-compito";
