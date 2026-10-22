@@ -5,29 +5,43 @@ import { comeDocente, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente }
  * raccolta a mano, oppure `argomento` (con `anno` e `difficoltaMax`
  * opzionali) per pescare fra gli esercizi i cui metadati corrispondono. MAI
  * entrambi, MAI nessuno dei due — l'invariante di tutto questo file (Task
- * 1, docente-via-veloce). Vedi `formaRegola` più sotto per dove viene
- * imposta in scrittura e riverificata in lettura. */
+ * 1, docente-via-veloce). Il Nuovo compito (Task 2) aggiunge una terza
+ * forma, `esercizioIds` ("scelti a mano"), con la stessa regola: una sola
+ * forma per regola. Vedi `formaRegola` più sotto per dove viene imposta in
+ * scrittura e riverificata in lettura. */
 export interface RegolaInput {
   count: number;
   contenitoreId?: string;
   argomento?: string;
   anno?: number;
   difficoltaMax?: number;
+  /** Nuovo compito (Task 2): la terza forma, "scelti a mano" — gli id degli
+   * esercizi scelti dal docente, tutti assegnati. Da sola: niente
+   * `contenitoreId` né `argomento`, e `count` uguale a quanti sono. */
+  esercizioIds?: string[];
 }
 
 /** L'invariante, in un solo posto: "contenitore" se la regola ha SOLO
- * `contenitoreId`, "filtro" se ha SOLO `argomento`, `null` altrimenti — un
- * `null` copre sia "ha entrambi" sia "non ha nessuno dei due": non sono due
- * errori diversi, sono la stessa violazione. Chi chiama decide da sé come
+ * `contenitoreId`, "filtro" se ha SOLO `argomento`, "scelti" se ha SOLO
+ * `esercizioIds` non vuoto (Nuovo compito, Task 2: la terza forma), `null`
+ * altrimenti — un `null` copre sia "ne ha più d'una" sia "non ne ha
+ * nessuna": non sono due errori diversi, sono la stessa violazione. Un
+ * `esercizioIds` vuoto non è una forma (è il default della colonna per le
+ * regole delle altre due): conta come "assente". Chi chiama decide da sé come
  * reagire a `null`: `creaBatteria` lo trasforma in un rifiuto in
  * scrittura; `bacinoRegola` lo trasforma in un'eccezione in lettura. Né
  * l'uno né l'altro deve MAI indovinare una forma di default o trattarla
  * come "nessun candidato" — vedi il commento sopra `bacinoRegola`. */
-function formaRegola(r: { contenitoreId: string | null; argomento: string | null }): "contenitore" | "filtro" | null {
+export function formaRegola(r: {
+  contenitoreId: string | null;
+  argomento: string | null;
+  esercizioIds?: readonly string[];
+}): "contenitore" | "filtro" | "scelti" | null {
   const haContenitore = r.contenitoreId != null;
   const haArgomento = r.argomento != null;
-  if (haContenitore === haArgomento) return null;
-  return haContenitore ? "contenitore" : "filtro";
+  const haScelti = (r.esercizioIds?.length ?? 0) > 0;
+  if (Number(haContenitore) + Number(haArgomento) + Number(haScelti) !== 1) return null;
+  return haContenitore ? "contenitore" : haArgomento ? "filtro" : "scelti";
 }
 
 /** Gli id, fra quelli passati, che hanno almeno una `EsercizioVersione`: un
@@ -92,6 +106,10 @@ export async function bacinoRegola(
     argomento: string | null;
     anno: number | null;
     difficoltaMax: number | null;
+    // Facoltativo nel tipo perché i chiamanti che costruiscono una regola a
+    // mano (test, `quantiCorrispondono`) non lo passano; le righe lette da
+    // Prisma lo portano sempre (default `[]`).
+    esercizioIds?: readonly string[];
   },
   chi: Utente,
   visibili?: ReadonlyMap<string, Ruolo>,
@@ -99,13 +117,25 @@ export async function bacinoRegola(
   const forma = formaRegola(regola);
   if (forma === null) {
     throw new Error(
-      "BatteriaRegola malformata: deve avere contenitoreId oppure argomento, mai entrambi né nessuno dei due " +
-        `(contenitoreId=${regola.contenitoreId ?? "null"}, argomento=${regola.argomento ?? "null"})`,
+      "BatteriaRegola malformata: deve avere una sola forma fra contenitoreId, argomento ed esercizioIds " +
+        `(contenitoreId=${regola.contenitoreId ?? "null"}, argomento=${regola.argomento ?? "null"}, ` +
+        `esercizioIds=${regola.esercizioIds?.length ?? 0})`,
     );
   }
 
   const docente = comeDocente(chi);
   const vede = visibili ?? (await ruoliEsercizi(docente));
+
+  // Forma "scelti" (Nuovo compito, Task 2): il bacino sono gli scelti
+  // stessi, ristretti a quelli che `chi` vede — un esercizio scelto e poi
+  // reso privato dal suo autore (o eliminato) esce dal bacino, e il blocco
+  // diventa insufficiente invece di consegnare una bozza altrui. Nessuna
+  // query: la mappa dei visibili basta. Nell'ordine in cui il docente li ha
+  // scelti, senza doppioni (`creaBatteria` li rifiuta, ma qui non ci si
+  // fida, come per la forma).
+  if (forma === "scelti") {
+    return [...new Set(regola.esercizioIds!)].filter((id) => vede.has(id));
+  }
 
   if (forma === "contenitore") {
     if (!(await ruoloContenitore(docente, regola.contenitoreId!))) return [];
@@ -227,7 +257,12 @@ export async function argomentiDisponibili(
  * il nome del contenitore per una regola a raccolta, l'argomento per una a
  * filtro. Usata da `elencoBatterie` qui sotto e da `assegna` (compiti.ts)
  * nel dettaglio di un rifiuto per capienza insufficiente. */
-export function etichettaRegola(regola: { contenitore: { name: string } | null; argomento: string | null }): string {
+export function etichettaRegola(regola: {
+  contenitore: { name: string } | null;
+  argomento: string | null;
+  esercizioIds?: readonly string[];
+}): string {
+  if ((regola.esercizioIds?.length ?? 0) > 0) return "Esercizi scelti";
   return regola.contenitore?.name ?? regola.argomento ?? "?";
 }
 
@@ -235,8 +270,11 @@ export function etichettaRegola(regola: { contenitore: { name: string } | null; 
  * quale che ne fosse la forma — dopo aver tolto gli esercizi già REALMENTE
  * pescati da regole precedenti della stessa batteria (l'insieme `presi`
  * cresce con le scelte vere del sorteggio, non con una stima) e quelli
- * senza versione risolvibile. Usata da `assegna` in compiti.ts, che
- * mescola quello che risulta con un seme vero e ne prende `count`.
+ * senza versione risolvibile. Era usata da `assegna` in compiti.ts; dal
+ * Nuovo compito (Task 2) il sorteggio vive in `estraiConDettaglio`
+ * (estrazione.ts), che applica la stessa esclusione e lo stesso
+ * ordinamento sui candidati già filtrati per versione. Resta come
+ * definizione di riferimento (e per i suoi test).
  *
  * NON usata da `verificaBatteria` qui sotto: prima di un'assegnazione non
  * esiste un seme, quindi non c'è un "presi" vero da passare — quella
@@ -309,10 +347,19 @@ export async function creaBatteria(
 > {
   for (let i = 0; i < regole.length; i++) {
     const r = regole[i]!;
-    if (formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null }) === null) {
+    const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null, esercizioIds: r.esercizioIds });
+    if (forma === null) {
       return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
     }
-    if (!Number.isInteger(r.count) || r.count <= 0) {
+    // Forma "scelti" (Nuovo compito, Task 2): un doppione è una regola
+    // malformata (lo stesso esercizio due volte nello stesso compito non
+    // esiste: l'estrazione esclude i già presi), e `count` DEVE essere
+    // quanti sono gli scelti — "tutti assegnati" è la definizione del
+    // blocco, un count diverso sarebbe una seconda verità sul numero.
+    if (forma === "scelti" && new Set(r.esercizioIds).size !== r.esercizioIds!.length) {
+      return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
+    }
+    if (!Number.isInteger(r.count) || r.count <= 0 || (forma === "scelti" && r.count !== r.esercizioIds!.length)) {
       return { ok: false, motivo: "conteggio_non_valido", dettaglio: { index: i, count: r.count } };
     }
   }
@@ -343,7 +390,7 @@ export async function creaBatteria(
           // di persistere ciò che il chiamante ha eventualmente passato per
           // sbaglio insieme a un contenitoreId — una riga non deve mai
           // portare campi di una forma che non è la sua.
-          const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null });
+          const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null, esercizioIds: r.esercizioIds });
           return {
             batteriaId: b.id,
             order: i,
@@ -352,6 +399,7 @@ export async function creaBatteria(
             argomento: forma === "filtro" ? r.argomento! : null,
             anno: forma === "filtro" ? r.anno ?? null : null,
             difficoltaMax: forma === "filtro" ? r.difficoltaMax ?? null : null,
+            esercizioIds: forma === "scelti" ? r.esercizioIds! : [],
           };
         }),
       });

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
-import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
-import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
+import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
+import { estraiConDettaglio, ultimeVersioni } from "./estrazione";
 import { comeDocente, ruoliEsercizi, type Utente } from "./accesso";
 
 type MotivoAssegna =
@@ -68,8 +68,8 @@ function motivoDateNonValide(
  * se lo prende, e alla regola successiva non resta più disponibile, anche
  * se questo la fa fallire per insufficienza. Un esercizio senza nessuna
  * `EsercizioVersione` non conta mai come disponibile, per nessuna regola:
- * non potrebbe comunque essere consegnato (vedi `candidatiDisponibili` e
- * `idsConVersione` in batterie.ts — quest'ultima condivisa anche da
+ * non potrebbe comunque essere consegnato (vedi `estraiConDettaglio` in
+ * estrazione.ts e `idsConVersione` in batterie.ts — quest'ultima condivisa anche da
  * `verificaBatteria`, che stima la stessa cosa senza un sorteggio vero).
  *
  * Tutti i controlli (batteria, classe, insegnamento, capienza dei
@@ -142,48 +142,44 @@ export async function assegna(
   const tuttiGliId = [...new Set(bacini.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 
+  // Il sorteggio vive in `estraiConDettaglio` (estrazione.ts, Nuovo
+  // compito Task 2): lo STESSO algoritmo che stava qui — seme nuovo, regole
+  // in ordine, esclusione dei già pescati (due contenitori possono
+  // condividere un esercizio, Task 3: senza esclusione un compito "5 da
+  // Equazioni, 3 da Sistemi" potrebbe consegnare meno di 8 esercizi
+  // distinti), candidati ordinati, Fisher–Yates seminato — spostato perché
+  // anche il riepilogo del Nuovo compito lo usa: una copia sola, così
+  // l'anteprima e l'assegnazione non possono estrarre in due modi diversi.
+  // Il candidato senza versione resta fuori come prima (`conVersione`).
+  const daEstrarre = batteria.regole.map((regola, i) => ({
+    candidati: bacini[i]!.filter((id) => conVersione.has(id)),
+    richiesti: regola.count,
+  }));
   const drawSeed = randomUUID();
-  const rng = seedrandom(drawSeed);
-  const drawnVersionIds: string[] = [];
-  // Un esercizio già pescato da una regola non può essere ripescato da
-  // un'altra regola della stessa batteria: due contenitori possono
-  // condividere un esercizio (Task 3), e senza questa esclusione un compito
-  // "5 da Equazioni, 3 da Sistemi" potrebbe consegnare meno di 8 esercizi
-  // distinti se il sorteggio pesca lo stesso esercizio da entrambi i lati.
-  const giaPescati = new Set<string>();
-
-  for (let i = 0; i < batteria.regole.length; i++) {
+  const { esercizi, disponibili } = estraiConDettaglio(daEstrarre, drawSeed);
+  if (!esercizi) {
+    // Il PRIMO blocco insufficiente: i suoi numeri sono quelli di sempre,
+    // perché tutti i precedenti hanno pescato normalmente.
+    const i = disponibili.findIndex((d, k) => d < daEstrarre[k]!.richiesti);
     const regola = batteria.regole[i]!;
-    const candidati = candidatiDisponibili(bacini[i]!, giaPescati, conVersione);
-    if (candidati.length < regola.count) {
-      return {
-        ok: false,
-        motivo: "esercizi_insufficienti",
-        dettaglio: {
-          contenitore: etichettaRegola(regola),
-          richiesti: regola.count,
-          disponibili: candidati.length,
-        },
-      };
-    }
-
-    // Fisher-Yates seminato: stabile per lo stesso seme, diverso ad ogni
-    // nuova assegnazione perché il seme è nuovo ogni volta.
-    const mescolati = [...candidati];
-    for (let i = mescolati.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [mescolati[i], mescolati[j]] = [mescolati[j]!, mescolati[i]!];
-    }
-
-    for (const esercizioId of mescolati.slice(0, regola.count)) {
-      giaPescati.add(esercizioId);
-      const versione = await prisma.esercizioVersione.findFirst({
-        where: { esercizioId },
-        orderBy: { version: "desc" },
-      });
-      if (versione) drawnVersionIds.push(versione.id);
-    }
+    return {
+      ok: false,
+      motivo: "esercizi_insufficienti",
+      dettaglio: {
+        contenitore: etichettaRegola(regola),
+        richiesti: regola.count,
+        disponibili: disponibili[i]!,
+      },
+    };
   }
+
+  // L'ultima versione di ciascun estratto, nell'ordine dell'estrazione (una
+  // query sola invece di una per esercizio, stesso risultato).
+  const versioni = await ultimeVersioni(esercizi);
+  const drawnVersionIds = esercizi.flatMap((id) => {
+    const v = versioni.get(id);
+    return v ? [v.versioneId] : [];
+  });
 
   const compito = await prisma.compito.create({
     data: {

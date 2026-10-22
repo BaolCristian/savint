@@ -576,3 +576,46 @@ describe("bacino e verifica di un ADMIN", () => {
     });
   });
 });
+
+// Nuovo compito, Task 2: la terza forma, "scelti a mano" — solo
+// `esercizioIds`, niente contenitore né argomento, `count` = quanti ne sono
+// stati scelti.
+describe("la regola a esercizi scelti", () => {
+  it("si crea con esercizioIds e count uguale a quanti sono", async () => {
+    const b = await creaBatteria(teacherId, `${P}Scelti`, [{ esercizioIds: [`${P}b1`, `${P}a1`], count: 2 }]);
+    const [r] = await prisma.batteriaRegola.findMany({ where: { batteriaId: b.id } });
+    expect(r).toMatchObject({ contenitoreId: null, argomento: null, anno: null, difficoltaMax: null, count: 2 });
+    expect(r!.esercizioIds).toEqual([`${P}b1`, `${P}a1`]);
+  });
+
+  it("count diverso da quanti sono gli scelti, o un doppione, sono rifiutati", async () => {
+    expect(await creaBatteriaGrezza(teacherId, `${P}ScMale`, [{ esercizioIds: [`${P}a1`], count: 2 }]))
+      .toEqual({ ok: false, motivo: "conteggio_non_valido", dettaglio: { index: 0, count: 2 } });
+    expect(await creaBatteriaGrezza(teacherId, `${P}ScMale`, [{ esercizioIds: [`${P}a1`, `${P}a1`], count: 2 }]))
+      .toEqual({ ok: false, motivo: "regola_malformata", dettaglio: { index: 0 } });
+    // Scelti insieme a un'altra forma: malformata, come contenitore+argomento.
+    expect(await creaBatteriaGrezza(teacherId, `${P}ScMale`, [{ esercizioIds: [`${P}a1`], contenitoreId: contA, count: 1 }]))
+      .toEqual({ ok: false, motivo: "regola_malformata", dettaglio: { index: 0 } });
+    expect(await prisma.batteria.count({ where: { name: `${P}ScMale` } })).toBe(0);
+  });
+
+  it("bacinoRegola con la forma scelti restituisce solo gli scelti visibili, nel loro ordine", async () => {
+    const collega = (await prisma.user.create({ data: { email: `${P}collega3@test.it`, name: "C", role: "TEACHER" } })).id;
+    await prisma.esercizio.create({
+      data: { id: `${P}privato3`, title: "P", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, authorId: collega },
+    });
+    const regola = {
+      contenitoreId: null, argomento: null, anno: null, difficoltaMax: null,
+      esercizioIds: [`${P}b1`, `${P}privato3`, `${P}a1`, `${P}inesistente`],
+    };
+    expect(await bacinoRegola(regola, docente())).toEqual([`${P}b1`, `${P}a1`]);
+    // Il collega vede il suo.
+    expect(await bacinoRegola(regola, { id: collega, admin: false })).toEqual([`${P}b1`, `${P}privato3`, `${P}a1`]);
+  });
+
+  it("una regola scelti insieme a un contenitore lancia in lettura", async () => {
+    await expect(
+      bacinoRegola({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null, esercizioIds: [`${P}a1`] }, docente()),
+    ).rejects.toThrow(/malformata/);
+  });
+});
