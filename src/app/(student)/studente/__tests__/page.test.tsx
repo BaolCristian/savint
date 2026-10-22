@@ -11,6 +11,7 @@ vi.mock("@/lib/db/client", () => ({
   },
 }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDelloStudente: vi.fn() }));
+vi.mock("@/lib/esercizi/pratica", () => ({ eserciziPraticaLibera: vi.fn() }));
 // Il traduttore restituisce chiave e valori: così le asserzioni parlano di
 // quale messaggio è stato scelto, non del testo italiano di quel messaggio.
 vi.mock("next-intl/server", () => ({
@@ -27,6 +28,7 @@ vi.mock("next-intl", () => ({
 
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
+import { eserciziPraticaLibera } from "@/lib/esercizi/pratica";
 import StudentHomePage from "../page";
 
 function esercizioCon(tentativi: unknown[]) {
@@ -41,6 +43,7 @@ beforeEach(() => {
   vi.mocked(prisma.compito.findMany).mockReset().mockResolvedValue([]);
   vi.mocked(prisma.tentativo.findMany).mockReset().mockResolvedValue([]);
   vi.mocked(compitiDelloStudente).mockReset().mockResolvedValue([]);
+  vi.mocked(eserciziPraticaLibera).mockReset().mockResolvedValue(new Set(["01-prova"]));
 });
 
 async function rendi() {
@@ -87,6 +90,16 @@ describe("elenco degli esercizi dello studente", () => {
     await rendi();
     expect(screen.queryByText(/tentativo/i)).toBeNull();
     expect(screen.getByText("Prova")).toBeInTheDocument();
+  });
+
+  // Pratica libera: l'elenco chiede al database solo gli esercizi che vede
+  // tutta la scuola, non tutti quelli che esistono.
+  it("l'elenco libero si limita agli esercizi della pratica libera", async () => {
+    vi.mocked(eserciziPraticaLibera).mockResolvedValue(new Set(["della-scuola"]));
+    vi.mocked(prisma.esercizio.findMany).mockResolvedValue([] as never);
+    await rendi();
+    const dove = vi.mocked(prisma.esercizio.findMany).mock.calls[0]?.[0]?.where;
+    expect(dove?.id).toEqual({ in: ["della-scuola"] });
   });
 });
 

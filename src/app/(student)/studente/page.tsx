@@ -5,6 +5,7 @@ import { BookOpen, CheckCircle2, ClipboardList } from "lucide-react";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
+import { eserciziPraticaLibera } from "@/lib/esercizi/pratica";
 import { Card } from "@/components/ui/card";
 import { CatalogoEsercizi, type StatoCatalogo } from "./catalogo-esercizi";
 import { IscrizioneClasseForm } from "./iscrizione-classe-form";
@@ -32,9 +33,12 @@ export default async function StudentHomePage() {
 
   const t = await getTranslations("esercizi");
   const studentT = await getTranslations("studentExercisesUi");
+  // L'elenco libero mostra solo gli esercizi che vede tutta la scuola: uno
+  // privato o condiviso con pochi è lavoro in corso, non va agli studenti.
+  const praticaLibera = await eserciziPraticaLibera();
   const [esercizi, compitiGrezzi] = await Promise.all([
     prisma.esercizio.findMany({
-      where: { versions: { some: {} } },
+      where: { id: { in: [...praticaLibera] }, versions: { some: {} } },
       orderBy: [{ yearLevel: "asc" }, { title: "asc" }],
       include: {
         versions: {

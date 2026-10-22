@@ -3,11 +3,14 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@/lib/auth/config", () => ({ auth: vi.fn(async () => ({ user: { id: "u1", role: "STUDENT" } })) }));
 vi.mock("@/lib/esercizi/tentativo", () => ({ avviaORiprendi: vi.fn() }));
 vi.mock("@/lib/esercizi/percorso-compito", () => ({ percorsoCompitoStudente: vi.fn() }));
+// Di norma l'esercizio è apribile: i test sul cancello lo dicono esplicitamente.
+vi.mock("@/lib/esercizi/pratica", () => ({ esercizioApribileDaStudente: vi.fn(async () => true) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }), notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
 vi.mock("next-intl/server", () => ({ getLocale: vi.fn(async () => "it") }));
 
 import { avviaORiprendi } from "@/lib/esercizi/tentativo";
 import { percorsoCompitoStudente } from "@/lib/esercizi/percorso-compito";
+import { esercizioApribileDaStudente } from "@/lib/esercizi/pratica";
 import { notFound, redirect } from "next/navigation";
 import Page from "../[esercizioId]/page";
 
@@ -104,5 +107,31 @@ describe("pagina dell'esercizio", () => {
     });
     const props = (albero as { props: Record<string, unknown> }).props;
     expect(props.richiestaCompitoRifiutata).toBe(true);
+  });
+
+  // Pratica libera: dal link senza compito un esercizio che lo studente non
+  // può aprire risponde "non trovato", prima di aprire alcun tentativo.
+  it("senza compitoId, un esercizio non apribile dallo studente è non trovato", async () => {
+    vi.mocked(esercizioApribileDaStudente).mockResolvedValueOnce(false);
+    vi.mocked(avviaORiprendi).mockClear();
+    await expect(Page({ params: Promise.resolve({ esercizioId: "privato" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(esercizioApribileDaStudente).toHaveBeenCalledWith("u1", "privato");
+    expect(avviaORiprendi).not.toHaveBeenCalled();
+  });
+
+  // Col compito il percorso lo valida già `avviaORiprendi`: il cancello
+  // della pratica libera non si interpone.
+  it("con compitoId il cancello della pratica libera non si applica", async () => {
+    vi.mocked(esercizioApribileDaStudente).mockClear();
+    vi.mocked(avviaORiprendi).mockResolvedValue({
+      tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
+      score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
+      richiestaCompitoRifiutata: false,
+    });
+    await Page({
+      params: Promise.resolve({ esercizioId: "assegnato" }),
+      searchParams: Promise.resolve({ compitoId: "compito-1" }),
+    });
+    expect(esercizioApribileDaStudente).not.toHaveBeenCalled();
   });
 });

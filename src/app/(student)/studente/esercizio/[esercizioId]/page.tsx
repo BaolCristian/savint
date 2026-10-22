@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { auth } from "@/lib/auth/config";
 import { avviaORiprendi } from "@/lib/esercizi/tentativo";
+import { esercizioApribileDaStudente } from "@/lib/esercizi/pratica";
 import { percorsoCompitoStudente } from "@/lib/esercizi/percorso-compito";
 import { PlayerEsercizioLazy } from "@/components/esercizi/player/player-esercizio-lazy";
 
@@ -24,6 +25,11 @@ export default async function Page({
   const parametri = await searchParams;
   const compitoId = parametri?.compitoId;
   const locale = (await getLocale()) === "en" ? "en" : "it";
+  // Dal link libero si apre solo ciò che vede la scuola o che lo studente ha
+  // avuto in un compito ("esercitati di nuovo"); il resto risponde "non
+  // trovato", come un esercizio che non esiste. Col `compitoId` il percorso
+  // lo valida già `avviaORiprendi`.
+  if (!compitoId && !(await esercizioApribileDaStudente(session.user.id, esercizioId))) notFound();
   // Un vecchio tab o il tasto indietro può riportare qui dopo che il
   // tentativo è già stato completato altrove. Si risolve PRIMA di aprire il
   // tentativo: altrimenti `avviaORiprendi` creerebbe una nuova riga vuota
