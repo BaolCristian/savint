@@ -8,7 +8,7 @@ import { percorsoCompitoStudente } from "@/lib/esercizi/percorso-compito";
 
 export default async function Page({ params }: { params: Promise<{ compitoId: string }> }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/login?callbackUrl=/studente");
   if (session.user.role !== "STUDENT") redirect("/dashboard");
 
   const { compitoId } = await params;

@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslations } from "next-intl";
 import { Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { DESTINAZIONE_PREDEFINITA, destinazioneLogin, loginDaStudente } from "@/lib/auth/destinazione-login";
 
 export default function LoginPage() {
   const t = useTranslations("login");
   const [email, setEmail] = useState("docente@scuola.it");
+  const [destinazione, setDestinazione] = useState(DESTINAZIONE_PREDEFINITA);
+  const daStudente = loginDaStudente(destinazione);
 
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [devLoginEnabled, setDevLoginEnabled] = useState(false);
@@ -17,7 +20,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Letto da window per non richiedere un boundary Suspense (useSearchParams).
-    const err = new URLSearchParams(window.location.search).get("error");
+    const parametri = new URLSearchParams(window.location.search);
+    const verso = destinazioneLogin(parametri.get("callbackUrl"));
+    if (verso !== DESTINAZIONE_PREDEFINITA) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDestinazione(verso);
+      if (loginDaStudente(verso)) setEmail("studente@scuola.it");
+    }
+    const err = parametri.get("error");
     if (!err) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (err === "NotAllowed" || err === "AccessDenied") setErrorKey("errorNotAllowed");
@@ -101,7 +111,7 @@ export default function LoginPage() {
         {/* Google Sign In Button */}
         {googleEnabled && (
           <button
-            onClick={() => signIn("google", { callbackUrl: withBasePath("/dashboard") })}
+            onClick={() => signIn("google", { callbackUrl: withBasePath(destinazione) })}
             className="flex items-center justify-center w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 px-6 py-3 rounded-2xl transition-all font-semibold text-sm sm:text-base shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             {/* Google official SVG 'G' Icon */}
@@ -139,10 +149,10 @@ export default function LoginPage() {
 
             {/* Submit Demo Button */}
             <button
-              onClick={() => signIn("credentials", { email, callbackUrl: withBasePath("/dashboard") })}
+              onClick={() => signIn("credentials", { email, callbackUrl: withBasePath(destinazione) })}
               className="group/btn flex items-center justify-center w-full bg-gradient-to-r from-brand-orange to-amber-500 hover:from-brand-orange/90 hover:to-amber-500/90 text-slate-955 px-6 py-3 rounded-2xl transition-all font-bold text-sm sm:text-base shadow-md shadow-brand-orange/10 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
-              {t("enterAsTeacher")}
+              {daStudente ? t("enterAsStudent") : t("enterAsTeacher")}
               <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover/btn:translate-x-1 duration-200" />
             </button>
           </div>

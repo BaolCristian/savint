@@ -104,6 +104,7 @@
     "demoLogin": "Demo Login",
     "emailPlaceholder": "docente@scuola.it",
     "enterAsTeacher": "Entra come docente",
+    "enterAsStudent": "Entra come studente",
     "errorNotAllowed": "Il tuo account non è abilitato: non risulta nei gruppi della scuola. Chiedi alla segreteria di controllare il tuo gruppo.",
     "errorGroupCheckFailed": "Non siamo riusciti a verificare il tuo account con Google. Riprova tra qualche minuto.",
     "errorGeneric": "Accesso non riuscito. Riprova."
@@ -462,7 +463,9 @@
     "youFinished": "Sei arrivato {position}°!",
     "playAgain": "Gioca ancora",
     "teacherLoginPrompt": "Sei un docente?",
-    "teacherLoginAction": "Accedi"
+    "teacherLoginAction": "Accedi",
+    "exercisesPrompt": "Hai esercizi da svolgere?",
+    "exercisesAction": "Vai agli esercizi"
   },
   "legal": {
     "termsTitle": "Accettazione delle condizioni di utilizzo",
@@ -1714,6 +1717,24 @@
       "senzaVersioneTitolo": "Nessuna versione salvata",
       "senzaVersioneTesto": "Questo esercizio non ha ancora nessuna versione salvata: non c'è niente da mostrare in anteprima."
     }
+  },
+  "eserciziIngresso": {
+    "metaTitle": "Esercizi — Savint",
+    "title": "Esercizi di matematica",
+    "intro": "Gli esercizi di Savint si svolgono da soli, a casa o in laboratorio. Ogni studente riceve numeri diversi, la correzione è immediata e il docente vede subito i risultati della classe.",
+    "featureNumbers": "Numeri diversi per ogni studente",
+    "featureFeedback": "Correzione immediata, con la spiegazione",
+    "featureResults": "I risultati della classe per il docente",
+    "studentTitle": "Sono uno studente",
+    "studentText": "Accedi con l'account della scuola: trovi i compiti assegnati e puoi esercitarti con tutti gli esercizi del catalogo.",
+    "studentCode": "La prima volta inserisci il codice classe che ti ha dato il docente.",
+    "studentAction": "Vai ai miei compiti",
+    "teacherTitle": "Sono un docente",
+    "teacherText": "Usa gli esercizi pronti o creane di nuovi, assegnali alle tue classi e controlla chi li ha svolti e con quali risultati.",
+    "teacherAction": "Vai all'area Esercizi",
+    "signedInAs": "Hai già effettuato l'accesso come {name}.",
+    "quizPrompt": "Cerchi il quiz in classe?",
+    "quizAction": "Inserisci il PIN"
   },
   "studentExercisesUi": {
     "assignedActiveTitle": "Da completare",

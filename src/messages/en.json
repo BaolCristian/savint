@@ -104,6 +104,7 @@
     "demoLogin": "Demo Login",
     "emailPlaceholder": "teacher@school.com",
     "enterAsTeacher": "Enter as teacher",
+    "enterAsStudent": "Enter as student",
     "errorNotAllowed": "Your account is not enabled: it is not in the school's groups. Ask the office to check your group.",
     "errorGroupCheckFailed": "We could not verify your account with Google. Please try again in a few minutes.",
     "errorGeneric": "Sign-in failed. Please try again."
@@ -462,7 +463,9 @@
     "youFinished": "You finished {position}!",
     "playAgain": "Play again",
     "teacherLoginPrompt": "Are you a teacher?",
-    "teacherLoginAction": "Sign in"
+    "teacherLoginAction": "Sign in",
+    "exercisesPrompt": "Have exercises to do?",
+    "exercisesAction": "Go to exercises"
   },
   "legal": {
     "termsTitle": "Terms of use acceptance",
@@ -1714,6 +1717,24 @@
       "senzaVersioneTitolo": "No version saved",
       "senzaVersioneTesto": "This exercise doesn't have a saved version yet: there's nothing to preview."
     }
+  },
+  "eserciziIngresso": {
+    "metaTitle": "Exercises — Savint",
+    "title": "Math exercises",
+    "intro": "Savint exercises are done on your own, at home or in the lab. Every student gets different numbers, answers are checked instantly and the teacher sees the class results right away.",
+    "featureNumbers": "Different numbers for every student",
+    "featureFeedback": "Instant checking, with the explanation",
+    "featureResults": "Class results for the teacher",
+    "studentTitle": "I'm a student",
+    "studentText": "Sign in with your school account: you'll find your assignments and can practise with every exercise in the catalogue.",
+    "studentCode": "The first time, enter the class code your teacher gave you.",
+    "studentAction": "Go to my assignments",
+    "teacherTitle": "I'm a teacher",
+    "teacherText": "Use ready-made exercises or write new ones, assign them to your classes and check who did them and how well.",
+    "teacherAction": "Go to the Exercises area",
+    "signedInAs": "You're already signed in as {name}.",
+    "quizPrompt": "Looking for the live quiz?",
+    "quizAction": "Enter the PIN"
   },
   "studentExercisesUi": {
     "assignedActiveTitle": "To complete",

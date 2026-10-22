@@ -28,7 +28,7 @@ function statoCatalogo(tentativo: Pick<StatoTentativo, "status"> | undefined): S
 
 export default async function StudentHomePage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/login?callbackUrl=/studente");
 
   const t = await getTranslations("esercizi");
   const studentT = await getTranslations("studentExercisesUi");

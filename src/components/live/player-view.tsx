@@ -624,6 +624,17 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             </a>
           </p>
 
+          {/* Exercises (students and teachers) */}
+          <p className="text-center text-sm text-slate-500">
+            {t("exercisesPrompt")}{" "}
+            <a
+              href={withBasePath("/esercizi")}
+              className="font-semibold text-brand-blue hover:text-blue-800"
+            >
+              {t("exercisesAction")}
+            </a>
+          </p>
+
           {/* Version / creator / savint.it */}
           <div className="pb-3">
             <SiteFooter />
