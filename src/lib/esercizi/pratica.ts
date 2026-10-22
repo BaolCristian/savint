@@ -16,8 +16,9 @@ export async function eserciziPraticaLibera(): Promise<Set<string>> {
  * Vero se lo studente può aprire l'esercizio dal link libero (senza
  * `compitoId`): perché la scuola lo vede, oppure perché l'ha avuto in un
  * compito non ritirato di una sua classe — così "esercitati di nuovo" non si
- * rompe anche se nel frattempo l'esercizio è tornato privato. Iscrizione e
- * ritiro si leggono come in `compitiDelloStudente`.
+ * rompe anche se nel frattempo l'esercizio è tornato privato. Iscrizione,
+ * ritiro e apertura si leggono come in `compitiDelloStudente` e
+ * `compitoApribile`: un compito non ancora aperto non svela i suoi esercizi.
  */
 export async function esercizioApribileDaStudente(studentId: string, esercizioId: string): Promise<boolean> {
   if ((await ruoliEsercizi("scuola")).has(esercizioId)) return true;
@@ -32,6 +33,7 @@ export async function esercizioApribileDaStudente(studentId: string, esercizioId
     where: {
       classeId: { in: iscrizioni.map((i) => i.classeId) },
       ritiratoAt: null,
+      OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }],
       drawnVersionIds: { hasSome: versioni.map((v) => v.id) },
     },
     select: { id: true },

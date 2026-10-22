@@ -119,19 +119,34 @@ describe("pagina dell'esercizio", () => {
     expect(avviaORiprendi).not.toHaveBeenCalled();
   });
 
-  // Col compito il percorso lo valida già `avviaORiprendi`: il cancello
-  // della pratica libera non si interpone.
-  it("con compitoId il cancello della pratica libera non si applica", async () => {
-    vi.mocked(esercizioApribileDaStudente).mockClear();
+  // Un `compitoId` inventato non apre un esercizio nascosto: senza il
+  // cancello `avviaORiprendi` ricadrebbe sul tentativo libero.
+  it("con un compitoId inventato, un esercizio non apribile è non trovato", async () => {
+    vi.mocked(esercizioApribileDaStudente).mockResolvedValueOnce(false);
+    vi.mocked(avviaORiprendi).mockClear();
+    await expect(Page({
+      params: Promise.resolve({ esercizioId: "nascosto" }),
+      searchParams: Promise.resolve({ compitoId: "inventato" }),
+    })).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(esercizioApribileDaStudente).toHaveBeenCalledWith("u1", "nascosto");
+    expect(avviaORiprendi).not.toHaveBeenCalled();
+  });
+
+  // Un link di compito legittimo passa il cancello (eccezione del compito) e
+  // apre il tentativo sul compito.
+  it("con un compitoId legittimo l'esercizio si apre sul compito", async () => {
+    vi.mocked(esercizioApribileDaStudente).mockClear().mockResolvedValueOnce(true);
     vi.mocked(avviaORiprendi).mockResolvedValue({
       tentativoId: "t1", seed: "s1", content: { name: "x" }, state: null,
       score: 0, maxScore: 2, status: "IN_PROGRESS", lastActivityAt: new Date(),
       richiestaCompitoRifiutata: false,
     });
-    await Page({
+    const albero = await Page({
       params: Promise.resolve({ esercizioId: "assegnato" }),
       searchParams: Promise.resolve({ compitoId: "compito-1" }),
     });
-    expect(esercizioApribileDaStudente).not.toHaveBeenCalled();
+    expect(esercizioApribileDaStudente).toHaveBeenCalledWith("u1", "assegnato");
+    expect(avviaORiprendi).toHaveBeenCalledWith("u1", "assegnato", "compito-1", "it");
+    expect((albero as { props: Record<string, unknown> }).props.contesto).toBe("assigned");
   });
 });

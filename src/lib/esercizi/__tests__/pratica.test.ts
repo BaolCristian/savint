@@ -29,9 +29,9 @@ async function esercizio(id: string, authorId: string, topic = "prova", accessoS
   return { esercizioId: e.id, versioneId: v.id };
 }
 
-async function compito(classeId: string, drawnVersionIds: string[], ritiratoAt: Date | null = null) {
+async function compito(classeId: string, drawnVersionIds: string[], ritiratoAt: Date | null = null, opensAt: Date | null = null) {
   return prisma.compito.create({
-    data: { batteriaId: batteria, classeId, assignedById: A, drawSeed: "s", drawnVersionIds, ritiratoAt },
+    data: { batteriaId: batteria, classeId, assignedById: A, drawSeed: "s", drawnVersionIds, ritiratoAt, opensAt },
   });
 }
 
@@ -73,6 +73,15 @@ describe("pratica libera degli studenti", () => {
     const privato = await esercizio("privato", A);
     await compito(classe, [privato.versioneId], new Date());
     expect(await esercizioApribileDaStudente(studente, privato.esercizioId)).toBe(false);
+  });
+
+  it("un compito non ancora aperto non svela i suoi esercizi; uno già aperto sì", async () => {
+    const futuro = await esercizio("futuro", A);
+    await compito(classe, [futuro.versioneId], null, new Date(Date.now() + 86_400_000));
+    expect(await esercizioApribileDaStudente(studente, futuro.esercizioId)).toBe(false);
+    const aperto = await esercizio("gia-aperto", A);
+    await compito(classe, [aperto.versioneId], null, new Date(Date.now() - 86_400_000));
+    expect(await esercizioApribileDaStudente(studente, aperto.esercizioId)).toBe(true);
   });
 
   it("un esercizio condiviso con la scuola per argomento è nella pratica libera", async () => {

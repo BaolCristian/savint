@@ -25,11 +25,13 @@ export default async function Page({
   const parametri = await searchParams;
   const compitoId = parametri?.compitoId;
   const locale = (await getLocale()) === "en" ? "en" : "it";
-  // Dal link libero si apre solo ciò che vede la scuola o che lo studente ha
-  // avuto in un compito ("esercitati di nuovo"); il resto risponde "non
-  // trovato", come un esercizio che non esiste. Col `compitoId` il percorso
-  // lo valida già `avviaORiprendi`.
-  if (!compitoId && !(await esercizioApribileDaStudente(session.user.id, esercizioId))) notFound();
+  // Si apre solo ciò che vede la scuola o che lo studente ha avuto in un
+  // compito aperto ("esercitati di nuovo"); il resto risponde "non trovato",
+  // come un esercizio che non esiste. Vale anche col `compitoId`: un compito
+  // respinto da `avviaORiprendi` ricade sul tentativo libero, quindi un
+  // `?compitoId=` inventato non deve bastare ad aprire un esercizio nascosto.
+  // Un compito vero soddisfa comunque il cancello (eccezione del compito).
+  if (!(await esercizioApribileDaStudente(session.user.id, esercizioId))) notFound();
   // Un vecchio tab o il tasto indietro può riportare qui dopo che il
   // tentativo è già stato completato altrove. Si risolve PRIMA di aprire il
   // tentativo: altrimenti `avviaORiprendi` creerebbe una nuova riga vuota
