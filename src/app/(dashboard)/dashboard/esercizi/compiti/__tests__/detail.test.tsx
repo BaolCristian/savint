@@ -51,6 +51,15 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
+  it("offre la stampa del compito come verifica su carta", async () => {
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, dueAt: null,
+    } as never);
+    vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+    await rendi();
+    expect(screen.getByRole("link", { name: "link" })).toHaveAttribute("href", "/stampa/compito/comp1");
+  });
+
   it("passa il docente della sessione (chi guarda), non un id arbitrario", async () => {
     vi.mocked(prisma.compito.findUnique).mockResolvedValue({
       id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, dueAt: null,

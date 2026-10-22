@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Printer } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
@@ -54,6 +55,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const consegne = esito.righe;
   const tUi = await getTranslations("teacherExercisesUi");
   const tE = await getTranslations("esercizi");
+  const tStampa = await getTranslations("esercizi.stampa");
 
   return (
     <div className="space-y-6">
@@ -68,6 +70,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <p className="text-sm text-muted-foreground">
           {compito.dueAt ? t("compitoScadenza", { quando: compito.dueAt.toLocaleDateString("it-IT") }) : t("nessunaScadenza")}
         </p>
+        <Link
+          href={`/stampa/compito/${compito.id}`}
+          className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:underline"
+        >
+          <Printer aria-hidden="true" className="size-4" />
+          {tStampa("link")}
+        </Link>
       </div>
 
       <GestioneCompito compitoId={compito.id} opensAt={perCampoData(compito.opensAt)} dueAt={perCampoData(compito.dueAt)} />
