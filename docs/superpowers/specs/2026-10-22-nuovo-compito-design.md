@@ -93,6 +93,10 @@ compito intero come lo vede lo studente.
 - I blocchi si pescano **in ordine**; un esercizio già preso da un blocco
   precedente non viene ripreso (come oggi in `assegna`: vincono i blocchi
   precedenti). L'ordine degli esercizi nel compito è quello dei blocchi.
+- **Gli esercizi scelti a mano vincono sempre**: prima di pescare, sono tolti
+  dai bacini dei blocchi a caso, così un blocco "scelti" non diventa mai
+  insufficiente per colpa del seme; restano **nell'ordine in cui il docente li
+  ha scelti**.
 - Se un blocco non ha abbastanza esercizi, il **riepilogo lo dice per quel
   blocco** ("Equazioni: ne chiedi 5, ce ne sono 3") e "Assegna" è disabilitato
   finché non si corregge (stesso motivo `esercizi_insufficienti` di oggi).
