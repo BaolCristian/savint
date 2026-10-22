@@ -75,6 +75,35 @@ export function raccoltaTrasmette(addedById: string | null, authorId: string, co
   return addedById === authorId && contributori.has(authorId);
 }
 
+/**
+ * Se una raccolta rende davvero visibile un esercizio a qualcuno oltre al
+ * suo autore: la trasmette (`raccoltaTrasmette`) ed è aperta a qualcun
+ * altro (tutta la scuola, un collega nominato, o il proprietario della
+ * raccolta quando non è l'autore). È l'unico punto da cui l'interfaccia
+ * ("condiviso" in redazione, l'avviso sulla pagina della raccolta, gli
+ * accessi indiretti della finestra Condividi) deduce la regola delle
+ * raccolte, così non può dire altro da `ruoliEsercizi`.
+ */
+export function raccoltaRendeVisibile(
+  r: { createdById: string; accessoScuola: RuoloEsercizi | null; condivisioni: { userId: string; ruolo: RuoloEsercizi }[] },
+  addedById: string | null,
+  authorId: string,
+): boolean {
+  if (!raccoltaTrasmette(addedById, authorId, contributoriRaccolta(r))) return false;
+  return r.accessoScuola !== null || r.createdById !== authorId || r.condivisioni.some((c) => c.userId !== authorId);
+}
+
+/**
+ * Lo stesso utente come docente qualunque, senza i poteri dell'ADMIN. Serve
+ * dove si pesca o si conta per un compito (bacini, conteggi, argomenti,
+ * batterie): un ADMIN che insegna pesca solo fra ciò che vedrebbe da
+ * docente, mai fra le bozze private dei colleghi. I poteri dell'ADMIN
+ * restano nel catalogo e nella gestione.
+ */
+export function comeDocente(u: Utente | string): Utente {
+  return { id: typeof u === "string" ? u : u.id, admin: false };
+}
+
 type RigaRaccolta = {
   id: string;
   createdById: string;

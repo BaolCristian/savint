@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Share2Icon, UserRoundIcon, XIcon } from "lucide-react";
 import {
@@ -121,6 +121,12 @@ export function CondividiDialog({
   compatto?: boolean;
 }) {
   const router = useRouter();
+  // Id unici per finestra: due finestre Condividi sulla stessa pagina non
+  // si rubano le etichette.
+  const idBase = useId();
+  const idCerca = `${idBase}-cerca`;
+  const idGenerale = `${idBase}-generale`;
+  const idProprietario = `${idBase}-proprietario`;
   const [aperta, setAperta] = useState(false);
   const [caricata, setCaricata] = useState(false);
   const [erroreCaricamento, setErroreCaricamento] = useState(false);
@@ -266,11 +272,10 @@ export function CondividiDialog({
             {/* Aggiungi colleghi: si cerca, si clicca, entra come
                 visualizzatore; il ruolo si sceglie poi nell'elenco. */}
             <div className="space-y-1.5">
-              <label htmlFor="condividi-cerca" className="text-sm font-medium">{testi.aggiungiColleghi}</label>
+              <label htmlFor={idCerca} className="text-sm font-medium">{testi.aggiungiColleghi}</label>
               <Input
-                id="condividi-cerca"
+                id={idCerca}
                 type="search"
-                aria-label={testi.cercaCollega}
                 placeholder={testi.cercaCollega}
                 value={cerca}
                 autoComplete="off"
@@ -340,10 +345,10 @@ export function CondividiDialog({
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="condividi-generale" className="text-sm font-medium">{testi.accessoGenerale}</label>
+              <label htmlFor={idGenerale} className="text-sm font-medium">{testi.accessoGenerale}</label>
               <div className="flex flex-wrap items-center gap-2">
                 <select
-                  id="condividi-generale"
+                  id={idGenerale}
                   value={scuola ? "scuola" : "solo"}
                   onChange={(e) => setScuola(e.target.value === "scuola" ? (scuola ?? "VISUALIZZATORE") : null)}
                   className={cn(SELECT, "min-w-0 flex-1")}
@@ -382,9 +387,9 @@ export function CondividiDialog({
 
             {trasferibile && (
               <div className="space-y-1.5">
-                <label htmlFor="condividi-proprietario" className="text-sm font-medium">{testi.nuovoProprietario}</label>
+                <label htmlFor={idProprietario} className="text-sm font-medium">{testi.nuovoProprietario}</label>
                 <select
-                  id="condividi-proprietario"
+                  id={idProprietario}
                   value={nuovoProprietario}
                   onChange={(e) => setNuovoProprietario(e.target.value)}
                   className={cn(SELECT, "w-full")}

@@ -565,3 +565,53 @@ describe("la pesca rispetta la visibilità di chi assegna", () => {
     });
   });
 });
+
+// Un ADMIN che insegna pesca e conta da docente qualunque (`comeDocente`):
+// i suoi poteri valgono nel catalogo e nella gestione, non nei compiti. Le
+// bozze private dei colleghi non entrano mai nei suoi compiti né nei suoi
+// conteggi; le sue sì.
+describe("un ADMIN che insegna pesca da docente", () => {
+  async function adminCheInsegna(): Promise<string> {
+    const admin = (await prisma.user.create({ data: { email: `${P}admin@test.it`, name: "Adm", role: "ADMIN" } })).id;
+    await prisma.classeDocente.create({ data: { classeId, teacherId: admin } });
+    return admin;
+  }
+
+  it("conta e pesca il proprio esercizio privato, mai quello privato di un collega", async () => {
+    const admin = await adminCheInsegna();
+    const topic = `${P}admin-pesca`;
+    await creaEsercizio(`${P}ad-collega`, topic, { autore: teacherId, privato: true });
+    const suo = await creaEsercizio(`${P}ad-suo`, topic, { autore: admin, privato: true });
+
+    // Anche passandogli i poteri da ADMIN, conteggi e menu restano da docente.
+    const chi: Utente = { id: admin, admin: true };
+    expect(await quantiCorrispondono({ anno: 2, argomento: topic }, chi)).toBe(1);
+    expect((await argomentiDisponibili(chi, 2)).find((x) => x.argomento === topic)?.quanti).toBe(1);
+
+    const uno = await assegnaDiretto({ classeId, teacherId: admin, filtro: { anno: 2, argomento: topic }, quanti: 1 });
+    expect(uno.ok).toBe(true);
+    if (!uno.ok) return;
+    const compito = await prisma.compito.findUniqueOrThrow({ where: { id: uno.compitoId } });
+    const versioni = await prisma.esercizioVersione.findMany({ where: { id: { in: compito.drawnVersionIds } } });
+    expect(versioni.map((v) => v.esercizioId)).toEqual([suo]);
+
+    const due = await assegnaDiretto({ classeId, teacherId: admin, filtro: { anno: 2, argomento: topic }, quanti: 2 });
+    expect(due).toMatchObject({
+      ok: false,
+      motivo: "esercizi_insufficienti",
+      dettaglio: { contenitore: topic, richiesti: 2, disponibili: 1 },
+    });
+  });
+
+  it("assegna (batteria a filtro) non pesca la bozza privata del collega", async () => {
+    const admin = await adminCheInsegna();
+    const topic = `${P}admin-batteria`;
+    await creaEsercizio(`${P}ab-collega`, topic, { autore: teacherId, privato: true });
+    const b = await creaBatteria(admin, `${P}AdminBatteria`, [{ count: 1, argomento: topic, anno: 2 }]);
+    expect(await assegna(b.id, classeId, admin)).toMatchObject({
+      ok: false,
+      motivo: "esercizi_insufficienti",
+      dettaglio: { richiesti: 1, disponibili: 0 },
+    });
+  });
+});

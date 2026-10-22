@@ -524,3 +524,55 @@ describe("il bacino rispetta la visibilità", () => {
     expect((await bacinoRegola(regola, { id: autore, admin: false }))).toEqual([]);
   });
 });
+
+// creaBatteria: una raccolta che chi crea non vede è "non trovata", come una
+// che non esiste — nessun oracolo, e nessuna batteria che leghi a sé una
+// raccolta privata altrui. Anche per un ADMIN, che compone batterie da
+// docente (`comeDocente`), come poi pesca.
+describe("creaBatteria e le raccolte invisibili", () => {
+  it("una raccolta privata altrui è contenitore_non_trovato e non si scrive niente", async () => {
+    const estraneo = (await prisma.user.create({ data: { email: `${P}estraneo2@test.it`, name: "E", role: "TEACHER" } })).id;
+    const r = await creaBatteriaGrezza(estraneo, `${P}Invisibile`, [{ contenitoreId: contA, count: 1 }]);
+    expect(r).toEqual({ ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: contA } });
+    expect(await prisma.batteria.count({ where: { name: `${P}Invisibile` } })).toBe(0);
+    // Stessa risposta di un id che non esiste.
+    expect(await creaBatteriaGrezza(estraneo, `${P}Inesistente`, [{ contenitoreId: `${P}nessuno`, count: 1 }]))
+      .toEqual({ ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: `${P}nessuno` } });
+  });
+
+  it("una raccolta condivisa con chi crea va bene; per un ADMIN quella privata altrui no", async () => {
+    const collega = (await prisma.user.create({ data: { email: `${P}collega2@test.it`, name: "C", role: "TEACHER" } })).id;
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: contA, userId: collega, ruolo: "VISUALIZZATORE" } });
+    expect((await creaBatteriaGrezza(collega, `${P}Condivisa`, [{ contenitoreId: contA, count: 1 }])).ok).toBe(true);
+
+    const admin = (await prisma.user.create({ data: { email: `${P}admin@test.it`, name: "Adm", role: "ADMIN" } })).id;
+    expect(await creaBatteriaGrezza(admin, `${P}DaAdmin`, [{ contenitoreId: contB, count: 1 }]))
+      .toEqual({ ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: contB } });
+  });
+});
+
+// Un ADMIN conta e verifica da docente: le bozze private dei colleghi non
+// entrano nel suo bacino.
+describe("bacino e verifica di un ADMIN", () => {
+  it("la bozza privata di un collega non entra; la sua sì", async () => {
+    const admin = (await prisma.user.create({ data: { email: `${P}admin@test.it`, name: "Adm", role: "ADMIN" } })).id;
+    const topic = `${P}admin-argomento`;
+    const base = { yearLevel: 2, topic, tags: [], difficulty: 1 };
+    await prisma.esercizio.create({ data: { id: `${P}del-collega`, title: "C", ...base, authorId: teacherId } });
+    await prisma.esercizio.create({ data: { id: `${P}dell-admin`, title: "A", ...base, authorId: admin } });
+    await prisma.esercizioVersione.createMany({
+      data: [`${P}del-collega`, `${P}dell-admin`].map((esercizioId, i) => ({ esercizioId, version: 1, content: {}, hash: `adm${i}` })),
+    });
+    const chi: Utente = { id: admin, admin: true };
+    const regola = { contenitoreId: null, argomento: topic, anno: 2, difficoltaMax: null };
+    expect(await bacinoRegola(regola, chi)).toEqual([`${P}dell-admin`]);
+    // Né la raccolta privata del collega.
+    expect(await bacinoRegola({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null }, chi)).toEqual([]);
+
+    const b = await creaBatteria(admin, `${P}AdminVerifica`, [{ argomento: topic, anno: 2, count: 2 }]);
+    expect(await verificaBatteria(b.id, chi)).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: topic, richiesti: 2, disponibili: 1 }],
+    });
+  });
+});

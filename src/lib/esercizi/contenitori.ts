@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/client";
-import { puo, ruoliContenitori, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
+import { puo, raccoltaRendeVisibile, ruoliContenitori, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
 
 /**
  * Le raccolte (il modello Prisma `Contenitore`) rispettano proprietà e
@@ -60,9 +60,12 @@ export async function elencoContenitori(chi: Utente): Promise<
  * solo quelli che `chi` vede. `null` se il contenitore non esiste o `chi`
  * non ha un ruolo su di esso (le due cose non si distinguono).
  *
- * `condivisa` dice se la raccolta è aperta a qualcuno oltre al proprietario
- * (tutta la scuola o almeno un collega nominato): serve alla pagina per
- * avvisare prima di metterci un esercizio proprio e privato.
+ * `trasmette` dice se un esercizio di `chi`, messo qui da `chi`, diventerebbe
+ * davvero visibile a qualcun altro (`raccoltaRendeVisibile`: `chi` deve
+ * esserne contributore — proprietario o editor nominato — e la raccolta
+ * aperta a qualcuno). Serve alla pagina per avvisare prima di metterci un
+ * esercizio proprio e privato; un editor di scuola non contribuisce, quindi
+ * per lui è sempre false.
  *
  * `visibili` è `ruoliEsercizi(chi)` già calcolata, per la pagina che la usa
  * anche per l'elenco degli esercizi da aggiungere (una volta per
@@ -77,7 +80,7 @@ export async function contenutoContenitore(
       name: string;
       description: string | null;
       ruolo: Ruolo;
-      condivisa: boolean;
+      trasmette: boolean;
       esercizi: { id: string; title: string; yearLevel: number; topic: string; difficulty: number }[];
     }
   | null
@@ -90,7 +93,7 @@ export async function contenutoContenitore(
       where: { id },
       include: {
         esercizi: { include: { esercizio: true } },
-        _count: { select: { condivisioni: true } },
+        condivisioni: { select: { userId: true, ruolo: true } },
       },
     }),
     visibili ?? ruoliEsercizi(chi),
@@ -107,7 +110,7 @@ export async function contenutoContenitore(
     name: c.name,
     description: c.description,
     ruolo,
-    condivisa: c.accessoScuola !== null || c._count.condivisioni > 0,
+    trasmette: raccoltaRendeVisibile(c, chi.id, chi.id),
     esercizi: esercizi.map((e) => ({
       id: e.id,
       title: e.title,

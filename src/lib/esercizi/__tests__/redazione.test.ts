@@ -9,7 +9,7 @@ import {
 } from "../redazione";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
-import { creaContenitore, aggiungiEsercizi } from "../contenitori";
+import { creaContenitore, aggiungiEsercizi, contenutoContenitore } from "../contenitori";
 import { assegna, consegneDelCompito } from "../compiti";
 import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import type { EsercizioEditor } from "../editor/modello";
@@ -610,7 +610,11 @@ describe("proprietà e ruoli", () => {
     expect((await elencoRedazione(altroDocente)).find((v) => v.id === id)!.ruolo).toBe("COMMENTATORE");
   });
 
-  it("condiviso se l'autore l'ha messo in una raccolta condivisa; non se ce l'ha messo un altro", async () => {
+  // La regola delle raccolte (`raccoltaTrasmette` in accesso.ts): la
+  // raccolta trasmette solo ciò che vi ha messo l'autore, ed è un suo
+  // contributore (proprietario o editor nominato). Un ruolo di scuola fa
+  // ricevere, mai contribuire.
+  it("condiviso se l'autore, contributore, l'ha messo in una raccolta condivisa; non se ce l'ha messo un altro né se non ne è contributore", async () => {
     const id = await privatoDelDocente();
     const raccolta = await prisma.contenitore.create({
       data: { name: `${PREFIX}Raccolta condivisa`, createdById: altroDocenteId, accessoScuola: "VISUALIZZATORE" },
@@ -619,11 +623,44 @@ describe("proprietà e ruoli", () => {
     await prisma.contenitoreEsercizio.create({ data: { contenitoreId: raccolta.id, esercizioId: id, addedById: altroDocenteId } });
     expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("privato");
 
+    // Messo dall'autore, che però della raccolta non è contributore: ancora
+    // privato (e infatti il collega non lo vede).
     await prisma.contenitoreEsercizio.update({
       where: { contenitoreId_esercizioId: { contenitoreId: raccolta.id, esercizioId: id } },
       data: { addedById: docenteId },
     });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("privato");
+    expect((await elencoRedazione(estraneo)).find((v) => v.id === id)).toBeUndefined();
+
+    // Ora l'autore è editor nominato della raccolta: la raccolta lo trasmette.
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: raccolta.id, userId: docenteId, ruolo: "EDITOR" } });
     expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("condiviso");
+    expect((await elencoRedazione(estraneo)).find((v) => v.id === id)?.ruolo).toBe("VISUALIZZATORE");
+  });
+
+  it("condiviso se l'autore l'ha messo in una sua raccolta aperta alla scuola; privato in una sua raccolta non condivisa", async () => {
+    const id = await privatoDelDocente();
+    const raccolta = await prisma.contenitore.create({ data: { name: `${PREFIX}Raccolta mia`, createdById: docenteId } });
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: raccolta.id, esercizioId: id, addedById: docenteId } });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("privato");
+    expect((await contenutoContenitore(raccolta.id, docente))!.trasmette).toBe(false);
+
+    await prisma.contenitore.update({ where: { id: raccolta.id }, data: { accessoScuola: "VISUALIZZATORE" } });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("condiviso");
+    expect((await contenutoContenitore(raccolta.id, docente))!.trasmette).toBe(true);
+  });
+
+  it("una raccolta altrui con la scuola EDITOR non trasmette: resta privato e la pagina non avvisa", async () => {
+    const id = await privatoDelDocente();
+    // Una raccolta "di prima" di un collega, aperta alla scuola come editor:
+    // il docente può metterci esercizi, ma non ne è contributore.
+    const raccolta = await prisma.contenitore.create({
+      data: { name: `${PREFIX}Raccolta di scuola`, createdById: altroDocenteId, accessoScuola: "EDITOR" },
+    });
+    expect((await contenutoContenitore(raccolta.id, docente))!.trasmette).toBe(false);
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: raccolta.id, esercizioId: id, addedById: docenteId } });
+    expect((await elencoRedazione(docente)).find((v) => v.id === id)!.accesso).toBe("privato");
+    expect((await elencoRedazione(altroDocente)).find((v) => v.id === id)).toBeUndefined();
   });
 
   it("caricaPerEditor: sola_lettura per un visualizzatore, non_trovato per un estraneo", async () => {
@@ -639,7 +676,7 @@ describe("proprietà e ruoli", () => {
     expect((await caricaPerEditor(id, altroDocente)).ok).toBe(true);
   });
 
-  it("salvaNuovaVersione: un visualizzatore viene rifiutato e non nasce nessuna versione", async () => {
+  it("salvaNuovaVersione: un commentatore viene rifiutato e non nasce nessuna versione", async () => {
     const id = await privatoDelDocente();
     await condividi(id, altroDocenteId, "COMMENTATORE");
     expect(await salvaNuovaVersione(id, { ...base, testo: "non deve arrivare" }, altroDocente))

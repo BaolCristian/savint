@@ -36,6 +36,13 @@ describe("pagina delle batterie", () => {
     expect(elencoContenitori).toHaveBeenCalledWith({ id: "doc1", admin: false });
   });
 
+  it("un ADMIN sceglie fra le raccolte che vedrebbe da docente (come le accetta creaBatteria)", async () => {
+    vi.mocked(redirectUnlessTeacher).mockResolvedValue({ user: { id: "adm1", role: "ADMIN" } } as never);
+    vi.mocked(elencoBatterie).mockResolvedValue([]);
+    await rendi();
+    expect(elencoContenitori).toHaveBeenCalledWith({ id: "adm1", admin: false });
+  });
+
   it("elenca le batterie con le loro regole e quanti compiti le usano", async () => {
     vi.mocked(elencoBatterie).mockResolvedValue([
       { id: "b1", name: "Verifica 1", regole: [{ contenitore: "Equazioni", count: 3 }], compiti: 2 },

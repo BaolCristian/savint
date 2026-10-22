@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoBatterie } from "@/lib/esercizi/batterie";
 import { elencoContenitori } from "@/lib/esercizi/contenitori";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { comeDocente, utenteDaSessione } from "@/lib/esercizi/accesso";
 import { BatterieClient } from "./batterie-client";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
@@ -13,10 +13,11 @@ export default async function Page() {
   const tUi = await getTranslations("teacherExercisesUi");
 
   // Le batterie restano comuni (spec "Batterie"); le raccolte fra cui
-  // sceglierne le regole sono solo quelle che il docente vede.
+  // sceglierne le regole sono solo quelle che il docente vede — da docente
+  // qualunque anche per un ADMIN, come le accetta `creaBatteria`.
   const [batterie, contenitori] = await Promise.all([
     elencoBatterie(),
-    elencoContenitori(utenteDaSessione(session)),
+    elencoContenitori(comeDocente(utenteDaSessione(session))),
   ]);
 
   return (

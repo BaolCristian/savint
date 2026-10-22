@@ -172,6 +172,14 @@ describe("condivisione per argomento", () => {
     expect(await impostaCondivisione({ tipo: "argomento", argomento: "Frazioni", ownerId: A.id }, ADM, { persone: [{ userId: A.id, ruolo: "EDITOR" }], scuola: null }))
       .toEqual({ ok: false, motivo: "destinatario_non_valido" });
   });
+
+  it("l'ADMIN non può indicare come proprietario di un argomento uno studente: non trovato", async () => {
+    const risorsa = { tipo: "argomento" as const, argomento: "Frazioni", ownerId: S.id };
+    expect(await leggiCondivisione(risorsa, ADM)).toBeNull();
+    expect(await impostaCondivisione(risorsa, ADM, { persone: [{ userId: C.id, ruolo: "VISUALIZZATORE" }], scuola: null }))
+      .toEqual({ ok: false, motivo: "non_trovato" });
+    expect(await prisma.condivisioneArgomento.count({ where: { ownerId: S.id } })).toBe(0);
+  });
 });
 
 describe("docentiDellaScuola", () => {

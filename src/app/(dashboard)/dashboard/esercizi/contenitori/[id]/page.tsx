@@ -38,13 +38,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       })
     : [];
 
-  // Regola delle raccolte: un esercizio proprio messo in una raccolta
-  // condivisa diventa visibile ai suoi membri. Se oggi è privato, il client
+  // Regola delle raccolte: un esercizio proprio messo in una raccolta di cui
+  // si è contributori (proprietario o editor nominato) e che è aperta a
+  // qualcuno diventa visibile ai suoi membri. Se oggi è privato, il client
   // chiede conferma prima di aggiungerlo. Solo per gli esercizi propri (un
   // amministratore è PROPRIETARIO di tutto, ma non è l'autore: la raccolta
-  // non trasmette ciò che non ha messo l'autore) e solo se la raccolta è
-  // davvero aperta a qualcuno.
-  const propri = contenitore.condivisa
+  // non trasmette ciò che non ha messo l'autore) e solo se la raccolta li
+  // trasmetterebbe davvero (`contenitore.trasmette`, la stessa regola di
+  // accesso.ts: un editor di scuola non contribuisce, quindi niente avviso).
+  const propri = contenitore.trasmette
     ? disponibili.filter((e) => e.authorId === chi.id && visibili.get(e.id) === "PROPRIETARIO")
     : [];
   const accessi = await accessoEsercizi(propri);

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/client";
-import { ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
+import { comeDocente, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
 
 /** Una regola nasce con l'uno o l'altro: `contenitoreId` per pescare da una
  * raccolta a mano, oppure `argomento` (con `anno` e `difficoltaMax`
@@ -77,10 +77,15 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
  * malformata: lì il vuoto nasconderebbe un dato rotto, qui è la risposta
  * vera ("per te, qui, non c'è niente").
  *
- * `visibili` è la mappa di `ruoliEsercizi(chi)` già calcolata: chi risolve
- * più regole nella stessa richiesta (`assegna`, `verificaBatteria`) la
- * calcola una volta sola e la passa, perché carica tutti gli esercizi.
- * Senza, la calcola qui. */
+ * `chi` conta sempre come docente qualunque (`comeDocente`): un ADMIN che
+ * insegna pesca e conta solo fra ciò che vedrebbe da docente, mai fra le
+ * bozze private dei colleghi. Vale per tutte le funzioni di pesca e
+ * conteggio di questo modulo e di compiti.ts.
+ *
+ * `visibili` è la mappa di `ruoliEsercizi(comeDocente(chi))` già calcolata:
+ * chi risolve più regole nella stessa richiesta (`assegna`,
+ * `verificaBatteria`) la calcola una volta sola e la passa, perché carica
+ * tutti gli esercizi. Senza, la calcola qui. */
 export async function bacinoRegola(
   regola: {
     contenitoreId: string | null;
@@ -99,10 +104,11 @@ export async function bacinoRegola(
     );
   }
 
-  const vede = visibili ?? (await ruoliEsercizi(chi));
+  const docente = comeDocente(chi);
+  const vede = visibili ?? (await ruoliEsercizi(docente));
 
   if (forma === "contenitore") {
-    if (!(await ruoloContenitore(chi, regola.contenitoreId!))) return [];
+    if (!(await ruoloContenitore(docente, regola.contenitoreId!))) return [];
     const righe = await prisma.contenitoreEsercizio.findMany({
       where: { contenitoreId: regola.contenitoreId! },
       select: { esercizioId: true },
@@ -192,7 +198,8 @@ export async function argomentiDisponibili(
       where: anno != null ? { yearLevel: anno } : {},
       select: { id: true, topic: true },
     }),
-    ruoliEsercizi(chi),
+    // Da docente qualunque, come `bacinoRegola`.
+    ruoliEsercizi(comeDocente(chi)),
   ]);
   const righe = tutte.filter((r) => vede.has(r.id));
 
@@ -310,16 +317,19 @@ export async function creaBatteria(
     }
   }
 
+  // Una raccolta che chi crea non vede è "non trovata", come una che non
+  // esiste: nessun oracolo sull'esistenza delle raccolte private altrui, e
+  // nessuna batteria che le leghi a sé (le renderebbe `in_uso`). Chi crea
+  // conta come docente qualunque (`comeDocente`, come per la pesca): anche
+  // un ADMIN compone batterie solo sulle raccolte che vedrebbe da docente,
+  // perché sono quelle da cui poi pescherà.
   const contenitoreIds = [...new Set(regole.map((r) => r.contenitoreId).filter((id): id is string => id != null))];
   if (contenitoreIds.length > 0) {
-    const esistenti = await prisma.contenitore.findMany({
-      where: { id: { in: contenitoreIds } },
-      select: { id: true },
-    });
-    const trovati = new Set(esistenti.map((c) => c.id));
-    const mancante = contenitoreIds.find((id) => !trovati.has(id));
-    if (mancante) {
-      return { ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId: mancante } };
+    const docente = comeDocente(createdById);
+    for (const contenitoreId of contenitoreIds) {
+      if (!(await ruoloContenitore(docente, contenitoreId))) {
+        return { ok: false, motivo: "contenitore_non_trovato", dettaglio: { contenitoreId } };
+      }
     }
   }
 
@@ -448,8 +458,10 @@ export async function verificaBatteria(
   // Il bacino grezzo di ciascuna regola, quale che sia la sua forma —
   // bacinoRegola lancia se una regola non rispetta l'invariante, invece di
   // restituire un bacino vuoto (vedi il suo commento).
-  const visibili = await ruoliEsercizi(chi);
-  const baciniGrezzi = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, chi, visibili)));
+  // Da docente qualunque, come `bacinoRegola`.
+  const docente = comeDocente(chi);
+  const visibili = await ruoliEsercizi(docente);
+  const baciniGrezzi = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, docente, visibili)));
   const tuttiGliId = [...new Set(baciniGrezzi.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 

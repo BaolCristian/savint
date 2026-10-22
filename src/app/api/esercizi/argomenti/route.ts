@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { argomentiDisponibili } from "@/lib/esercizi/batterie";
 import { quantiCorrispondono } from "@/lib/esercizi/compiti";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { comeDocente, utenteDaSessione } from "@/lib/esercizi/accesso";
 
 // `anno` è facoltativo qui e SOLO qui: è il ripiego per una classe che non
 // ne porta uno proprio (vedi la risoluzione più sotto). Quando la classe ha
@@ -68,8 +68,10 @@ export async function GET(request: NextRequest) {
   // ristretto all'anno risolto sopra.
   //
   // Entrambi contano solo gli esercizi che questo docente vede: gli stessi
-  // fra cui `assegnaDiretto` pescherà per lui (spec "Batterie").
-  const chi = utenteDaSessione(gate.session);
+  // fra cui `assegnaDiretto` pescherà per lui (spec "Batterie"). Da docente
+  // qualunque (`comeDocente`): un ADMIN che insegna non conta le bozze
+  // private dei colleghi, che la pesca non gli darebbe.
+  const chi = comeDocente(utenteDaSessione(gate.session));
   if (parsed.data.argomento !== undefined) {
     const quanti = await quantiCorrispondono({
       anno,

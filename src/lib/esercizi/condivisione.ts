@@ -1,7 +1,7 @@
 import type { RuoloEsercizi } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import {
-  chiaveArgomento, contributoriRaccolta, raccoltaTrasmette, ruoloMassimo, versoEsercizi,
+  chiaveArgomento, raccoltaRendeVisibile, ruoloMassimo, versoEsercizi,
   type Ruolo, type Utente,
 } from "./accesso";
 
@@ -82,7 +82,10 @@ async function bersaglio(risorsa: Risorsa, chi: Utente): Promise<Bersaglio | nul
   const ownerId = risorsa.ownerId ?? chi.id;
   if (ownerId !== chi.id) {
     if (!chi.admin) return null;
-    if (!(await prisma.user.findUnique({ where: { id: ownerId }, select: { id: true } }))) return null;
+    // Solo un docente (TEACHER/ADMIN) ha argomenti propri: uno studente o un
+    // id inesistente è "non trovato", come per i destinatari.
+    const owner = await prisma.user.findUnique({ where: { id: ownerId }, select: { role: true } });
+    if (!owner || (owner.role !== "TEACHER" && owner.role !== "ADMIN")) return null;
   }
   return { tipo: "argomento", proprietarioId: ownerId, chiave: chiaveArgomento(argomento), argomento };
 }
@@ -138,8 +141,8 @@ export async function leggiCondivisione(risorsa: Risorsa, chi: Utente): Promise<
  * Chi riceve l'esercizio da una raccolta o dall'argomento del proprietario,
  * a prescindere dalla condivisione diretta: una voce per persona (o "Tutta
  * la scuola") e per strada. Le raccolte seguono la regola di `accesso.ts`
- * (`raccoltaTrasmette`): contano solo quelle in cui l'esercizio l'ha messo
- * il proprietario stesso, quando ne è contributore.
+ * (`raccoltaRendeVisibile`): contano solo quelle in cui l'esercizio l'ha
+ * messo il proprietario stesso, quando ne è contributore.
  */
 async function accessiIndiretti(esercizioId: string, proprietarioId: string, topic: string): Promise<AccessoIndiretto[]> {
   const utente = { select: { name: true, email: true } } as const;
@@ -182,7 +185,7 @@ async function accessiIndiretti(esercizioId: string, proprietarioId: string, top
   }
 
   for (const { addedById, contenitore: r } of righeRaccolta) {
-    if (!raccoltaTrasmette(addedById, proprietarioId, contributoriRaccolta(r))) continue;
+    if (!raccoltaRendeVisibile(r, addedById, proprietarioId)) continue;
     aggiungi(r.createdById, nomeDi(r.createdBy), "raccolta", r.id, r.name, versoEsercizi("PROPRIETARIO"));
     for (const c of r.condivisioni) aggiungi(c.userId, nomeDi(c.user), "raccolta", r.id, r.name, versoEsercizi(c.ruolo));
     if (r.accessoScuola) aggiungi("", TUTTA_LA_SCUOLA, "raccolta", r.id, r.name, r.accessoScuola);

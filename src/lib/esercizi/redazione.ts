@@ -6,7 +6,7 @@ import { versoNumbas } from "./editor/verso-numbas";
 import { daNumbas } from "./editor/da-numbas";
 import { verificaSuSemi, type EsitoVerifica } from "./editor/verifica";
 import { hashContenuto, type EsercizioFile } from "./format/schema";
-import { chiaveArgomento, puo, ruoliEsercizi, ruoloEsercizio, type Ruolo, type Utente } from "./accesso";
+import { chiaveArgomento, puo, raccoltaRendeVisibile, ruoliEsercizi, ruoloEsercizio, type Ruolo, type Utente } from "./accesso";
 import { commentiApertiPer } from "./commenti";
 
 export type EsitoRedazione =
@@ -441,25 +441,28 @@ export async function accessoEsercizi(
           select: { ownerId: true, chiave: true },
         })
       : Promise.resolve([]),
-    // Le raccolte aperte a qualcuno (scuola o almeno un collega nominato):
-    // trasmettono l'esercizio solo se ce l'ha messo il suo autore, la stessa
-    // regola di `ruoliEsercizi` (accesso.ts).
+    // Le raccolte che contengono gli esercizi, messi lì da qualcuno: decide
+    // `raccoltaRendeVisibile` (accesso.ts), la stessa regola di
+    // `ruoliEsercizi` — l'autore deve esserne contributore, e la raccolta
+    // aperta a qualcun altro.
     prisma.contenitoreEsercizio.findMany({
-      where: {
-        esercizioId: { in: ids },
-        addedById: { not: null },
-        contenitore: { OR: [{ accessoScuola: { not: null } }, { condivisioni: { some: {} } }] },
+      where: { esercizioId: { in: ids }, addedById: { not: null } },
+      select: {
+        esercizioId: true,
+        addedById: true,
+        contenitore: {
+          select: { createdById: true, accessoScuola: true, condivisioni: { select: { userId: true, ruolo: true } } },
+        },
       },
-      select: { esercizioId: true, addedById: true },
     }),
   ]);
   const conDiretta = new Set(dirette.map((d) => d.esercizioId));
   const argomentiCondivisi = new Set(argomenti.map((a) => `${a.ownerId}\u0000${chiaveArgomento(a.chiave)}`));
-  const aggiuntoDa = new Map<string, Set<string>>();
-  for (const { esercizioId, addedById } of inRaccolte) {
-    const autoriAggiunta = aggiuntoDa.get(esercizioId) ?? new Set<string>();
-    autoriAggiunta.add(addedById!);
-    aggiuntoDa.set(esercizioId, autoriAggiunta);
+  const autorePerId = new Map(esercizi.map((e) => [e.id, e.authorId]));
+  const daRaccolta = new Set<string>();
+  for (const { esercizioId, addedById, contenitore } of inRaccolte) {
+    const autore = autorePerId.get(esercizioId);
+    if (autore && raccoltaRendeVisibile(contenitore, addedById, autore)) daRaccolta.add(esercizioId);
   }
 
   const accessoDi = (e: (typeof esercizi)[number]): VoceRedazione["accesso"] => {
@@ -467,7 +470,7 @@ export async function accessoEsercizi(
     if (conDiretta.has(e.id)) return "condiviso";
     if (e.authorId) {
       if (argomentiCondivisi.has(`${e.authorId}\u0000${chiaveArgomento(e.topic)}`)) return "condiviso";
-      if (aggiuntoDa.get(e.id)?.has(e.authorId)) return "condiviso";
+      if (daRaccolta.has(e.id)) return "condiviso";
     }
     return "privato";
   };

@@ -76,7 +76,7 @@ describe("CondividiDialog", () => {
     await waitFor(() => expect(f).toHaveBeenCalledWith(expect.stringContaining("/api/esercizi/condivisione?tipo=esercizio&id=e1")));
     expect(await within(dialogo).findByText("Io Docente")).toBeInTheDocument();
 
-    await userEvent.type(within(dialogo).getByLabelText(T.cercaCollega), "ross");
+    await userEvent.type(within(dialogo).getByLabelText(T.aggiungiColleghi), "ross");
     expect(within(dialogo).queryByRole("button", { name: /^Anna Bianchi/ })).toBeNull();
     await userEvent.click(within(dialogo).getByRole("button", { name: /^Mario Rossi/ }));
 
@@ -104,7 +104,7 @@ describe("CondividiDialog", () => {
 
     expect(await within(dialogo).findByLabelText("Ruolo di Anna Bianchi")).toHaveValue("COMMENTATORE");
     expect(within(dialogo).getByLabelText(T.accessoGenerale)).toHaveValue("scuola");
-    await userEvent.type(within(dialogo).getByLabelText(T.cercaCollega), "a");
+    await userEvent.type(within(dialogo).getByLabelText(T.aggiungiColleghi), "a");
     expect(within(dialogo).queryByRole("button", { name: /^Anna Bianchi/ })).toBeNull();
 
     await userEvent.click(within(dialogo).getByRole("button", { name: "Rimuovi Anna Bianchi" }));

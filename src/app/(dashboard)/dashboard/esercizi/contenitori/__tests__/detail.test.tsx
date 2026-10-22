@@ -45,7 +45,7 @@ beforeEach(() => {
 
 // I campi che ogni raccolta di prova porta: di norma è del docente e
 // nessun altro ci ha accesso.
-const MIA = { ruolo: "PROPRIETARIO" as const, condivisa: false };
+const MIA = { ruolo: "PROPRIETARIO" as const, trasmette: false };
 
 async function rendi(id = "cont1") {
   render(await Page({ params: Promise.resolve({ id }) }));
@@ -197,7 +197,7 @@ describe("pagina di dettaglio di un contenitore", () => {
 
   it("chi ha la raccolta da editor non ha Condividi", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue({
-      id: "cont1", name: "Equazioni", description: null, esercizi: [], ruolo: "EDITOR", condivisa: true,
+      id: "cont1", name: "Equazioni", description: null, esercizi: [], ruolo: "EDITOR", trasmette: true,
     });
     await rendi();
     expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
@@ -205,7 +205,7 @@ describe("pagina di dettaglio di un contenitore", () => {
 
   it("in sola lettura niente pulsanti di rimozione e niente sezione per aggiungere", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue({
-      id: "cont1", name: "Equazioni", description: null, ruolo: "VISUALIZZATORE", condivisa: true,
+      id: "cont1", name: "Equazioni", description: null, ruolo: "VISUALIZZATORE", trasmette: true,
       esercizi: [{ id: "e1", title: "Dentro", yearLevel: 1, topic: "algebra", difficulty: 1 }],
     });
     await rendi();
@@ -219,7 +219,7 @@ describe("pagina di dettaglio di un contenitore", () => {
     beforeEach(() => {
       vi.mocked(ruoliEsercizi).mockResolvedValue(new Map([["e2", "PROPRIETARIO" as const], ["e3", "PROPRIETARIO" as const]]));
       vi.mocked(contenutoContenitore).mockResolvedValue({
-        id: "cont1", name: "Equazioni", description: null, ruolo: "PROPRIETARIO", condivisa: true, esercizi: [],
+        id: "cont1", name: "Equazioni", description: null, ruolo: "PROPRIETARIO", trasmette: true, esercizi: [],
       });
       vi.mocked(prisma.esercizio.findMany).mockResolvedValue([
         { id: "e2", title: "Mio privato", yearLevel: 1, topic: "algebra", difficulty: 1, authorId: "doc1" },
@@ -261,9 +261,9 @@ describe("pagina di dettaglio di un contenitore", () => {
       await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
     });
 
-    it("in una raccolta non condivisa non c'è avviso (e non si calcola nemmeno l'accesso)", async () => {
+    it("in una raccolta che non trasmette non c'è avviso (e non si calcola nemmeno l'accesso)", async () => {
       vi.mocked(contenutoContenitore).mockResolvedValue({
-        id: "cont1", name: "Equazioni", description: null, ruolo: "PROPRIETARIO", condivisa: false, esercizi: [],
+        id: "cont1", name: "Equazioni", description: null, ruolo: "PROPRIETARIO", trasmette: false, esercizi: [],
       });
       await rendi();
       fireEvent.click(screen.getByRole("checkbox", { name: /Mio privato/ }));
