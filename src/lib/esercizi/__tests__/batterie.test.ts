@@ -7,7 +7,6 @@ import {
   eliminaBatteria,
   bacinoRegola,
   idsConVersione,
-  candidatiDisponibili,
 } from "../batterie";
 import type { Utente } from "../accesso";
 
@@ -336,7 +335,7 @@ describe("la regola a due forme", () => {
     expect(new Set(bacino)).toEqual(new Set([okId, senzaVersioneId]));
 
     const conVersione = await idsConVersione(bacino);
-    const candidati = candidatiDisponibili(bacino, new Set(), conVersione);
+    const candidati = bacino.filter((id) => conVersione.has(id));
     expect(candidati).toEqual([okId]);
   });
 

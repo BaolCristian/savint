@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db/client";
-import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
+import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria, formaRegola } from "./batterie";
 import { estraiConDettaglio, ultimeVersioni } from "./estrazione";
 import { comeDocente, ruoliEsercizi, type Utente } from "./accesso";
 
@@ -154,6 +154,9 @@ export async function assegna(
   const daEstrarre = batteria.regole.map((regola, i) => ({
     candidati: bacini[i]!.filter((id) => conVersione.has(id)),
     richiesti: regola.count,
+    // Una regola "scelti a mano" vince sempre sulle casuali e non si
+    // mescola (vedi `estraiConDettaglio`).
+    scelti: formaRegola(regola) === "scelti",
   }));
   const drawSeed = randomUUID();
   const { esercizi, disponibili } = estraiConDettaglio(daEstrarre, drawSeed);
@@ -212,8 +215,8 @@ export type FiltroDiretto = { anno: number; argomento: string; difficoltaMax?: n
  * filtro di disponibilità di versione di `idsConVersione`, non da una nuova
  * query che potrebbe divergere in silenzio da quella che la pesca userà.
  *
- * Nessuna esclusione per "già pescati" da applicare qui, a differenza di
- * `candidatiDisponibili`: una batteria automatica (`assegnaDiretto` più
+ * Nessuna esclusione per "già pescati" da applicare qui, a differenza del
+ * sorteggio (`estraiConDettaglio`, estrazione.ts): una batteria automatica (`assegnaDiretto` più
  * sotto) ha sempre e solo UNA regola, quindi non esiste una regola
  * precedente della stessa batteria con cui accavallarsi — lo stesso motivo
  * per cui `verificaBatteria` (batterie.ts) non ha bisogno di un `presi`

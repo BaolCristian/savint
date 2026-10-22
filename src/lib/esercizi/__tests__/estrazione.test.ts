@@ -3,12 +3,16 @@ import { prisma } from "@/lib/db/client";
 import {
   baciniDeiBlocchi,
   estraiDaBacini,
+  estraiConDettaglio,
   riepilogoEstrazione,
+  ultimeVersioni,
   bloccoDaRegola,
   regolaDaBlocco,
   type Blocco,
 } from "../estrazione";
 import type { Utente } from "../accesso";
+import { creaBatteria } from "../batterie";
+import { assegna } from "../compiti";
 
 const P = "estrtest-";
 const TOPIC = `${P}topic`;
@@ -20,6 +24,11 @@ const docente = (): Utente => ({ id: docenteId, admin: false });
 const e = (n: number) => `${P}e${n}`;
 
 beforeEach(async () => {
+  await prisma.compito.deleteMany({ where: { batteria: { name: { startsWith: P } } } });
+  await prisma.batteriaRegola.deleteMany({ where: { batteria: { name: { startsWith: P } } } });
+  await prisma.batteria.deleteMany({ where: { name: { startsWith: P } } });
+  await prisma.classeDocente.deleteMany({ where: { classe: { googleGroupEmail: { startsWith: P } } } });
+  await prisma.classe.deleteMany({ where: { googleGroupEmail: { startsWith: P } } });
   await prisma.contenitoreEsercizio.deleteMany({ where: { contenitore: { name: { startsWith: P } } } });
   await prisma.contenitore.deleteMany({ where: { name: { startsWith: P } } });
   await prisma.esercizio.deleteMany({ where: { id: { startsWith: P } } });
@@ -78,6 +87,58 @@ describe("estraiDaBacini (pura)", () => {
   it("non dipende dall'ordine dei candidati in ingresso (come assegna, che li ordina)", () => {
     const rovesciati = bacini.map((b) => ({ ...b, candidati: [...b.candidati].reverse() }));
     expect(estraiDaBacini(rovesciati, "seme-x")).toEqual(estraiDaBacini(bacini, "seme-x"));
+  });
+
+  it("algoritmo bloccato: seme fisso e bacini fissi danno esattamente questi id", () => {
+    // Valore calcolato anche con una copia letterale del ciclo di `assegna`
+    // prima del Nuovo compito (1ae75f9): se cambia, cambia l'estrazione di
+    // ogni compito già rifatto con il suo seme.
+    expect(estraiDaBacini(bacini, "seme-fisso")).toEqual(["c", "a", "b", "f", "e"]);
+    expect(
+      estraiDaBacini(
+        [bacini[0]!, { candidati: ["f", "c"], richiesti: 2, scelti: true }, bacini[1]!],
+        "seme-fisso",
+      ),
+    ).toEqual(["a", "d", "b", "f", "c", "h", "e"]);
+  });
+
+  it("gli scelti vincono sempre: un blocco casuale precedente non li prende mai, per nessun seme", () => {
+    const conScelti = [
+      { candidati: ["a", "b", "c", "x"], richiesti: 3 },
+      { candidati: ["y", "x"], richiesti: 2, scelti: true },
+    ];
+    for (let i = 0; i < 30; i++) {
+      const d = estraiConDettaglio(conScelti, `seme-${i}`);
+      expect(d.esercizi).not.toBeNull();
+      const x = d.esercizi!;
+      // x una volta sola, nella posizione del blocco scelti, e nell'ordine
+      // del docente (y prima di x).
+      expect(x.filter((id) => id === "x")).toHaveLength(1);
+      expect(x.slice(3)).toEqual(["y", "x"]);
+      expect([...x.slice(0, 3)].sort()).toEqual(["a", "b", "c"]);
+      // Il blocco casuale ha perso x perché scelto a mano: conta.
+      expect(d.duplicatiTolti).toBe(1);
+      expect(d.disponibili).toEqual([3, 2]);
+    }
+  });
+
+  it("i blocchi scelti non si mescolano e non consumano il seme", () => {
+    const a = { candidati: ["a", "b", "c", "d"], richiesti: 2 };
+    const b = { candidati: ["e", "f", "g"], richiesti: 2 };
+    const s = { candidati: ["q", "p", "r"], richiesti: 3, scelti: true };
+    for (let i = 0; i < 10; i++) {
+      const senza = estraiDaBacini([a, b], `seme-${i}`)!;
+      const con = estraiDaBacini([a, s, b], `seme-${i}`)!;
+      expect(con).toEqual([...senza.slice(0, 2), "q", "p", "r", ...senza.slice(2)]);
+    }
+  });
+
+  it("lo stesso esercizio scelto in due blocchi va al primo; il secondo resta corto", () => {
+    const d = estraiConDettaglio(
+      [{ candidati: ["x", "y"], richiesti: 2, scelti: true }, { candidati: ["x"], richiesti: 1, scelti: true }],
+      "s",
+    );
+    expect(d).toEqual({ esercizi: null, disponibili: [2, 0], duplicatiTolti: 1 });
   });
 
   it("null se un blocco resta insufficiente dopo l'esclusione dei già presi", () => {
@@ -185,6 +246,24 @@ describe("riepilogoEstrazione", () => {
     expect(c.esercizi.map((x) => x.esercizioId).sort()).toEqual([e(3), `${P}priv`].sort());
   });
 
+  it("un blocco casuale prima di un blocco scelti che condivide un esercizio: sufficiente per ogni seme", async () => {
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 4 },
+      { tipo: "scelti", esercizioIds: [e(6), e(2)] },
+    ];
+    for (let i = 0; i < 10; i++) {
+      const r = await riepilogoEstrazione(blocchi, docente(), `seme-${i}`);
+      expect(r.sufficiente).toBe(true);
+      const ids = r.esercizi.map((x) => x.esercizioId);
+      expect(ids.slice(4)).toEqual([e(6), e(2)]);
+      expect(ids.filter((id) => id === e(6) || id === e(2))).toHaveLength(2);
+      // Alla raccolta (6) restano 4 dopo aver tolto i 2 scelti: ne chiede
+      // 4, e basta sempre — prima dipendeva dal seme.
+      expect(r.blocchi[0]!.disponibili).toBe(4);
+      expect(r.duplicatiTolti).toBe(2);
+    }
+  });
+
   it("una raccolta che il docente non vede ha l'etichetta generica e zero disponibili", async () => {
     const r = await riepilogoEstrazione([{ tipo: "raccolta", contenitoreId: raccoltaId, quanti: 1 }], { id: collegaId, admin: false }, "s");
     expect(r.blocchi).toEqual([{ etichetta: "Raccolta non disponibile", richiesti: 1, disponibili: 0, nonDisponibili: [] }]);
@@ -238,5 +317,43 @@ describe("blocchi e regole", () => {
     expect(() =>
       bloccoDaRegola({ contenitoreId: null, argomento: null, anno: null, difficoltaMax: null, count: 1, esercizioIds: [] }),
     ).toThrow(/malformata/);
+  });
+});
+
+describe("ultimeVersioni", () => {
+  it("dà l'ultima versione con titolo e contenuto; un id senza versione non compare", async () => {
+    const m = await ultimeVersioni([e(1), e(2), `${P}nov`]);
+    expect([...m.keys()].sort()).toEqual([e(1), e(2)]);
+    expect(m.get(e(1))).toMatchObject({ titolo: "E1", content: { v: 2 } });
+    expect(m.get(e(2))).toMatchObject({ titolo: "E2", content: { v: 1 } });
+  });
+});
+
+describe("assegna usa lo stesso sorteggio", () => {
+  it("le versioni fissate nel compito sono quelle di estraiDaBacini con il suo seme", async () => {
+    const classeId = (await prisma.classe.create({
+      data: { googleGroupEmail: `${P}classe@scuola.it`, name: "Classe", yearLevel: 2 },
+    })).id;
+    await prisma.classeDocente.create({ data: { classeId, teacherId: docenteId } });
+    const b = await creaBatteria(docenteId, `${P}Batteria`, [
+      { contenitoreId: raccoltaId, count: 3 },
+      { esercizioIds: [e(5), e(1)], count: 2 },
+    ]);
+    if (!b.ok) throw new Error(b.motivo);
+    const esito = await assegna(b.id, classeId, docenteId);
+    if (!esito.ok) throw new Error(esito.motivo);
+    const compito = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+
+    const atteso = estraiDaBacini(
+      [
+        { candidati: [1, 2, 3, 4, 5, 6].map(e), richiesti: 3 },
+        { candidati: [e(5), e(1)], richiesti: 2, scelti: true },
+      ],
+      compito.drawSeed,
+    )!;
+    const versioni = await ultimeVersioni(atteso);
+    expect(compito.drawnVersionIds).toEqual(atteso.map((id) => versioni.get(id)!.versioneId));
+    // Gli scelti in coda, nell'ordine del docente, con l'ultima versione.
+    expect(atteso.slice(3)).toEqual([e(5), e(1)]);
   });
 });

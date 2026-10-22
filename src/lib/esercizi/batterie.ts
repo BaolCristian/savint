@@ -63,8 +63,8 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
  * sua forma — appartenenza a un contenitore, o corrispondenza a un filtro
  * (`argomento` esatto, `anno` esatto se presente, `difficoltaMax` come
  * soglia superiore inclusiva). NON filtra per versione né per "già
- * pescati": quel passo è a valle, in `candidatiDisponibili` più sotto,
- * identico per le due forme — la disponibilità di versione non dipende da
+ * pescati": quel passo è a valle, nel sorteggio (`estraiConDettaglio`,
+ * estrazione.ts), identico per tutte le forme — la disponibilità di versione non dipende da
  * come l'esercizio è stato trovato.
  *
  * LANCIA se la regola non rispetta l'invariante (`formaRegola` sopra torna
@@ -264,28 +264,6 @@ export function etichettaRegola(regola: {
 }): string {
   if ((regola.esercizioIds?.length ?? 0) > 0) return "Esercizi scelti";
   return regola.contenitore?.name ?? regola.argomento ?? "?";
-}
-
-/** Il bacino di candidati di una regola — già risolto da `bacinoRegola`,
- * quale che ne fosse la forma — dopo aver tolto gli esercizi già REALMENTE
- * pescati da regole precedenti della stessa batteria (l'insieme `presi`
- * cresce con le scelte vere del sorteggio, non con una stima) e quelli
- * senza versione risolvibile. Era usata da `assegna` in compiti.ts; dal
- * Nuovo compito (Task 2) il sorteggio vive in `estraiConDettaglio`
- * (estrazione.ts), che applica la stessa esclusione e lo stesso
- * ordinamento sui candidati già filtrati per versione. Resta come
- * definizione di riferimento (e per i suoi test).
- *
- * NON usata da `verificaBatteria` qui sotto: prima di un'assegnazione non
- * esiste un seme, quindi non c'è un "presi" vero da passare — quella
- * funzione stima invece un limite superiore al consumo possibile (vedi il
- * suo commento). Le due condividono `idsConVersione`, non questa. */
-export function candidatiDisponibili(
-  esercizioIds: string[],
-  presi: ReadonlySet<string>,
-  conVersione: ReadonlySet<string>,
-): string[] {
-  return esercizioIds.filter((id) => conVersione.has(id) && !presi.has(id)).sort();
 }
 
 /** Crea una batteria con le sue regole, in una transazione: o vanno dentro

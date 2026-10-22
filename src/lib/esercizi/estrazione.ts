@@ -51,8 +51,11 @@ export type Riepilogo = {
 /** Il bacino di un blocco già risolto: gli id che può pescare (visibili a
  * chi assegna, con almeno una versione) e quanti ne deve prendere. È la
  * forma che consuma `estraiDaBacini`, e la stessa che il compito "diverse
- * per studente" congelerà (Decisioni, punto 4). */
-type Bacino = { candidati: string[]; richiesti: number };
+ * per studente" congelerà (Decisioni, punto 4). `scelti` marca un blocco
+ * "scelti a mano": i suoi esercizi vincono sempre sui blocchi casuali e
+ * restano nell'ordine dato (vedi `estraiConDettaglio`); assente = blocco
+ * casuale, come ogni regola prima del Nuovo compito. */
+type Bacino = { candidati: string[]; richiesti: number; scelti?: boolean };
 
 /** Il titolo con cui un esercizio scelto ma non più assegnabile compare nel
  * riepilogo quando chi assegna NON lo vede: mai il titolo vero, che è
@@ -160,7 +163,7 @@ export function regolaDaBlocco(b: Blocco): RegolaInput {
 export async function baciniDeiBlocchi(
   blocchi: Blocco[],
   chi: Utente,
-): Promise<{ etichetta: string; candidati: string[]; richiesti: number; nonDisponibili: string[] }[]> {
+): Promise<{ etichetta: string; candidati: string[]; richiesti: number; nonDisponibili: string[]; scelti: boolean }[]> {
   const docente = comeDocente(chi);
   const visibili = await ruoliEsercizi(docente);
 
@@ -192,7 +195,7 @@ export async function baciniDeiBlocchi(
     blocchi.map(async (b, i) => {
       const candidati = grezzi[i]!.filter((id) => conVersione.has(id));
       if (b.tipo === "argomento") {
-        return { etichetta: b.argomento, candidati, richiesti: b.quanti, nonDisponibili: [] };
+        return { etichetta: b.argomento, candidati, richiesti: b.quanti, nonDisponibili: [], scelti: false };
       }
       if (b.tipo === "raccolta") {
         const raccolta = (await ruoloContenitore(docente, b.contenitoreId))
@@ -203,6 +206,7 @@ export async function baciniDeiBlocchi(
           candidati,
           richiesti: b.quanti,
           nonDisponibili: [],
+          scelti: false,
         };
       }
       const scelti = [...new Set(b.esercizioIds)];
@@ -210,64 +214,98 @@ export async function baciniDeiBlocchi(
       const nonDisponibili = scelti
         .filter((id) => !presenti.has(id))
         .map((id) => (visibili.has(id) ? titoli.get(id) ?? ESERCIZIO_NON_DISPONIBILE : ESERCIZIO_NON_DISPONIBILE));
-      return { etichetta: ETICHETTA_SCELTI, candidati, richiesti: scelti.length, nonDisponibili };
+      // `candidati` resta nell'ordine scelto dal docente: `bacinoRegola`
+      // conserva l'ordine degli scelti, e i filtri qui sopra non lo cambiano.
+      return { etichetta: ETICHETTA_SCELTI, candidati, richiesti: scelti.length, nonDisponibili, scelti: true };
     }),
   );
+}
+
+/** I candidati che restano a un blocco: tolti quelli `esclusi`, senza
+ * doppioni, ORDINATI — così il sorteggio non dipende dall'ordine in cui il
+ * database ha restituito il bacino. È la regola che `assegna` ha sempre
+ * applicato (prima in `candidatiDisponibili`, batterie.ts, ora tolta: una
+ * copia sola), per i blocchi casuali. */
+function liberiOrdinati(candidati: readonly string[], esclusi: (id: string) => boolean): string[] {
+  return [...new Set(candidati)].filter((id) => !esclusi(id)).sort();
 }
 
 /** Il sorteggio vero, con il dettaglio che serve al riepilogo (e al
  * messaggio di rifiuto di `assegna`). Pura: nessuna query, solo il seme.
  *
- * L'algoritmo è quello che `assegna` (compiti.ts) ha sempre usato, e che
- * ora usa da qui: `seedrandom(seme)`, blocchi IN ORDINE, per ciascuno i
- * candidati tolti i già presi dai blocchi precedenti e ORDINATI (come
- * `candidatiDisponibili`: il risultato non dipende dall'ordine in cui il
- * database li ha restituiti), Fisher–Yates seminato con lo stesso `rng`
- * condiviso fra i blocchi, poi i primi `richiesti`. Stesso seme e stessi
- * bacini ⇒ stessa estrazione: è ciò che permette ad "Assegna" di rifare
+ * **Gli esercizi scelti a mano vincono sempre** (spec, 281721c). Prima di
+ * pescare si raccolgono i candidati di TUTTI i blocchi "scelti" (`riservati`)
+ * e si tolgono dai bacini di tutti i blocchi casuali (argomento/raccolta),
+ * che vengano prima o dopo. Senza questo, la sufficienza di un blocco
+ * scelti dipendeva dal seme: un blocco casuale precedente poteva pescarne
+ * un esercizio e lasciarlo corto, con "Assegna" abilitato a un "Estrai di
+ * nuovo" sì e all'altro no. Così un blocco scelti è soddisfatto ogni volta
+ * che i suoi esercizi sono disponibili, qualunque seme.
+ *
+ * Per i blocchi casuali l'algoritmo è quello che `assegna` (compiti.ts) ha
+ * sempre usato, e che ora usa da qui: `seedrandom(seme)`, blocchi IN
+ * ORDINE, candidati tolti i già presi (e i riservati) e ordinati
+ * (`liberiOrdinati`), Fisher–Yates seminato con lo stesso `rng` condiviso
+ * fra i blocchi, poi i primi `richiesti`. Una batteria senza blocchi
+ * scelti estrae esattamente come prima. Stesso seme e stessi bacini ⇒
+ * stessa estrazione: è ciò che permette ad "Assegna" di rifare
  * l'estrazione vista in anteprima e confrontarla.
+ *
+ * I blocchi "scelti" non si mescolano e NON consumano `rng`: prendono i
+ * loro esercizi nell'ordine in cui il docente li ha scelti (tolti solo
+ * quelli già presi da un blocco scelti precedente: lo stesso esercizio
+ * scelto in due blocchi va al primo). L'ordine nel compito resta l'ordine
+ * dei blocchi.
  *
  * Un blocco insufficiente rende nulla l'estrazione (`esercizi: null`), ma
  * il ciclo CONTINUA sui blocchi seguenti senza che quello prenda niente: il
  * riepilogo vuole i numeri di tutti i blocchi, non solo fino al primo che
  * manca. Il primo blocco insufficiente ha comunque esattamente i numeri che
- * `assegna` ha sempre riportato (tutti i precedenti sono andati a buon fine
- * con le stesse estrazioni).
+ * `assegna` ha sempre riportato (tutti i precedenti hanno pescato).
  *
- * `duplicatiTolti`: quanti esercizi l'esclusione ha DAVVERO tolto, cioè la
- * somma, blocco per blocco, degli esercizi già PRESI da blocchi precedenti
- * che stavano anche fra i candidati di questo blocco. Non la
- * sovrapposizione fra i bacini: due blocchi con 6 esercizi in comune di cui
- * il primo ne prende 1 tolgono 1, non 6 — "1 esercizio era già in un blocco
- * precedente" (spec, zona 3). Un esercizio preso dal primo blocco e
- * presente nei candidati del secondo e del terzo conta due volte: è stato
- * tolto due volte. */
+ * `duplicatiTolti`: quanti esercizi un blocco ha PERSO perché già presi
+ * altrove — la somma, blocco per blocco, dei suoi candidati tolti perché
+ * (a) già PRESI da un blocco precedente, o (b) per un blocco casuale,
+ * scelti a mano in un blocco scelti (che vince, prima o dopo che sia).
+ * Non la sovrapposizione fra i bacini: due blocchi casuali con 6 esercizi
+ * in comune di cui il primo ne prende 1 tolgono 1, non 6 — "1 esercizio
+ * era già in un blocco precedente" (spec, zona 3). Un esercizio tolto a
+ * due blocchi conta due volte: è stato tolto due volte. */
 export function estraiConDettaglio(
   bacini: Bacino[],
   seme: string,
 ): { esercizi: string[] | null; disponibili: number[]; duplicatiTolti: number } {
   const rng = seedrandom(seme);
+  const riservati = new Set(bacini.filter((b) => b.scelti).flatMap((b) => b.candidati));
   const presi = new Set<string>();
   const esercizi: string[] = [];
   const disponibili: number[] = [];
   let duplicatiTolti = 0;
   let sufficiente = true;
 
-  for (const { candidati, richiesti } of bacini) {
+  for (const { candidati, richiesti, scelti } of bacini) {
     const unici = [...new Set(candidati)];
-    duplicatiTolti += unici.filter((id) => presi.has(id)).length;
-    const liberi = unici.filter((id) => !presi.has(id)).sort();
+    let liberi: string[];
+    if (scelti) {
+      // Ordine del docente, nessun sorteggio.
+      liberi = unici.filter((id) => !presi.has(id));
+    } else {
+      liberi = liberiOrdinati(unici, (id) => presi.has(id) || riservati.has(id));
+    }
+    duplicatiTolti += unici.length - liberi.length;
     disponibili.push(liberi.length);
     if (liberi.length < richiesti) {
       sufficiente = false;
       continue;
     }
 
-    // Fisher–Yates seminato, identico a quello che `assegna` ha sempre
-    // fatto: stabile per lo stesso seme, diverso per un seme nuovo.
-    for (let i = liberi.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [liberi[i], liberi[j]] = [liberi[j]!, liberi[i]!];
+    if (!scelti) {
+      // Fisher–Yates seminato, identico a quello che `assegna` ha sempre
+      // fatto: stabile per lo stesso seme, diverso per un seme nuovo.
+      for (let i = liberi.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [liberi[i], liberi[j]] = [liberi[j]!, liberi[i]!];
+      }
     }
     for (const id of liberi.slice(0, richiesti)) {
       presi.add(id);
@@ -285,17 +323,29 @@ export function estraiDaBacini(bacini: Bacino[], seme: string): string[] | null 
   return estraiConDettaglio(bacini, seme).esercizi;
 }
 
-/** L'ultima versione di ciascun esercizio, con il titolo dell'esercizio:
- * una query sola (DISTINCT ON esercizioId, ordinato per versione
- * decrescente). Un id senza versione semplicemente non compare. */
+/** L'ultima versione di ciascun esercizio, con il titolo dell'esercizio.
+ * Un id senza versione semplicemente non compare.
+ *
+ * Due query, non una: il `distinct` di Prisma NON diventa un `DISTINCT ON`
+ * in SQL — carica tutte le righe e scarta i doppioni in memoria. Se la
+ * prima query portasse anche `content`, si caricherebbe il contenuto (il
+ * JSON intero dell'esercizio) di OGNI versione di ogni esercizio estratto
+ * per tenerne una sola. Quindi: prima solo gli id (riga leggera, ordinata
+ * per versione decrescente, la prima per esercizio è l'ultima), poi il
+ * contenuto e il titolo soltanto delle versioni scelte. */
 export async function ultimeVersioni(
   esercizioIds: string[],
 ): Promise<Map<string, { versioneId: string; titolo: string; content: unknown }>> {
   if (esercizioIds.length === 0) return new Map();
-  const righe = await prisma.esercizioVersione.findMany({
+  const leggere = await prisma.esercizioVersione.findMany({
     where: { esercizioId: { in: esercizioIds } },
     orderBy: [{ esercizioId: "asc" }, { version: "desc" }],
     distinct: ["esercizioId"],
+    select: { id: true },
+  });
+  if (leggere.length === 0) return new Map();
+  const righe = await prisma.esercizioVersione.findMany({
+    where: { id: { in: leggere.map((r) => r.id) } },
     select: { id: true, esercizioId: true, content: true, esercizio: { select: { title: true } } },
   });
   return new Map(righe.map((r) => [r.esercizioId, { versioneId: r.id, titolo: r.esercizio.title, content: r.content }]));
