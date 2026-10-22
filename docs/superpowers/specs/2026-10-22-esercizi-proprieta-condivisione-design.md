@@ -92,8 +92,12 @@ scelte di assegnazione, e gli URL di anteprima/editor rispondono "non trovato"
 
 ### Regola delle raccolte (scelta mia, per l'anti-obiettivo sull'escalation)
 
-Una raccolta condivide con i suoi membri **solo gli esercizi del proprietario
-della raccolta e dei suoi editor nominati uno per uno**. Un ruolo dato a
+Una raccolta condivide con i suoi membri **solo gli esercizi che il loro
+autore ci ha messo personalmente, quando l'autore è il proprietario della
+raccolta o uno dei suoi editor nominati uno per uno**. Chi aggiunge un
+esercizio altrui a una raccolta lo rende visibile solo a chi lo vede già per
+un'altra strada (per questo ogni legame raccolta–esercizio ricorda chi l'ha
+aggiunto). Un ruolo dato a
 "tutta la scuola" fa *ricevere* gli esercizi della raccolta, ma non fa
 *contribuire*: altrimenti ogni raccolta esistente (migrata a "tutta la scuola:
 editor") renderebbe modificabile da tutti qualunque esercizio ci venga messo.
