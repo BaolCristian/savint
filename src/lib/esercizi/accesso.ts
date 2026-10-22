@@ -53,8 +53,26 @@ export async function utenteDaId(id: string): Promise<Utente> {
 
 // Su una raccolta il proprietario conta come EDITOR verso gli esercizi che
 // contiene: una raccolta non rende nessuno proprietario di un esercizio altrui.
-function versoEsercizi(r: Ruolo): Ruolo {
+export function versoEsercizi(r: Ruolo): Ruolo {
   return r === "PROPRIETARIO" ? "EDITOR" : r;
+}
+
+/** I contributori di una raccolta: il proprietario e gli editor nominati.
+ * Un ruolo di scuola fa ricevere, non contribuire. */
+export function contributoriRaccolta(r: { createdById: string; condivisioni: { userId: string; ruolo: RuoloEsercizi }[] }): Set<string> {
+  const contributori = new Set([r.createdById]);
+  for (const c of r.condivisioni) if (c.ruolo === "EDITOR") contributori.add(c.userId);
+  return contributori;
+}
+
+/**
+ * La regola delle raccolte: una raccolta trasmette un esercizio solo se ce
+ * l'ha messo l'autore stesso, ed è un suo contributore. Chi ha ricevuto un
+ * esercizio non può girarlo ad altri mettendolo in una raccolta, nemmeno se
+ * ne nomina editor l'autore.
+ */
+export function raccoltaTrasmette(addedById: string | null, authorId: string, contributori: Set<string>): boolean {
+  return addedById === authorId && contributori.has(authorId);
 }
 
 type RigaRaccolta = {
@@ -153,8 +171,7 @@ async function calcolaRuoliEsercizi(chi: Utente | "scuola", soloId?: string): Pr
   for (const r of raccolte) {
     const ruolo = ruoloSuRaccolta(chi, r);
     if (!ruolo) continue;
-    const contributori = new Set([r.createdById]);
-    for (const c of r.condivisioni) if (c.ruolo === "EDITOR") contributori.add(c.userId);
+    const contributori = contributoriRaccolta(r);
     for (const { esercizioId, addedById } of r.esercizi) {
       const voce: Voce = { ruolo: versoEsercizi(ruolo), contributori, addedById };
       const lista = perRaccolta.get(esercizioId);
@@ -170,11 +187,9 @@ async function calcolaRuoliEsercizi(chi: Utente | "scuola", soloId?: string): Pr
     ruolo = ruoloMassimo(ruolo, e.accessoScuola);
     if (e.authorId) {
       ruolo = ruoloMassimo(ruolo, perArgomento.get(`${e.authorId}\u0000${chiaveArgomento(e.topic)}`));
-      // La raccolta trasmette solo ciò che l'autore stesso, contributore, ci
-      // ha messo: chi ha ricevuto un esercizio non può girarlo ad altri
-      // mettendolo in una raccolta, nemmeno se ne nomina editor l'autore.
+      // La regola delle raccolte (`raccoltaTrasmette`).
       for (const v of perRaccolta.get(e.id) ?? []) {
-        if (v.addedById === e.authorId && v.contributori.has(e.authorId)) ruolo = ruoloMassimo(ruolo, v.ruolo);
+        if (raccoltaTrasmette(v.addedById, e.authorId, v.contributori)) ruolo = ruoloMassimo(ruolo, v.ruolo);
       }
     }
     if (ruolo) ruoli.set(e.id, ruolo);
