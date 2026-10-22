@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerAnteprima } from "@/lib/esercizi/redazione";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
+import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
+import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { AnteprimaDocenteClient } from "./anteprima-docente-client";
 
 /** L'anteprima del docente su QUALUNQUE esercizio del bacino, modificabile
@@ -30,7 +32,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const t = await getTranslations("esercizi.anteprimaDocente");
   const { id } = await params;
 
-  const esito = await caricaPerAnteprima(id, utenteDaSessione(session));
+  const chi = utenteDaSessione(session);
+  const esito = await caricaPerAnteprima(id, chi);
   if (!esito.ok && esito.motivo === "non_trovato") notFound();
 
   const locale = (await getLocale()) === "en" ? "en" : "it";
@@ -43,9 +46,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       {esito.ok ? (
         <>
-          <div>
-            <h1 className="text-2xl font-semibold">{esito.titolo}</h1>
-            <p className="text-sm text-muted-foreground">{t("versione", { numero: esito.versione })}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold">{esito.titolo}</h1>
+              <p className="text-sm text-muted-foreground">{t("versione", { numero: esito.versione })}</p>
+            </div>
+            {/* "Condividi" solo al proprietario (o all'ADMIN). */}
+            {puo(esito.ruolo, "condividere") && (
+              <CondividiDialog risorsa={{ tipo: "esercizio", id }} titolo={esito.titolo} testi={await testiCondivisione()} admin={chi.admin} />
+            )}
           </div>
           <p className="text-sm text-muted-foreground">{t("spiegazione")}</p>
           <AnteprimaDocenteClient esercizioId={id} content={esito.content} locale={locale} />

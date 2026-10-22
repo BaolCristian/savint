@@ -189,6 +189,20 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(vi.mocked(prisma.esercizio.findMany).mock.calls[0]![0]).toMatchObject({ where: { id: { in: ["e2"] } } });
   });
 
+  it("il proprietario della raccolta ha Condividi", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({ id: "cont1", name: "Equazioni", description: null, esercizi: [], ...MIA });
+    await rendi();
+    expect(screen.getByRole("button", { name: "condividi" })).toBeInTheDocument();
+  });
+
+  it("chi ha la raccolta da editor non ha Condividi", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({
+      id: "cont1", name: "Equazioni", description: null, esercizi: [], ruolo: "EDITOR", condivisa: true,
+    });
+    await rendi();
+    expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
+  });
+
   it("in sola lettura niente pulsanti di rimozione e niente sezione per aggiungere", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue({
       id: "cont1", name: "Equazioni", description: null, ruolo: "VISUALIZZATORE", condivisa: true,

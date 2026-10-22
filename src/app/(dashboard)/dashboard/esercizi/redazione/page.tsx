@@ -2,7 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoRedazione } from "@/lib/esercizi/redazione";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
+import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { Button } from "@/components/ui/button";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-client";
@@ -51,7 +52,20 @@ export default async function Page({
   const tUi = await getTranslations("teacherExercisesUi");
 
   // Solo gli esercizi che il docente vede (suoi, condivisi, della scuola).
-  const elenco = await elencoRedazione(utenteDaSessione(session));
+  const chi = utenteDaSessione(session);
+  const elenco = await elencoRedazione(chi);
+
+  // L'etichetta di proprietà della riga. Un ADMIN è PROPRIETARIO di tutto:
+  // ciò che non ha scritto lui lo vede "di" qualcun altro, e da amministratore.
+  const nomeRuolo = { EDITOR: tUi("catalog.roleEditor"), COMMENTATORE: tUi("catalog.roleCommenter"), VISUALIZZATORE: tUi("catalog.roleViewer") };
+  const diChi = (v: (typeof elenco)[number]): VoceElenco["diChi"] =>
+    v.ruolo !== "PROPRIETARIO" ? "condivisi" : v.proprietarioId === chi.id ? "miei" : "altri";
+  const etichetta = (v: (typeof elenco)[number]) => {
+    const proprietario = v.proprietarioNome ? tUi("catalog.ownedBy", { nome: v.proprietarioNome }) : tUi("catalog.noOwner");
+    if (v.ruolo !== "PROPRIETARIO") return `${nomeRuolo[v.ruolo]} · ${proprietario}`;
+    if (v.proprietarioId !== chi.id) return `${proprietario} · ${tUi("catalog.admin")}`;
+    return tUi(v.accesso === "scuola" ? "catalog.yoursSchool" : v.accesso === "condiviso" ? "catalog.yoursShared" : "catalog.yoursPrivate");
+  };
 
   const formattaData = (d: Date) => d.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
 
@@ -63,6 +77,10 @@ export default async function Page({
     anno: v.anno,
     argomento: v.argomento,
     modificabile: v.modificabile,
+    puoModificare: puo(v.ruolo, "modificare"),
+    puoCondividere: puo(v.ruolo, "condividere"),
+    diChi: diChi(v),
+    etichetta: etichetta(v),
     motivo: v.modificabile ? null : (v.motivo ?? t("motivoGenerico")),
     ultimaVersione: t("ultimaVersioneDa", {
       autore: v.autoreNome ?? t("autoreSconosciuto"),
@@ -79,9 +97,6 @@ export default async function Page({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-          {/* La riga che la specifica impone: il rischio di due docenti che
-              si sovrascrivono va reso visibile, non solo mitigato altrove. */}
-          <p className="text-sm text-muted-foreground">{t("chiunquePuoModificare")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/dashboard/esercizi/redazione/importa">
@@ -104,7 +119,13 @@ export default async function Page({
       ) : (
         <RedazioneElencoClient
           voci={voci}
+          admin={chi.admin}
           testi={{
+            condivisione: await testiCondivisione(),
+            diChi: tUi("catalog.owner"),
+            miei: tUi("catalog.mine"),
+            condivisiConMe: tUi("catalog.sharedWithMe"),
+            diAltri: tUi("catalog.others"),
             modificabile: t("modificabile"),
             soloLettura: t("soloLettura"),
             apri: t("apri"),

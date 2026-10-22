@@ -3,7 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { caricaPerEditor } from "@/lib/esercizi/redazione";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
+import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
+import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { ModificaEsercizioClient } from "./modifica-esercizio-client";
 
 /** La modifica di un esercizio esistente. Chi arriva dall'elenco (Task 8)
@@ -25,7 +27,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const t = await getTranslations("esercizi.redazione.elenco");
   const { id } = await params;
 
-  const esito = await caricaPerEditor(id, utenteDaSessione(session));
+  const chi = utenteDaSessione(session);
+  const esito = await caricaPerEditor(id, chi);
 
   if (!esito.ok) {
     if (esito.motivo === "non_trovato") notFound();
@@ -48,9 +51,20 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">
-        {t("torna")}
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">
+          {t("torna")}
+        </Link>
+        {/* "Condividi" solo al proprietario (o all'ADMIN). */}
+        {puo(esito.ruolo, "condividere") && (
+          <CondividiDialog
+            risorsa={{ tipo: "esercizio", id }}
+            titolo={esito.editor.meta.titolo}
+            testi={await testiCondivisione()}
+            admin={chi.admin}
+          />
+        )}
+      </div>
       <ModificaEsercizioClient esercizioId={id} valoreIniziale={esito.editor} />
     </div>
   );

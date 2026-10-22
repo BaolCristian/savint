@@ -213,7 +213,7 @@ describe("GET /api/esercizi/redazione/[id]", () => {
   it("200 con editor, versione, autoreNome e aggiornatoIl", async () => {
     const aggiornatoIl = new Date("2026-02-01");
     vi.mocked(caricaPerEditor).mockResolvedValue({
-      ok: true, editor: editorValido as never, versione: 3, autoreNome: "Prof", aggiornatoIl,
+      ok: true, editor: editorValido as never, versione: 3, autoreNome: "Prof", aggiornatoIl, ruolo: "EDITOR",
     });
     const r = await GET_ID(richiesta(), { params });
     expect(r.status).toBe(200);

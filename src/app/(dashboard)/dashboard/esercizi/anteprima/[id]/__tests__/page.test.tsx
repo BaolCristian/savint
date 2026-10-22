@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/redazione", () => ({ caricaPerAnteprima: vi.fn() }));
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -79,5 +80,18 @@ describe("pagina di anteprima del docente su un esercizio", () => {
     await rendi("e2");
     expect(screen.queryByTestId("anteprima-client")).toBeNull();
     expect(screen.getByText("senzaVersioneTesto")).toBeInTheDocument();
+  });
+
+  // "Condividi" solo a chi può condividere (proprietario o ADMIN).
+  it("offre Condividi al proprietario, non a chi lo vede soltanto", async () => {
+    vi.mocked(caricaPerAnteprima).mockResolvedValue({ ok: true, titolo: "Prova", versione: 1, content: {}, ruolo: "PROPRIETARIO" });
+    await rendi();
+    expect(screen.getByRole("button", { name: "condividi" })).toBeInTheDocument();
+  });
+
+  it("non offre Condividi a un editor", async () => {
+    vi.mocked(caricaPerAnteprima).mockResolvedValue({ ok: true, titolo: "Prova", versione: 1, content: {}, ruolo: "EDITOR" });
+    await rendi();
+    expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
   });
 });

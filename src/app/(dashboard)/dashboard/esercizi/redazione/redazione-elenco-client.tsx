@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { CondividiDialog, type TestiCondivisione } from "@/components/esercizi/condivisione/condividi-dialog";
 import { DuplicaButton, type DuplicaButtonTesti } from "./duplica-button";
 
 export interface VoceElenco {
@@ -15,6 +16,16 @@ export interface VoceElenco {
   anno: number;
   argomento: string;
   modificabile: boolean;
+  /** Il ruolo di chi guarda, già tradotto in permessi dalla pagina (`puo`):
+   * "Apri" solo con `modificare`, "Condividi" solo con `condividere`. */
+  puoModificare: boolean;
+  puoCondividere: boolean;
+  /** Per il filtro "Di chi": "miei" (proprietario e autore), "condivisi"
+   * (con un ruolo ricevuto), "altri" (solo per l'ADMIN: visibile perché è
+   * amministratore, non perché è suo). */
+  diChi: "miei" | "condivisi" | "altri";
+  /** "Tuo · Privato", "Editor · di Rossi"...: già composta dalla pagina. */
+  etichetta: string;
   /** Il motivo del dominio per cui non è ricostruibile fedelmente — assente
    * per un esercizio modificabile. Il testo di `daNumbas` (da-numbas.ts,
    * `SUGGERIMENTO_REPOSITORIO`) chiude già da sé con "può essere modificato
@@ -48,6 +59,11 @@ interface Testi extends DuplicaButtonTesti {
   solaLettura: string;
   diagnostica: string;
   nessunRisultato: string;
+  diChi: string;
+  miei: string;
+  condivisiConMe: string;
+  diAltri: string;
+  condivisione: TestiCondivisione;
 }
 
 /** L'elenco della redazione: per ogni esercizio, se è modificabile un link
@@ -81,58 +97,86 @@ function perArgomento(voci: VoceElenco[]): Gruppo[] {
   return [...gruppi.values()].sort((a, b) => a.argomento.localeCompare(b.argomento, "it"));
 }
 
-export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; testi: Testi }) {
+/** Una riga si apre nell'editor solo se l'editor sa ricostruirla E chi
+ * guarda può modificarla: per tutti gli altri è "sola lettura". */
+const apribile = (v: VoceElenco) => v.modificabile && v.puoModificare;
+
+/** "analisi logica" → "Analisi logica", come lo mostra l'intestazione del gruppo. */
+const maiuscola = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
+
+const SELECT = "h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm";
+
+export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: VoceElenco[]; testi: Testi; admin?: boolean }) {
   const [query, setQuery] = useState("");
   const [anno, setAnno] = useState("all");
   const [argomento, setArgomento] = useState("all");
   const [modificabilita, setModificabilita] = useState("all");
+  const [diChi, setDiChi] = useState("all");
   const anni = [...new Set(voci.map((v) => v.anno))].sort((a, b) => a - b);
   const argomenti = [...new Set(voci.map((v) => v.argomento))].sort((a, b) => a.localeCompare(b));
   const filtrate = voci.filter((v) =>
     (anno === "all" || v.anno === Number(anno)) &&
     (argomento === "all" || v.argomento === argomento) &&
-    (modificabilita === "all" || (modificabilita === "editable" ? v.modificabile : !v.modificabile)) &&
+    (modificabilita === "all" || (modificabilita === "editable" ? apribile(v) : !apribile(v))) &&
+    (diChi === "all" || v.diChi === diChi) &&
     `${v.titolo} ${v.sottotitolo}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
   );
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2" aria-label={testi.cerca}>
-        <Input type="search" aria-label={testi.cerca} placeholder={testi.cerca} value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 max-w-sm" />
-        <select aria-label={testi.anno} value={anno} onChange={(e) => setAnno(e.target.value)} className="h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm">
+        <Input type="search" aria-label={testi.cerca} placeholder={testi.cerca} value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 max-w-xs" />
+        <select aria-label={testi.anno} value={anno} onChange={(e) => setAnno(e.target.value)} className={SELECT}>
           <option value="all">{testi.anno}: {testi.tutti}</option>
           {anni.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
-        <select aria-label={testi.argomento} value={argomento} onChange={(e) => setArgomento(e.target.value)} className="h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm">
+        <select aria-label={testi.argomento} value={argomento} onChange={(e) => setArgomento(e.target.value)} className={SELECT}>
           <option value="all">{testi.argomento}: {testi.tutti}</option>
           {argomenti.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
-        <select aria-label={testi.modificabilita} value={modificabilita} onChange={(e) => setModificabilita(e.target.value)} className="h-9 max-w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm">
+        <select aria-label={testi.modificabilita} value={modificabilita} onChange={(e) => setModificabilita(e.target.value)} className={SELECT}>
           <option value="all">{testi.tutti}</option>
           <option value="editable">{testi.modificabili}</option>
           <option value="readonly">{testi.solaLettura}</option>
+        </select>
+        <select aria-label={testi.diChi} value={diChi} onChange={(e) => setDiChi(e.target.value)} className={SELECT}>
+          <option value="all">{testi.diChi}: {testi.tutti}</option>
+          <option value="miei">{testi.miei}</option>
+          <option value="condivisi">{testi.condivisiConMe}</option>
+          {admin && <option value="altri">{testi.diAltri}</option>}
         </select>
       </div>
       {filtrate.length === 0 ? <p className="text-sm text-muted-foreground">{testi.nessunRisultato}</p> : (
         <div className="space-y-6">
           {perArgomento(filtrate).map((g) => (
             <section key={g.argomento} aria-label={g.argomento} className="rounded-xl border border-border bg-card shadow-sm">
-              <h2 className="flex items-center justify-between gap-2 rounded-t-xl border-b border-border border-l-4 border-l-brand-blue bg-muted/50 px-4 py-2.5 text-lg font-semibold">
-                <span className="first-letter:uppercase">{g.argomento}</span>
-                <span className="rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-sm font-medium text-brand-blue">{g.voci.length}</span>
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-xl border-b border-border border-l-4 border-l-brand-blue bg-muted/50 px-4 py-2.5">
+                <h2 className="flex items-center gap-2 text-lg font-semibold">
+                  <span className="first-letter:uppercase">{g.argomento}</span>
+                  <span className="rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-sm font-medium text-brand-blue">{g.voci.length}</span>
+                </h2>
+                {/* L'argomento si condivide solo per gli esercizi propri: il
+                    pulsante c'è se nel gruppo ce n'è almeno uno (anche per
+                    l'ADMIN, che qui condivide i suoi). */}
+                {g.voci.some((v) => v.diChi === "miei") && (
+                  <CondividiDialog risorsa={{ tipo: "argomento", argomento: g.argomento }} titolo={maiuscola(g.argomento)} testi={testi.condivisione} compatto />
+                )}
+              </div>
               <ul className="divide-y divide-border px-4">
                 {g.voci.map((v) => (
                   <li key={v.id}>
                     <article className="space-y-2 py-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-medium">{v.titolo}</p>
                           <p className="text-sm text-muted-foreground">{v.classe}</p>
                         </div>
-                        <Badge variant={v.modificabile ? "default" : "outline"}>
-                          {v.modificabile ? testi.modificabile : testi.soloLettura}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant={v.diChi === "miei" ? "secondary" : "outline"}>{v.etichetta}</Badge>
+                          <Badge variant={apribile(v) ? "default" : "outline"}>
+                            {apribile(v) ? testi.modificabile : testi.soloLettura}
+                          </Badge>
+                        </div>
                       </div>
 
                       <p className="text-xs text-muted-foreground">{v.ultimaVersione}</p>
@@ -141,13 +185,15 @@ export function RedazioneElencoClient({ voci, testi }: { voci: VoceElenco[]; tes
                         <Link href={`/dashboard/esercizi/anteprima/${v.id}`} className="text-sm text-brand-blue hover:underline">
                           {testi.anteprima}
                         </Link>
-                        {v.modificabile && (
-                          <>
-                            <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
-                              {testi.apri}
-                            </Link>
-                            <DuplicaButton esercizioId={v.id} testi={testi} />
-                          </>
+                        {apribile(v) && (
+                          <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
+                            {testi.apri}
+                          </Link>
+                        )}
+                        {/* Duplicare basta vederlo: la copia è di chi duplica. */}
+                        {v.modificabile && <DuplicaButton esercizioId={v.id} testi={testi} />}
+                        {v.puoCondividere && (
+                          <CondividiDialog risorsa={{ tipo: "esercizio", id: v.id }} titolo={v.titolo} testi={testi.condivisione} admin={admin} compatto />
                         )}
                       </div>
 

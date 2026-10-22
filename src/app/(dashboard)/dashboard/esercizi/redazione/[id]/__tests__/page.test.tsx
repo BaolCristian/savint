@@ -50,7 +50,7 @@ async function rendi(id = "e1") {
 describe("pagina di modifica di un esercizio esistente", () => {
   it("chiama redirectUnlessTeacher", async () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({
-      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario Rossi", aggiornatoIl: new Date(),
+      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario Rossi", aggiornatoIl: new Date(), ruolo: "EDITOR",
     });
     await rendi();
     expect(redirectUnlessTeacher).toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe("pagina di modifica di un esercizio esistente", () => {
 
   it("un esercizio modificabile monta l'editor con il suo valore iniziale", async () => {
     vi.mocked(caricaPerEditor).mockResolvedValue({
-      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario Rossi", aggiornatoIl: new Date(),
+      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario Rossi", aggiornatoIl: new Date(), ruolo: "EDITOR",
     });
     await rendi("e1");
     expect(caricaPerEditor).toHaveBeenCalledWith("e1", { id: "doc1", admin: false });
@@ -106,5 +106,21 @@ describe("pagina di modifica di un esercizio esistente", () => {
     // c'era anche in un secondo paragrafo statico (`soloRepository`), ora
     // rimosso — mai due nodi che la contengono.
     expect(screen.getAllByText(/repository dei contenuti/)).toHaveLength(1);
+  });
+
+  it("offre Condividi al proprietario", async () => {
+    vi.mocked(caricaPerEditor).mockResolvedValue({
+      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Io", aggiornatoIl: new Date(), ruolo: "PROPRIETARIO",
+    });
+    await rendi();
+    expect(screen.getByRole("button", { name: "condividi" })).toBeInTheDocument();
+  });
+
+  it("un editor non vede Condividi", async () => {
+    vi.mocked(caricaPerEditor).mockResolvedValue({
+      ok: true, editor: EDITOR_VALIDO as never, versione: 1, autoreNome: "Mario", aggiornatoIl: new Date(), ruolo: "EDITOR",
+    });
+    await rendi();
+    expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
   });
 });

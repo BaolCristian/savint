@@ -484,7 +484,7 @@ export async function accessoEsercizi(
  * non vede l'esercizio riceve `non_trovato`, chi lo vede soltanto
  * `sola_lettura` (la pagina lo manda all'anteprima). */
 export async function caricaPerEditor(esercizioId: string, chi: Utente): Promise<
-  | { ok: true; editor: EsercizioEditor; versione: number; autoreNome: string | null; aggiornatoIl: Date }
+  | { ok: true; editor: EsercizioEditor; versione: number; autoreNome: string | null; aggiornatoIl: Date; ruolo: Ruolo }
   | { ok: false; motivo: "non_trovato" | "sola_lettura" | "non_rappresentabile"; dettaglio: string }
 > {
   const ruolo = await ruoloEsercizio(chi, esercizioId);
@@ -524,6 +524,8 @@ export async function caricaPerEditor(esercizioId: string, chi: Utente): Promise
     versione: versione.version,
     autoreNome: await nomeAutore(esercizio.authorId),
     aggiornatoIl: esercizio.updatedAt,
+    // Perché la pagina sappia se offrire "Condividi" (solo al proprietario).
+    ruolo,
   };
 }
 

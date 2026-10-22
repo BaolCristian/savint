@@ -18,11 +18,11 @@ vi.mock("next-intl/server", () => ({
 }));
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
-import { elencoRedazione } from "@/lib/esercizi/redazione";
+import { elencoRedazione, type VoceRedazione } from "@/lib/esercizi/redazione";
 import Page from "../page";
 
-// Il ruolo e la proprietà di ogni voce (Task 3 della condivisione): questa
-// pagina non li mostra ancora, ma `VoceRedazione` li porta sempre.
+// Il ruolo e la proprietà di ogni voce (Task 3 della condivisione): di norma
+// un esercizio della scuola su cui il docente è editor.
 const ACCESSO = {
   ruolo: "EDITOR" as const, proprietarioId: null, proprietarioNome: null, accesso: "scuola" as const,
 };
@@ -51,10 +51,12 @@ describe("elenco della redazione", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
-  it("dichiara che qualunque docente può modificare qualunque esercizio", async () => {
+  // Con proprietà e ruoli la frase "qualunque docente può modificare
+  // qualunque esercizio" non è più vera: sparisce.
+  it("non dice più che qualunque docente può modificare qualunque esercizio", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();
-    expect(screen.getByText("chiunquePuoModificare")).toBeInTheDocument();
+    expect(screen.queryByText("chiunquePuoModificare")).toBeNull();
   });
 
   // Le due direzioni della correzione, nello stesso test: I4 aveva tolto
@@ -229,5 +231,85 @@ describe("elenco della redazione", () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  // Proprietà e ruoli (condivisione, Task 7): l'etichetta di ogni riga, le
+  // azioni che il ruolo permette, il filtro "Di chi".
+  describe("ruoli e condivisione", () => {
+    const voce = (id: string, titolo: string, accesso: Partial<VoceRedazione>, argomento = "algebra"): VoceRedazione => ({
+      id, titolo, argomento, anno: 2, ultimaVersione: 1, modificabile: true, motivo: null,
+      autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"),
+      ...ACCESSO, ...accesso,
+    });
+
+    it("una riga da visualizzatore non ha né Apri né Condividi, ma dice di chi è", async () => {
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "VISUALIZZATORE", proprietarioId: "u9", proprietarioNome: "Anna Neri" }),
+      ]);
+      await rendi();
+      expect(screen.queryByRole("link", { name: "apri" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
+      expect(screen.getByRole("link", { name: "anteprima" })).toBeInTheDocument();
+      expect(screen.getByText('catalog.roleViewer · catalog.ownedBy:{"nome":"Anna Neri"}')).toBeInTheDocument();
+      // Niente "Condividi argomento": in questo gruppo non c'è niente di suo.
+      expect(screen.queryByRole("button", { name: "condividiArgomento" })).toBeNull();
+    });
+
+    it("una riga propria ha Apri, Condividi e l'etichetta Tuo", async () => {
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "PROPRIETARIO", proprietarioId: "doc1", proprietarioNome: "Io", accesso: "privato" }),
+        voce("e2", "Aumenti", { ruolo: "PROPRIETARIO", proprietarioId: "doc1", proprietarioNome: "Io", accesso: "scuola" }),
+      ]);
+      await rendi();
+      expect(screen.getAllByRole("link", { name: "apri" })).toHaveLength(2);
+      expect(screen.getAllByRole("button", { name: "condividi" })).toHaveLength(2);
+      expect(screen.getByText("catalog.yoursPrivate")).toBeInTheDocument();
+      expect(screen.getByText("catalog.yoursSchool")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "condividiArgomento" })).toBeInTheDocument();
+    });
+
+    it("un editor ha Apri ma non Condividi; senza proprietario lo dice", async () => {
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "EDITOR", proprietarioId: null, proprietarioNome: null }),
+      ]);
+      await rendi();
+      expect(screen.getByRole("link", { name: "apri" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "condividi" })).toBeNull();
+      expect(screen.getByText("catalog.roleEditor · catalog.noOwner")).toBeInTheDocument();
+    });
+
+    it("il filtro Miei nasconde le righe con un ruolo diverso da proprietario", async () => {
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "PROPRIETARIO", proprietarioId: "doc1", proprietarioNome: "Io" }),
+        voce("e2", "Aumenti", { ruolo: "COMMENTATORE", proprietarioId: "u9", proprietarioNome: "Anna Neri" }),
+      ]);
+      await rendi();
+      const filtro = screen.getByRole("combobox", { name: "catalog.owner" });
+      fireEvent.change(filtro, { target: { value: "miei" } });
+      expect(screen.getByText("Sconti")).toBeInTheDocument();
+      expect(screen.queryByText("Aumenti")).toBeNull();
+      fireEvent.change(filtro, { target: { value: "condivisi" } });
+      expect(screen.queryByText("Sconti")).toBeNull();
+      expect(screen.getByText("Aumenti")).toBeInTheDocument();
+      // "Di altri" è solo dell'amministratore.
+      expect(within(filtro).queryByRole("option", { name: "catalog.others" })).toBeNull();
+    });
+
+    it("l'amministratore vede gli esercizi altrui come tali e li filtra con Di altri", async () => {
+      vi.mocked(redirectUnlessTeacher).mockResolvedValue({ user: { id: "adm", role: "ADMIN" } } as never);
+      vi.mocked(elencoRedazione).mockResolvedValue([
+        voce("e1", "Sconti", { ruolo: "PROPRIETARIO", proprietarioId: "adm", proprietarioNome: "Admin" }),
+        voce("e2", "Aumenti", { ruolo: "PROPRIETARIO", proprietarioId: "u9", proprietarioNome: "Anna Neri" }, "geometria"),
+      ]);
+      await rendi();
+      expect(screen.getByText('catalog.ownedBy:{"nome":"Anna Neri"} · catalog.admin')).toBeInTheDocument();
+      // Condividi su entrambe (l'amministratore condivide tutto), ma
+      // "Condividi argomento" solo dove ha qualcosa di suo.
+      expect(screen.getAllByRole("button", { name: "condividi" })).toHaveLength(2);
+      expect(screen.getAllByRole("button", { name: "condividiArgomento" })).toHaveLength(1);
+      fireEvent.change(screen.getByRole("combobox", { name: "catalog.owner" }), { target: { value: "altri" } });
+      expect(screen.queryByText("Sconti")).toBeNull();
+      expect(screen.getByText("Aumenti")).toBeInTheDocument();
+    });
   });
 });

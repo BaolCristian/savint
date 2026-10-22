@@ -6,6 +6,8 @@ import { contenutoContenitore } from "@/lib/esercizi/contenitori";
 import { puo, ruoliEsercizi, utenteDaSessione } from "@/lib/esercizi/accesso";
 import { accessoEsercizi } from "@/lib/esercizi/redazione";
 import { prisma } from "@/lib/db/client";
+import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
+import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 
@@ -58,10 +60,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Link href="/dashboard/esercizi/contenitori" className="text-sm text-brand-blue hover:underline">
           {t("torna")}
         </Link>
-        <h1 className="text-2xl font-semibold">{contenitore.name}</h1>
-        {contenitore.description && (
-          <p className="text-sm text-muted-foreground">{contenitore.description}</p>
-        )}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold">{contenitore.name}</h1>
+            {contenitore.description && (
+              <p className="text-sm text-muted-foreground">{contenitore.description}</p>
+            )}
+          </div>
+          {/* "Condividi" solo al proprietario della raccolta (o all'ADMIN). */}
+          {puo(contenitore.ruolo, "condividere") && (
+            <CondividiDialog risorsa={{ tipo: "contenitore", id }} titolo={contenitore.name} testi={await testiCondivisione()} admin={chi.admin} />
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
