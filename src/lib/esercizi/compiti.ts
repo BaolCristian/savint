@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import seedrandom from "seedrandom";
 import { prisma } from "@/lib/db/client";
 import { candidatiDisponibili, idsConVersione, bacinoRegola, etichettaRegola, creaBatteria } from "./batterie";
+import { ruoliEsercizi, utenteDaId, type Utente } from "./accesso";
 
 type MotivoAssegna =
   | "batteria_non_trovata"
@@ -128,7 +129,14 @@ export async function assegna(
   // contenitore o filtro) — bacinoRegola lancia se una regola non rispetta
   // l'invariante, invece di restituire un bacino vuoto (vedi batterie.ts):
   // la stessa risoluzione che usa `verificaBatteria`, non una seconda.
-  const bacini = await Promise.all(batteria.regole.map((r) => bacinoRegola(r)));
+  // Ristretto a ciò che vede chi assegna (spec "Batterie"): la batteria è
+  // comune, la pesca no. Gli esercizi visibili si calcolano UNA volta per
+  // tutta l'assegnazione (`ruoliEsercizi` li carica tutti), non per regola;
+  // una regola su una raccolta che questo docente non vede pesca zero e
+  // finisce nel solito `esercizi_insufficienti` qui sotto.
+  const chi = await utenteDaId(assignedById);
+  const visibili = await ruoliEsercizi(chi);
+  const bacini = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, chi, visibili)));
   const tuttiGliId = [...new Set(bacini.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 
@@ -216,14 +224,16 @@ export type FiltroDiretto = { anno: number; argomento: string; difficoltaMax?: n
  * "Un conteggio che promette più di quanto la pesca consegni sarebbe peggio
  * di nessun conteggio" (dal brief): qui non può succedere per costruzione —
  * non è una stima, è la stessa identica risoluzione che `assegna` userebbe
- * per questa regola. */
-export async function quantiCorrispondono(f: FiltroDiretto): Promise<number> {
+ * per questa regola — compreso il filtro su ciò che `chi` vede: chi conta
+ * deve essere lo stesso docente che poi assegna (`assegnaDiretto` passa il
+ * suo `teacherId` ad `assegna`, che lo risolve con `utenteDaId`). */
+export async function quantiCorrispondono(f: FiltroDiretto, chi: Utente): Promise<number> {
   const bacino = await bacinoRegola({
     contenitoreId: null,
     argomento: f.argomento,
     anno: f.anno,
     difficoltaMax: f.difficoltaMax ?? null,
-  });
+  }, chi);
   const conVersione = await idsConVersione(bacino);
   return conVersione.size;
 }
@@ -366,6 +376,8 @@ export async function assegnaDiretto(input: {
 
   let esito: EsitoAssegna;
   try {
+    // `assegna` risolve `teacherId` in un Utente (`utenteDaId`) e pesca solo
+    // fra gli esercizi che lui vede: nessun filtro da ripetere qui.
     esito = await assegna(creazione.id, input.classeId, input.teacherId, {
       opensAt: input.opensAt,
       dueAt: input.dueAt,

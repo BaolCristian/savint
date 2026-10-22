@@ -24,6 +24,8 @@ import {
 import { DELETE as DELETE_CONTENITORE } from "@/app/api/esercizi/contenitori/[id]/route";
 
 const params = Promise.resolve({ id: "cont1" });
+// Come `utenteDaSessione` traduce la sessione del beforeEach.
+const docente = { id: "docente1", admin: false };
 
 beforeEach(() => {
   vi.mocked(requireTeacher).mockResolvedValue({ ok: true, session: { user: { id: "docente1" } } } as never);
@@ -112,11 +114,25 @@ describe("POST /api/esercizi/contenitori/[id]/esercizi", () => {
   });
 
   it("200 col numero di righe davvero aggiunte", async () => {
-    vi.mocked(aggiungiEsercizi).mockResolvedValue(2);
+    vi.mocked(aggiungiEsercizi).mockResolvedValue({ ok: true, aggiunti: 2 });
     const r = await POST_ESERCIZI(richiesta({ esercizioIds: ["e1", "e2"] }), { params });
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ aggiunti: 2 });
-    expect(aggiungiEsercizi).toHaveBeenCalledWith("cont1", ["e1", "e2"]);
+    expect(aggiungiEsercizi).toHaveBeenCalledWith("cont1", ["e1", "e2"], docente);
+  });
+
+  it("404 per una raccolta (o un esercizio) che il docente non vede", async () => {
+    vi.mocked(aggiungiEsercizi).mockResolvedValue({ ok: false, motivo: "non_trovato" });
+    const r = await POST_ESERCIZI(richiesta({ esercizioIds: ["e1"] }), { params });
+    expect(r.status).toBe(404);
+    expect(await r.json()).toEqual({ error: "non_trovato" });
+  });
+
+  it("403 per chi vede la raccolta senza poterla modificare", async () => {
+    vi.mocked(aggiungiEsercizi).mockResolvedValue({ ok: false, motivo: "sola_lettura" });
+    const r = await POST_ESERCIZI(richiesta({ esercizioIds: ["e1"] }), { params });
+    expect(r.status).toBe(403);
+    expect(await r.json()).toEqual({ error: "sola_lettura" });
   });
 });
 
@@ -148,11 +164,18 @@ describe("DELETE /api/esercizi/contenitori/[id]/esercizi", () => {
   });
 
   it("200 quando la rimozione riesce", async () => {
-    vi.mocked(togliEsercizio).mockResolvedValue(undefined);
+    vi.mocked(togliEsercizio).mockResolvedValue({ ok: true });
     const r = await DELETE_ESERCIZI(richiesta({ esercizioId: "e1" }), { params });
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ ok: true });
-    expect(togliEsercizio).toHaveBeenCalledWith("cont1", "e1");
+    expect(togliEsercizio).toHaveBeenCalledWith("cont1", "e1", docente);
+  });
+
+  it("404 per una raccolta che il docente non vede, 403 per una in sola lettura", async () => {
+    vi.mocked(togliEsercizio).mockResolvedValue({ ok: false, motivo: "non_trovato" });
+    expect((await DELETE_ESERCIZI(richiesta({ esercizioId: "e1" }), { params })).status).toBe(404);
+    vi.mocked(togliEsercizio).mockResolvedValue({ ok: false, motivo: "sola_lettura" });
+    expect((await DELETE_ESERCIZI(richiesta({ esercizioId: "e1" }), { params })).status).toBe(403);
   });
 });
 
@@ -188,6 +211,20 @@ describe("DELETE /api/esercizi/contenitori/[id]", () => {
     const r = await DELETE_CONTENITORE(richiesta(), { params });
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ ok: true });
-    expect(eliminaContenitore).toHaveBeenCalledWith("cont1");
+    expect(eliminaContenitore).toHaveBeenCalledWith("cont1", docente);
+  });
+
+  it("404 per un estraneo: la raccolta che non vede non esiste", async () => {
+    vi.mocked(eliminaContenitore).mockResolvedValue({ ok: false, motivo: "non_trovato" });
+    const r = await DELETE_CONTENITORE(richiesta(), { params });
+    expect(r.status).toBe(404);
+    expect(await r.json()).toEqual({ error: "non_trovato" });
+  });
+
+  it("403 per un editor: la vede ma non è sua", async () => {
+    vi.mocked(eliminaContenitore).mockResolvedValue({ ok: false, motivo: "sola_lettura" });
+    const r = await DELETE_CONTENITORE(richiesta(), { params });
+    expect(r.status).toBe(403);
+    expect(await r.json()).toEqual({ error: "sola_lettura" });
   });
 });

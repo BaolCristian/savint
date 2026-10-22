@@ -3,26 +3,50 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { contenutoContenitore } from "@/lib/esercizi/contenitori";
+import { puo, ruoliEsercizi, utenteDaSessione } from "@/lib/esercizi/accesso";
+import { accessoEsercizi } from "@/lib/esercizi/redazione";
 import { prisma } from "@/lib/db/client";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
+  const chi = utenteDaSessione(session);
   const t = await getTranslations("esercizi.contenitori");
   const tBase = await getTranslations("esercizi");
   const tUi = await getTranslations("teacherExercisesUi");
 
   const { id } = await params;
-  const contenitore = await contenutoContenitore(id);
+  // Gli esercizi che il docente vede, una volta sola per la richiesta
+  // (`ruoliEsercizi` li carica tutti): servono sia al contenuto della
+  // raccolta sia all'elenco di quelli da aggiungere.
+  const visibili = await ruoliEsercizi(chi);
+  // Una raccolta che non vede è un 404, come una che non esiste.
+  const contenitore = await contenutoContenitore(id, chi, visibili);
   if (!contenitore) notFound();
+  const modificabile = puo(contenitore.ruolo, "modificare");
 
-  const dentroIds = contenitore.esercizi.map((e) => e.id);
-  // Chi può ancora entrare: tutti gli esercizi del bacino, tranne chi c'è già.
-  const disponibili = await prisma.esercizio.findMany({
-    where: dentroIds.length > 0 ? { id: { notIn: dentroIds } } : undefined,
-    orderBy: [{ yearLevel: "asc" }, { title: "asc" }],
-  });
+  const dentroIds = new Set(contenitore.esercizi.map((e) => e.id));
+  // Chi può ancora entrare: gli esercizi che il docente vede, tranne chi
+  // c'è già. Nessuno, se la raccolta per lui è in sola lettura.
+  const disponibili = modificabile
+    ? await prisma.esercizio.findMany({
+        where: { id: { in: [...visibili.keys()].filter((e) => !dentroIds.has(e)) } },
+        orderBy: [{ yearLevel: "asc" }, { title: "asc" }],
+      })
+    : [];
+
+  // Regola delle raccolte: un esercizio proprio messo in una raccolta
+  // condivisa diventa visibile ai suoi membri. Se oggi è privato, il client
+  // chiede conferma prima di aggiungerlo. Solo per gli esercizi propri (un
+  // amministratore è PROPRIETARIO di tutto, ma non è l'autore: la raccolta
+  // non trasmette ciò che non ha messo l'autore) e solo se la raccolta è
+  // davvero aperta a qualcuno.
+  const propri = contenitore.condivisa
+    ? disponibili.filter((e) => e.authorId === chi.id && visibili.get(e.id) === "PROPRIETARIO")
+    : [];
+  const accessi = await accessoEsercizi(propri);
+  const privati = new Set(propri.filter((e) => accessi.get(e.id) === "privato").map((e) => e.id));
 
   const sottotitolo = (e: { yearLevel: number; topic: string; difficulty: number }) =>
     `${tBase("annoArgomento", { anno: e.yearLevel, argomento: e.topic })} · ${tBase("difficolta", { livello: e.difficulty })}`;
@@ -47,7 +71,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <ContenitoreDetailClient
         contenitoreId={id}
         dentro={contenitore.esercizi.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e), anno: e.yearLevel, argomento: e.topic }))}
-        fuori={disponibili.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e), anno: e.yearLevel, argomento: e.topic }))}
+        fuori={disponibili.map((e) => ({ id: e.id, title: e.title, subtitle: sottotitolo(e), anno: e.yearLevel, argomento: e.topic, privato: privati.has(e.id) }))}
+        modificabile={modificabile}
         testi={{
           nessunoDentro: t("nessunEsercizioNelContenitore"),
           rimuovi: t("rimuovi"),
@@ -61,6 +86,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           argomento: tUi("collections.topic"),
           tutti: tUi("collections.all"),
           nessunRisultato: tUi("collections.noResults"),
+          avvisoPrivato: t("avvisoPrivato"),
+          confermaAggiunta: t("confermaAggiunta"),
+          annulla: t("annulla"),
         }}
       />
     </div>

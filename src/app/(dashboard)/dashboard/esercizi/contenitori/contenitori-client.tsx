@@ -14,6 +14,9 @@ interface Contenitore {
   // Già formattata dal server ("N esercizi"): un client component non può
   // ricevere una funzione di formattazione come prop.
   eserciziLabel: string;
+  /** Solo il proprietario elimina una raccolta: per gli altri il pulsante
+   * non c'è. */
+  eliminabile: boolean;
 }
 
 /** Elenco dei contenitori con eliminazione per riga, e il modulo per crearne
@@ -121,14 +124,16 @@ export function ContenitoriClient({
                 <p className="text-sm text-muted-foreground">{c.eserciziLabel}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => elimina(c.id)}
-                  disabled={eliminando === c.id}
-                >
-                  {testi.elimina}
-                </Button>
+                {c.eliminabile && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => elimina(c.id)}
+                    disabled={eliminando === c.id}
+                  >
+                    {testi.elimina}
+                  </Button>
+                )}
                 {erroreElimina[c.id] && (
                   <span className="text-xs text-destructive">{erroreElimina[c.id]}</span>
                 )}

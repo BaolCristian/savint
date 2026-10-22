@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { creaBatteria as creaBatteriaGrezza, elencoBatterie, argomentiDisponibili } from "../batterie";
 import { assegna, assegnaDiretto, quantiCorrispondono } from "../compiti";
 import type { FiltroDiretto } from "../compiti";
+import type { Utente } from "../accesso";
 
 // Il "parità di seme" del brief significa, operativamente: la sequenza
 // pseudocasuale che guida il Fisher-Yates deve comportarsi allo stesso modo
@@ -43,11 +44,16 @@ const P = "viaveloce-";
 
 let teacherId: string;
 let classeId: string;
+// Chi assegna, come lo vedono le funzioni di dominio.
+const docente = (): Utente => ({ id: teacherId, admin: false });
 
 async function creaEsercizio(
   id: string,
   topic: string,
-  opts: { yearLevel?: number; difficulty?: number; conVersione?: boolean } = {},
+  // `autore` + `privato` servono ai test sulla visibilità (in fondo): di
+  // norma l'esercizio è aperto a tutta la scuola, come ogni esercizio
+  // esistente il giorno dell'aggiornamento.
+  opts: { yearLevel?: number; difficulty?: number; conVersione?: boolean; autore?: string; privato?: boolean } = {},
 ) {
   const e = await prisma.esercizio.create({
     data: {
@@ -57,6 +63,8 @@ async function creaEsercizio(
       topic,
       tags: [],
       difficulty: opts.difficulty ?? 1,
+      authorId: opts.autore ?? null,
+      accessoScuola: opts.privato ? null : "EDITOR",
     },
   });
   if (opts.conVersione !== false) {
@@ -118,7 +126,7 @@ describe("argomentiDisponibili", () => {
     await creaEsercizio(`${P}radici-2`, `${P}radici`);
     await creaEsercizio(`${P}radici-3`, `${P}radici `); // spazio in coda
 
-    const risultati = (await argomentiDisponibili()).filter((x) => x.argomento.trim().toLowerCase() === `${P}radici`);
+    const risultati = (await argomentiDisponibili(docente())).filter((x) => x.argomento.trim().toLowerCase() === `${P}radici`);
     expect(risultati).toHaveLength(3);
     expect(new Set(risultati.map((x) => x.argomento))).toEqual(
       new Set([`${P}Radici`, `${P}radici`, `${P}radici `]),
@@ -145,20 +153,20 @@ describe("argomentiDisponibili", () => {
     await creaEsercizio(`${P}fus-3`, grafiaMinuscola, { yearLevel: 2 });
     await creaEsercizio(`${P}fus-4`, grafiaMaiuscola, { yearLevel: 2 });
 
-    const voci = (await argomentiDisponibili(2)).filter((x) => x.argomento.toLowerCase() === grafiaMinuscola.toLowerCase());
+    const voci = (await argomentiDisponibili(docente(), 2)).filter((x) => x.argomento.toLowerCase() === grafiaMinuscola.toLowerCase());
     // Due grafie distinte, non una sola voce fusa: la prima asserzione che
     // la versione fusa faceva fallire.
     expect(voci).toHaveLength(2);
 
     for (const voce of voci) {
-      const trovati = await quantiCorrispondono({ anno: 2, argomento: voce.argomento });
+      const trovati = await quantiCorrispondono({ anno: 2, argomento: voce.argomento }, docente());
       expect(trovati).toBe(voce.quanti);
     }
   });
 
   it("non modifica il dato salvato: la riga resta esattamente come scritta", async () => {
     const id = await creaEsercizio(`${P}spazi-1`, ` ${P}Con Spazi `);
-    await argomentiDisponibili();
+    await argomentiDisponibili(docente());
     const riga = await prisma.esercizio.findUniqueOrThrow({ where: { id } });
     expect(riga.topic).toBe(` ${P}Con Spazi `);
   });
@@ -167,10 +175,10 @@ describe("argomentiDisponibili", () => {
     await creaEsercizio(`${P}anno-2`, `${P}AnnoFiltro`, { yearLevel: 2 });
     await creaEsercizio(`${P}anno-3`, `${P}AnnoFiltro`, { yearLevel: 3 });
 
-    const perAnno2 = (await argomentiDisponibili(2)).find((x) => x.argomento === `${P}AnnoFiltro`);
+    const perAnno2 = (await argomentiDisponibili(docente(), 2)).find((x) => x.argomento === `${P}AnnoFiltro`);
     expect(perAnno2).toEqual({ argomento: `${P}AnnoFiltro`, quanti: 1 });
 
-    const senzaFiltro = (await argomentiDisponibili()).find((x) => x.argomento === `${P}AnnoFiltro`);
+    const senzaFiltro = (await argomentiDisponibili(docente())).find((x) => x.argomento === `${P}AnnoFiltro`);
     expect(senzaFiltro).toEqual({ argomento: `${P}AnnoFiltro`, quanti: 2 });
   });
 
@@ -184,10 +192,10 @@ describe("argomentiDisponibili", () => {
     await creaEsercizio(`${P}ord-1`, maiuscola, { yearLevel: 2 });
     await creaEsercizio(`${P}ord-2`, minuscola, { yearLevel: 2 });
 
-    const tutti = (await argomentiDisponibili(2)).filter((x) => x.argomento.toLowerCase() === minuscola.toLowerCase());
+    const tutti = (await argomentiDisponibili(docente(), 2)).filter((x) => x.argomento.toLowerCase() === minuscola.toLowerCase());
     expect(tutti).toHaveLength(2);
 
-    const tuttiOrdinati = (await argomentiDisponibili(2));
+    const tuttiOrdinati = (await argomentiDisponibili(docente(), 2));
     const iMin = tuttiOrdinati.findIndex((x) => x.argomento === minuscola);
     const iMai = tuttiOrdinati.findIndex((x) => x.argomento === maiuscola);
     expect(Math.abs(iMin - iMai)).toBe(1);
@@ -225,11 +233,11 @@ describe("argomentiDisponibili", () => {
     // comportamento e quello corretto già coincidevano.
     await creaEsercizio(`${P}iv-completo-1`, argomentoCompleto, { yearLevel: 4 });
 
-    const voci = (await argomentiDisponibili(4)).filter((x) => x.argomento.startsWith(`${P}invariante-versione-`));
+    const voci = (await argomentiDisponibili(docente(), 4)).filter((x) => x.argomento.startsWith(`${P}invariante-versione-`));
     expect(voci.map((v) => v.argomento).sort()).toEqual([argomentoCompleto, argomentoMisto].sort());
 
     for (const voce of voci) {
-      const trovati = await quantiCorrispondono({ anno: 4, argomento: voce.argomento });
+      const trovati = await quantiCorrispondono({ anno: 4, argomento: voce.argomento }, docente());
       expect(trovati).toBe(voce.quanti);
     }
 
@@ -251,7 +259,7 @@ describe("quantiCorrispondono", () => {
     await creaEsercizio(`${P}q-senzaversione`, topic, { yearLevel: 2, difficulty: 1, conVersione: false });
 
     const filtro: FiltroDiretto = { anno: 2, argomento: topic, difficoltaMax: 3 };
-    expect(await quantiCorrispondono(filtro)).toBe(2);
+    expect(await quantiCorrispondono(filtro, docente())).toBe(2);
   });
 
   it("quantiCorrispondono e assegnaDiretto concordano: chiedere esattamente quel numero riesce, chiederne uno in più fallisce con lo stesso 'disponibili' nel dettaglio", async () => {
@@ -261,7 +269,7 @@ describe("quantiCorrispondono", () => {
     await creaEsercizio(`${P}pc-3-senza-versione`, topic, { yearLevel: 2, difficulty: 1, conVersione: false });
 
     const filtro: FiltroDiretto = { anno: 2, argomento: topic };
-    const disponibili = await quantiCorrispondono(filtro);
+    const disponibili = await quantiCorrispondono(filtro, docente());
     expect(disponibili).toBe(2);
 
     const ok = await assegnaDiretto({ classeId, teacherId, filtro, quanti: disponibili });
@@ -515,4 +523,45 @@ describe("assegnaDiretto", () => {
       expect(compitiDopo).toBe(compitiPrima);
     },
   );
+});
+
+// Spec "Batterie" / anti-obiettivo sulle strade laterali: l'assegnazione
+// per argomento e il suo conteggio vedono solo ciò che vede chi assegna.
+describe("la pesca rispetta la visibilità di chi assegna", () => {
+  it("quantiCorrispondono per B conta solo l'esercizio di A condiviso con la scuola, non i due privati", async () => {
+    const a = (await prisma.user.create({ data: { email: `${P}a@test.it`, name: "A", role: "TEACHER" } })).id;
+    const topic = `${P}visibilita-conteggio`;
+    await creaEsercizio(`${P}vc-priv1`, topic, { autore: a, privato: true });
+    await creaEsercizio(`${P}vc-priv2`, topic, { autore: a, privato: true });
+    await creaEsercizio(`${P}vc-scuola`, topic, { autore: a });
+
+    expect(await quantiCorrispondono({ anno: 2, argomento: topic }, docente())).toBe(1);
+    // A, proprietario, li conta tutti e tre.
+    expect(await quantiCorrispondono({ anno: 2, argomento: topic }, { id: a, admin: false })).toBe(3);
+    // Anche il menu degli argomenti dice 1, non 3.
+    const voce = (await argomentiDisponibili(docente(), 2)).find((x) => x.argomento === topic);
+    expect(voce?.quanti).toBe(1);
+  });
+
+  it("assegnaDiretto di B non pesca mai gli esercizi privati di A", async () => {
+    const a = (await prisma.user.create({ data: { email: `${P}a@test.it`, name: "A", role: "TEACHER" } })).id;
+    const topic = `${P}visibilita-pesca`;
+    await creaEsercizio(`${P}vp-priv1`, topic, { autore: a, privato: true });
+    await creaEsercizio(`${P}vp-priv2`, topic, { autore: a, privato: true });
+    const condiviso = await creaEsercizio(`${P}vp-scuola`, topic, { autore: a });
+
+    const uno = await assegnaDiretto({ classeId, teacherId, filtro: { anno: 2, argomento: topic }, quanti: 1 });
+    expect(uno.ok).toBe(true);
+    if (!uno.ok) return;
+    const compito = await prisma.compito.findUniqueOrThrow({ where: { id: uno.compitoId } });
+    const versioni = await prisma.esercizioVersione.findMany({ where: { id: { in: compito.drawnVersionIds } } });
+    expect(versioni.map((v) => v.esercizioId)).toEqual([condiviso]);
+
+    const due = await assegnaDiretto({ classeId, teacherId, filtro: { anno: 2, argomento: topic }, quanti: 2 });
+    expect(due).toMatchObject({
+      ok: false,
+      motivo: "esercizi_insufficienti",
+      dettaglio: { contenitore: topic, richiesti: 2, disponibili: 1 },
+    });
+  });
 });

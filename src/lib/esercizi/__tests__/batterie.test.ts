@@ -9,6 +9,7 @@ import {
   idsConVersione,
   candidatiDisponibili,
 } from "../batterie";
+import type { Utente } from "../accesso";
 
 // `creaBatteria` (Fix round finale, item 5) restituisce ora un rifiuto
 // esplicito — `{ ok: false, motivo, dettaglio }` — invece di lasciar
@@ -23,6 +24,8 @@ async function creaBatteria(...args: Parameters<typeof creaBatteriaGrezza>) {
 
 const P = "battest-";
 let teacherId: string;
+// Chi conta o pesca, come lo vedono le funzioni di dominio.
+const docente = (): Utente => ({ id: teacherId, admin: false });
 let contA: string;
 let contB: string;
 
@@ -44,7 +47,7 @@ beforeEach(async () => {
   contA = (await prisma.contenitore.create({ data: { name: `${P}Equazioni`, createdById: teacherId } })).id;
   contB = (await prisma.contenitore.create({ data: { name: `${P}Sistemi`, createdById: teacherId } })).id;
 
-  const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1 };
+  const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
   const a1 = (await prisma.esercizio.create({ data: { id: `${P}a1`, title: "A1", ...base } })).id;
   const a2 = (await prisma.esercizio.create({ data: { id: `${P}a2`, title: "A2", ...base } })).id;
   const b1 = (await prisma.esercizio.create({ data: { id: `${P}b1`, title: "B1", ...base } })).id;
@@ -103,7 +106,7 @@ describe("batterie", () => {
       { contenitoreId: contA, count: 2 },
       { contenitoreId: contB, count: 1 },
     ]);
-    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
   });
 
   it("verificaBatteria elenca il contenitore e i due numeri quando manca qualcosa", async () => {
@@ -111,7 +114,7 @@ describe("batterie", () => {
       { contenitoreId: contA, count: 2 },
       { contenitoreId: contB, count: 5 },
     ]);
-    const r = await verificaBatteria(b.id);
+    const r = await verificaBatteria(b.id, docente());
     expect(r).toEqual({
       ok: false,
       mancanti: [{ contenitore: `${P}Sistemi`, richiesti: 5, disponibili: 1 }],
@@ -119,18 +122,18 @@ describe("batterie", () => {
   });
 
   it("verificaBatteria su una batteria inesistente lancia invece di dire ok in silenzio", async () => {
-    await expect(verificaBatteria("non-esiste")).rejects.toThrow();
+    await expect(verificaBatteria("non-esiste", docente())).rejects.toThrow();
   });
 
   it("verificaBatteria non conta un esercizio senza versione come disponibile", async () => {
     const senzaVersione = (await prisma.esercizio.create({
-      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1 },
+      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     })).id;
     await prisma.contenitoreEsercizio.create({ data: { contenitoreId: contA, esercizioId: senzaVersione } });
     // contA ha ora 3 membri (a1, a2 con versione, senza-versione senza): una
     // regola che ne chiede 3 deve vedersi dire che ne sono disponibili 2.
     const b = await creaBatteria(teacherId, `${P}TreSuTre`, [{ contenitoreId: contA, count: 3 }]);
-    expect(await verificaBatteria(b.id)).toEqual({
+    expect(await verificaBatteria(b.id, docente())).toEqual({
       ok: false,
       mancanti: [{ contenitore: `${P}Equazioni`, richiesti: 3, disponibili: 2 }],
     });
@@ -148,7 +151,7 @@ describe("batterie", () => {
   // comunque, perché assume che le regole precedenti abbiano consumato la
   // sovrapposizione al massimo possibile.
   it("verificaBatteria rifiuta quando la sovrapposizione rende il sorteggio incerto", async () => {
-    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1 };
+    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
     const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1`, title: "Shared1", ...base } })).id;
     const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2`, title: "Shared2", ...base } })).id;
     const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1`, title: "AOnly1", ...base } })).id;
@@ -174,7 +177,7 @@ describe("batterie", () => {
       { contenitoreId: contRischio, count: 2 },
     ]);
 
-    expect(await verificaBatteria(b.id)).toEqual({
+    expect(await verificaBatteria(b.id, docente())).toEqual({
       ok: false,
       mancanti: [{ contenitore: `${P}Rischio`, richiesti: 2, disponibili: 1 }],
     });
@@ -186,7 +189,7 @@ describe("batterie", () => {
   // prudenza della stima non deve rendere la funzione inutile sui casi in
   // cui la capienza regge anche nello scenario più sfortunato.
   it("verificaBatteria non rifiuta quando la capienza regge anche nel caso peggiore", async () => {
-    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1 };
+    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
     const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1b`, title: "Shared1", ...base } })).id;
     const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2b`, title: "Shared2", ...base } })).id;
     const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1b`, title: "AOnly1", ...base } })).id;
@@ -212,7 +215,7 @@ describe("batterie", () => {
       { contenitoreId: contComodo, count: 1 },
     ]);
 
-    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
   });
 
   it("una batteria libera si cancella", async () => {
@@ -294,18 +297,18 @@ describe("la regola a due forme", () => {
   // versione (Fix round 1).
   it("bacinoRegola lancia per una regola senza contenitore né argomento, invece di dare zero candidati", async () => {
     await expect(
-      bacinoRegola({ contenitoreId: null, argomento: null, anno: null, difficoltaMax: null }),
+      bacinoRegola({ contenitoreId: null, argomento: null, anno: null, difficoltaMax: null }, docente()),
     ).rejects.toThrow();
   });
 
   it("bacinoRegola lancia per una regola con contenitore e argomento insieme", async () => {
     await expect(
-      bacinoRegola({ contenitoreId: contA, argomento: "equazioni", anno: null, difficoltaMax: null }),
+      bacinoRegola({ contenitoreId: contA, argomento: "equazioni", anno: null, difficoltaMax: null }, docente()),
     ).rejects.toThrow();
   });
 
   it("una regola a filtro pesca esattamente gli esercizi che corrispondono, versione compresa", async () => {
-    const base = { yearLevel: 2, topic: `${P}filtro-equazioni`, tags: [], difficulty: 1 };
+    const base = { yearLevel: 2, topic: `${P}filtro-equazioni`, tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
     const okId = (await prisma.esercizio.create({ data: { id: `${P}filtro-ok`, title: "Ok", ...base } })).id;
     const troppoDifficileId = (await prisma.esercizio.create({
       data: { id: `${P}filtro-difficile`, title: "Difficile", ...base, difficulty: 5 },
@@ -329,7 +332,7 @@ describe("la regola a due forme", () => {
     // condiviso con le regole a contenitore — vedi sotto).
 
     const regola = { contenitoreId: null, argomento: `${P}filtro-equazioni`, anno: 2, difficoltaMax: 2 };
-    const bacino = await bacinoRegola(regola);
+    const bacino = await bacinoRegola(regola, docente());
     expect(new Set(bacino)).toEqual(new Set([okId, senzaVersioneId]));
 
     const conVersione = await idsConVersione(bacino);
@@ -338,7 +341,7 @@ describe("la regola a due forme", () => {
   });
 
   it("il filtro senza anno né difficoltaMax pesca da qualunque anno e difficoltà", async () => {
-    const base = { topic: `${P}argomento-libero`, tags: [] };
+    const base = { topic: `${P}argomento-libero`, tags: [], accessoScuola: "EDITOR" as const };
     const e1 = (await prisma.esercizio.create({
       data: { id: `${P}libero-1`, title: "1", yearLevel: 1, difficulty: 1, ...base },
     })).id;
@@ -347,17 +350,17 @@ describe("la regola a due forme", () => {
     })).id;
     const bacino = await bacinoRegola({
       contenitoreId: null, argomento: `${P}argomento-libero`, anno: null, difficoltaMax: null,
-    });
+    }, docente());
     expect(new Set(bacino)).toEqual(new Set([e1, e2]));
   });
 
   it("difficoltaMax è una soglia superiore inclusiva", async () => {
-    const base = { topic: `${P}soglia`, yearLevel: 2, tags: [] };
+    const base = { topic: `${P}soglia`, yearLevel: 2, tags: [], accessoScuola: "EDITOR" as const };
     const alSoglia = (await prisma.esercizio.create({
       data: { id: `${P}soglia-uguale`, title: "=", difficulty: 3, ...base },
     })).id;
     await prisma.esercizio.create({ data: { id: `${P}soglia-sopra`, title: ">", difficulty: 4, ...base } });
-    const bacino = await bacinoRegola({ contenitoreId: null, argomento: `${P}soglia`, anno: null, difficoltaMax: 3 });
+    const bacino = await bacinoRegola({ contenitoreId: null, argomento: `${P}soglia`, anno: null, difficoltaMax: 3 }, docente());
     expect(bacino).toEqual([alSoglia]);
   });
 
@@ -370,7 +373,7 @@ describe("la regola a due forme", () => {
   // condiviso corrisponde già a decine di righe estranee a questo test.
   it("verificaBatteria applica la stessa stima peggiore-caso a una batteria con regole miste", async () => {
     const argomentoMisto = `${P}mista-argomento`;
-    const base = { yearLevel: 2, topic: argomentoMisto, tags: [], difficulty: 1 };
+    const base = { yearLevel: 2, topic: argomentoMisto, tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
     const shared1 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared1`, title: "S1", ...base } })).id;
     const shared2 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared2`, title: "S2", ...base } })).id;
     const soloArgomento = (await prisma.esercizio.create({ data: { id: `${P}mista-solo`, title: "Solo", ...base } })).id;
@@ -392,13 +395,13 @@ describe("la regola a due forme", () => {
       { contenitoreId: contMista, count: 2 },
       { argomento: argomentoMisto, count: 1 },
     ]);
-    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
 
     const b2 = await creaBatteria(teacherId, `${P}Mista4`, [
       { contenitoreId: contMista, count: 2 },
       { argomento: argomentoMisto, count: 2 },
     ]);
-    expect(await verificaBatteria(b2.id)).toEqual({
+    expect(await verificaBatteria(b2.id, docente())).toEqual({
       ok: false,
       mancanti: [{ contenitore: argomentoMisto, richiesti: 2, disponibili: 1 }],
     });
@@ -418,7 +421,7 @@ describe("la regola a due forme", () => {
     expect(regole).toHaveLength(2);
     expect(regole[0]).toMatchObject({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null, count: 2 });
     expect(regole[1]).toMatchObject({ contenitoreId: contB, argomento: null, anno: null, difficoltaMax: null, count: 1 });
-    expect(await verificaBatteria(b.id)).toEqual({ ok: true });
+    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
     const elenco = (await elencoBatterie()).filter((x) => x.name === `${P}SoloContenitore`);
     expect(elenco[0]).toMatchObject({
       regole: [{ contenitore: `${P}Equazioni`, count: 2 }, { contenitore: `${P}Sistemi`, count: 1 }],
@@ -484,5 +487,40 @@ describe("il conteggio di una regola", () => {
       { contenitoreId: contA, count: 1.5 },
     ]);
     expect(r).toEqual({ ok: false, motivo: "conteggio_non_valido", dettaglio: { index: 0, count: 1.5 } });
+  });
+});
+
+// Spec "Batterie": la batteria è comune, il bacino no — ciascuno pesca solo
+// fra ciò che vede. Una raccolta senza ruolo dà zero, non un errore.
+describe("il bacino rispetta la visibilità", () => {
+  it("una regola su una raccolta privata altrui dà un bacino vuoto, e verificaBatteria lo dice", async () => {
+    const estraneo = (await prisma.user.create({ data: { email: `${P}estraneo@test.it`, name: "E", role: "TEACHER" } })).id;
+    const chiEstraneo: Utente = { id: estraneo, admin: false };
+    const regola = { contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null };
+    expect(await bacinoRegola(regola, chiEstraneo)).toEqual([]);
+    // Il proprietario, invece, la pesca intera.
+    expect((await bacinoRegola(regola, docente())).sort()).toEqual([`${P}a1`, `${P}a2`]);
+
+    const b = await creaBatteria(teacherId, `${P}Altrui`, [{ contenitoreId: contA, count: 1 }]);
+    expect(await verificaBatteria(b.id, chiEstraneo)).toEqual({
+      ok: false,
+      mancanti: [{ contenitore: `${P}Equazioni`, richiesti: 1, disponibili: 0 }],
+    });
+  });
+
+  it("dentro una raccolta visibile resta fuori l'esercizio privato che chi pesca non vede", async () => {
+    const autore = (await prisma.user.create({ data: { email: `${P}autore@test.it`, name: "A", role: "TEACHER" } })).id;
+    const collega = (await prisma.user.create({ data: { email: `${P}collega@test.it`, name: "C", role: "TEACHER" } })).id;
+    // Privato dell'autore, messo in contA dal proprietario della raccolta
+    // (non dall'autore): la raccolta non lo trasmette a nessuno.
+    const privato = (await prisma.esercizio.create({
+      data: { id: `${P}privato`, title: "P", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, authorId: autore },
+    })).id;
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: contA, esercizioId: privato, addedById: teacherId } });
+    await prisma.condivisioneContenitore.create({ data: { contenitoreId: contA, userId: collega, ruolo: "EDITOR" } });
+
+    const regola = { contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null };
+    expect((await bacinoRegola(regola, { id: collega, admin: false })).sort()).toEqual([`${P}a1`, `${P}a2`]);
+    expect((await bacinoRegola(regola, { id: autore, admin: false }))).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { argomentiDisponibili } from "@/lib/esercizi/batterie";
 import { quantiCorrispondono } from "@/lib/esercizi/compiti";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 
 // `anno` è facoltativo qui e SOLO qui: è il ripiego per una classe che non
 // ne porta uno proprio (vedi la risoluzione più sotto). Quando la classe ha
@@ -65,15 +66,19 @@ export async function GET(request: NextRequest) {
   // modulo di assegnazione mostra sotto i filtri, aggiornato mentre si
   // sceglie (Task 5). Senza argomento: l'elenco fra cui scegliere, già
   // ristretto all'anno risolto sopra.
+  //
+  // Entrambi contano solo gli esercizi che questo docente vede: gli stessi
+  // fra cui `assegnaDiretto` pescherà per lui (spec "Batterie").
+  const chi = utenteDaSessione(gate.session);
   if (parsed.data.argomento !== undefined) {
     const quanti = await quantiCorrispondono({
       anno,
       argomento: parsed.data.argomento,
       difficoltaMax: parsed.data.difficoltaMax,
-    });
+    }, chi);
     return NextResponse.json({ quanti });
   }
 
-  const elenco = await argomentiDisponibili(anno);
+  const elenco = await argomentiDisponibili(chi, anno);
   return NextResponse.json(elenco);
 }

@@ -1272,7 +1272,10 @@
       "aggiungiEsercizi": "Add exercises",
       "nessunEsercizioDaAggiungere": "There are no other exercises to add.",
       "aggiungi": "Add",
-      "anteprima": "Preview"
+      "anteprima": "Preview",
+      "avvisoPrivato": "This exercise is private: if you add it, people with access to the collection will see it too.",
+      "confermaAggiunta": "Add anyway",
+      "annulla": "Cancel"
     },
     "batterie": {
       "titolo": "Batteries",

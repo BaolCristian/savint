@@ -377,10 +377,49 @@ export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
   });
 
   const authorIds = [...new Set(esercizi.map((e) => e.authorId).filter((id): id is string => id !== null))];
-  const [autori, dirette, argomenti, inRaccolte] = await Promise.all([
+  const [autori, accessi] = await Promise.all([
     authorIds.length
       ? prisma.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, name: true } })
       : Promise.resolve([]),
+    accessoEsercizi(esercizi),
+  ]);
+  const nomePerId = new Map(autori.map((a) => [a.id, a.name]));
+
+  return esercizi.map((e) => {
+    const ultima = e.versions[0];
+    const lettura = ultima ? daNumbas({ savint: savintPerLettura(e, ultima.content), question: ultima.content }) : null;
+    const proprietarioNome = e.authorId ? (nomePerId.get(e.authorId) ?? null) : null;
+    return {
+      id: e.id,
+      titolo: e.title,
+      argomento: e.topic,
+      anno: e.yearLevel,
+      ultimaVersione: ultima?.version ?? 0,
+      modificabile: lettura?.ok ?? false,
+      motivo: lettura && !lettura.ok ? lettura.dettaglio : null,
+      autoreNome: proprietarioNome,
+      aggiornatoIl: e.updatedAt,
+      ruolo: ruoli.get(e.id)!,
+      proprietarioId: e.authorId,
+      proprietarioNome,
+      accesso: accessi.get(e.id)!,
+    };
+  });
+}
+
+/** Quanto è aperto agli altri ciascuno degli esercizi dati (vedi
+ * `VoceRedazione.accesso`), a query fisse qualunque sia il loro numero: le
+ * condivisioni nominate, gli argomenti condivisi dei proprietari e le
+ * raccolte condivise che li contengono. Esportata per la pagina di una
+ * raccolta, che avvisa prima di metterci un esercizio proprio e privato. */
+export async function accessoEsercizi(
+  esercizi: { id: string; authorId: string | null; topic: string; accessoScuola: unknown }[],
+): Promise<Map<string, VoceRedazione["accesso"]>> {
+  const accessi = new Map<string, VoceRedazione["accesso"]>();
+  if (esercizi.length === 0) return accessi;
+  const ids = esercizi.map((e) => e.id);
+  const authorIds = [...new Set(esercizi.map((e) => e.authorId).filter((id): id is string => id !== null))];
+  const [dirette, argomenti, inRaccolte] = await Promise.all([
     prisma.condivisioneEsercizio.findMany({
       where: { esercizioId: { in: ids } },
       select: { esercizioId: true },
@@ -404,7 +443,6 @@ export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
       select: { esercizioId: true, addedById: true },
     }),
   ]);
-  const nomePerId = new Map(autori.map((a) => [a.id, a.name]));
   const conDiretta = new Set(dirette.map((d) => d.esercizioId));
   const argomentiCondivisi = new Set(argomenti.map((a) => `${a.ownerId}\u0000${chiaveArgomento(a.chiave)}`));
   const aggiuntoDa = new Map<string, Set<string>>();
@@ -424,26 +462,8 @@ export async function elencoRedazione(chi: Utente): Promise<VoceRedazione[]> {
     return "privato";
   };
 
-  return esercizi.map((e) => {
-    const ultima = e.versions[0];
-    const lettura = ultima ? daNumbas({ savint: savintPerLettura(e, ultima.content), question: ultima.content }) : null;
-    const proprietarioNome = e.authorId ? (nomePerId.get(e.authorId) ?? null) : null;
-    return {
-      id: e.id,
-      titolo: e.title,
-      argomento: e.topic,
-      anno: e.yearLevel,
-      ultimaVersione: ultima?.version ?? 0,
-      modificabile: lettura?.ok ?? false,
-      motivo: lettura && !lettura.ok ? lettura.dettaglio : null,
-      autoreNome: proprietarioNome,
-      aggiornatoIl: e.updatedAt,
-      ruolo: ruoli.get(e.id)!,
-      proprietarioId: e.authorId,
-      proprietarioNome,
-      accesso: accessoDi(e),
-    };
-  });
+  for (const e of esercizi) accessi.set(e.id, accessoDi(e));
+  return accessi;
 }
 
 /** Carica un esercizio per l'editor: la sua ultima versione, letta con

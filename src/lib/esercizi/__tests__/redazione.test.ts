@@ -217,7 +217,7 @@ describe("salvaNuovaVersione", () => {
     if (!creato.ok) throw new Error("creazione fallita");
 
     const contenitoreId = (await creaContenitore(docenteId, `${PREFIX}Contenitore`)).id;
-    await aggiungiEsercizi(contenitoreId, [creato.esercizioId]);
+    await aggiungiEsercizi(contenitoreId, [creato.esercizioId], { id: docenteId, admin: false });
     const batteria = await creaBatteriaGrezza(docenteId, `${PREFIX}Batteria`, [{ contenitoreId, count: 1 }]);
     if (!batteria.ok) throw new Error("creazione batteria fallita");
     const assegnazione = await assegna(batteria.id, classeId, docenteId);

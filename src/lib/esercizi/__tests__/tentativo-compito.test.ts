@@ -90,7 +90,7 @@ beforeEach(async () => {
   const contenitore = await prisma.contenitore.create({
     data: { name: `${PREFIX}Cont`, createdById: teacherId },
   });
-  await aggiungiEsercizi(contenitore.id, [ESERCIZIO_ID]);
+  await aggiungiEsercizi(contenitore.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
 
   const batteria = await creaBatteria(teacherId, `${PREFIX}Batt`, [{ contenitoreId: contenitore.id, count: 1 }]);
   const r = await assegna(batteria.id, classeId, teacherId);
@@ -150,7 +150,7 @@ describe("avviaORiprendi con un compito", () => {
       const contAltro = await prisma.contenitore.create({
         data: { name: `${PREFIX}ContAltro`, createdById: teacherId },
       });
-      await aggiungiEsercizi(contAltro.id, [ESERCIZIO_ID]);
+      await aggiungiEsercizi(contAltro.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
       const battAltra = await creaBatteria(teacherId, `${PREFIX}BattAltra`, [{ contenitoreId: contAltro.id, count: 1 }]);
       const rAltra = await assegna(battAltra.id, classeAltra.id, teacherId);
       if (!rAltra.ok) throw new Error("assegnazione fallita nel setup del test");
@@ -178,7 +178,7 @@ describe("avviaORiprendi con un compito", () => {
       const contFuturo = await prisma.contenitore.create({
         data: { name: `${PREFIX}ContFuturo`, createdById: teacherId },
       });
-      await aggiungiEsercizi(contFuturo.id, [ESERCIZIO_ID]);
+      await aggiungiEsercizi(contFuturo.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
       const battFuturo = await creaBatteria(teacherId, `${PREFIX}BattFuturo`, [{ contenitoreId: contFuturo.id, count: 1 }]);
       const rFuturo = await assegna(battFuturo.id, classeId, teacherId, {
         opensAt: new Date(Date.now() + 7 * 86_400_000),

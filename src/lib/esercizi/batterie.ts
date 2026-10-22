@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import { ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
 
 /** Una regola nasce con l'uno o l'altro: `contenitoreId` per pescare da una
  * raccolta a mano, oppure `argomento` (con `anno` e `difficoltaMax`
@@ -64,13 +65,32 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
  * esistere — `creaBatteria` la rifiuta in scrittura — ma questa funzione
  * non si fida di quel controllo esterno: lo riverifica, perché è l'unico
  * punto che TUTTE le letture (`verificaBatteria` qui sotto, `assegna` in
- * compiti.ts) attraversano per risolvere una regola in candidati. */
-export async function bacinoRegola(regola: {
-  contenitoreId: string | null;
-  argomento: string | null;
-  anno: number | null;
-  difficoltaMax: number | null;
-}): Promise<string[]> {
+ * compiti.ts) attraversano per risolvere una regola in candidati.
+ *
+ * Proprietà e condivisione (spec "Batterie"): il bacino è sempre ristretto
+ * agli esercizi che `chi` — il docente che assegna o che conta — vede. Le
+ * batterie restano comuni, ma una regola non diventa mai una strada
+ * laterale verso un esercizio privato altrui. Una regola su una raccolta
+ * a cui `chi` non ha accesso dà un bacino VUOTO, non un errore: è lo stesso
+ * esito, e lo stesso messaggio al docente, di una raccolta che non ha
+ * abbastanza esercizi. Non contraddice il discorso sopra sulla regola
+ * malformata: lì il vuoto nasconderebbe un dato rotto, qui è la risposta
+ * vera ("per te, qui, non c'è niente").
+ *
+ * `visibili` è la mappa di `ruoliEsercizi(chi)` già calcolata: chi risolve
+ * più regole nella stessa richiesta (`assegna`, `verificaBatteria`) la
+ * calcola una volta sola e la passa, perché carica tutti gli esercizi.
+ * Senza, la calcola qui. */
+export async function bacinoRegola(
+  regola: {
+    contenitoreId: string | null;
+    argomento: string | null;
+    anno: number | null;
+    difficoltaMax: number | null;
+  },
+  chi: Utente,
+  visibili?: ReadonlyMap<string, Ruolo>,
+): Promise<string[]> {
   const forma = formaRegola(regola);
   if (forma === null) {
     throw new Error(
@@ -79,12 +99,15 @@ export async function bacinoRegola(regola: {
     );
   }
 
+  const vede = visibili ?? (await ruoliEsercizi(chi));
+
   if (forma === "contenitore") {
+    if (!(await ruoloContenitore(chi, regola.contenitoreId!))) return [];
     const righe = await prisma.contenitoreEsercizio.findMany({
       where: { contenitoreId: regola.contenitoreId! },
       select: { esercizioId: true },
     });
-    return righe.map((r) => r.esercizioId);
+    return righe.map((r) => r.esercizioId).filter((id) => vede.has(id));
   }
 
   const righe = await prisma.esercizio.findMany({
@@ -95,7 +118,7 @@ export async function bacinoRegola(regola: {
     },
     select: { id: true },
   });
-  return righe.map((r) => r.id);
+  return righe.map((r) => r.id).filter((id) => vede.has(id));
 }
 
 /** L'elenco degli argomenti che gli esercizi dichiarano davvero, con quanti
@@ -155,12 +178,23 @@ export async function bacinoRegola(regola: {
  * stesso filtro di versione — il conteggio qui e quello di
  * `quantiCorrispondono` per la stessa voce coincidono SEMPRE quando
  * `difficoltaMax` non viene passato: non una stima, la stessa risoluzione
- * (`idsConVersione`, condivisa) applicata alla stessa identica domanda. */
-export async function argomentiDisponibili(anno?: number): Promise<{ argomento: string; quanti: number }[]> {
-  const righe = await prisma.esercizio.findMany({
-    where: anno != null ? { yearLevel: anno } : {},
-    select: { id: true, topic: true },
-  });
+ * (`idsConVersione`, condivisa) applicata alla stessa identica domanda.
+ *
+ * Per lo stesso motivo conta solo gli esercizi che `chi` vede, come fa
+ * `bacinoRegola`: un argomento fatto solo di esercizi privati altrui non
+ * compare nemmeno nel menu (spec, anti-obiettivo sui conteggi). */
+export async function argomentiDisponibili(
+  chi: Utente,
+  anno?: number,
+): Promise<{ argomento: string; quanti: number }[]> {
+  const [tutte, vede] = await Promise.all([
+    prisma.esercizio.findMany({
+      where: anno != null ? { yearLevel: anno } : {},
+      select: { id: true, topic: true },
+    }),
+    ruoliEsercizi(chi),
+  ]);
+  const righe = tutte.filter((r) => vede.has(r.id));
 
   const conVersione = await idsConVersione(righe.map((r) => r.id));
 
@@ -392,9 +426,14 @@ export async function elencoBatterie(): Promise<
  * perché — questa funzione e `assegna` (compiti.ts) risolvono OGNI regola
  * attraverso la STESSA `bacinoRegola`: non c'è un secondo modo di
  * calcolare "quanti esercizi ha questa regola" che possa divergere da
- * quello usato alla pesca vera. */
+ * quello usato alla pesca vera.
+ *
+ * Il verdetto vale per `chi`: due docenti possono avere bacini diversi per
+ * la stessa batteria comune, perché ciascuno pesca solo fra ciò che vede
+ * (vedi `bacinoRegola`). */
 export async function verificaBatteria(
   batteriaId: string,
+  chi: Utente,
 ): Promise<{ ok: true } | { ok: false; mancanti: { contenitore: string; richiesti: number; disponibili: number }[] }> {
   const batteria = await prisma.batteria.findUniqueOrThrow({
     where: { id: batteriaId },
@@ -409,7 +448,8 @@ export async function verificaBatteria(
   // Il bacino grezzo di ciascuna regola, quale che sia la sua forma —
   // bacinoRegola lancia se una regola non rispetta l'invariante, invece di
   // restituire un bacino vuoto (vedi il suo commento).
-  const baciniGrezzi = await Promise.all(batteria.regole.map((r) => bacinoRegola(r)));
+  const visibili = await ruoliEsercizi(chi);
+  const baciniGrezzi = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, chi, visibili)));
   const tuttiGliId = [...new Set(baciniGrezzi.flat())];
   const conVersione = await idsConVersione(tuttiGliId);
 

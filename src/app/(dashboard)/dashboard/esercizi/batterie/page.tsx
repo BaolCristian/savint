@@ -3,15 +3,21 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoBatterie } from "@/lib/esercizi/batterie";
 import { elencoContenitori } from "@/lib/esercizi/contenitori";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { BatterieClient } from "./batterie-client";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 export default async function Page() {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.batterie");
   const tUi = await getTranslations("teacherExercisesUi");
 
-  const [batterie, contenitori] = await Promise.all([elencoBatterie(), elencoContenitori()]);
+  // Le batterie restano comuni (spec "Batterie"); le raccolte fra cui
+  // sceglierne le regole sono solo quelle che il docente vede.
+  const [batterie, contenitori] = await Promise.all([
+    elencoBatterie(),
+    elencoContenitori(utenteDaSessione(session)),
+  ]);
 
   return (
     <div className="space-y-4">

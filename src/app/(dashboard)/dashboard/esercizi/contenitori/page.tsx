@@ -2,15 +2,18 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { elencoContenitori } from "@/lib/esercizi/contenitori";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { ContenitoriClient } from "./contenitori-client";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 export default async function Page() {
-  await redirectUnlessTeacher();
+  const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.contenitori");
   const tUi = await getTranslations("teacherExercisesUi");
 
-  const contenitori = await elencoContenitori();
+  // Solo le raccolte su cui il docente ha un ruolo; eliminarla spetta al
+  // proprietario (la rotta risponderebbe 403 a chiunque altro).
+  const contenitori = await elencoContenitori(utenteDaSessione(session));
 
   return (
     <div className="space-y-4">
@@ -34,6 +37,7 @@ export default async function Page() {
           name: c.name,
           description: c.description,
           eserciziLabel: t("eserciziCount", { n: c.esercizi }),
+          eliminabile: c.ruolo === "PROPRIETARIO",
         }))}
         testi={{
           nome: t("nome"),

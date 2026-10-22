@@ -27,11 +27,21 @@ describe("pagina dei contenitori", () => {
     vi.mocked(elencoContenitori).mockResolvedValue([]);
     await rendi();
     expect(redirectUnlessTeacher).toHaveBeenCalled();
+    expect(elencoContenitori).toHaveBeenCalledWith({ id: "doc1", admin: false });
+  });
+
+  it("il pulsante Elimina c'è solo sulle raccolte proprie", async () => {
+    vi.mocked(elencoContenitori).mockResolvedValue([
+      { id: "mia", name: "Mia", description: null, esercizi: 1, ruolo: "PROPRIETARIO" },
+      { id: "altrui", name: "Altrui", description: null, esercizi: 1, ruolo: "EDITOR" },
+    ]);
+    await rendi();
+    expect(screen.getAllByRole("button", { name: "elimina" })).toHaveLength(1);
   });
 
   it("elenca i contenitori con il conteggio degli esercizi e un link al dettaglio", async () => {
     vi.mocked(elencoContenitori).mockResolvedValue([
-      { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
+      { id: "cont1", name: "Equazioni", description: null, esercizi: 5, ruolo: "PROPRIETARIO" },
     ]);
     await rendi();
     expect(screen.getByText("Equazioni")).toBeInTheDocument();
@@ -73,7 +83,7 @@ describe("pagina dei contenitori", () => {
 
   it("eliminare un contenitore in uso mostra il motivo del rifiuto", async () => {
     vi.mocked(elencoContenitori).mockResolvedValue([
-      { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
+      { id: "cont1", name: "Equazioni", description: null, esercizi: 5, ruolo: "PROPRIETARIO" },
     ]);
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ error: "in_uso" }), { status: 409 })) as typeof fetch;
 

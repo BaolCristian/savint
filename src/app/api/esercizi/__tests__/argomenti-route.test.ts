@@ -20,6 +20,10 @@ vi.mock("@/lib/rate-limit/db-rate-limit", () => ({
 import { requireTeacher } from "@/lib/auth/require-role";
 import { argomentiDisponibili } from "@/lib/esercizi/batterie";
 import { quantiCorrispondono } from "@/lib/esercizi/compiti";
+
+// Come `utenteDaSessione` traduce la sessione del beforeEach: conteggio ed
+// elenco valgono per chi chiede (spec "Batterie").
+const docente = { id: "docente1", admin: false };
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { GET } from "@/app/api/esercizi/argomenti/route";
@@ -112,7 +116,7 @@ describe("GET /api/esercizi/argomenti", () => {
     vi.mocked(argomentiDisponibili).mockResolvedValue([{ argomento: "Radici", quanti: 2 }]);
     const r = await GET(richiesta("?classeId=c1&anno=3"));
     expect(r.status).toBe(200);
-    expect(argomentiDisponibili).toHaveBeenCalledWith(3);
+    expect(argomentiDisponibili).toHaveBeenCalledWith(docente, 3);
   });
 
   it("quando la classe non ha un anno, usa l'anno fornito in query (conteggio)", async () => {
@@ -120,7 +124,7 @@ describe("GET /api/esercizi/argomenti", () => {
     vi.mocked(quantiCorrispondono).mockResolvedValue(5);
     const r = await GET(richiesta("?classeId=c1&anno=3&argomento=Equazioni"));
     expect(r.status).toBe(200);
-    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 3, argomento: "Equazioni", difficoltaMax: undefined });
+    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 3, argomento: "Equazioni", difficoltaMax: undefined }, docente);
   });
 
   it("quando la classe HA un anno, un anno in query viene ignorato", async () => {
@@ -129,7 +133,7 @@ describe("GET /api/esercizi/argomenti", () => {
     // comunque valido, 1-5), ma quando la classe porta già un anno quello
     // della query non viene mai usato.
     await GET(richiesta("?classeId=c1&anno=4"));
-    expect(argomentiDisponibili).toHaveBeenCalledWith(2);
+    expect(argomentiDisponibili).toHaveBeenCalledWith(docente, 2);
   });
 
   it("senza argomento restituisce l'elenco, filtrato per l'anno della classe", async () => {
@@ -137,7 +141,7 @@ describe("GET /api/esercizi/argomenti", () => {
     const r = await GET(richiesta("?classeId=c1"));
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual([{ argomento: "Equazioni", quanti: 4 }]);
-    expect(argomentiDisponibili).toHaveBeenCalledWith(2);
+    expect(argomentiDisponibili).toHaveBeenCalledWith(docente, 2);
     expect(quantiCorrispondono).not.toHaveBeenCalled();
   });
 
@@ -146,7 +150,7 @@ describe("GET /api/esercizi/argomenti", () => {
     const r = await GET(richiesta("?classeId=c1&argomento=Equazioni"));
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ quanti: 7 });
-    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 2, argomento: "Equazioni", difficoltaMax: undefined });
+    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 2, argomento: "Equazioni", difficoltaMax: undefined }, docente);
     expect(argomentiDisponibili).not.toHaveBeenCalled();
   });
 
@@ -155,7 +159,7 @@ describe("GET /api/esercizi/argomenti", () => {
     const r = await GET(richiesta("?classeId=c1&argomento=Equazioni&difficoltaMax=2"));
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ quanti: 2 });
-    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 2, argomento: "Equazioni", difficoltaMax: 2 });
+    expect(quantiCorrispondono).toHaveBeenCalledWith({ anno: 2, argomento: "Equazioni", difficoltaMax: 2 }, docente);
   });
 
   it("400 con un parametro fuori range", async () => {

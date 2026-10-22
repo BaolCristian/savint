@@ -19,7 +19,7 @@ beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(elencoBatterie).mockReset();
   vi.mocked(elencoContenitori).mockReset().mockResolvedValue([
-    { id: "cont1", name: "Equazioni", description: null, esercizi: 5 },
+    { id: "cont1", name: "Equazioni", description: null, esercizi: 5, ruolo: "PROPRIETARIO" },
   ]);
 });
 
@@ -32,6 +32,8 @@ describe("pagina delle batterie", () => {
     vi.mocked(elencoBatterie).mockResolvedValue([]);
     await rendi();
     expect(redirectUnlessTeacher).toHaveBeenCalled();
+    // Le raccolte fra cui scegliere sono quelle che vede chi è collegato.
+    expect(elencoContenitori).toHaveBeenCalledWith({ id: "doc1", admin: false });
   });
 
   it("elenca le batterie con le loro regole e quanti compiti le usano", async () => {

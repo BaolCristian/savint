@@ -6,6 +6,7 @@ import { dichiaraInsegnamento } from "../classi";
 import {
   assegna, compitiDellaClasse, compitiDelloStudente, consegneDelCompito,
 } from "../compiti";
+import type { Utente } from "../accesso";
 
 // `creaBatteria` (Fix round finale, item 5) restituisce ora un rifiuto
 // esplicito invece di lasciar scappare un errore di Prisma quando una
@@ -21,6 +22,7 @@ async function creaBatteria(...args: Parameters<typeof creaBatteriaGrezza>) {
 
 const P = "compititest-";
 let teacherId: string;
+const docente = (): Utente => ({ id: teacherId, admin: false });
 let teacherAltro: string;
 let adminId: string;
 let studentId: string;
@@ -34,7 +36,10 @@ let batteriaTroppoGrande: string;
 
 async function creaEsercizioConVersione(id: string, title: string) {
   const e = await prisma.esercizio.create({
-    data: { id, title, yearLevel: 2, topic: "prova", tags: [], difficulty: 1 },
+    // Aperto a tutta la scuola, come ogni esercizio esistente il giorno
+    // dell'aggiornamento: questi test parlano della pesca, non della
+    // visibilità (che ha i suoi test in fondo).
+    data: { id, title, yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
   });
   await prisma.esercizioVersione.create({
     data: { esercizioId: e.id, version: 1, content: { testo: title }, hash: `h-${id}` },
@@ -87,7 +92,11 @@ beforeEach(async () => {
   })).id;
   await prisma.classeDocente.create({ data: { classeId: classeAltrui, teacherId: teacherAltro } });
 
-  contenitoreId = (await prisma.contenitore.create({ data: { name: `${P}Equazioni`, createdById: teacherId } })).id;
+  // Aperta a tutta la scuola (come le raccolte esistenti dopo la
+  // migrazione): `teacherAltro` assegna dalla stessa batteria più sotto.
+  contenitoreId = (await prisma.contenitore.create({
+    data: { name: `${P}Equazioni`, createdById: teacherId, accessoScuola: "EDITOR" },
+  })).id;
   const es = await Promise.all([
     creaEsercizioConVersione(`${P}es0`, "Es 0"),
     creaEsercizioConVersione(`${P}es1`, "Es 1"),
@@ -128,7 +137,7 @@ describe("assegna", () => {
     const r = await assegna(batteriaId, classeId, teacherId);
     if (!r.ok) throw new Error("assegnazione fallita");
     const prima = (await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } })).drawnVersionIds;
-    await aggiungiEsercizi(contenitoreId, [esercizioExtra]);
+    await aggiungiEsercizi(contenitoreId, [esercizioExtra], docente());
     const dopo = (await prisma.compito.findUniqueOrThrow({ where: { id: r.compitoId } })).drawnVersionIds;
     expect(dopo).toEqual(prima);
   });
@@ -167,7 +176,7 @@ describe("assegna", () => {
 
   it("un esercizio senza versione non viene mai consegnato e non gonfia i disponibili", async () => {
     const senzaVersione = (await prisma.esercizio.create({
-      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1 },
+      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
     })).id;
     await prisma.contenitoreEsercizio.create({ data: { contenitoreId, esercizioId: senzaVersione } });
     // contenitoreId ha ora 6 membri: 5 con versione (dal beforeEach) + 1
@@ -381,7 +390,7 @@ describe("assegna", () => {
       { contenitoreId: contTre, count: 3 },
     ])).id;
 
-    const verifica = await verificaBatteria(battAggressiva);
+    const verifica = await verificaBatteria(battAggressiva, docente());
     expect(verifica).toEqual({
       ok: false,
       mancanti: [{ contenitore: `${P}Tre`, richiesti: 3, disponibili: 1 }],
@@ -411,7 +420,7 @@ describe("assegna", () => {
         { contenitoreId: contB, esercizioId: soloB2 },
       ],
     });
-    await aggiungiEsercizi(contenitoreId, [overlap]);
+    await aggiungiEsercizi(contenitoreId, [overlap], docente());
 
     const batteriaMista = (await creaBatteria(teacherId, `${P}Mista`, [
       { contenitoreId, count: 2 },
@@ -420,7 +429,7 @@ describe("assegna", () => {
 
     // Anche qui capienza abbondante su entrambi i lati anche nel caso
     // peggiore: verificaBatteria e assegna devono concordare sul sì.
-    expect(await verificaBatteria(batteriaMista)).toEqual({ ok: true });
+    expect(await verificaBatteria(batteriaMista, docente())).toEqual({ ok: true });
 
     const r = await assegna(batteriaMista, classeId, teacherId);
     expect(r.ok).toBe(true);
@@ -617,6 +626,42 @@ describe("assegna", () => {
       expect(suo.esercizi).toHaveLength(2);
       expect(righe[0]!.totali).toBe(2);
       expect(righe[0]!.totali).toBe(suo.esercizi.length);
+    });
+  });
+});
+
+// Spec "Batterie": l'estrazione usa solo esercizi visibili a chi assegna.
+describe("assegna e visibilità", () => {
+  it("una regola su una raccolta che chi assegna non vede pesca zero: esercizi_insufficienti, nessun compito", async () => {
+    const privata = (await prisma.contenitore.create({ data: { name: `${P}Privata`, createdById: teacherId } })).id;
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: privata, esercizioId: esercizioExtra, addedById: teacherId } });
+    const batt = (await creaBatteria(teacherId, `${P}DaPrivata`, [{ contenitoreId: privata, count: 1 }])).id;
+
+    const r = await assegna(batt, classeAltrui, teacherAltro);
+    expect(r).toEqual({
+      ok: false,
+      motivo: "esercizi_insufficienti",
+      dettaglio: { contenitore: `${P}Privata`, richiesti: 1, disponibili: 0 },
+    });
+    expect(await prisma.compito.count({ where: { batteriaId: batt } })).toBe(0);
+    // Il proprietario della raccolta, invece, assegna senza problemi.
+    expect((await assegna(batt, classeId, teacherId)).ok).toBe(true);
+  });
+
+  it("non pesca mai un esercizio privato altrui finito in una raccolta visibile", async () => {
+    const privato = (await prisma.esercizio.create({
+      data: { id: `${P}privato`, title: "Privato", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, authorId: teacherAltro },
+    })).id;
+    await prisma.esercizioVersione.create({ data: { esercizioId: privato, version: 1, content: {}, hash: `h-${P}privato` } });
+    const sola = (await prisma.contenitore.create({
+      data: { name: `${P}SoloPrivato`, createdById: teacherAltro, accessoScuola: "EDITOR" },
+    })).id;
+    // Ce l'ha messo un altro (teacherId), non l'autore: non si trasmette.
+    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: sola, esercizioId: privato, addedById: teacherId } });
+    const batt = (await creaBatteria(teacherId, `${P}SoloPrivato`, [{ contenitoreId: sola, count: 1 }])).id;
+
+    expect(await assegna(batt, classeId, teacherId)).toMatchObject({
+      ok: false, motivo: "esercizi_insufficienti", dettaglio: { disponibili: 0 },
     });
   });
 });

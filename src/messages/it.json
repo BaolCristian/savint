@@ -1272,7 +1272,10 @@
       "aggiungiEsercizi": "Aggiungi esercizi",
       "nessunEsercizioDaAggiungere": "Non ci sono altri esercizi da aggiungere.",
       "aggiungi": "Aggiungi",
-      "anteprima": "Anteprima"
+      "anteprima": "Anteprima",
+      "avvisoPrivato": "Questo esercizio è privato: aggiungendolo, lo vedranno anche le persone che hanno accesso alla raccolta.",
+      "confermaAggiunta": "Aggiungi comunque",
+      "annulla": "Annulla"
     },
     "batterie": {
       "titolo": "Batterie",
