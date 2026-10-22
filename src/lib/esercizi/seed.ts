@@ -92,6 +92,8 @@ export async function seedEsercizi(dir: string, opzioni: OpzioniSeed = {}): Prom
       create: {
         id: chiave, title: savint.title, description: savint.description ?? null,
         yearLevel: savint.yearLevel, topic: savint.topic, tags: savint.tags, difficulty: savint.difficulty,
+        // Il catalogo di partenza è della scuola: ogni docente lo può modificare.
+        accessoScuola: "EDITOR",
       },
       update: {
         title: savint.title, description: savint.description ?? null,

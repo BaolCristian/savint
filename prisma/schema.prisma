@@ -131,6 +131,15 @@ model User {
   contenitoriCreati Contenitore[]
   batterieCreate    Batteria[]
   compitiAssegnati  Compito[]
+
+  // Proprietà, condivisione e commenti degli esercizi
+  eserciziScritti         Esercizio[]
+  condivisioniEsercizi    CondivisioneEsercizio[]
+  condivisioniContenitori CondivisioneContenitore[]
+  argomentiCondivisi      CondivisioneArgomento[]   @relation("argomentiCondivisi")
+  argomentiRicevuti       CondivisioneArgomento[]   @relation("argomentiRicevuti")
+  commentiEsercizi        CommentoEsercizio[]       @relation("commentiScritti")
+  commentiRisolti         CommentoEsercizio[]       @relation("commentiRisolti")
 }
 
 model Account {
@@ -587,21 +596,103 @@ model HubConfig {
   updatedAt    DateTime @updatedAt
 }
 
+// Ruolo concesso su un esercizio, una raccolta o un argomento. I ruoli sono
+// in ordine crescente: chi commenta vede anche, chi modifica commenta anche.
+enum RuoloEsercizi {
+  VISUALIZZATORE
+  COMMENTATORE
+  EDITOR
+}
+
 model Esercizio {
-  id          String                 @id @default(cuid())
-  title       String
-  description String?
-  authorId    String?
-  yearLevel   Int
-  topic       String
-  tags        String[]
-  difficulty  Int
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  versions    EsercizioVersione[]
-  contenitori ContenitoreEsercizio[]
+  id            String                  @id @default(cuid())
+  title         String
+  description   String?
+  // Il proprietario. Se il suo account sparisce l'esercizio resta alla
+  // scuola, senza autore: non si perde il lavoro fatto.
+  authorId      String?
+  yearLevel     Int
+  topic         String
+  tags          String[]
+  difficulty    Int
+  // Quanto vede di questo esercizio il resto della scuola: null = privato
+  // (solo l'autore e chi ha una condivisione). Gli esercizi nati prima della
+  // condivisione sono stati portati a EDITOR dalla migrazione, perché fino
+  // ad allora ogni docente li poteva modificare tutti.
+  accessoScuola RuoloEsercizi?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  author        User?                   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  versions      EsercizioVersione[]
+  contenitori   ContenitoreEsercizio[]
+  condivisioni  CondivisioneEsercizio[]
+  commenti      CommentoEsercizio[]
 
   @@index([yearLevel, topic])
+}
+
+// Un esercizio condiviso con un singolo collega, con il ruolo dato.
+model CondivisioneEsercizio {
+  esercizioId String
+  userId      String
+  ruolo       RuoloEsercizi
+  createdAt   DateTime      @default(now())
+  esercizio   Esercizio     @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([esercizioId, userId])
+}
+
+// Una raccolta (Contenitore) condivisa con un singolo collega.
+model CondivisioneContenitore {
+  contenitoreId String
+  userId        String
+  ruolo         RuoloEsercizi
+  createdAt     DateTime      @default(now())
+  contenitore   Contenitore   @relation(fields: [contenitoreId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([contenitoreId, userId])
+}
+
+// Un docente condivide tutti i suoi esercizi di un argomento. L'argomento
+// non è una tabella, è il campo libero Esercizio.topic: `chiave` è la sua
+// forma normalizzata (trim + minuscolo) con cui si confronta, `argomento` la
+// forma da mostrare. userId null = la condivisione vale per tutta la scuola.
+model CondivisioneArgomento {
+  id        String        @id @default(cuid())
+  ownerId   String
+  chiave    String
+  argomento String
+  userId    String?
+  ruolo     RuoloEsercizi
+  createdAt DateTime      @default(now())
+  owner     User          @relation("argomentiCondivisi", fields: [ownerId], references: [id], onDelete: Cascade)
+  user      User?         @relation("argomentiRicevuti", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, chiave])
+}
+
+// Commento di un docente su un esercizio. Le risposte puntano al commento
+// di partenza con parentId e spariscono con lui. risoltoAt/risoltoDaId
+// segnano un commento chiuso; se chi l'ha risolto se ne va il commento
+// resta risolto, senza nome.
+model CommentoEsercizio {
+  id          String              @id @default(cuid())
+  esercizioId String
+  autoreId    String
+  parentId    String?
+  testo       String
+  risoltoAt   DateTime?
+  risoltoDaId String?
+  createdAt   DateTime            @default(now())
+  esercizio   Esercizio           @relation(fields: [esercizioId], references: [id], onDelete: Cascade)
+  autore      User                @relation("commentiScritti", fields: [autoreId], references: [id], onDelete: Cascade)
+  parent      CommentoEsercizio?  @relation("risposte", fields: [parentId], references: [id], onDelete: Cascade)
+  risposte    CommentoEsercizio[] @relation("risposte")
+  risoltoDa   User?               @relation("commentiRisolti", fields: [risoltoDaId], references: [id], onDelete: SetNull)
+
+  @@index([esercizioId])
 }
 
 model EsercizioVersione {
@@ -704,15 +795,20 @@ model ClasseDocente {
 }
 
 model Contenitore {
-  id          String                 @id @default(cuid())
-  name        String
-  description String?
-  createdById String
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  createdBy   User                   @relation(fields: [createdById], references: [id])
-  esercizi    ContenitoreEsercizio[]
-  regole      BatteriaRegola[]
+  id            String                    @id @default(cuid())
+  name          String
+  description   String?
+  // Il proprietario della raccolta.
+  createdById   String
+  // Come Esercizio.accessoScuola: null = privata; le raccolte esistenti
+  // prima della condivisione sono state portate a EDITOR dalla migrazione.
+  accessoScuola RuoloEsercizi?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  createdBy     User                      @relation(fields: [createdById], references: [id])
+  esercizi      ContenitoreEsercizio[]
+  regole        BatteriaRegola[]
+  condivisioni  CondivisioneContenitore[]
 }
 
 model ContenitoreEsercizio {

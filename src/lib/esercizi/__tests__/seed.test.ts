@@ -48,6 +48,9 @@ describe("seed degli esercizi", () => {
     const versioni = await prisma.esercizioVersione.findMany({ where: { esercizioId: { startsWith: PREFIX } } });
     expect(versioni).toHaveLength(1);
     expect(versioni[0]!.version).toBe(1);
+    // Il catalogo di partenza nasce modificabile da tutta la scuola.
+    const esercizio = await prisma.esercizio.findUniqueOrThrow({ where: { id: versioni[0]!.esercizioId } });
+    expect(esercizio.accessoScuola).toBe("EDITOR");
   });
 
   it("un secondo giro con lo stesso contenuto non crea versioni", async () => {
