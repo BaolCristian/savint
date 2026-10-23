@@ -180,7 +180,9 @@ export async function applicaRisposta(
     where: { id: tentativoId },
     include: { versione: true },
   });
-  if (!t) return { ok: false, motivo: "non_trovato" };
+  // Il tentativo di una prova di verifica non esiste per le rotte dei
+  // compiti: niente feedback né punteggio su una verifica da qui.
+  if (!t || t.provaId != null) return { ok: false, motivo: "non_trovato" };
   if (t.studentId !== studentId) return { ok: false, motivo: "non_tuo" };
   if (t.status === "COMPLETED") return { ok: false, motivo: "gia_completato" };
 
@@ -212,7 +214,8 @@ export async function completa(
   locale: Locale,
 ): Promise<{ ok: true; score: number; maxScore: number } | { ok: false; motivo: "non_trovato" | "non_tuo" }> {
   const t = await prisma.tentativo.findUnique({ where: { id: tentativoId }, include: { versione: true } });
-  if (!t) return { ok: false, motivo: "non_trovato" };
+  // Una prova di verifica si consegna dalle sue rotte, non da qui.
+  if (!t || t.provaId != null) return { ok: false, motivo: "non_trovato" };
   if (t.studentId !== studentId) return { ok: false, motivo: "non_tuo" };
   if (t.status === "COMPLETED") return { ok: true, score: t.score, maxScore: t.maxScore };
 
@@ -250,7 +253,8 @@ export async function abbandona(
   studentId: string,
 ): Promise<{ ok: true } | { ok: false; motivo: "non_trovato" | "non_tuo" | "gia_completato" }> {
   const t = await prisma.tentativo.findUnique({ where: { id: tentativoId } });
-  if (!t) return { ok: false, motivo: "non_trovato" };
+  // Una prova di verifica non si abbandona per ricominciare.
+  if (!t || t.provaId != null) return { ok: false, motivo: "non_trovato" };
   if (t.studentId !== studentId) return { ok: false, motivo: "non_tuo" };
   if (t.status === "COMPLETED") return { ok: false, motivo: "gia_completato" };
   if (t.status === "ABANDONED") return { ok: true };

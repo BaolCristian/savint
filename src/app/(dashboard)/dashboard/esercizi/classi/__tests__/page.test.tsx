@@ -139,7 +139,7 @@ describe("pagina delle classi del docente", () => {
 
     it("chiede conferma nominando il compito, e NON toglie subito la spunta", async () => {
       vi.mocked(compitiDellaClasse).mockResolvedValue([
-        { id: "comp1", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
+        { id: "comp1", tipo: "COMPITO", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
       ]);
       await rendi();
 
@@ -154,7 +154,7 @@ describe("pagina delle classi del docente", () => {
 
     it("annullare la conferma lascia la classe spuntata", async () => {
       vi.mocked(compitiDellaClasse).mockResolvedValue([
-        { id: "comp1", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
+        { id: "comp1", tipo: "COMPITO", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
       ]);
       await rendi();
 
@@ -168,7 +168,7 @@ describe("pagina delle classi del docente", () => {
 
     it("confermare toglie davvero la spunta", async () => {
       vi.mocked(compitiDellaClasse).mockResolvedValue([
-        { id: "comp1", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
+        { id: "comp1", tipo: "COMPITO", batteria: "Verifica 1", dueAt: null, esercizi: 3 },
       ]);
       await rendi();
 

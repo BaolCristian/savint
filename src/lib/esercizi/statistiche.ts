@@ -23,7 +23,8 @@ import { estrazioniDegliStudenti, type BacinoCongelato } from "./versioni-compit
  *   consegnato apre un tentativo nuovo (`avviaORiprendi` non riprende mai un
  *   COMPLETED), e conta il migliore fra i completati, con `score` e
  *   `maxScore` presi dallo stesso tentativo;
- * - un compito ritirato è inesistente.
+ * - un compito ritirato è inesistente, e così una verifica (le sue prove
+ *   hanno pagine proprie: non entrano nelle statistiche dei compiti).
  *
  * Le percentuali sono intere (arrotondate): servono a confrontare esercizi e
  * argomenti a colpo d'occhio, non a dare un voto. */
@@ -186,7 +187,7 @@ export async function statisticheDelCompito(
   | { ok: false; motivo: "compito_non_trovato" }
 > {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
-  if (!compito || compito.ritiratoAt != null) return { ok: false, motivo: "compito_non_trovato" };
+  if (!compito || compito.ritiratoAt != null || compito.tipo === "VERIFICA") return { ok: false, motivo: "compito_non_trovato" };
   if (!(await haTitoloSulCompito(compito, teacherId))) return { ok: false, motivo: "compito_non_trovato" };
 
   const studenti = await iscrittiAttuali(compito.classeId);
@@ -259,8 +260,9 @@ export async function andamentoDellaClasse(
   const compiti = await prisma.compito.findMany({
     // Né i ritirati né quelli non ancora aperti: un compito che si apre fra
     // una settimana non l'ha visto nessuno, e contarlo abbasserebbe il
-    // completamento di un argomento che la classe sta facendo bene.
-    where: { classeId, ritiratoAt: null, OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }] },
+    // completamento di un argomento che la classe sta facendo bene. Le
+    // verifiche non sono allenamento: restano fuori.
+    where: { classeId, ritiratoAt: null, tipo: "COMPITO", OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }] },
     select: { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true },
   });
   const studenti = await iscrittiAttuali(classeId);

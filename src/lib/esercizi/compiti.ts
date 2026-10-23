@@ -1,3 +1,4 @@
+import type { TipoCompito } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { rifiutoRegole, scriviBatteria } from "./batterie";
 import {
@@ -410,7 +411,9 @@ export async function compitoApribile(
   // Un compito ritirato (soft delete, vedi `ritiraCompito`) esiste ancora
   // come riga, ma per lo studente non c'è più: un `compitoId` scritto a
   // mano nell'indirizzo non deve poter legargli un tentativo nuovo.
-  if (!compito || compito.ritiratoAt != null) return null;
+  // Una verifica non è un compito: si apre solo dalle rotte della prova,
+  // mai da un `compitoId` nell'indirizzo dell'esercizio.
+  if (!compito || compito.ritiratoAt != null || compito.tipo === "VERIFICA") return null;
   if (compito.opensAt && compito.opensAt > new Date()) return null;
 
   const iscritto = await prisma.classeStudente.findUnique({
@@ -432,10 +435,12 @@ export async function compitoApribile(
 
 /** I compiti assegnati a una classe, per la vista del docente. `esercizi` è
  * quanti esercizi riceve ogni studente (`eserciziPerStudente`): nel modo
- * STUDENTE le versioni cambiano da studente a studente, il numero no. */
+ * STUDENTE le versioni cambiano da studente a studente, il numero no.
+ * Comprende anche le verifiche (`tipo`): l'elenco del docente le mostra con
+ * la loro etichetta e la conferma di rimozione di una classe le conta. */
 export async function compitiDellaClasse(
   classeId: string,
-): Promise<{ id: string; batteria: string; dueAt: Date | null; esercizi: number }[]> {
+): Promise<{ id: string; tipo: TipoCompito; batteria: string; dueAt: Date | null; esercizi: number }[]> {
   const righe = await prisma.compito.findMany({
     // I compiti ritirati spariscono dagli elenchi del docente (questa
     // funzione alimenta la pagina dei compiti, quella d'ingresso e la
@@ -446,6 +451,7 @@ export async function compitiDellaClasse(
   });
   return righe.map((c) => ({
     id: c.id,
+    tipo: c.tipo,
     batteria: c.batteria.name,
     dueAt: c.dueAt,
     esercizi: eserciziPerStudente(c),
@@ -465,7 +471,8 @@ export async function compitiDelloStudente(studentId: string): Promise<
 
   const compiti = await prisma.compito.findMany({
     // Un compito ritirato non è più "da fare": non compare, e non conta.
-    where: { classeId: { in: classeIds }, ritiratoAt: null },
+    // Una verifica ha la sua sezione: qui solo i compiti.
+    where: { classeId: { in: classeIds }, ritiratoAt: null, tipo: "COMPITO" },
     include: { batteria: true },
     orderBy: { createdAt: "desc" },
   });
@@ -556,7 +563,8 @@ export async function consegneDelCompito(
 > {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
   // Ritirato = inesistente, anche qui: stessa risposta di un id che non c'è.
-  if (!compito || compito.ritiratoAt != null) return { ok: true, righe: [] };
+  // Una verifica pure: le sue consegne sono le prove, lette altrove.
+  if (!compito || compito.ritiratoAt != null || compito.tipo === "VERIFICA") return { ok: true, righe: [] };
 
   if (!(await haTitoloSulCompito(compito, teacherId))) return { ok: false, motivo: "non_insegni_questa_classe" };
 
@@ -679,12 +687,21 @@ export type EsitoGestioneCompito =
   | { ok: true }
   | { ok: false; motivo: "compito_non_trovato" | MotivoDate };
 
-/** Il compito, se `teacherId` può agire su di lui e non è già ritirato. */
-async function compitoGestibile(compitoId: string, teacherId: string) {
+/** Il compito o la verifica, se `teacherId` può agire su di lui e non è già
+ * ritirato. Nessun filtro di tipo: è la lettura di `ritiraCompito`, che vale
+ * anche per le verifiche. */
+async function compitoOVerificaGestibile(compitoId: string, teacherId: string) {
   const compito = await prisma.compito.findUnique({ where: { id: compitoId } });
   if (!compito || compito.ritiratoAt != null) return null;
   if (!(await haTitoloSulCompito(compito, teacherId))) return null;
   return compito;
+}
+
+/** Il compito, se `teacherId` può agire su di lui e non è già ritirato. Una
+ * verifica qui è inesistente: le sue date sono quelle della verifica. */
+async function compitoGestibile(compitoId: string, teacherId: string) {
+  const compito = await compitoOVerificaGestibile(compitoId, teacherId);
+  return compito && compito.tipo !== "VERIFICA" ? compito : null;
 }
 
 /** Cambia apertura e scadenza di un compito già assegnato (una scadenza
@@ -715,7 +732,7 @@ export async function modificaDateCompito(
   if (motivo) return { ok: false, motivo };
 
   const { count } = await prisma.compito.updateMany({
-    where: { id: compitoId, ritiratoAt: null },
+    where: { id: compitoId, ritiratoAt: null, tipo: "COMPITO" },
     data: { opensAt: date.opensAt, dueAt: date.dueAt },
   });
   if (count === 0) return { ok: false, motivo: "compito_non_trovato" };
@@ -735,11 +752,13 @@ export async function modificaDateCompito(
  * preparato si nasconde invece di cancellarsi), che il vincolo `Restrict`
  * obbligherebbe comunque.
  *
+ * Vale anche per una verifica (stessa riga `Compito`, stesso soft delete).
+ *
  * Ritirare un compito già ritirato risponde "non trovato" e non sposta la
  * data del primo ritiro: lo stesso `updateMany` condizionato di
  * `modificaDateCompito`, così due ritiri concorrenti ne registrano uno. */
 export async function ritiraCompito(compitoId: string, teacherId: string): Promise<EsitoGestioneCompito> {
-  const compito = await compitoGestibile(compitoId, teacherId);
+  const compito = await compitoOVerificaGestibile(compitoId, teacherId);
   if (!compito) return { ok: false, motivo: "compito_non_trovato" };
 
   const { count } = await prisma.compito.updateMany({

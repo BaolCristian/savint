@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Eye, Printer } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
-import { consegneDelCompito } from "@/lib/esercizi/compiti";
+import { consegneDelCompito, haTitoloSulCompito } from "@/lib/esercizi/compiti";
 import { statisticheDelCompito } from "@/lib/esercizi/statistiche";
 import { prisma } from "@/lib/db/client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
@@ -44,6 +44,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   // lettura per id lo troverebbe, quindi lo si esclude qui esplicitamente —
   // `consegneDelCompito` lo tratta già come inesistente.
   if (!compito || compito.ritiratoAt != null) notFound();
+
+  // Una verifica ha la sua pagina (monitoraggio e risultati): ci si va
+  // prima di ogni altra lettura. `consegneDelCompito` la tratta come
+  // inesistente, quindi non ha controllato il titolo: lo si controlla qui,
+  // e chi non ne ha riceve lo stesso 404 di un compito altrui.
+  if (compito.tipo === "VERIFICA") {
+    if (!(await haTitoloSulCompito(compito, session.user.id))) notFound();
+    redirect(`/dashboard/esercizi/verifiche/${id}`);
+  }
 
   // Le statistiche per esercizio riverificano da sé il titolo del docente
   // (stessa regola delle consegne): un compito ritirato fra le due letture

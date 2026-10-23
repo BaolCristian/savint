@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
-vi.mock("@/lib/esercizi/compiti", () => ({ consegneDelCompito: vi.fn() }));
+vi.mock("@/lib/esercizi/compiti", () => ({ consegneDelCompito: vi.fn(), haTitoloSulCompito: vi.fn() }));
 vi.mock("@/lib/esercizi/statistiche", () => ({ statisticheDelCompito: vi.fn() }));
 vi.mock("@/lib/db/client", () => ({ prisma: { compito: { findUnique: vi.fn() } } }));
 vi.mock("next/navigation", () => ({
@@ -10,6 +10,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
+  }),
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
   }),
 }));
 vi.mock("next-intl/server", () => ({
@@ -24,16 +27,18 @@ vi.mock("next-intl", () => ({
 }));
 
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
-import { consegneDelCompito } from "@/lib/esercizi/compiti";
+import { consegneDelCompito, haTitoloSulCompito } from "@/lib/esercizi/compiti";
 import { statisticheDelCompito } from "@/lib/esercizi/statistiche";
 import { prisma } from "@/lib/db/client";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Page from "../[id]/page";
 
 beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(consegneDelCompito).mockReset();
   vi.mocked(prisma.compito.findUnique).mockReset();
+  vi.mocked(haTitoloSulCompito).mockReset();
+  vi.mocked(redirect).mockClear();
   vi.mocked(statisticheDelCompito).mockReset().mockResolvedValue({ ok: true, iscritti: 0, righe: [] });
 });
 
@@ -134,6 +139,33 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
   // Il ritiro è un soft delete: la riga esiste ancora, e una lettura per id
   // la troverebbe. La pagina deve trattarla come inesistente, non mostrarne
   // le consegne né il modulo per cambiarle le date.
+  // Modalità verifica: una verifica ha la sua pagina. Chi ne ha titolo ci
+  // viene mandato prima delle statistiche; chi no riceve il 404 di sempre.
+  it("una verifica rimanda alla sua pagina, prima delle statistiche", async () => {
+    vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+    vi.mocked(haTitoloSulCompito).mockResolvedValue(true);
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "ver1", tipo: "VERIFICA", classeId: "c1", assignedById: "doc1", classe: { name: "1A" },
+      batteria: { name: "Verifica 1" }, dueAt: null, opensAt: null, ritiratoAt: null,
+    } as never);
+    await expect(Page({ params: Promise.resolve({ id: "ver1" }) }))
+      .rejects.toThrow("NEXT_REDIRECT:/dashboard/esercizi/verifiche/ver1");
+    expect(redirect).toHaveBeenCalledWith("/dashboard/esercizi/verifiche/ver1");
+    expect(haTitoloSulCompito).toHaveBeenCalledWith(expect.objectContaining({ id: "ver1" }), "doc1");
+    expect(statisticheDelCompito).not.toHaveBeenCalled();
+  });
+
+  it("una verifica senza titolo è un 404, non un rimando", async () => {
+    vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+    vi.mocked(haTitoloSulCompito).mockResolvedValue(false);
+    vi.mocked(prisma.compito.findUnique).mockResolvedValue({
+      id: "ver1", tipo: "VERIFICA", classeId: "c1", assignedById: "altro", classe: { name: "1A" },
+      batteria: { name: "Verifica 1" }, dueAt: null, opensAt: null, ritiratoAt: null,
+    } as never);
+    await expect(Page({ params: Promise.resolve({ id: "ver1" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
   it("404 se il compito è stato ritirato", async () => {
     vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
     vi.mocked(prisma.compito.findUnique).mockResolvedValue({

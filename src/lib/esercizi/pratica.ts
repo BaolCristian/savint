@@ -23,6 +23,12 @@ export async function eserciziPraticaLibera(): Promise<Set<string>> {
  * "L'ha avuto" vuol dire nelle SUE versioni: `drawnVersionIds` nel modo
  * CLASSE, la sua estrazione nel modo STUDENTE — l'esercizio pescato a un
  * compagno non gli apre niente.
+ *
+ * Una verifica non conta come compito: un suo esercizio si riapre solo dopo
+ * che i risultati della SUA prova sono stati pubblicati (`pubblicataAt`),
+ * e sempre come tentativo libero (nessun `compitoId`). Prima, avere in
+ * mano gli esercizi della verifica in corso o non ancora corretta non deve
+ * dare un modo di allenarcisi sopra.
  */
 export async function esercizioApribileDaStudente(studentId: string, esercizioId: string): Promise<boolean> {
   if ((await ruoliEsercizi("scuola")).has(esercizioId)) return true;
@@ -36,6 +42,7 @@ export async function esercizioApribileDaStudente(studentId: string, esercizioId
   const dove = {
     classeId: { in: iscrizioni.map((i) => i.classeId) },
     ritiratoAt: null,
+    tipo: "COMPITO" as const,
     OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }],
   };
   const ids = versioni.map((v) => v.id);
@@ -49,7 +56,31 @@ export async function esercizioApribileDaStudente(studentId: string, esercizioId
     where: { ...dove, modo: "STUDENTE" },
     select: { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true },
   });
-  if (perStudente.length === 0) return false;
-  const estrazioni = await estrazioniDegliStudenti(perStudente, [studentId]);
-  return [...estrazioni.values()].some((m) => (m.get(studentId) ?? []).some((v) => ids.includes(v)));
+  if (perStudente.length > 0) {
+    const estrazioni = await estrazioniDegliStudenti(perStudente, [studentId]);
+    if ([...estrazioni.values()].some((m) => (m.get(studentId) ?? []).some((v) => ids.includes(v)))) return true;
+  }
+
+  return inUnaProvaPubblicata(studentId, ids);
+}
+
+/** Vero se una delle versioni `ids` è fra gli esercizi di una prova di
+ * verifica dello studente già pubblicata (verifica non ritirata). Gli
+ * esercizi della prova sono le `posizioni` della sua estrazione; senza
+ * posizioni fissate, l'estrazione intera. */
+async function inUnaProvaPubblicata(studentId: string, ids: string[]): Promise<boolean> {
+  const prove = await prisma.provaVerifica.findMany({
+    where: { studentId, pubblicataAt: { not: null }, compito: { tipo: "VERIFICA", ritiratoAt: null } },
+    select: {
+      posizioni: true,
+      compito: { select: { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true } },
+    },
+  });
+  if (prove.length === 0) return false;
+  const estrazioni = await estrazioniDegliStudenti(prove.map((p) => p.compito), [studentId]);
+  return prove.some((p) => {
+    const estratte = estrazioni.get(p.compito.id)!.get(studentId) ?? [];
+    const dellaProva = p.posizioni.length > 0 ? p.posizioni.map((i) => estratte[i]) : estratte;
+    return dellaProva.some((v) => v != null && ids.includes(v));
+  });
 }

@@ -1439,6 +1439,7 @@
       "nessunaClasseInsegnata": "Dichiara prima le classi che insegni.",
       "compitoScadenza": "Scade il {quando}",
       "nessunaScadenza": "Nessuna scadenza",
+      "etichettaVerifica": "Verifica",
       "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
       "torna": "Torna ai compiti",
       "titoloConsegne": "Consegne — {batteria} ({classe})",

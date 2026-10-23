@@ -31,9 +31,11 @@ export async function percorsoCompitoStudente(
   });
   // `ritiratoAt`: un compito ritirato dal docente non si apre più, nemmeno
   // con l'id scritto a mano in /studente/compito/[id] (vedi `ritiraCompito`).
+  // Una verifica non ha un percorso da compito: la si svolge dalla prova.
   if (
     !compito ||
     compito.ritiratoAt != null ||
+    compito.tipo === "VERIFICA" ||
     (compito.opensAt && compito.opensAt > new Date())
   ) return null;
 

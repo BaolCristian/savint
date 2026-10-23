@@ -1439,6 +1439,7 @@
       "nessunaClasseInsegnata": "Declare which classes you teach first.",
       "compitoScadenza": "Due on {quando}",
       "nessunaScadenza": "No deadline",
+      "etichettaVerifica": "Test",
       "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
       "torna": "Back to assignments",
       "titoloConsegne": "Submissions — {batteria} ({classe})",

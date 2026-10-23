@@ -51,7 +51,17 @@ export default async function Page() {
           <ul className="grid gap-2">
             {compiti.map((c) => (
               <li key={c.id} className="rounded-lg border border-input p-3 text-sm">
-                <Link href={`/dashboard/esercizi/compiti/${c.id}`} className="font-medium text-brand-blue hover:underline">
+                {/* Una verifica ha la sua pagina (monitoraggio e risultati),
+                    non quella delle consegne di un compito. */}
+                {c.tipo === "VERIFICA" && (
+                  <span className="mr-2 rounded bg-brand-magenta/10 px-1.5 py-0.5 text-xs font-medium text-brand-magenta">
+                    {t("etichettaVerifica")}
+                  </span>
+                )}
+                <Link
+                  href={c.tipo === "VERIFICA" ? `/dashboard/esercizi/verifiche/${c.id}` : `/dashboard/esercizi/compiti/${c.id}`}
+                  className="font-medium text-brand-blue hover:underline"
+                >
                   {c.batteria} — {c.classe}
                 </Link>
                 <p className="text-muted-foreground">

@@ -106,10 +106,10 @@ describe("hub della sezione esercizi del docente", () => {
 describe("i compiti gia' assegnati, sulla pagina invece che dietro un clic", () => {
   it("elenca i piu' recenti per classe — al massimo tre — con classe, scadenza e quanti esercizi, ciascuno collegato alle sue consegne", async () => {
     vi.mocked(compitiDellaClasse).mockResolvedValue([
-      { id: "k4", batteria: "equazioni (10)", dueAt: new Date("2026-09-20T00:00:00Z"), esercizi: 10 },
-      { id: "k3", batteria: "polinomi (4)", dueAt: null, esercizi: 4 },
-      { id: "k2", batteria: "Ripasso", dueAt: null, esercizi: 6 },
-      { id: "k1", batteria: "Il piu' vecchio", dueAt: null, esercizi: 2 },
+      { id: "k4", tipo: "COMPITO", batteria: "equazioni (10)", dueAt: new Date("2026-09-20T00:00:00Z"), esercizi: 10 },
+      { id: "k3", tipo: "COMPITO", batteria: "polinomi (4)", dueAt: null, esercizi: 4 },
+      { id: "k2", tipo: "COMPITO", batteria: "Ripasso", dueAt: null, esercizi: 6 },
+      { id: "k1", tipo: "COMPITO", batteria: "Il piu' vecchio", dueAt: null, esercizi: 2 },
     ]);
     await rendi();
 
