@@ -143,6 +143,13 @@ describe("RisultatiVerifica", () => {
     await waitFor(() => expect(chiamate("GET", `${API}/risultati`)).toHaveLength(2));
   });
 
+  it("una pubblicazione che fallisce riabilita il pulsante", async () => {
+    monta(vi.fn(async () => { throw new Error("rete assente"); }));
+    const pulsante = await screen.findByRole("button", { name: r.pubblica });
+    fireEvent.click(pulsante);
+    await waitFor(() => expect(pulsante).toBeEnabled());
+  });
+
   it("in PUBBLICATA con tutto pubblicato nessun pulsante; con un recupero consegnato «Pubblica i nuovi»", async () => {
     attuali = risultati({ stato: "PUBBLICATA", righe: [riga({ studentId: "s1", nome: "Anna Bianchi", pubblicata: true })] });
     monta();

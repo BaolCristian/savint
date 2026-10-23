@@ -318,7 +318,11 @@ export async function pubblicaRisultati(
 /** I risultati di uno studente, null finché la SUA prova non è pubblicata
  * (o se la verifica non c'è più). Punti per esercizio, totale finale sulla
  * scala della verifica completa, risposte e contenuto originale con lo
- * svolgimento; niente uscite, niente misure. */
+ * svolgimento; niente uscite, niente misure.
+ *
+ * Non controlla l'iscrizione alla classe: chi la chiama deve prima passare
+ * da `introProva` (null per chi non è iscritto), come fa la pagina dello
+ * studente. Uno studente tolto dalla classe non rivede così i risultati. */
 export async function risultatiDelloStudente(compitoId: string, studentId: string): Promise<RisultatiStudente | null> {
   const v = await sincronizzaVerifica(compitoId);
   if (!v) return null;

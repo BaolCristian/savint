@@ -94,9 +94,15 @@ export function RisultatiVerifica({ compitoId, aggiornamento, onPubblica }: {
 
   async function pubblica() {
     setPubblicando(true);
-    await onPubblica();
-    await carica();
-    setPubblicando(false);
+    try {
+      await onPubblica();
+      await carica();
+    } catch {
+      // L'errore dell'azione lo mostra il genitore; qui basta non restare
+      // col pulsante spento.
+    } finally {
+      setPubblicando(false);
+    }
   }
 
   const f = (n: number) => formattaPunti(n, locale);
