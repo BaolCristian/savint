@@ -928,6 +928,7 @@ model Compito {
   estrazioni      EstrazioneStudente[]
 
   @@index([classeId, dueAt])
+  @@index([modelloId])
 }
 
 // Nuovo compito: come si estraggono gli esercizi di un Compito.
@@ -951,4 +952,5 @@ model EstrazioneStudente {
   student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([compitoId, studentId])
+  @@index([studentId])
 }
