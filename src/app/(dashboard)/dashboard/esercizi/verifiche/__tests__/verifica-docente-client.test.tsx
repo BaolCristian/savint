@@ -252,6 +252,24 @@ describe("VerificaDocenteClient — chiusa", () => {
   });
 });
 
+describe("VerificaDocenteClient — risultati", () => {
+  it("in CHIUSA monta i risultati sotto il monitoraggio e «Pubblica i risultati» manda l'azione pubblica", async () => {
+    rotte[`GET ${API}/risultati`] = () => json({ stato: "CHIUSA", totalePieno: 4, colonne: [{ posizione: 0, punti: 4 }], righe: [] });
+    rendi(monitoraggio({ stato: "CHIUSA" }));
+    expect(screen.getByText("Anna Bianchi")).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Pubblica i risultati" }));
+    await waitFor(() => expect(chiamate("POST", `${API}/azioni`)).toHaveLength(1));
+    expect(corpoDi(chiamate("POST", `${API}/azioni`)[0])).toEqual({ azione: "pubblica" });
+    await waitFor(() => expect(chiamate("GET", API)).toHaveLength(1));
+  });
+
+  it("durante la prova i risultati non si chiedono", async () => {
+    rendi(monitoraggio());
+    expect(chiamate("GET", `${API}/risultati`)).toHaveLength(0);
+    expect(screen.queryByRole("heading", { name: "Risultati" })).toBeNull();
+  });
+});
+
 describe("VerificaDocenteClient — preparata", () => {
   const preparata = (o: { avvioProgrammatoAt?: string | null } = {}) =>
     monitoraggio({ stato: "PREPARATA", ...o, righe: [riga({ studentId: "s1", nome: "Anna Bianchi", secondiResidui: null, scadenza: null })] });

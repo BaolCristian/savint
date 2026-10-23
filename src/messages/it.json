@@ -2053,10 +2053,70 @@
           "troppe": "Troppe richieste: aspetta qualche secondo e riprova.",
           "nonTrovata": "Questa verifica non esiste più o è stata ritirata.",
           "generico": "Qualcosa è andato storto. Riprova."
-        },
-        "risultati": {
+        }
+      },
+      "risultati": {
+        "docente": {
           "titolo": "Risultati",
-          "segnaposto": "La correzione e la pubblicazione dei risultati arriveranno qui."
+          "caricamento": "Carico i risultati…",
+          "errore": "Non riesco a caricare i risultati. Ricarica la pagina.",
+          "studente": "Studente",
+          "esercizio": "Esercizio {n}",
+          "puntiColonna": "{punti} pt",
+          "totale": "Totale",
+          "percentuale": "%",
+          "uscite": "Uscite",
+          "nessunaUscita": "nessuna",
+          "usciteValore": "{n, plural, one {# uscita} other {# uscite}}",
+          "usciteDi": "Uscite di {nome}",
+          "usciteDescrizione": "Ogni uscita dalla verifica con l'ora e quanto è durata.",
+          "uscita": "{ora} — uscita ({motivo})",
+          "rientro": "{ora} — rientro dopo {durata}",
+          "rientroSenzaDurata": "{ora} — rientro",
+          "motivo": {
+            "SCHERMO_INTERO": "schermo intero",
+            "SCHEDA": "scheda",
+            "FOCUS": "finestra",
+            "altro": "uscita"
+          },
+          "fuori": "{tempo} fuori",
+          "assente": "assente",
+          "in_corso": "recupero in corso",
+          "consegnato": "consegnato",
+          "consegnato_auto": "consegnato automaticamente",
+          "nonPubblicato": "non pubblicato",
+          "menoEsercizi": "{ottenuto} su {totale}, riportato su {pieno}",
+          "nonAssegnato": "non assegnato",
+          "cella": "Esercizio {n} di {nome}: {punti} su {max}",
+          "modificato": "modificato",
+          "pubblica": "Pubblica i risultati",
+          "pubblicaNuovi": "Pubblica i nuovi",
+          "pubblicati": "Risultati pubblicati: gli studenti li vedono.",
+          "pubblicaAiuto": "Gli studenti vedranno punti, risposte, correzione e svolgimento. Non vedranno le uscite.",
+          "pannelloTitolo": "{nome} — Esercizio {n}",
+          "pannelloDescrizione": "La risposta dello studente con la correzione, la risposta attesa e lo svolgimento.",
+          "punti": "Punti (da 0 a {max}, a passi di 0,25)",
+          "salva": "Salva i punti",
+          "automatico": "Torna al calcolo automatico",
+          "erroreValore": "Scrivi un numero da 0 a {max}, a passi di 0,25 (per esempio 1,25).",
+          "erroreSalvataggio": "Non riesco a salvare i punti. Riprova.",
+          "erroreDettaglio": "Non riesco a caricare la risposta.",
+          "chiudi": "Chiudi"
+        },
+        "studente": {
+          "titolo": "Risultati della verifica",
+          "totale": "{finale} / {totalePieno} punti ({percentuale}%)",
+          "esercizio": "Esercizio {numero} — {punti}/{puntiMax}",
+          "esercitati": "Esercitati di nuovo",
+          "esercitatiAiuto": "L'allenamento non cambia il risultato della verifica.",
+          "nonPubblicati": "Risultati non ancora pubblicati",
+          "nonPubblicatiSpiegazione": "La tua verifica è consegnata: vedrai qui punti e correzioni quando il docente li pubblicherà.",
+          "tornaHome": "Torna alla home"
+        },
+        "revisione": {
+          "rispostaAttesa": "Risposta attesa",
+          "svolgimento": "Svolgimento",
+          "errore": "Non è stato possibile caricare l'esercizio."
         }
       }
     },

@@ -170,8 +170,8 @@ describe("POST /api/esercizi/verifiche/[id]/azioni", () => {
     expect(avviaRecupero).not.toHaveBeenCalled();
   });
 
-  it("pubblica non è ancora disponibile ⇒ 400", async () => {
-    expect((await azione({ azione: "pubblica" })).status).toBe(400);
+  it("pubblica: con studentIds vuoto ⇒ 400 (l'azione è collegata nel Task 11, vedi risultati-verifica-route.test.ts)", async () => {
+    expect((await azione({ azione: "pubblica", studentIds: [] })).status).toBe(400);
   });
 
   it("chiama l'azione giusta e traduce gli esiti", async () => {

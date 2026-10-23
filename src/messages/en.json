@@ -2053,10 +2053,70 @@
           "troppe": "Too many requests: wait a few seconds and try again.",
           "nonTrovata": "This test no longer exists or has been withdrawn.",
           "generico": "Something went wrong. Try again."
-        },
-        "risultati": {
+        }
+      },
+      "risultati": {
+        "docente": {
           "titolo": "Results",
-          "segnaposto": "Grading and publishing of results will appear here."
+          "caricamento": "Loading results…",
+          "errore": "Could not load the results. Reload the page.",
+          "studente": "Student",
+          "esercizio": "Exercise {n}",
+          "puntiColonna": "{punti} pts",
+          "totale": "Total",
+          "percentuale": "%",
+          "uscite": "Exits",
+          "nessunaUscita": "none",
+          "usciteValore": "{n, plural, one {# exit} other {# exits}}",
+          "usciteDi": "Exits of {nome}",
+          "usciteDescrizione": "Every exit from the test with its time and how long it lasted.",
+          "uscita": "{ora} — exit ({motivo})",
+          "rientro": "{ora} — back after {durata}",
+          "rientroSenzaDurata": "{ora} — back",
+          "motivo": {
+            "SCHERMO_INTERO": "full screen",
+            "SCHEDA": "tab",
+            "FOCUS": "window",
+            "altro": "exit"
+          },
+          "fuori": "{tempo} away",
+          "assente": "absent",
+          "in_corso": "make-up in progress",
+          "consegnato": "submitted",
+          "consegnato_auto": "submitted automatically",
+          "nonPubblicato": "not published",
+          "menoEsercizi": "{ottenuto} of {totale}, scaled to {pieno}",
+          "nonAssegnato": "not assigned",
+          "cella": "Exercise {n} of {nome}: {punti} of {max}",
+          "modificato": "edited",
+          "pubblica": "Publish results",
+          "pubblicaNuovi": "Publish the new ones",
+          "pubblicati": "Results published: students can see them.",
+          "pubblicaAiuto": "Students will see points, answers, marking and worked solution. They will not see the exits.",
+          "pannelloTitolo": "{nome} — Exercise {n}",
+          "pannelloDescrizione": "The student's answer with marking, expected answer and worked solution.",
+          "punti": "Points (0 to {max}, in steps of 0.25)",
+          "salva": "Save points",
+          "automatico": "Back to automatic marking",
+          "erroreValore": "Enter a number from 0 to {max}, in steps of 0.25 (for example 1.25).",
+          "erroreSalvataggio": "Could not save the points. Try again.",
+          "erroreDettaglio": "Could not load the answer.",
+          "chiudi": "Close"
+        },
+        "studente": {
+          "titolo": "Test results",
+          "totale": "{finale} / {totalePieno} points ({percentuale}%)",
+          "esercizio": "Exercise {numero} — {punti}/{puntiMax}",
+          "esercitati": "Practise again",
+          "esercitatiAiuto": "Practice does not change the test result.",
+          "nonPubblicati": "Results not published yet",
+          "nonPubblicatiSpiegazione": "Your test is submitted: you will see points and marking here when the teacher publishes them.",
+          "tornaHome": "Back to home"
+        },
+        "revisione": {
+          "rispostaAttesa": "Expected answer",
+          "svolgimento": "Worked solution",
+          "errore": "Could not load the exercise."
         }
       }
     },

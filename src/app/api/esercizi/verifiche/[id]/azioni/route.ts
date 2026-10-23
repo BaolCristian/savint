@@ -9,11 +9,12 @@ import {
   chiudiVerifica,
   type EsitoAzione,
 } from "@/lib/esercizi/verifiche";
+import { pubblicaRisultati } from "@/lib/esercizi/risultati-verifica";
 import { limiteVerifiche, rispostaAzione } from "../comune";
 
 // Le azioni del docente su una verifica: avviare, chiudere, dare minuti,
-// aprire e chiudere i recuperi. `pubblica` è nel contratto ma arriva con i
-// risultati: fino ad allora risponde 400.
+// aprire e chiudere i recuperi, pubblicare i risultati (a tutti o solo ad
+// alcuni studenti).
 const studentIds = z.array(z.string().min(1)).min(1);
 const bodySchema = z.discriminatedUnion("azione", [
   z.object({ azione: z.literal("avvia") }),
@@ -55,7 +56,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       esito = await chiudiRecupero(id, teacherId, corpo.studentIds);
       break;
     case "pubblica":
-      return NextResponse.json({ error: "non_disponibile" }, { status: 400 });
+      esito = await pubblicaRisultati(id, teacherId, corpo.studentIds);
+      break;
   }
   return rispostaAzione(esito);
 }

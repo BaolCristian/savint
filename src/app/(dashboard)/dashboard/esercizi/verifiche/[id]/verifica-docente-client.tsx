@@ -23,6 +23,7 @@ import type { MisurePdpValori } from "@/lib/esercizi/misure-pdp";
 import { MisurePdpDialog } from "../../classi/misure-pdp-dialog";
 import { ImpostazioniVerifica } from "./impostazioni-verifica";
 import { MinutiDialog, MonitoraggioVerifica } from "./monitoraggio-verifica";
+import { RisultatiVerifica } from "./risultati-verifica";
 
 /** Un valore come arriva da JSON: le date diventano stringhe ISO. */
 type Serializzato<T> = T extends Date
@@ -39,13 +40,14 @@ export type MonitoraggioJson = Serializzato<Monitoraggio>;
 export type VerificaJson = MonitoraggioJson["verifica"];
 /** Una riga di `GET .../misure`. */
 export type MisuraVerificaJson = { studentId: string; nome: string; misure: MisurePdpValori; personalizzate: boolean };
-/** Il corpo di `POST .../azioni` (senza `pubblica`, che arriva con i risultati). */
+/** Il corpo di `POST .../azioni`. */
 export type CorpoAzione =
   | { azione: "avvia" }
   | { azione: "chiudi" }
   | { azione: "minuti"; minuti: number; studentId?: string }
   | { azione: "recupero"; studentIds: string[] }
-  | { azione: "chiudiRecupero"; studentIds: string[] };
+  | { azione: "chiudiRecupero"; studentIds: string[] }
+  | { azione: "pubblica"; studentIds?: string[] };
 
 const OGNI_MS = 5_000;
 // Un secondo dopo l'avvio programmato: il server lo applica alla prima
@@ -65,7 +67,8 @@ const COLORE_STATO: Record<VerificaJson["stato"], string> = {
  * La pagina della verifica dal lato del docente. PREPARATA: impostazioni,
  * misure PDP per questa verifica, Avvia e Ritira. Da IN_CORSO in poi: il
  * monitoraggio (mai un punteggio), con minuti in più, chiusura e recuperi;
- * in CHIUSA/PUBBLICATA sotto c'è lo spazio dei risultati.
+ * in CHIUSA/PUBBLICATA sotto ci sono i risultati: correzione e
+ * pubblicazione.
  *
  * Si rilegge `GET` ogni 5 s mentre qualcuno può lavorare (in corso, o un
  * recupero aperto) e la scheda è visibile, subito dopo ogni azione e al
@@ -224,6 +227,10 @@ export function VerificaDocenteClient({ compitoId, iniziale, misureIniziali }: {
   const v = dati.verifica;
   const preparata = stato === "PREPARATA";
   const conRisultati = stato === "CHIUSA" || stato === "PUBBLICATA";
+  // I risultati si rileggono quando il monitoraggio dice che qualcosa è
+  // cambiato: lo stato della verifica o quello di una prova (un recupero
+  // consegnato).
+  const aggiornamentoRisultati = `${stato}|${dati.righe.map((r) => `${r.studentId}:${r.stato}:${r.recupero}`).join(",")}`;
 
   return (
     <div className="space-y-6">
@@ -380,12 +387,12 @@ export function VerificaDocenteClient({ compitoId, iniziale, misureIniziali }: {
         />
       )}
 
-      {conRisultati && (
-        // Lo spazio dei risultati: correzione e pubblicazione arrivano qui.
-        <section aria-labelledby="risultati-titolo" className="space-y-2 rounded-xl border border-dashed border-border p-4">
-          <h2 id="risultati-titolo" className="text-lg font-semibold">{t("risultati.titolo")}</h2>
-          <p className="text-sm text-muted-foreground">{t("risultati.segnaposto")}</p>
-        </section>
+      {conRisultati && !sparita && (
+        <RisultatiVerifica
+          compitoId={compitoId}
+          aggiornamento={aggiornamentoRisultati}
+          onPubblica={() => esegui({ azione: "pubblica" })}
+        />
       )}
 
       <Dialog open={dialogo !== null} onOpenChange={(aperta) => !aperta && setDialogo(null)}>

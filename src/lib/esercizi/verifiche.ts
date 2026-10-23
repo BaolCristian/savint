@@ -272,7 +272,7 @@ async function chiusuraDiDiritto(
 /** La verifica sincronizzata, se `teacherId` ha titolo sul compito (chi la
  * insegna o chi l'ha assegnata, come per i compiti). Null altrimenti: le
  * rotte ne fanno un 404, mai un 403. */
-async function verificaDelDocente(compitoId: string, teacherId: string, ora: Date): Promise<VerificaLetta | null> {
+export async function verificaDelDocente(compitoId: string, teacherId: string, ora: Date): Promise<VerificaLetta | null> {
   const v = await leggiVerifica(compitoId);
   if (!v || !(await haTitoloSulCompito(v, teacherId))) return null;
   return sincronizzaVerifica(compitoId, ora);
@@ -584,6 +584,34 @@ export async function salvaMisureVerifica(
   return salvate ? { ok: true } : STATO_NON_VALIDO;
 }
 
+/** Le uscite di una prova (eventi in ordine di tempo): quante e quanti
+ * secondi fuori in tutto. Un'uscita ancora aperta conta fino a ora, ma non
+ * oltre la consegna: chi esce e non torna più non resta «fuori» per giorni.
+ * Lo stesso conto nel monitoraggio e nei risultati. */
+export function usciteDellaProva(
+  eventi: { tipo: "USCITA" | "RIENTRO"; at: Date; durataMs: number | null }[],
+  consegnataAt: Date | null,
+  ora: Date,
+): { uscite: number; secondiFuori: number } {
+  let uscite = 0;
+  let fuoriMs = 0;
+  let uscitaAperta: Date | null = null;
+  for (const ev of eventi) {
+    if (ev.tipo === "USCITA") {
+      uscite++;
+      uscitaAperta = ev.at;
+    } else {
+      fuoriMs += ev.durataMs ?? 0;
+      uscitaAperta = null;
+    }
+  }
+  if (uscitaAperta) {
+    const fine = Math.min(ora.getTime(), consegnataAt?.getTime() ?? ora.getTime());
+    fuoriMs += Math.max(0, fine - uscitaAperta.getTime());
+  }
+  return { uscite, secondiFuori: Math.round(fuoriMs / 1000) };
+}
+
 export type RigaMonitoraggio = {
   studentId: string;
   nome: string;
@@ -683,24 +711,7 @@ export async function monitoraggioVerifica(
       ? Math.max(0, Math.round((scadenza.getTime() - ora.getTime()) / 1000))
       : null;
 
-    let uscite = 0;
-    let fuoriMs = 0;
-    let uscitaAperta: Date | null = null;
-    for (const ev of p?.eventi ?? []) {
-      if (ev.tipo === "USCITA") {
-        uscite++;
-        uscitaAperta = ev.at;
-      } else {
-        fuoriMs += ev.durataMs ?? 0;
-        uscitaAperta = null;
-      }
-    }
-    // Un'uscita ancora aperta conta fino a ora, ma non oltre la consegna:
-    // chi esce e non torna più non resta «fuori» per giorni.
-    if (uscitaAperta) {
-      const fine = Math.min(ora.getTime(), p?.consegnataAt?.getTime() ?? ora.getTime());
-      fuoriMs += Math.max(0, fine - uscitaAperta.getTime());
-    }
+    const { uscite, secondiFuori } = usciteDellaProva(p?.eventi ?? [], p?.consegnataAt ?? null, ora);
 
     righe.push({
       studentId: i.studentId,
@@ -714,7 +725,7 @@ export async function monitoraggioVerifica(
       tempoExtraPct: misure.tempoExtraPct,
       minutiExtra: p?.minutiExtra ?? 0,
       uscite,
-      secondiFuori: Math.round(fuoriMs / 1000),
+      secondiFuori,
       ultimoSalvataggioAt: p?.ultimoSalvataggioAt ?? null,
       recuperabile: recuperabile(provaPerRecupero(p), p ? risposte.get(p.id) ?? 0 : 0),
     });

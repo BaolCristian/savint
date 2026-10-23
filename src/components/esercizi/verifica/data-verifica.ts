@@ -20,3 +20,10 @@ export function formattaOra(quando: Date, locale: "it" | "en"): string {
     timeZone: "Europe/Rome",
   });
 }
+
+/** Un numero di punti come si legge nella lingua di chi guarda (1,25 in
+ * italiano), al massimo due decimali: risultati del docente e dello
+ * studente. */
+export function formattaPunti(n: number, locale: "it" | "en"): string {
+  return new Intl.NumberFormat(locale === "en" ? "en-GB" : "it-IT", { maximumFractionDigits: 2 }).format(n);
+}
