@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import { extname, join } from "path";
 import crypto from "crypto";
 
@@ -70,5 +70,16 @@ export async function leggiFormulario(nome: string): Promise<{ byte: Uint8Array;
     return { byte: new Uint8Array(await readFile(join(cartellaFormulari(), nome))), tipo };
   } catch {
     return null;
+  }
+}
+
+/** Esiste un formulario con quel nome? Solo i nomi generati qui, e senza
+ * leggere il file (fino a 10 MB): basta che ci sia e che sia un file. */
+export async function esisteFormulario(nome: string): Promise<boolean> {
+  if (!NOME_FILE_FORMULARIO.test(nome)) return false;
+  try {
+    return (await stat(join(cartellaFormulari(), nome))).isFile();
+  } catch {
+    return false;
   }
 }

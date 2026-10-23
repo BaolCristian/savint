@@ -156,6 +156,9 @@ describe("assegnaCompito — tipo VERIFICA", () => {
     // Senza i dati della verifica, o con le date di un compito.
     expect(await assegnaCompito(input({ verifica: undefined }))).toMatchObject({ ok: false, motivo: "verifica_non_valida" });
     expect(await assegnaCompito(input({ dueAt: fra(600) }))).toMatchObject({ ok: false, motivo: "verifica_non_valida" });
+    // Anche una scadenza nel passato: su una verifica il problema è che c'è.
+    expect(await assegnaCompito(input({ dueAt: fra(-600) }))).toMatchObject({ ok: false, motivo: "verifica_non_valida" });
+    expect(await assegnaCompito(input({ opensAt: fra(60), dueAt: fra(30) }))).toMatchObject({ ok: false, motivo: "verifica_non_valida" });
     expect(await righe()).toEqual(prima);
   });
 

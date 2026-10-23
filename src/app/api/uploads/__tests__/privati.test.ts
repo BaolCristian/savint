@@ -10,6 +10,7 @@ import { GET } from "@/app/api/uploads/[...path]/route";
 const radice = mkdtempSync(path.join(tmpdir(), "uploads-privati-"));
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const NOME = "0f3c2a1e-1b2c-4d5e-8f90-a1b2c3d4e5f6.png";
+const appRootPrima = process.env.APP_ROOT;
 
 const get = (segmenti: string[]) => GET({} as never, { params: Promise.resolve({ path: segmenti }) });
 
@@ -22,7 +23,8 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  delete process.env.APP_ROOT;
+  if (appRootPrima === undefined) delete process.env.APP_ROOT;
+  else process.env.APP_ROOT = appRootPrima;
   rmSync(radice, { recursive: true, force: true });
 });
 

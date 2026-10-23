@@ -19,7 +19,7 @@ import {
   type BacinoCongelato,
 } from "./versioni-compito";
 import { comeDocente, type Utente } from "./accesso";
-import { leggiFormulario } from "./formulari";
+import { esisteFormulario } from "./formulari";
 import { posizioniDellaProva, type LayoutBlocco } from "./verifica-regole";
 
 type MotivoDate = "scadenza_prima_apertura" | "scadenza_nel_passato";
@@ -134,9 +134,9 @@ function senzaCampiVerifica(b: Blocco): Blocco {
   }
 }
 
-/** I controlli propri di una verifica, prima di qualunque lettura pesante:
- * niente date da compito (una verifica ha avvio e durata, non apertura e
- * scadenza), durata in [5, 300] minuti, avvio programmato nel futuro,
+/** I controlli propri di una verifica, prima di qualunque lettura pesante
+ * (le date da compito le rifiuta già `assegnaCompito`, prima di tutto):
+ * dati della verifica presenti, durata in [5, 300] minuti, avvio programmato nel futuro,
  * qualcosa da fare anche per chi ha «meno esercizi», formulario esistente.
  *
  * Il controllo PDP guarda il layout: per un blocco scelti la posizione k è
@@ -146,7 +146,7 @@ async function rifiutoVerifica(
   i: InputAssegna,
 ): Promise<"verifica_non_valida" | "pdp_senza_esercizi" | "formulario_non_trovato" | null> {
   const v = i.verifica;
-  if (!v || i.opensAt !== undefined || i.dueAt !== undefined) return "verifica_non_valida";
+  if (!v) return "verifica_non_valida";
   if (!Number.isInteger(v.durataMinuti) || v.durataMinuti < DURATA_MIN || v.durataMinuti > DURATA_MAX) {
     return "verifica_non_valida";
   }
@@ -158,7 +158,7 @@ async function rifiutoVerifica(
   );
   if (posizioniDellaProva(layout, idPerPosizione, true).length === 0) return "pdp_senza_esercizi";
 
-  if (v.formularioFile !== undefined && !(await leggiFormulario(v.formularioFile))) return "formulario_non_trovato";
+  if (v.formularioFile !== undefined && !(await esisteFormulario(v.formularioFile))) return "formulario_non_trovato";
   return null;
 }
 
@@ -382,6 +382,10 @@ export async function assegnaCompito(input: InputAssegna): Promise<EsitoAssegnaC
   const verifica = input.tipo === "VERIFICA";
   // Un compito normale ignora i campi della verifica, nei blocchi e fuori.
   const i: InputAssegna = verifica ? input : { ...input, blocchi: input.blocchi.map(senzaCampiVerifica), verifica: undefined };
+
+  // Una verifica ha avvio e durata, non apertura e scadenza: date da compito
+  // su una verifica sono un errore suo, prima di guardare se sono sensate.
+  if (verifica && (i.opensAt !== undefined || i.dueAt !== undefined)) return { ok: false, motivo: "verifica_non_valida" };
 
   const date = motivoDateNonValide(i.opensAt ?? null, i.dueAt ?? null, true);
   if (date) return { ok: false, motivo: "date_non_valide", dettaglio: date };

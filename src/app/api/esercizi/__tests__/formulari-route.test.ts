@@ -10,9 +10,10 @@ vi.mock("@/lib/rate-limit/db-rate-limit", () => ({ checkRateLimit: vi.fn(async (
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { POST } from "@/app/api/esercizi/verifiche/formulari/route";
-import { leggiFormulario, NOME_FILE_FORMULARIO } from "@/lib/esercizi/formulari";
+import { esisteFormulario, leggiFormulario, NOME_FILE_FORMULARIO } from "@/lib/esercizi/formulari";
 
 const radice = mkdtempSync(path.join(tmpdir(), "formulari-verifica-"));
+const appRootPrima = process.env.APP_ROOT;
 const PDF = new TextEncoder().encode("%PDF-1.4\n1 0 obj <<>> endobj\n%%EOF\n");
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 
@@ -29,7 +30,8 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-  delete process.env.APP_ROOT;
+  if (appRootPrima === undefined) delete process.env.APP_ROOT;
+  else process.env.APP_ROOT = appRootPrima;
   rmSync(radice, { recursive: true, force: true });
 });
 
@@ -92,5 +94,15 @@ describe("leggiFormulario", () => {
   it("null per un nome fuori forma o un file che non c'è", async () => {
     expect(await leggiFormulario("../../etc/passwd")).toBeNull();
     expect(await leggiFormulario("0f3c2a1e-1b2c-4d5e-8f90-a1b2c3d4e5f6.pdf")).toBeNull();
+  });
+});
+
+describe("esisteFormulario", () => {
+  it("vero solo per un file caricato con un nome generato", async () => {
+    const r = await POST(richiesta(new File([PDF], "f.pdf", { type: "application/pdf" })));
+    const { file } = (await r.json()) as { file: string };
+    expect(await esisteFormulario(file)).toBe(true);
+    expect(await esisteFormulario("0f3c2a1e-1b2c-4d5e-8f90-a1b2c3d4e5f6.pdf")).toBe(false);
+    expect(await esisteFormulario("../../etc/passwd")).toBe(false);
   });
 });
