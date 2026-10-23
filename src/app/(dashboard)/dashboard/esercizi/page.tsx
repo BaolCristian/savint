@@ -108,9 +108,20 @@ export default async function Page() {
             <ul className="divide-y divide-border border-y border-border">
               {compiti.map((c) => (
                 <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5 text-sm">
-                  <Link href={`/dashboard/esercizi/compiti/${c.id}`} className="font-medium hover:text-brand-blue hover:underline">
-                    {c.batteria} — {c.classe}
-                  </Link>
+                  {/* Una verifica ha la sua pagina, come nell'elenco dei compiti. */}
+                  <span className="flex min-w-0 items-baseline gap-2">
+                    {c.tipo === "VERIFICA" && (
+                      <span className="rounded bg-brand-magenta/10 px-1.5 py-0.5 text-xs font-medium text-brand-magenta">
+                        {tCompiti("etichettaVerifica")}
+                      </span>
+                    )}
+                    <Link
+                      href={c.tipo === "VERIFICA" ? `/dashboard/esercizi/verifiche/${c.id}` : `/dashboard/esercizi/compiti/${c.id}`}
+                      className="font-medium hover:text-brand-blue hover:underline"
+                    >
+                      {c.batteria} — {c.classe}
+                    </Link>
+                  </span>
                   <span className="text-muted-foreground">
                     {c.dueAt ? tCompiti("compitoScadenza", { quando: c.dueAt.toLocaleDateString(locale) }) : tCompiti("nessunaScadenza")}
                     {" · "}

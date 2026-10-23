@@ -47,6 +47,7 @@ function riepilogo(p: Partial<Riepilogo> = {}): Riepilogo {
 type Risposta = { status: number; body: unknown };
 let risposteEstrai: ((corpo: Record<string, unknown>) => Risposta | Promise<Risposta>) | null;
 let risposteAssegna: Risposta[];
+let rispostaFormulario: Risposta;
 const chiamate = (url: string) =>
   vi.mocked(global.fetch).mock.calls.filter(([u]) => String(u) === url).map(([, init]) => JSON.parse(String(init!.body)));
 
@@ -54,7 +55,10 @@ beforeEach(() => {
   push.mockReset();
   risposteEstrai = () => ({ status: 200, body: riepilogo() });
   risposteAssegna = [{ status: 201, body: { compitoId: "comp9" } }];
+  rispostaFormulario = { status: 201, body: { file: "11111111-2222-3333-4444-555555555555.pdf" } };
   global.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+    // Il formulario va come multipart (FormData), non come JSON.
+    if (String(url) === "/api/esercizi/verifiche/formulari") return new Response(JSON.stringify(rispostaFormulario.body), { status: rispostaFormulario.status });
     const corpo = JSON.parse(String(init?.body ?? "{}"));
     const r = String(url) === "/api/esercizi/compiti/estrai" ? await risposteEstrai!(corpo) : risposteAssegna.shift()!;
     return new Response(JSON.stringify(r.body), { status: r.status });
@@ -393,5 +397,227 @@ describe("NuovoCompitoClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Aggiungi da un argomento" }));
     const menu = screen.getByRole("group", { name: "+ Aggiungi da un argomento" });
     expect(within(menu).getByRole("button", { name: /Percentuali — 4 disponibili/ })).toBeInTheDocument();
+  });
+});
+
+// Modalità verifica (Task 7): lo stesso Nuovo compito, con l'interruttore
+// Compito / Verifica in cima. Una verifica ha durata e avvio al posto delle
+// date, punti e misure PDP sui blocchi, formulario e strumenti.
+describe("NuovoCompitoClient — modalità verifica", () => {
+  const crea = () => screen.getByRole("button", { name: /^Crea la verifica/ });
+  const passaAVerifica = () => fireEvent.click(screen.getByRole("radio", { name: "Verifica" }));
+  const scriviDurata = (minuti: string) => fireEvent.change(screen.getByLabelText("Durata (minuti)"), { target: { value: minuti } });
+
+  it("di default è un compito: nessun campo della verifica", async () => {
+    rendi();
+    await attendiRiepilogo();
+    expect(screen.getByRole("radio", { name: "Compito" })).toBeChecked();
+    expect(screen.queryByLabelText("Durata (minuti)")).toBeNull();
+    expect(screen.queryByLabelText(/^Punti per esercizio/)).toBeNull();
+    expect(screen.queryByText(/Totale della verifica/)).toBeNull();
+  });
+
+  it("in modo Verifica le date spariscono e compare la durata; senza durata Crea è disabilitato", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    expect(screen.queryByLabelText("Si apre")).toBeNull();
+    expect(screen.queryByLabelText("Scade")).toBeNull();
+    expect(screen.getByLabelText("Durata (minuti)")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "quando premo Avvia" })).toBeChecked();
+    expect(crea()).toBeDisabled();
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled());
+    scriviDurata("3");
+    expect(crea()).toBeDisabled();
+  });
+
+  it("Crea manda tipo, verifica e i blocchi con punti e quantiPdp, poi apre la pagina della verifica", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.change(screen.getByLabelText("Quanti esercizi prendere da Percentuali 2ª"), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText("Punti per esercizio di Percentuali 2ª"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Quanti per gli studenti con meno esercizi da Percentuali 2ª"), { target: { value: "3" } });
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled(), { timeout: 2000 });
+    fireEvent.click(crea());
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard/esercizi/verifiche/comp9"));
+    expect(chiamate("/api/esercizi/compiti")[0]).toEqual({
+      classeId: "c1",
+      blocchi: [{ tipo: "raccolta", contenitoreId: "r1", quanti: 5, punti: 2, quantiPdp: 3 }],
+      modo: "CLASSE",
+      seme: "s0",
+      versioniViste: ["v1", "v2"],
+      tipo: "VERIFICA",
+      verifica: { durataMinuti: 50, calcolatrice: "SOLO_PDP", formulario: "NESSUNO" },
+    });
+  });
+
+  it("i punti e i quanti per chi ha meno esercizi non cambiano il riepilogo chiesto a /estrai", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.change(screen.getByLabelText("Punti per esercizio di Percentuali 2ª"), { target: { value: "2" } });
+    await waitFor(() => expect(screen.getByText("Totale della verifica: 4 punti")).toBeInTheDocument());
+    for (const corpo of chiamate("/api/esercizi/compiti/estrai")) expect(corpo.blocchi).toEqual([{ tipo: "raccolta", contenitoreId: "r1", quanti: 2 }]);
+  });
+
+  it("«quanti per chi ha meno esercizi» segue quanti finché il docente non lo tocca", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    const quanti = screen.getByLabelText("Quanti esercizi prendere da Percentuali 2ª");
+    const pdp = screen.getByLabelText("Quanti per gli studenti con meno esercizi da Percentuali 2ª");
+    expect(pdp).toHaveValue(2);
+    fireEvent.change(quanti, { target: { value: "4" } });
+    expect(pdp).toHaveValue(4);
+    fireEvent.change(pdp, { target: { value: "1" } });
+    fireEvent.change(quanti, { target: { value: "6" } });
+    expect(pdp).toHaveValue(1);
+  });
+
+  it("totale dei punti e quanti esercizi per chi ha meno esercizi", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.change(screen.getByLabelText("Quanti esercizi prendere da Percentuali 2ª"), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText("Punti per esercizio di Percentuali 2ª"), { target: { value: "2" } });
+    expect(screen.getByText("Totale della verifica: 10 punti")).toBeInTheDocument();
+    expect(screen.getByText("Con meno esercizi: 5 esercizi")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Punti per esercizio di Percentuali 2ª"), { target: { value: "1.5" } });
+    expect(screen.getByText("Totale della verifica: 7,5 punti")).toBeInTheDocument();
+  });
+
+  it("con zero esercizi per chi ha meno esercizi: avviso e Crea disabilitato", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled());
+    fireEvent.change(screen.getByLabelText("Quanti per gli studenti con meno esercizi da Percentuali 2ª"), { target: { value: "0" } });
+    expect(screen.getByText("Con meno esercizi: 0 esercizi")).toBeInTheDocument();
+    expect(screen.getByText(/non avrebbe nessun esercizio/)).toBeInTheDocument();
+    expect(crea()).toBeDisabled();
+  });
+
+  it("un blocco scelto a mano: la spunta «non per PDP» manda nonPerPdp", async () => {
+    rendi({ iniziale: { ...PROPS.iniziale, blocchi: [{ tipo: "scelti", esercizioIds: ["e1", "e2"] }] } });
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.click(screen.getByLabelText("Il punto di pareggio: non per PDP"));
+    expect(screen.getByText("Con meno esercizi: 1 esercizio")).toBeInTheDocument();
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled());
+    fireEvent.click(crea());
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(chiamate("/api/esercizi/compiti")[0].blocchi).toEqual([
+      { tipo: "scelti", esercizioIds: ["e1", "e2"], punti: 1, nonPerPdp: ["e2"] },
+    ]);
+  });
+
+  it("«a un orario» manda avvioProgrammatoAt come ISO; senza orario Crea è disabilitato", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    scriviDurata("60");
+    fireEvent.click(screen.getByRole("radio", { name: "a un orario" }));
+    expect(crea()).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Orario di avvio"), { target: { value: "2099-05-04T08:30" } });
+    await waitFor(() => expect(crea()).toBeEnabled());
+    fireEvent.click(crea());
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(chiamate("/api/esercizi/compiti")[0].verifica).toEqual({
+      durataMinuti: 60,
+      avvioProgrammatoAt: new Date("2099-05-04T08:30").toISOString(),
+      calcolatrice: "SOLO_PDP",
+      formulario: "NESSUNO",
+    });
+  });
+
+  it("caricare il formulario lo manda subito, abilita il suo strumento e porta formularioFile nel corpo", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    expect(screen.getByLabelText("Formulario")).toBeDisabled();
+    const file = new File(["%PDF-1.4"], "formule.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Formulario (facoltativo)"), { target: { files: [file] } });
+    expect(await screen.findByText("formule.pdf")).toBeInTheDocument();
+    const upload = vi.mocked(global.fetch).mock.calls.find(([u]) => String(u) === "/api/esercizi/verifiche/formulari")!;
+    expect((upload[1]!.body as FormData).get("file")).toBeInstanceOf(File);
+    expect(screen.getByLabelText("Formulario")).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("Calcolatrice"), { target: { value: "TUTTI" } });
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled());
+    fireEvent.click(crea());
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(chiamate("/api/esercizi/compiti")[0].verifica).toEqual({
+      durataMinuti: 50,
+      calcolatrice: "TUTTI",
+      formulario: "SOLO_PDP",
+      formularioFile: "11111111-2222-3333-4444-555555555555.pdf",
+    });
+  });
+
+  it("«Togli» toglie il formulario; un file non ammesso lo dice", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.change(screen.getByLabelText("Formulario (facoltativo)"), { target: { files: [new File(["x"], "f.pdf", { type: "application/pdf" })] } });
+    fireEvent.click(await screen.findByRole("button", { name: "Togli" }));
+    expect(screen.queryByText("f.pdf")).toBeNull();
+    expect(screen.getByLabelText("Formulario")).toBeDisabled();
+    rispostaFormulario = { status: 400, body: { error: "troppo_grande" } };
+    fireEvent.change(screen.getByLabelText("Formulario (facoltativo)"), { target: { files: [new File(["x"], "g.pdf", { type: "application/pdf" })] } });
+    expect(await screen.findByText("Il file è troppo grande: al massimo 10 MB.")).toBeInTheDocument();
+  });
+
+  it("tornando a Compito il corpo è quello di un compito: niente tipo, verifica, punti", async () => {
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    fireEvent.change(screen.getByLabelText("Punti per esercizio di Percentuali 2ª"), { target: { value: "2" } });
+    scriviDurata("50");
+    fireEvent.click(screen.getByRole("radio", { name: "Compito" }));
+    fireEvent.click(assegna());
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard/esercizi/compiti/comp9"));
+    expect(chiamate("/api/esercizi/compiti")[0]).toEqual({
+      classeId: "c1",
+      blocchi: [{ tipo: "raccolta", contenitoreId: "r1", quanti: 2 }],
+      modo: "CLASSE",
+      seme: "s0",
+      versioniViste: ["v1", "v2"],
+    });
+  });
+
+  it("parte in modo Verifica con i campi precompilati dai blocchi (modello di una verifica)", async () => {
+    rendi({
+      iniziale: {
+        ...PROPS.iniziale,
+        tipo: "VERIFICA",
+        blocchi: [{ tipo: "raccolta", contenitoreId: "r1", quanti: 4, punti: 2.5, quantiPdp: 2 }],
+      },
+    });
+    await attendiRiepilogo();
+    expect(screen.getByRole("radio", { name: "Verifica" })).toBeChecked();
+    expect(screen.getByLabelText("Punti per esercizio di Percentuali 2ª")).toHaveValue(2.5);
+    expect(screen.getByLabelText("Quanti per gli studenti con meno esercizi da Percentuali 2ª")).toHaveValue(2);
+    expect(screen.getByText("Totale della verifica: 10 punti")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["verifica_non_valida", /Controlla la durata/],
+    ["pdp_senza_esercizi", /non avrebbe nessun esercizio/],
+    ["formulario_non_trovato", /Il formulario non si trova più/],
+  ])("l'errore %s ha il suo messaggio", async (error, testo) => {
+    risposteAssegna = [{ status: 400, body: { error } }];
+    rendi();
+    await attendiRiepilogo();
+    passaAVerifica();
+    scriviDurata("50");
+    await waitFor(() => expect(crea()).toBeEnabled());
+    fireEvent.click(crea());
+    expect(await screen.findByRole("alert")).toHaveTextContent(testo);
+    expect(push).not.toHaveBeenCalled();
   });
 });

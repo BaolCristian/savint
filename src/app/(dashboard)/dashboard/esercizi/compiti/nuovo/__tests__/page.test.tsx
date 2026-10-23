@@ -122,6 +122,30 @@ describe("pagina Nuovo compito", () => {
     expect(screen.getByLabelText("Quanti esercizi prendere da Percentuali 2ª")).toHaveValue(2);
   });
 
+  it("?tipo=verifica apre la pagina in modo Verifica", async () => {
+    await rendi({ tipo: "verifica" });
+    expect(screen.getByRole("radio", { name: "Verifica" })).toBeChecked();
+    expect(screen.getByLabelText("Durata (minuti)")).toBeInTheDocument();
+  });
+
+  it("senza ?tipo= è un compito", async () => {
+    await rendi();
+    expect(screen.getByRole("radio", { name: "Compito" })).toBeChecked();
+    expect(screen.queryByLabelText("Durata (minuti)")).toBeNull();
+  });
+
+  it("?modello= di una verifica (regole con punti) apre in modo Verifica con i campi precompilati", async () => {
+    vi.mocked(caricaModello).mockResolvedValue({
+      id: "m2",
+      nome: "Verifica equazioni",
+      blocchi: [{ tipo: "raccolta", contenitoreId: "r1", quanti: 4, punti: 2, quantiPdp: 3 }],
+    });
+    await rendi({ modello: "m2", classe: "c1" });
+    expect(screen.getByRole("radio", { name: "Verifica" })).toBeChecked();
+    expect(screen.getByLabelText("Punti per esercizio di Percentuali 2ª")).toHaveValue(2);
+    expect(screen.getByLabelText("Quanti per gli studenti con meno esercizi da Percentuali 2ª")).toHaveValue(3);
+  });
+
   it("?classe= sceglie la classe; senza, con più classi, nessuna è scelta", async () => {
     await rendi({ classe: "c2" });
     expect(classeScelta()).toBe("c2");

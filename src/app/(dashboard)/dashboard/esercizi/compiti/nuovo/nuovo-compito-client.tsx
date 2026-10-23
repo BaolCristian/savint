@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { AnteprimaCompito } from "@/components/esercizi/compito/anteprima-compito";
 import { withBasePath } from "@/lib/base-path";
 import type { Blocco, Riepilogo } from "@/lib/esercizi/estrazione";
+import { DURATA_MAX, DURATA_MIN, durataValida } from "@/lib/esercizi/verifica-regole";
 
 export type ClasseOpzione = { id: string; nome: string; anno: number | null };
 export type ArgomentoOpzione = { argomento: string; quanti: number };
@@ -25,8 +26,10 @@ export type NuovoCompitoProps = {
   raccolte: RaccoltaOpzione[];
   /** Il catalogo di "+ scegli esercizi" (`eserciziAssegnabili`). */
   catalogo: EsercizioOpzione[];
-  /** La precompilazione dai parametri della pagina (`?classe=&raccolta=…`). */
-  iniziale: { classeId: string; blocchi: Blocco[]; modello: { id: string; nome: string } | null };
+  /** La precompilazione dai parametri della pagina (`?classe=&raccolta=…`);
+   * `tipo` dice se la pagina parte in modo Verifica (`?tipo=verifica`, o un
+   * modello salvato da una verifica). */
+  iniziale: { classeId: string; blocchi: Blocco[]; modello: { id: string; nome: string } | null; tipo?: Tipo };
   /** Il primo seme viene dal server: lo stesso HTML lato server e lato
    * client, e una prova può conoscerlo. */
   semeIniziale: string;
@@ -34,14 +37,22 @@ export type NuovoCompitoProps = {
 };
 
 type Modo = "CLASSE" | "STUDENTE";
+type Tipo = "COMPITO" | "VERIFICA";
+type ModoStrumento = "NESSUNO" | "SOLO_PDP" | "TUTTI";
 
 /** Un blocco come lo maneggia la pagina: il `quanti` resta il testo del
  * campo (un campo svuotato mentre il docente riscrive il numero non deve
- * diventare 0 né tornare indietro da solo); `chiave` per React. */
+ * diventare 0 né tornare indietro da solo); `chiave` per React.
+ *
+ * I campi della verifica ci sono sempre, ma partono solo in modo Verifica
+ * (`campiVerifica`): `punti` è il testo del campo; `quantiPdp` assente vuol
+ * dire "segue quanti", finché il docente non lo tocca; `nonPerPdp` sono gli
+ * scelti esclusi per chi ha la misura «meno esercizi». */
+type CampiUI = { punti: string };
 type BloccoUI =
-  | { chiave: string; tipo: "argomento"; argomento: string; anno?: number; difficoltaMax?: number; quanti: string }
-  | { chiave: string; tipo: "raccolta"; contenitoreId: string; quanti: string }
-  | { chiave: string; tipo: "scelti"; esercizioIds: string[] };
+  | ({ chiave: string; tipo: "argomento"; argomento: string; anno?: number; difficoltaMax?: number; quanti: string; quantiPdp?: string } & CampiUI)
+  | ({ chiave: string; tipo: "raccolta"; contenitoreId: string; quanti: string; quantiPdp?: string } & CampiUI)
+  | ({ chiave: string; tipo: "scelti"; esercizioIds: string[]; nonPerPdp: string[] } & CampiUI);
 
 /** Il risultato dell'ultima richiesta di riepilogo, con la chiave (il corpo
  * della richiesta) a cui risponde: un riepilogo vale solo se la sua chiave
@@ -54,6 +65,10 @@ const QUANTI_PREDEFINITO = 5;
 const DEBOUNCE_MS = 400;
 const RISULTATI_MAX = 20;
 const NOME_MAX = 120;
+const PUNTI_PREDEFINITI = "1";
+const PUNTI_MIN = 0.5;
+const PUNTI_MAX = 100;
+const STRUMENTI: ModoStrumento[] = ["NESSUNO", "SOLO_PDP", "TUTTI"];
 
 function nuovoSeme(): string {
   return Math.random().toString(36).slice(2, 12);
@@ -72,8 +87,60 @@ function quantiPredefinito(disponibili: number | undefined): string {
 }
 
 function versoUI(b: Blocco): BloccoUI {
-  if (b.tipo === "scelti") return { ...b, esercizioIds: [...b.esercizioIds], chiave: nuovaChiave() };
-  return { ...b, quanti: String(b.quanti), chiave: nuovaChiave() };
+  const chiave = nuovaChiave();
+  const punti = b.punti != null ? String(b.punti) : PUNTI_PREDEFINITI;
+  if (b.tipo === "scelti") {
+    return { tipo: "scelti", esercizioIds: [...b.esercizioIds], nonPerPdp: [...(b.nonPerPdp ?? [])], punti, chiave };
+  }
+  const quantiPdp = b.quantiPdp != null ? String(b.quantiPdp) : undefined;
+  if (b.tipo === "raccolta") return { tipo: "raccolta", contenitoreId: b.contenitoreId, quanti: String(b.quanti), quantiPdp, punti, chiave };
+  return {
+    tipo: "argomento",
+    argomento: b.argomento,
+    ...(b.anno != null ? { anno: b.anno } : {}),
+    ...(b.difficoltaMax != null ? { difficoltaMax: b.difficoltaMax } : {}),
+    quanti: String(b.quanti),
+    quantiPdp,
+    punti,
+    chiave,
+  };
+}
+
+/** I punti scritti nel campo, o `null` se non valgono: da 0,5 a 100, a
+ * mezzi punti (le regole di `blocchi-corpo.ts`). Si accetta anche la
+ * virgola. */
+function puntiDa(testo: string): number | null {
+  const t = testo.trim().replace(",", ".");
+  if (!/^\d+(\.\d+)?$/.test(t)) return null;
+  const n = Number(t);
+  return n >= PUNTI_MIN && n <= PUNTI_MAX && Number.isInteger(n * 2) ? n : null;
+}
+
+/** Il blocco con i campi della verifica, o `null` se uno non vale. `base`
+ * è il blocco già convalidato da `versoBlocco`. */
+function campiVerifica(b: BloccoUI, base: Blocco): Blocco | null {
+  const punti = puntiDa(b.punti);
+  if (punti === null) return null;
+  if (base.tipo === "scelti") {
+    if (b.tipo !== "scelti") return null;
+    const nonPerPdp = b.nonPerPdp.filter((id) => base.esercizioIds.includes(id));
+    return { ...base, punti, ...(nonPerPdp.length > 0 ? { nonPerPdp } : {}) };
+  }
+  if (b.tipo === "scelti") return null;
+  if (b.quantiPdp === undefined) return { ...base, punti, quantiPdp: base.quanti };
+  if (!/^\d+$/.test(b.quantiPdp.trim())) return null;
+  const quantiPdp = Number(b.quantiPdp);
+  return quantiPdp <= base.quanti ? { ...base, punti, quantiPdp } : null;
+}
+
+/** Quanti esercizi il blocco mette nella verifica, e quanti per chi ha la
+ * misura «meno esercizi» (come `layoutDaBlocchi` sul server). */
+function conteggiVerifica(b: Blocco): { tutti: number; pdp: number } {
+  if (b.tipo === "scelti") {
+    const esclusi = new Set(b.nonPerPdp ?? []).size;
+    return { tutti: b.esercizioIds.length, pdp: b.esercizioIds.length - esclusi };
+  }
+  return { tutti: b.quanti, pdp: b.quantiPdp ?? b.quanti };
 }
 
 /** Il blocco da mandare al server, o `null` se il suo numero non è valido
@@ -125,6 +192,7 @@ export function NuovoCompitoClient({
   locale,
 }: NuovoCompitoProps) {
   const t = useTranslations("esercizi.nuovoCompito");
+  const tV = useTranslations("esercizi.verifica.creazione");
   const router = useRouter();
 
   const [classeId, setClasseId] = useState(iniziale.classeId);
@@ -143,6 +211,18 @@ export function NuovoCompitoClient({
   const [invio, setInvio] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [avviso, setAvviso] = useState<string | null>(null);
+  // Modalità verifica: durata e avvio al posto delle date, formulario e
+  // strumenti. In modo Compito nessuno di questi parte.
+  const [tipo, setTipo] = useState<Tipo>(iniziale.tipo ?? "COMPITO");
+  const [durata, setDurata] = useState("");
+  const [avvioOrario, setAvvioOrario] = useState(false);
+  const [orario, setOrario] = useState("");
+  const [calcolatrice, setCalcolatrice] = useState<ModoStrumento>("SOLO_PDP");
+  const [modoFormulario, setModoFormulario] = useState<ModoStrumento>("SOLO_PDP");
+  const [formulario, setFormulario] = useState<{ file: string; nome: string } | null>(null);
+  const [caricaFormularioInCorso, setCaricaFormularioInCorso] = useState(false);
+  const [erroreFormulario, setErroreFormulario] = useState<string | null>(null);
+  const verifica = tipo === "VERIFICA";
 
   const classe = classi.find((c) => c.id === classeId) ?? null;
   const titoli = useMemo(() => new Map(catalogo.map((e) => [e.id, e.titolo])), [catalogo]);
@@ -164,6 +244,24 @@ export function NuovoCompitoClient({
     const validi = blocchi.map(versoBlocco);
     return validi.every((b): b is Blocco => b !== null) ? validi : null;
   }, [blocchi]);
+
+  // I blocchi con punti e misure PDP, per creare una verifica: tutti validi
+  // o nessuno, come `daMandare`. Il riepilogo (`/estrai`) non li riceve: non
+  // cambiano l'estrazione, e cambiarli non deve rifare la richiesta.
+  const daMandareVerifica = useMemo(() => {
+    if (!daMandare) return null;
+    const pieni = blocchi.map((b, i) => campiVerifica(b, daMandare[i]!));
+    return pieni.every((b): b is Blocco => b !== null) ? pieni : null;
+  }, [blocchi, daMandare]);
+  const conteggi = (daMandareVerifica ?? []).map(conteggiVerifica);
+  const totalePunti = (daMandareVerifica ?? []).reduce((somma, b, i) => somma + conteggi[i]!.tutti * (b.punti ?? 1), 0);
+  const conMeno = conteggi.reduce((somma, c) => somma + c.pdp, 0);
+  const durataMinuti = /^\d+$/.test(durata.trim()) ? Number(durata) : NaN;
+  const durataOk = durataValida(durataMinuti);
+  const orarioAvvio = avvioOrario && orario ? new Date(orario) : null;
+  const avvioOk = !avvioOrario || (orarioAvvio !== null && !Number.isNaN(orarioAvvio.getTime()));
+  const verificaPronta =
+    !verifica || (daMandareVerifica !== null && conMeno > 0 && durataOk && avvioOk && !caricaFormularioInCorso);
 
   const corpoRiepilogo =
     classe && daMandare && daMandare.length > 0
@@ -223,7 +321,7 @@ export function NuovoCompitoClient({
   const modoMostrato = corpoMostrato?.modo ?? modo;
   const pronto = aggiornato && riepilogo !== null && riepilogo.sufficiente && riepilogo.esercizi.length > 0;
   const assegnabile = classe !== null && aggiornato && riepilogo !== null && riepilogo.sufficiente && !invio
-    && (!salvaModello || nomeModello.trim().length > 0);
+    && (!salvaModello || nomeModello.trim().length > 0) && verificaPronta;
 
   function cambiaBlocchi(f: (prima: BloccoUI[]) => BloccoUI[]) {
     setBlocchi(f);
@@ -232,12 +330,12 @@ export function NuovoCompitoClient({
   }
 
   function aggiungiArgomento(o: ArgomentoOpzione) {
-    cambiaBlocchi((p) => [...p, { chiave: nuovaChiave(), tipo: "argomento", argomento: o.argomento, quanti: quantiPredefinito(o.quanti) }]);
+    cambiaBlocchi((p) => [...p, { chiave: nuovaChiave(), tipo: "argomento", argomento: o.argomento, quanti: quantiPredefinito(o.quanti), punti: PUNTI_PREDEFINITI }]);
     setMenu(null);
   }
 
   function aggiungiRaccolta(r: RaccoltaOpzione) {
-    cambiaBlocchi((p) => [...p, { chiave: nuovaChiave(), tipo: "raccolta", contenitoreId: r.id, quanti: quantiPredefinito(r.esercizi) }]);
+    cambiaBlocchi((p) => [...p, { chiave: nuovaChiave(), tipo: "raccolta", contenitoreId: r.id, quanti: quantiPredefinito(r.esercizi), punti: PUNTI_PREDEFINITI }]);
     setMenu(null);
   }
 
@@ -247,7 +345,7 @@ export function NuovoCompitoClient({
   function scegliEsercizio(id: string) {
     cambiaBlocchi((p) => {
       const k = p.map((b) => b.tipo).lastIndexOf("scelti");
-      if (k === -1) return [...p, { chiave: nuovaChiave(), tipo: "scelti", esercizioIds: [id] }];
+      if (k === -1) return [...p, { chiave: nuovaChiave(), tipo: "scelti", esercizioIds: [id], nonPerPdp: [], punti: PUNTI_PREDEFINITI }];
       return p.map((b, i) => (i === k && b.tipo === "scelti" ? { ...b, esercizioIds: [...b.esercizioIds, id] } : b));
     });
   }
@@ -266,6 +364,60 @@ export function NuovoCompitoClient({
 
   function cambiaQuanti(chiave: string, valore: string) {
     cambiaBlocchi((p) => p.map((b) => (b.chiave === chiave && b.tipo !== "scelti" ? { ...b, quanti: valore } : b)));
+  }
+
+  function cambiaPunti(chiave: string, valore: string) {
+    cambiaBlocchi((p) => p.map((b) => (b.chiave === chiave ? { ...b, punti: valore } : b)));
+  }
+
+  // Toccato una volta, «quanti per chi ha meno esercizi» non segue più quanti.
+  function cambiaQuantiPdp(chiave: string, valore: string) {
+    cambiaBlocchi((p) => p.map((b) => (b.chiave === chiave && b.tipo !== "scelti" ? { ...b, quantiPdp: valore } : b)));
+  }
+
+  function cambiaNonPerPdp(chiave: string, id: string, escluso: boolean) {
+    cambiaBlocchi((p) =>
+      p.map((b) =>
+        b.chiave === chiave && b.tipo === "scelti"
+          ? { ...b, nonPerPdp: escluso ? [...b.nonPerPdp.filter((x) => x !== id), id] : b.nonPerPdp.filter((x) => x !== id) }
+          : b,
+      ),
+    );
+  }
+
+  function cambiaTipo(nuovo: Tipo) {
+    setTipo(nuovo);
+    setAvviso(null);
+    setErrore(null);
+  }
+
+  // Il formulario si carica appena scelto: la verifica porta solo il nome
+  // che il server gli ha dato (`formularioFile`).
+  async function caricaFormulario(file: File) {
+    setCaricaFormularioInCorso(true);
+    setErroreFormulario(null);
+    const dati = new FormData();
+    dati.append("file", file);
+    try {
+      const res = await fetch(withBasePath("/api/esercizi/verifiche/formulari"), { method: "POST", body: dati });
+      const corpo = await res.json().catch(() => ({}));
+      if (res.ok && typeof corpo.file === "string") {
+        setFormulario({ file: corpo.file, nome: file.name });
+      } else {
+        setErroreFormulario(
+          corpo.error === "tipo_non_ammesso"
+            ? tV("erroreFormularioTipo")
+            : corpo.error === "troppo_grande"
+              ? tV("erroreFormularioGrande")
+              : res.status === 429
+                ? t("erroreTroppeRichieste")
+                : tV("erroreFormularioCaricamento"),
+        );
+      }
+    } catch {
+      setErroreFormulario(tV("erroreFormularioCaricamento"));
+    }
+    setCaricaFormularioInCorso(false);
   }
 
   const nomePredefinito = () =>
@@ -287,6 +439,12 @@ export function NuovoCompitoClient({
         return t("erroreClasseSenzaAnno");
       case "rate_limited":
         return t("erroreTroppeRichieste");
+      case "verifica_non_valida":
+        return tV("erroreVerificaNonValida");
+      case "pdp_senza_esercizi":
+        return tV("errorePdpSenzaEsercizi");
+      case "formulario_non_trovato":
+        return tV("erroreFormularioNonTrovato");
       default:
         return t("erroreGenerico");
     }
@@ -299,28 +457,45 @@ export function NuovoCompitoClient({
     setAvviso(null);
     const chiave = corpoRiepilogo;
     const tipi = daMandare.map((b) => b.tipo);
+    // Una verifica non ha apertura né scadenza (il server le rifiuterebbe):
+    // ha durata, avvio, strumenti e formulario. Un compito manda il corpo di
+    // sempre, senza nessuna chiave della verifica.
+    const perVerifica =
+      verifica && daMandareVerifica
+        ? {
+            tipo: "VERIFICA" as const,
+            verifica: {
+              durataMinuti,
+              ...(orarioAvvio ? { avvioProgrammatoAt: orarioAvvio.toISOString() } : {}),
+              calcolatrice,
+              formulario: formulario ? modoFormulario : "NESSUNO",
+              ...(formulario ? { formularioFile: formulario.file } : {}),
+            },
+          }
+        : null;
     try {
       const res = await fetch(withBasePath("/api/esercizi/compiti"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           classeId: classe.id,
-          blocchi: daMandare,
+          blocchi: perVerifica ? daMandareVerifica : daMandare,
           modo,
           seme,
           ...(modo === "CLASSE" ? { versioniViste: riepilogo.esercizi.map((e) => e.versioneId) } : {}),
           // Come i vecchi moduli di assegnazione: la data del campo
           // `type="date"` come mezzanotte UTC (la pagina del compito la
           // rilegge nello stesso modo, `perCampoData`).
-          ...(opensAt ? { opensAt: new Date(opensAt).toISOString() } : {}),
-          ...(dueAt ? { dueAt: new Date(dueAt).toISOString() } : {}),
+          ...(!perVerifica && opensAt ? { opensAt: new Date(opensAt).toISOString() } : {}),
+          ...(!perVerifica && dueAt ? { dueAt: new Date(dueAt).toISOString() } : {}),
           ...(salvaModello ? { salvaModello: { nome: nomeModello.trim() } } : {}),
           ...(iniziale.modello ? { modelloId: iniziale.modello.id } : {}),
+          ...(perVerifica ?? {}),
         }),
       });
       const corpo = await res.json().catch(() => ({}));
       if (res.ok && typeof corpo.compitoId === "string") {
-        router.push(`/dashboard/esercizi/compiti/${corpo.compitoId}`);
+        router.push(perVerifica ? `/dashboard/esercizi/verifiche/${corpo.compitoId}` : `/dashboard/esercizi/compiti/${corpo.compitoId}`);
         return;
       }
       if (corpo.riepilogo && (corpo.error === "estrazione_cambiata" || corpo.error === "esercizi_insufficienti")) {
@@ -337,6 +512,9 @@ export function NuovoCompitoClient({
     }
     setInvio(false);
   }
+
+  const etichettaStrumento = (m: ModoStrumento) =>
+    m === "NESSUNO" ? tV("strumentoNessuno") : m === "SOLO_PDP" ? tV("strumentoSoloPdp") : tV("strumentoTutti");
 
   const giaScelti = new Set(blocchi.flatMap((b) => (b.tipo === "scelti" ? b.esercizioIds : [])));
   const filtroAnno = soloAnno && classe?.anno != null ? classe.anno : null;
@@ -376,6 +554,38 @@ export function NuovoCompitoClient({
 
   return (
     <div className="space-y-4">
+      {/* Compito o Verifica: la stessa pagina. In modo Compito nient'altro
+          cambia; in modo Verifica compaiono durata, avvio, strumenti,
+          punti e misure PDP. */}
+      <fieldset className="space-y-2">
+        <legend className="sr-only">{tV("tipoLegenda")}</legend>
+        <div className="inline-flex rounded-lg border border-input bg-background p-1">
+          {(["COMPITO", "VERIFICA"] as const).map((x) => (
+            <label
+              key={x}
+              className={`cursor-pointer rounded-md px-4 py-1.5 text-sm font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring ${
+                tipo === x
+                  ? x === "VERIFICA"
+                    ? "bg-brand-magenta text-white"
+                    : "bg-brand-blue text-white"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <input
+                type="radio"
+                name="nc-tipo"
+                value={x}
+                checked={tipo === x}
+                onChange={() => cambiaTipo(x)}
+                className="sr-only"
+              />
+              {x === "COMPITO" ? tV("tipoCompito") : tV("tipoVerifica")}
+            </label>
+          ))}
+        </div>
+        {verifica && <p className="text-sm text-muted-foreground">{tV("spiegazione")}</p>}
+      </fieldset>
+
       {iniziale.modello && (
         <p className="text-sm text-muted-foreground">{t("dalModello", { nome: iniziale.modello.nome })}</p>
       )}
@@ -412,16 +622,151 @@ export function NuovoCompitoClient({
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="nc-apertura" className={ETICHETTA}>{t("apertura")}</label>
-              <Input id="nc-apertura" type="date" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} aria-describedby="nc-apertura-aiuto" className="h-10 w-44" />
-              <span id="nc-apertura-aiuto" className="text-xs text-muted-foreground">{t("aperturaAiuto")}</span>
+            {verifica ? (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nc-durata" className={ETICHETTA}>{tV("durata")}</label>
+                  <Input
+                    id="nc-durata"
+                    type="number"
+                    inputMode="numeric"
+                    required
+                    min={DURATA_MIN}
+                    max={DURATA_MAX}
+                    value={durata}
+                    onChange={(e) => {
+                      setDurata(e.target.value);
+                      setErrore(null);
+                    }}
+                    aria-describedby="nc-durata-aiuto"
+                    aria-invalid={(durata.trim() !== "" && !durataOk) || undefined}
+                    className="h-10 w-28 tabular-nums"
+                  />
+                  <span id="nc-durata-aiuto" className="text-xs text-muted-foreground">
+                    {tV("durataAiuto", { min: DURATA_MIN, max: DURATA_MAX })}
+                  </span>
+                </div>
+                <fieldset className="flex flex-col gap-1.5">
+                  <legend className={`${ETICHETTA} mb-1.5`}>{tV("avvio")}</legend>
+                  <div className="flex flex-col gap-1.5">
+                    {[false, true].map((aOrario) => (
+                      <label key={String(aOrario)} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="nc-avvio"
+                          checked={avvioOrario === aOrario}
+                          onChange={() => {
+                            setAvvioOrario(aOrario);
+                            setErrore(null);
+                          }}
+                          className="size-4 accent-brand-blue"
+                        />
+                        {aOrario ? tV("avvioOrario") : tV("avvioManuale")}
+                      </label>
+                    ))}
+                    {avvioOrario && (
+                      <Input
+                        type="datetime-local"
+                        value={orario}
+                        onChange={(e) => {
+                          setOrario(e.target.value);
+                          setErrore(null);
+                        }}
+                        aria-label={tV("orario")}
+                        className="ml-6 h-10 w-56"
+                      />
+                    )}
+                  </div>
+                </fieldset>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nc-apertura" className={ETICHETTA}>{t("apertura")}</label>
+                  <Input id="nc-apertura" type="date" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} aria-describedby="nc-apertura-aiuto" className="h-10 w-44" />
+                  <span id="nc-apertura-aiuto" className="text-xs text-muted-foreground">{t("aperturaAiuto")}</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nc-scadenza" className={ETICHETTA}>{t("scadenza")}</label>
+                  <Input id="nc-scadenza" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} aria-describedby="nc-scadenza-aiuto" className="h-10 w-44" />
+                  <span id="nc-scadenza-aiuto" className="text-xs text-muted-foreground">{t("scadenzaAiuto")}</span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {verifica && classi.length > 0 && (
+          <div className="flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-border pt-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <label htmlFor="nc-formulario-file" className={ETICHETTA}>{tV("formulario")}</label>
+              {formulario ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="truncate font-medium">{formulario.nome}</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setFormulario(null)}>
+                    {tV("togliFormulario")}
+                  </Button>
+                </div>
+              ) : (
+                <input
+                  id="nc-formulario-file"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,application/pdf"
+                  disabled={caricaFormularioInCorso}
+                  aria-describedby="nc-formulario-aiuto"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    // Svuotato subito: lo stesso file si può riscegliere dopo un errore.
+                    e.target.value = "";
+                    if (file) void caricaFormulario(file);
+                  }}
+                  className="max-w-full text-sm file:mr-3 file:h-9 file:rounded-lg file:border file:border-input file:bg-background file:px-3 file:text-sm file:font-medium hover:file:bg-muted"
+                />
+              )}
+              <span id="nc-formulario-aiuto" className="text-xs text-muted-foreground">
+                {caricaFormularioInCorso ? tV("formularioCaricamento") : tV("formularioAiuto")}
+              </span>
+              {erroreFormulario && (
+                <span role="alert" className="text-sm text-destructive">{erroreFormulario}</span>
+              )}
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="nc-scadenza" className={ETICHETTA}>{t("scadenza")}</label>
-              <Input id="nc-scadenza" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} aria-describedby="nc-scadenza-aiuto" className="h-10 w-44" />
-              <span id="nc-scadenza-aiuto" className="text-xs text-muted-foreground">{t("scadenzaAiuto")}</span>
-            </div>
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className={`${ETICHETTA} mb-1.5`}>{tV("strumenti")}</legend>
+              <div className="flex flex-wrap gap-x-5 gap-y-3">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nc-calcolatrice" className="text-sm text-muted-foreground">{tV("calcolatrice")}</label>
+                  <select
+                    id="nc-calcolatrice"
+                    value={calcolatrice}
+                    onChange={(e) => setCalcolatrice(e.target.value as ModoStrumento)}
+                    className={SELECT}
+                  >
+                    {STRUMENTI.map((m) => (
+                      <option key={m} value={m}>{etichettaStrumento(m)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nc-formulario-modo" className="text-sm text-muted-foreground">{tV("formularioStrumento")}</label>
+                  {/* Senza file non c'è formulario da mostrare: si manda NESSUNO. */}
+                  <select
+                    id="nc-formulario-modo"
+                    value={formulario ? modoFormulario : "NESSUNO"}
+                    disabled={!formulario}
+                    onChange={(e) => setModoFormulario(e.target.value as ModoStrumento)}
+                    aria-describedby={formulario ? undefined : "nc-formulario-modo-aiuto"}
+                    className={`${SELECT} disabled:opacity-60`}
+                  >
+                    {STRUMENTI.map((m) => (
+                      <option key={m} value={m}>{etichettaStrumento(m)}</option>
+                    ))}
+                  </select>
+                  {!formulario && (
+                    <span id="nc-formulario-modo-aiuto" className="text-xs text-muted-foreground">{tV("formularioStrumentoAiuto")}</span>
+                  )}
+                </div>
+              </div>
+            </fieldset>
           </div>
         )}
       </section>
@@ -472,6 +817,18 @@ export function NuovoCompitoClient({
                           return (
                             <span key={id} className="inline-flex items-center gap-0.5 rounded-md bg-background px-1.5 py-0.5">
                               <strong className="font-semibold">{titolo}</strong>
+                              {verifica && (
+                                <label className="ml-1 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <input
+                                    type="checkbox"
+                                    checked={b.nonPerPdp.includes(id)}
+                                    onChange={(e) => cambiaNonPerPdp(b.chiave, id, e.target.checked)}
+                                    aria-label={tV("nonPerPdpEtichetta", { titolo })}
+                                    className="size-3.5 accent-brand-magenta"
+                                  />
+                                  {tV("nonPerPdp")}
+                                </label>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => togliEsercizio(b.chiave, id)}
@@ -516,6 +873,40 @@ export function NuovoCompitoClient({
                       <X aria-hidden="true" />
                     </Button>
                   </div>
+                  {verifica && (
+                    <div className="flex basis-full flex-wrap items-center gap-x-5 gap-y-2 border-t border-brand-orange/20 pt-2">
+                      <label className="flex items-center gap-1.5">
+                        <span>{tV("punti")}</span>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          min={PUNTI_MIN}
+                          max={PUNTI_MAX}
+                          step={0.5}
+                          value={b.punti}
+                          onChange={(e) => cambiaPunti(b.chiave, e.target.value)}
+                          aria-label={tV("puntiEtichetta", { etichetta: nome })}
+                          aria-invalid={puntiDa(b.punti) === null || undefined}
+                          className="h-8 w-20 bg-background text-center font-semibold tabular-nums"
+                        />
+                      </label>
+                      {b.tipo !== "scelti" && (
+                        <label className="flex items-center gap-1.5">
+                          <span>{tV("quantiPdp")}</span>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            max={Number(b.quanti) || undefined}
+                            value={b.quantiPdp ?? b.quanti}
+                            onChange={(e) => cambiaQuantiPdp(b.chiave, e.target.value)}
+                            aria-label={tV("quantiPdpEtichetta", { etichetta: nome })}
+                            className="h-8 w-16 bg-background text-center font-semibold tabular-nums"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -682,6 +1073,20 @@ export function NuovoCompitoClient({
           )}
         </div>
 
+        {verifica && classe && blocchi.length > 0 && daMandare !== null && (
+          <div aria-live="polite" className="space-y-1 rounded-lg bg-brand-green-50 px-3 py-2 text-sm text-brand-ink">
+            {daMandareVerifica === null ? (
+              <p className="text-destructive">{tV("campiNonValidi")}</p>
+            ) : (
+              <>
+                <p className="font-semibold">{tV("totale", { n: totalePunti })}</p>
+                <p>{tV("conMeno", { n: conMeno })}</p>
+                {conMeno === 0 && <p className="font-medium text-destructive">{tV("pdpVuoto")}</p>}
+              </>
+            )}
+          </div>
+        )}
+
         <fieldset className="space-y-1.5">
           <legend className={`${ETICHETTA} mb-1`}>{t("modoLegenda")}</legend>
           <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-x-5">
@@ -773,7 +1178,9 @@ export function NuovoCompitoClient({
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button type="button" onClick={assegna} disabled={!assegnabile} className="h-11 px-6 text-base font-semibold">
-            {classe ? t("assegnaA", { classe: classe.nome }) : t("assegna")}
+            {verifica
+              ? classe ? tV("creaPer", { classe: classe.nome }) : tV("crea")
+              : classe ? t("assegnaA", { classe: classe.nome }) : t("assegna")}
           </Button>
           {errore && (
             <span role="alert" className="text-sm text-destructive">

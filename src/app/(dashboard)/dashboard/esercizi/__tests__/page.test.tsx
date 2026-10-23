@@ -125,6 +125,17 @@ describe("i compiti gia' assegnati, sulla pagina invece che dietro un clic", () 
     expect(screen.getByText(/compiti\.eserciziCount:\{"n":10\}/)).toBeInTheDocument();
   });
 
+  it("una verifica fra i recenti ha l'etichetta «Verifica» e porta alla sua pagina", async () => {
+    vi.mocked(compitiDellaClasse).mockResolvedValue([
+      { id: "v1", tipo: "VERIFICA", batteria: "equazioni (5)", dueAt: null, esercizi: 5 },
+      { id: "k1", tipo: "COMPITO", batteria: "Ripasso", dueAt: null, esercizi: 6 },
+    ]);
+    await rendi();
+    expect(screen.getAllByText("compiti.etichettaVerifica")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "equazioni (5) — 2A" })).toHaveAttribute("href", "/dashboard/esercizi/verifiche/v1");
+    expect(screen.getByRole("link", { name: "Ripasso — 2A" })).toHaveAttribute("href", "/dashboard/esercizi/compiti/k1");
+  });
+
   it("con classi ma senza compiti dice che non ce ne sono ancora", async () => {
     await rendi();
     expect(screen.getByText("compiti.nessunCompito")).toBeInTheDocument();

@@ -10,7 +10,7 @@ import { eserciziAssegnabili, type Blocco } from "@/lib/esercizi/estrazione";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 import { NuovoCompitoClient } from "./nuovo-compito-client";
 
-type Parametri = { classe?: string; raccolta?: string; argomento?: string; modello?: string; esercizio?: string };
+type Parametri = { classe?: string; raccolta?: string; argomento?: string; modello?: string; esercizio?: string; tipo?: string };
 
 /** Un parametro della query come stringa sola: `?raccolta=a&raccolta=b`
  * arriva come array, e qui vale il primo. */
@@ -42,7 +42,11 @@ const quantiDa = (disponibili: number | undefined) => Math.max(1, Math.min(5, di
  * `?raccolta=`, `?argomento=`, `?esercizio=` aggiungono un blocco
  * ciascuno. Un parametro che non corrisponde a niente di visibile si
  * ignora: nessun blocco su una raccolta privata altrui, e nessun indizio
- * che esista. */
+ * che esista.
+ *
+ * Modalità verifica: `?tipo=verifica` apre la pagina in modo Verifica; lo
+ * stesso un modello salvato da una verifica (le sue regole portano i punti,
+ * che un compito non salva mai). */
 export default async function Page({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await redirectUnlessTeacher();
   const t = await getTranslations("esercizi.nuovoCompito");
@@ -55,6 +59,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
     argomento: unoEsatto(grezzi.argomento),
     modello: uno(grezzi.modello),
     esercizio: uno(grezzi.esercizio),
+    tipo: uno(grezzi.tipo),
   };
 
   const chi = comeDocente(utenteDaSessione(session));
@@ -95,6 +100,9 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
   }
   if (p.esercizio && catalogo.some((e) => e.id === p.esercizio)) blocchi.push({ tipo: "scelti", esercizioIds: [p.esercizio] });
 
+  const daVerifica = (modello?.blocchi ?? []).some((b) => b.punti != null);
+  const tipo = p.tipo === "verifica" || daVerifica ? "VERIFICA" : "COMPITO";
+
   const locale = (await getLocale()) === "en" ? "en" : "it";
 
   return (
@@ -113,7 +121,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
           argomentiPerAnno={argomentiPerAnno}
           raccolte={raccolte.map((r) => ({ id: r.id, nome: r.name, esercizi: r.esercizi }))}
           catalogo={catalogo}
-          iniziale={{ classeId, blocchi, modello: modello ? { id: modello.id, nome: modello.nome } : null }}
+          iniziale={{ classeId, blocchi, modello: modello ? { id: modello.id, nome: modello.nome } : null, tipo }}
           semeIniziale={randomUUID().slice(0, 12)}
           locale={locale}
         />
