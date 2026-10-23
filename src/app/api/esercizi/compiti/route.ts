@@ -4,7 +4,7 @@ import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { assegnaCompito } from "@/lib/esercizi/compiti";
-import { blocchiConAnno, blocchiSchema, semeSchema } from "@/lib/esercizi/blocchi-corpo";
+import { blocchiConAnno, blocchiSchema, semeSchema, TOTALE_MAX } from "@/lib/esercizi/blocchi-corpo";
 
 // Nuovo compito, Task 3: il corpo è quello della pagina "Nuovo compito" —
 // i blocchi, il modo, il seme dell'estrazione vista. Il vecchio corpo
@@ -16,7 +16,7 @@ const bodySchema = z.object({
   blocchi: blocchiSchema,
   modo: z.enum(["CLASSE", "STUDENTE"]),
   seme: semeSchema,
-  versioniViste: z.array(z.string().min(1).max(100)).max(500).optional(),
+  versioniViste: z.array(z.string().min(1).max(100)).max(TOTALE_MAX).optional(),
   opensAt: z.coerce.date().optional(),
   dueAt: z.coerce.date().optional(),
   salvaModello: z.object({ nome: z.string().trim().min(1).max(200) }).optional(),

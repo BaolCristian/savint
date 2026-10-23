@@ -3,17 +3,22 @@ import { z } from "zod";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { classiDelDocente } from "@/lib/esercizi/classi";
-import { riepilogoEstrazione } from "@/lib/esercizi/estrazione";
+import { riepilogoPerModo } from "@/lib/esercizi/compiti";
 import { blocchiConAnno, blocchiSchema, semeSchema } from "@/lib/esercizi/blocchi-corpo";
 
 const bodySchema = z.object({
   classeId: z.string().min(1),
   blocchi: blocchiSchema,
   seme: semeSchema,
+  // Il modo scelto nel riepilogo: "diverse per studente" ha una sufficienza
+  // più severa (caso peggiore sui bacini congelati), e il riepilogo deve
+  // dire la stessa cosa che dirà "Assegna". Assente = stesse domande.
+  modo: z.enum(["CLASSE", "STUDENTE"]).default("CLASSE"),
 });
 
 /** Il riepilogo della zona 3 del "Nuovo compito" (Task 3): i numeri per
- * blocco e, se tutti bastano, l'estrazione con quel seme. Nessuna
+ * blocco e, se tutti bastano, l'estrazione con quel seme (nel modo
+ * "diverse per studente", un esempio dai bacini congelati). Nessuna
  * scrittura: la pagina lo chiede a ogni modifica dei blocchi e per "Estrai
  * di nuovo" (seme nuovo), e "Assegna" rifà poi la stessa estrazione con lo
  * stesso seme (`assegnaCompito`).
@@ -48,7 +53,10 @@ export async function POST(request: Request) {
   const blocchi = blocchiConAnno(parsed.data.blocchi, classe.yearLevel);
   if (!blocchi) return NextResponse.json({ error: "classe_senza_anno" }, { status: 422 });
 
-  // Sempre come docente: `riepilogoEstrazione` passa da `comeDocente`.
-  const riepilogo = await riepilogoEstrazione(blocchi, { id: teacherId, admin: false }, parsed.data.seme);
+  // Sempre come docente: `baciniDeiBlocchi` passa da `comeDocente`. Lo
+  // stesso calcolo di `assegnaCompito` (`riepilogoPerModo`), così il
+  // riepilogo non approva mai ciò che l'assegnazione poi rifiuta. Solo il
+  // riepilogo esce: i bacini congelati servono all'assegnazione.
+  const { riepilogo } = await riepilogoPerModo(blocchi, { id: teacherId, admin: false }, parsed.data.seme, parsed.data.modo);
   return NextResponse.json(riepilogo);
 }

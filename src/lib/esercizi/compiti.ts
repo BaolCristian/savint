@@ -7,6 +7,8 @@ import {
   regolaDaBlocco,
   riepilogoEstrazione,
   ultimeVersioni,
+  ultimeVersioniIds,
+  versioniConContenuto,
   type Blocco,
   type Riepilogo,
 } from "./estrazione";
@@ -464,54 +466,130 @@ function nomeDelCompito(r: Riepilogo): string {
 
 /** Il bacino congelato di un compito "diverse per studente" (Decisioni,
  * punto 4): per ogni blocco, le ULTIME versioni dei suoi candidati e quanti
- * pescarne.
+ * pescarne, e quanti ne restano a ciascun blocco NEL CASO PEGGIORE.
  *
- * Prima di congelare si applicano le esclusioni dell'estrazione, una volta
- * per tutte, così i bacini congelati sono DISGIUNTI: gli esercizi scelti a
- * mano vanno al loro blocco scelti (al primo, se scelti in due) e sono tolti
- * da tutti i blocchi casuali; ogni altro esercizio va al PRIMO blocco
- * casuale il cui bacino lo contiene. È più severo dell'estrazione di una
- * classe, dove un blocco perde solo ciò che i precedenti hanno davvero
- * PRESO: qui un blocco perde tutto ciò che i precedenti POTEVANO prendere.
- * Serve perché le estrazioni degli studenti avvengono anche molto dopo, una
- * per una, ciascuna col proprio seme: con bacini sovrapposti la sufficienza
- * dipenderebbe dal seme di ogni studente (un blocco che "ce la fa" per uno
- * potrebbe restare corto per un altro), mentre con bacini disgiunti basta
- * controllare `versionIds.length >= count` qui, una volta, perché valga per
- * tutti — "il caso studente con meno esercizi non può più capitare".
+ * - Blocco scelti: i suoi esercizi nell'ordine del docente (`scelti: true`),
+ *   tolti quelli già scelti in un blocco scelti precedente — come in
+ *   `estraiConDettaglio`. Disponibili = quanti ne restano.
+ * - Blocco casuale: TUTTI i suoi candidati, tolti solo gli scelti a mano
+ *   (che vincono sempre). I bacini casuali possono SOVRAPPORSI: una raccolta
+ *   e un argomento con gli stessi esercizi congelano entrambi tutto.
+ *   L'esclusione dei già presi la fa poi ogni estrazione di studente
+ *   (`estraiDaBacini` salta ciò che i blocchi precedenti hanno preso).
  *
- * Restituisce anche, per blocco, quanti ne restano dopo le esclusioni e
- * quanti ne ha persi: i numeri del riepilogo di rifiuto, se un blocco resta
- * corto. */
+ * Sufficienza, nel caso peggiore: le estrazioni degli studenti avvengono
+ * anche molto dopo, ciascuna col proprio seme, e nessuno studente deve mai
+ * restare con meno esercizi. Un blocco casuale k può perdere, per i blocchi
+ * casuali precedenti j il cui bacino tocca il suo, al più `count_j`
+ * esercizi ciascuno; quindi gli restano almeno
+ * `|bacino_k| − Σ count_j` (j precedente, casuale, bacino_j ∩ bacino_k ≠ ∅),
+ * qualunque seme. Se questo numero è ≥ `count_k` per ogni blocco,
+ * l'estrazione di ogni studente è piena. È più severo della sufficienza di
+ * una classe (dove un blocco perde solo ciò che i precedenti hanno DAVVERO
+ * preso con quel seme) e la implica: per questo nel modo STUDENTE il
+ * riepilogo non ha bisogno dell'estrazione di classe.
+ *
+ * Gli id delle ultime versioni con una query leggera (`ultimeVersioniIds`,
+ * senza contenuto). Un esercizio la cui versione è sparita fra le due
+ * query resta fuori, e il conteggio lo vede come mancante. */
 async function congelaBacini(
-  blocchi: Blocco[],
-  chi: { id: string; admin: boolean },
-): Promise<{ bacini: BacinoCongelato[]; tolti: number }> {
-  const risolti = await baciniDeiBlocchi(blocchi, chi);
+  risolti: Awaited<ReturnType<typeof baciniDeiBlocchi>>,
+): Promise<{ bacini: BacinoCongelato[]; disponibili: number[] }> {
   const riservati = new Set(risolti.filter((b) => b.scelti).flatMap((b) => b.candidati));
-  const assegnati = new Set<string>();
-  let tolti = 0;
+  const giaScelti = new Set<string>();
   const perBlocco = risolti.map((b) => {
     const unici = [...new Set(b.candidati)];
-    // Gli scelti restano nell'ordine del docente; i casuali vengono ordinati
-    // comunque dal sorteggio (`estraiConDettaglio`), qui l'ordine non conta.
-    const propri = unici.filter((id) => !assegnati.has(id) && (b.scelti || !riservati.has(id)));
-    for (const id of propri) assegnati.add(id);
-    tolti += unici.length - propri.length;
-    return propri;
+    if (b.scelti) {
+      const propri = unici.filter((id) => !giaScelti.has(id));
+      for (const id of propri) giaScelti.add(id);
+      return propri;
+    }
+    // L'ordine dei casuali non conta (il sorteggio li ordina da sé):
+    // ordinati solo perché il JSON salvato sia stabile.
+    return unici.filter((id) => !riservati.has(id)).sort();
   });
-  const versioni = await ultimeVersioni([...assegnati]);
-  const bacini = risolti.map((b, i) => ({
+  const versioni = await ultimeVersioniIds([...new Set(perBlocco.flat())]);
+  const bacini: BacinoCongelato[] = risolti.map((b, i) => ({
     count: b.richiesti,
-    // Un esercizio la cui versione è sparita fra le due query resta fuori,
-    // e il controllo sulla lunghezza lo conta come mancante.
     versionIds: perBlocco[i]!.flatMap((id) => {
       const v = versioni.get(id);
-      return v ? [v.versioneId] : [];
+      return v ? [v] : [];
     }),
     ...(b.scelti ? { scelti: true as const } : {}),
   }));
-  return { bacini, tolti };
+  const disponibili = bacini.map((b, k) => {
+    if (b.scelti) return b.versionIds.length;
+    const mio = new Set(b.versionIds);
+    const toltiAlPiu = bacini
+      .slice(0, k)
+      .filter((j) => !j.scelti && j.versionIds.some((v) => mio.has(v)))
+      .reduce((s, j) => s + j.count, 0);
+    return Math.max(0, b.versionIds.length - toltiAlPiu);
+  });
+  return { bacini, disponibili };
+}
+
+/** Il riepilogo della zona 3 NEL MODO scelto: l'unico calcolo, usato sia
+ * dalla rotta `compiti/estrai` sia da `assegnaCompito`, così che il
+ * riepilogo non dia mai per assegnabile ciò che l'assegnazione rifiuta.
+ *
+ * CLASSE: `riepilogoEstrazione` (l'estrazione vera, con quel seme).
+ *
+ * STUDENTE: i bacini congelati (`congelaBacini`) e i loro numeri del caso
+ * peggiore come `disponibili` per blocco; `sufficiente` se ogni blocco ne
+ * ha almeno quanti ne chiede. `duplicatiTolti` è 0: nel modo classe conta
+ * gli esercizi davvero tolti perché già presi con QUEL seme, mentre qui
+ * ogni studente pesca col suo e i già presi cambiano da uno all'altro — un
+ * numero "che avrebbero potuto prendere" sotto lo stesso nome direbbe
+ * un'altra cosa. `esercizi` è un ESEMPIO (la spec: nel modo diverse per
+ * studente l'anteprima è un esempio), estratto dai bacini congelati con il
+ * seme della pagina; con `anteprima: false` non si carica (chi assegna non
+ * ne fa niente) e resta vuoto. `bacini` è ciò che il compito salverà. */
+export async function riepilogoPerModo(
+  blocchi: Blocco[],
+  chi: Utente,
+  seme: string,
+  modo: "CLASSE" | "STUDENTE",
+  opzioni: { anteprima?: boolean } = {},
+): Promise<{ riepilogo: Riepilogo; bacini?: BacinoCongelato[] }> {
+  if (modo === "CLASSE") return { riepilogo: await riepilogoEstrazione(blocchi, chi, seme) };
+
+  const risolti = await baciniDeiBlocchi(blocchi, chi);
+  const { bacini, disponibili } = await congelaBacini(risolti);
+  let sufficiente = bacini.every((b, k) => disponibili[k]! >= b.count);
+
+  let esercizi: Riepilogo["esercizi"] = [];
+  if (sufficiente && opzioni.anteprima !== false) {
+    const ids = estrazioneDaBaciniCongelati(bacini, seme);
+    const righe = await versioniConContenuto(ids);
+    esercizi = ids.flatMap((v) => {
+      const r = righe.get(v);
+      return r ? [r] : [];
+    });
+    // Una versione sparita fra le query (esercizio eliminato in quel
+    // momento): come in `riepilogoEstrazione`, non si mostra un compito
+    // più corto del totale.
+    if (esercizi.length !== ids.length) {
+      sufficiente = false;
+      esercizi = [];
+    }
+  }
+
+  return {
+    riepilogo: {
+      blocchi: risolti.map((b, k) => ({
+        etichetta: b.etichetta,
+        richiesti: b.richiesti,
+        disponibili: disponibili[k]!,
+        nonDisponibili: b.nonDisponibili,
+      })),
+      duplicatiTolti: 0,
+      totale: risolti.reduce((s, b) => s + b.richiesti, 0),
+      sufficiente,
+      esercizi,
+    },
+    bacini,
+  };
 }
 
 /** Assegnare un compito dal "Nuovo compito" (spec 2026-10-22): i blocchi, il
@@ -540,10 +618,12 @@ async function congelaBacini(
  * (non ha mai aperto l'anteprima) si assegna l'estrazione del riepilogo.
  * `drawSeed` = il seme, `drawnVersionIds` = le versioni estratte.
  *
- * **Modo STUDENTE — diverse per studente.** Il riepilogo deve essere
- * sufficiente; poi si congela il bacino (`congelaBacini`, con il suo
- * controllo più severo: un blocco corto dopo il congelamento ⇒
- * `esercizi_insufficienti` con il riepilogo corretto con quei numeri).
+ * **Modo STUDENTE — diverse per studente.** Il riepilogo è quello del modo
+ * (`riepilogoPerModo`, lo stesso che la pagina ha ricevuto da
+ * `compiti/estrai`): bacini congelati e sufficienza nel caso peggiore, così
+ * nessuno studente può restare corto; insufficiente ⇒
+ * `esercizi_insufficienti` con quel riepilogo. Nessuna estrazione di classe
+ * e nessun contenuto caricato (`anteprima: false`).
  * `drawnVersionIds` resta vuoto, `bacini` è il bacino congelato, e ogni
  * studente iscritto ORA riceve subito la sua `EstrazioneStudente` (seme
  * `${seme}:${studentId}`, `estrazioneDaBaciniCongelati`: lo stesso calcolo
@@ -593,7 +673,8 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
   // sopra) ha bacino vuoto: il riepilogo la mostra come "Raccolta non
   // disponibile" con zero disponibili, che è la risposta più utile per il
   // docente — la stessa che la pagina gli mostrava già.
-  const riepilogo = await riepilogoEstrazione(i.blocchi, chi, i.seme);
+  // Nel modo STUDENTE senza anteprima: l'esempio non serve a chi assegna.
+  const { riepilogo, bacini: congelati } = await riepilogoPerModo(i.blocchi, chi, i.seme, i.modo, { anteprima: false });
   if (!riepilogo.sufficiente || rifiuto) return { ok: false, motivo: "esercizi_insufficienti", riepilogo };
 
   let drawnVersionIds: string[] = [];
@@ -605,21 +686,7 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
       return { ok: false, motivo: "estrazione_cambiata", riepilogo };
     }
   } else {
-    const congelati = await congelaBacini(i.blocchi, chi);
-    bacini = congelati.bacini;
-    if (bacini.some((b) => b.versionIds.length < b.count)) {
-      return {
-        ok: false,
-        motivo: "esercizi_insufficienti",
-        riepilogo: {
-          ...riepilogo,
-          blocchi: riepilogo.blocchi.map((b, k) => ({ ...b, disponibili: bacini![k]!.versionIds.length })),
-          duplicatiTolti: congelati.tolti,
-          sufficiente: false,
-          esercizi: [],
-        },
-      };
-    }
+    bacini = congelati!;
   }
 
   const nome = nomeDelCompito(riepilogo);

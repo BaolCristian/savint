@@ -49,6 +49,18 @@ beforeEach(() => {
 });
 
 describe("POST /api/esercizi/compiti", () => {
+  it("versioniViste lunghe quanto il compito più grande che i blocchi permettono sono accettate", async () => {
+    // 30 blocchi scelti da 200: il totale massimo che `blocchiSchema` lascia passare.
+    const blocchi = Array.from({ length: 30 }, (_, b) => ({
+      tipo: "scelti",
+      esercizioIds: Array.from({ length: 200 }, (_, i) => `e${b}-${i}`),
+    }));
+    const versioniViste = Array.from({ length: 6000 }, (_, i) => `v${i}`);
+    const r = await POST(richiesta({ ...corpoValido, blocchi, versioniViste }));
+    expect(r.status).toBe(201);
+    expect(vi.mocked(assegnaCompito).mock.calls[0]![0].versioniViste).toHaveLength(6000);
+  });
+
   it("401 se non autenticato", async () => {
     vi.mocked(requireTeacher).mockResolvedValue({ ok: false, response: new Response(null, { status: 401 }) } as never);
     expect((await POST(richiesta(corpoValido))).status).toBe(401);

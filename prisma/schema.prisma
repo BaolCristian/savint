@@ -909,7 +909,8 @@ model Compito {
   // elemento per blocco nell'ordine dei blocchi, forma
   // { count: number; versionIds: string[]; scelti?: true }[] — le versioni
   // candidate (visibili a chi ha assegnato, ultima versione di ogni
-  // esercizio, bacini disgiunti) e quante pescarne; `scelti` = blocco scelti
+  // esercizio; i bacini casuali possono sovrapporsi, gli scelti no) e quante
+  // pescarne; `scelti` = blocco scelti
   // a mano, assegnato nell'ordine del docente (vedi versioni-compito.ts). Le estrazioni per studente pescano solo da qui, con seme
   // `${drawSeed}:${studentId}`, così non dipendono più da chi ha assegnato né
   // dalle modifiche successive agli esercizi. Null nel modo CLASSE.

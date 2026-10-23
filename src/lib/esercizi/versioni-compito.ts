@@ -22,13 +22,16 @@ export type BacinoCongelato = { count: number; versionIds: string[]; scelti?: tr
  * da qualunque delle due porte entri.
  *
  * Il sorteggio è `estraiDaBacini` (estrazione.ts), sugli id VERSIONE invece
- * che sugli id esercizio. La sua riserva degli scelti (tolti dai bacini
- * casuali) e l'esclusione dei già presi qui non tolgono mai niente:
- * congelando, `assegnaCompito` ha già dato ogni esercizio a UN solo blocco
- * (gli scelti vincono, poi il primo blocco il cui bacino lo contiene), e
- * ogni esercizio ha una sola versione nel bacino (l'ultima). I bacini sono
- * quindi disgiunti, e ciascuno ha almeno `count` versioni (verificato
- * all'assegnazione): l'estrazione non può risultare corta. Se lo fosse — un
+ * che sugli id esercizio (ogni esercizio ha una sola versione nel bacino,
+ * l'ultima). I bacini casuali possono SOVRAPPORSI (una raccolta e un
+ * argomento con esercizi in comune): è `estraiDaBacini` a togliere a ogni
+ * blocco ciò che i precedenti hanno già preso per QUESTO studente. La
+ * riserva degli scelti qui non toglie niente: congelando, gli scelti sono
+ * già stati tolti dai bacini casuali. All'assegnazione
+ * (`riepilogoPerModo`, compiti.ts) ogni blocco casuale ha almeno `count`
+ * versioni anche nel caso peggiore — tolti `count` esercizi per ogni blocco
+ * precedente che lo tocca — quindi l'estrazione non può risultare corta,
+ * con nessun seme. Se lo fosse — un
  * `Compito.bacini` scritto a mano, o rotto — si lancia: uno studente con
  * meno esercizi è proprio il caso che il bacino congelato esiste per
  * escludere, non un esito da salvare. */

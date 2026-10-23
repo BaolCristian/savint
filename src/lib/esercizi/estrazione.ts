@@ -336,19 +336,42 @@ export function estraiDaBacini(bacini: Bacino[], seme: string): string[] | null 
 export async function ultimeVersioni(
   esercizioIds: string[],
 ): Promise<Map<string, { versioneId: string; titolo: string; content: unknown }>> {
+  const ultime = await ultimeVersioniIds(esercizioIds);
+  const righe = await versioniConContenuto([...ultime.values()]);
+  return new Map([...righe.values()].map((r) => [r.esercizioId, { versioneId: r.versioneId, titolo: r.titolo, content: r.content }]));
+}
+
+/** Solo l'id dell'ultima versione di ciascun esercizio (esercizioId →
+ * versioneId), senza contenuto: la prima delle due query di
+ * `ultimeVersioni`, da sola per chi non ha bisogno del contenuto — il
+ * congelamento dei bacini (`riepilogoPerModo`, compiti.ts) mappa così tutti
+ * i candidati di tutti i blocchi, che possono essere centinaia. */
+export async function ultimeVersioniIds(esercizioIds: string[]): Promise<Map<string, string>> {
   if (esercizioIds.length === 0) return new Map();
   const leggere = await prisma.esercizioVersione.findMany({
     where: { esercizioId: { in: esercizioIds } },
     orderBy: [{ esercizioId: "asc" }, { version: "desc" }],
     distinct: ["esercizioId"],
-    select: { id: true },
+    select: { id: true, esercizioId: true },
   });
-  if (leggere.length === 0) return new Map();
+  return new Map(leggere.map((r) => [r.esercizioId, r.id]));
+}
+
+/** Titolo e contenuto di versioni GIÀ scelte (versioneId → riga): la
+ * seconda query di `ultimeVersioni`, e ciò che serve all'anteprima di
+ * un'estrazione fatta sugli id versione (il bacino congelato). Una
+ * versione sparita semplicemente non compare. */
+export async function versioniConContenuto(
+  versionIds: string[],
+): Promise<Map<string, { versioneId: string; esercizioId: string; titolo: string; content: unknown }>> {
+  if (versionIds.length === 0) return new Map();
   const righe = await prisma.esercizioVersione.findMany({
-    where: { id: { in: leggere.map((r) => r.id) } },
+    where: { id: { in: versionIds } },
     select: { id: true, esercizioId: true, content: true, esercizio: { select: { title: true } } },
   });
-  return new Map(righe.map((r) => [r.esercizioId, { versioneId: r.id, titolo: r.esercizio.title, content: r.content }]));
+  return new Map(
+    righe.map((r) => [r.id, { versioneId: r.id, esercizioId: r.esercizioId, titolo: r.esercizio.title, content: r.content }]),
+  );
 }
 
 /** Il riepilogo della zona 3: risolve i blocchi (come docente), estrae con

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
-import { assegnaCompito, type InputAssegna } from "../compiti";
+import { assegnaCompito, riepilogoPerModo, type InputAssegna } from "../compiti";
 import { riepilogoEstrazione, type Blocco } from "../estrazione";
 import { estrazioneDelloStudente, estrazioneDaBaciniCongelati, type BacinoCongelato } from "../versioni-compito";
 
@@ -194,22 +194,72 @@ describe("assegnaCompito — modo STUDENTE (diverse per studente)", () => {
     }
   });
 
-  it("un esercizio appartiene al primo blocco il cui bacino lo contiene", async () => {
-    // Raccolta (e1..e6, ne prende 2) e poi l'argomento TOPIC (e1..e6, 3):
-    // congelati, l'argomento non ha più niente ⇒ insufficiente, nessuna riga.
+  it("bacini sovrapposti: raccolta e1..e6 (2) + argomento e1..e6 (3) si assegna, nel caso peggiore 6−2=4 ≥ 3", async () => {
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 2 },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
+    ];
+    const esito = await assegnaCompito(input({ modo: "STUDENTE", blocchi }));
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    const c = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+    const bacini = c.bacini as BacinoCongelato[];
+    // Ogni blocco congela TUTTI i suoi candidati: i bacini si sovrappongono.
+    const sei = (await Promise.all([1, 2, 3, 4, 5, 6].map(versioneDi))).sort();
+    expect([...bacini[0]!.versionIds].sort()).toEqual(sei);
+    expect([...bacini[1]!.versionIds].sort()).toEqual(sei);
+    const estrazioni = await prisma.estrazioneStudente.findMany({ where: { compitoId: c.id } });
+    expect(estrazioni).toHaveLength(3);
+    for (const x of estrazioni) {
+      expect(x.versionIds).toHaveLength(5);
+      expect(new Set(x.versionIds).size).toBe(5);
+    }
+  });
+
+  it("bacini sovrapposti che nel caso peggiore non bastano ⇒ rifiuto: raccolta e1..e4 (2) + argomento e1..e4 (3), 4−2=2 < 3", async () => {
+    // e5 ed e6 resi privati dal collega: raccolta e argomento sono e1..e4.
+    await prisma.esercizio.updateMany({ where: { id: { in: [e(5), e(6)] } }, data: { accessoScuola: null } });
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 2 },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
+    ];
     const prima = await righe();
-    const esito = await assegnaCompito(input({
-      modo: "STUDENTE",
-      blocchi: [
-        { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 2 },
-        { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
-      ],
-    }));
+    const esito = await assegnaCompito(input({ modo: "STUDENTE", blocchi }));
     expect(esito).toMatchObject({ ok: false, motivo: "esercizi_insufficienti" });
     if (esito.ok) return;
     expect(esito.riepilogo?.sufficiente).toBe(false);
-    expect(esito.riepilogo?.blocchi.map((b) => b.disponibili)).toEqual([6, 0]);
+    expect(esito.riepilogo?.blocchi.map((b) => b.disponibili)).toEqual([4, 2]);
     expect(await righe()).toEqual(prima);
+  });
+
+  it("il caso peggiore conta solo i blocchi precedenti che si sovrappongono", async () => {
+    // ALTRO (e7..e10) non tocca TOPIC: il suo quanti non toglie niente.
+    const blocchi: Blocco[] = [
+      { tipo: "argomento", argomento: ALTRO, anno: 2, quanti: 4 },
+      { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 3 },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
+    ];
+    const { riepilogo } = await riepilogoPerModo(blocchi, docente(), "s", "STUDENTE");
+    expect(riepilogo.blocchi.map((b) => b.disponibili)).toEqual([4, 6, 3]);
+    expect(riepilogo.sufficiente).toBe(true);
+  });
+
+  it("nessuno studente resta corto, per nessun seme, al limite del caso peggiore", async () => {
+    // 6 − 3 = 3 ≥ 3: il limite esatto; più gli scelti e un blocco disgiunto.
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 3 },
+      { tipo: "scelti", esercizioIds: [e(7)] },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
+      { tipo: "argomento", argomento: ALTRO, anno: 2, quanti: 3 },
+    ];
+    const { riepilogo, bacini } = await riepilogoPerModo(blocchi, docente(), "s", "STUDENTE");
+    expect(riepilogo.sufficiente).toBe(true);
+    expect(riepilogo.totale).toBe(10);
+    for (let k = 0; k < 500; k++) {
+      const v = estrazioneDaBaciniCongelati(bacini!, `seme-${k}:studente`);
+      expect(v).toHaveLength(10);
+      expect(new Set(v).size).toBe(10);
+    }
   });
 
   it("insufficiente ⇒ esercizi_insufficienti e nessuna riga (nemmeno estrazioni)", async () => {
@@ -325,5 +375,68 @@ describe("assegnaCompito — rifiuti senza righe", () => {
     const c = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
     expect(c.opensAt).toEqual(opensAt);
     expect(c.dueAt).toEqual(dueAt);
+  });
+});
+
+describe("riepilogoPerModo — il riepilogo non approva ciò che l'assegnazione rifiuta", () => {
+  const sovrapposti = (quantiArgomento: number): Blocco[] => [
+    { tipo: "raccolta", contenitoreId: raccoltaId, quanti: 2 },
+    { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: quantiArgomento },
+  ];
+
+  it("CLASSE è il riepilogo dell'estrazione, senza bacini", async () => {
+    const r = await riepilogoPerModo(sovrapposti(3), docente(), "s1", "CLASSE");
+    expect(r.riepilogo).toEqual(await riepilogoEstrazione(sovrapposti(3), docente(), "s1"));
+    expect(r.bacini).toBeUndefined();
+  });
+
+  it("STUDENTE: numeri del caso peggiore, duplicatiTolti 0, un'estrazione d'esempio dai bacini congelati", async () => {
+    const { riepilogo, bacini } = await riepilogoPerModo(sovrapposti(3), docente(), "s1", "STUDENTE");
+    expect(riepilogo.blocchi.map((b) => [b.richiesti, b.disponibili])).toEqual([[2, 6], [3, 4]]);
+    expect(riepilogo.duplicatiTolti).toBe(0);
+    expect(riepilogo.sufficiente).toBe(true);
+    expect(riepilogo.esercizi.map((x) => x.versioneId)).toEqual(estrazioneDaBaciniCongelati(bacini!, "s1"));
+    expect(riepilogo.esercizi[0]).toMatchObject({ titolo: expect.any(String), content: expect.anything() });
+  });
+
+  it("STUDENTE senza anteprima: stessi numeri, nessun esercizio caricato", async () => {
+    const con = await riepilogoPerModo(sovrapposti(3), docente(), "s1", "STUDENTE");
+    const senza = await riepilogoPerModo(sovrapposti(3), docente(), "s1", "STUDENTE", { anteprima: false });
+    expect(senza.riepilogo).toEqual({ ...con.riepilogo, esercizi: [] });
+    expect(senza.bacini).toEqual(con.bacini);
+  });
+
+  it("un seme con cui la CLASSE ce la fa non basta a STUDENTE: /estrai deve conoscere il modo", async () => {
+    // Raccolta {e5, e6, e7} (2) e argomento e1..e6 (5): in CLASSE basta se la
+    // raccolta pesca e7; nel caso peggiore 6 − 2 = 4 < 5, per ogni seme.
+    const piccola = (await prisma.contenitore.create({ data: { name: `${P}Piccola`, createdById: docenteId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [5, 6, 7].map((n) => ({ contenitoreId: piccola, esercizioId: e(n) })),
+    });
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: piccola, quanti: 2 },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 5 },
+    ];
+    let seme: string | null = null;
+    for (let k = 0; k < 100 && seme === null; k++) {
+      if ((await riepilogoEstrazione(blocchi, docente(), `s${k}`)).sufficiente) seme = `s${k}`;
+    }
+    expect(seme).not.toBeNull();
+    const { riepilogo } = await riepilogoPerModo(blocchi, docente(), seme!, "STUDENTE");
+    expect(riepilogo.sufficiente).toBe(false);
+    expect(riepilogo.blocchi.map((b) => b.disponibili)).toEqual([3, 4]);
+    expect(await assegnaCompito(input({ modo: "STUDENTE", blocchi, seme: seme! }))).toMatchObject({
+      ok: false,
+      motivo: "esercizi_insufficienti",
+    });
+    expect(await assegnaCompito(input({ modo: "CLASSE", blocchi, seme: seme! }))).toMatchObject({ ok: true });
+  });
+
+  it("STUDENTE: il rifiuto di assegnaCompito porta lo stesso riepilogo che la pagina ha visto", async () => {
+    await prisma.esercizio.updateMany({ where: { id: { in: [e(5), e(6)] } }, data: { accessoScuola: null } });
+    const visto = await riepilogoPerModo(sovrapposti(3), docente(), "s1", "STUDENTE");
+    expect(visto.riepilogo.sufficiente).toBe(false);
+    const esito = await assegnaCompito(input({ modo: "STUDENTE", blocchi: sovrapposti(3), seme: "s1" }));
+    expect(esito).toMatchObject({ ok: false, motivo: "esercizi_insufficienti", riepilogo: visto.riepilogo });
   });
 });

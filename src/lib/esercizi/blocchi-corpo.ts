@@ -13,26 +13,37 @@ import type { Blocco } from "./estrazione";
  * sono già, in `rifiutoRegole` (batterie.ts), così che `assegnaCompito` le
  * applichi a qualunque chiamante. `quanti` positivo è comunque richiesto
  * anche qui: un riepilogo con "0 esercizi" non ha niente da mostrare. */
+const QUANTI_MAX = 100;
+const SCELTI_MAX = 200;
+const BLOCCHI_MAX = 30;
+
+/** Il compito più grande che questi tetti lasciano passare: ogni blocco al
+ * suo massimo. È il tetto di `versioniViste` nella rotta `compiti`, che
+ * deve poter contenere qualunque estrazione il riepilogo abbia mostrato —
+ * un tetto più basso rifiuterebbe come corpo non valido un compito che il
+ * riepilogo dava per assegnabile. */
+export const TOTALE_MAX = BLOCCHI_MAX * Math.max(QUANTI_MAX, SCELTI_MAX);
+
 const bloccoSchema = z.discriminatedUnion("tipo", [
   z.object({
     tipo: z.literal("argomento"),
     argomento: z.string().min(1).max(200),
     anno: z.number().int().min(1).max(5).optional(),
     difficoltaMax: z.number().int().min(1).max(3).optional(),
-    quanti: z.number().int().positive().max(100),
+    quanti: z.number().int().positive().max(QUANTI_MAX),
   }),
   z.object({
     tipo: z.literal("raccolta"),
     contenitoreId: z.string().min(1).max(100),
-    quanti: z.number().int().positive().max(100),
+    quanti: z.number().int().positive().max(QUANTI_MAX),
   }),
   z.object({
     tipo: z.literal("scelti"),
-    esercizioIds: z.array(z.string().min(1).max(100)).max(200),
+    esercizioIds: z.array(z.string().min(1).max(100)).max(SCELTI_MAX),
   }),
 ]);
 
-export const blocchiSchema = z.array(bloccoSchema).max(30);
+export const blocchiSchema = z.array(bloccoSchema).max(BLOCCHI_MAX);
 
 /** Il seme dell'estrazione: lo genera la pagina ("Estrai di nuovo" = seme
  * nuovo), qui serve solo che sia una stringa sensata. */
