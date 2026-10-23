@@ -2,32 +2,42 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTeacher } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
-import { assegna } from "@/lib/esercizi/compiti";
+import { classiDelDocente } from "@/lib/esercizi/classi";
+import { assegnaCompito } from "@/lib/esercizi/compiti";
+import { blocchiConAnno, blocchiSchema, semeSchema } from "@/lib/esercizi/blocchi-corpo";
 
+// Nuovo compito, Task 3: il corpo è quello della pagina "Nuovo compito" —
+// i blocchi, il modo, il seme dell'estrazione vista. Il vecchio corpo
+// `{ batteriaId, classeId }` (assegnare una batteria composta prima) non è
+// più accettato: risponde 400 finché il vecchio modulo, che lo manda
+// ancora, non sparisce con il Task 7.
 const bodySchema = z.object({
-  batteriaId: z.string().min(1),
   classeId: z.string().min(1),
+  blocchi: blocchiSchema,
+  modo: z.enum(["CLASSE", "STUDENTE"]),
+  seme: semeSchema,
+  versioniViste: z.array(z.string().min(1).max(100)).max(500).optional(),
   opensAt: z.coerce.date().optional(),
   dueAt: z.coerce.date().optional(),
+  salvaModello: z.object({ nome: z.string().trim().min(1).max(200) }).optional(),
+  modelloId: z.string().min(1).max(100).optional(),
 });
 
-// I motivi di `assegna` portano un significato che il docente deve vedere:
-// `esercizi_insufficienti` porta anche un `dettaglio` (quale contenitore,
-// quanti richiesti, quanti disponibili) che finisce nel corpo qui sotto —
-// appiattirlo su un messaggio generico gli farebbe perdere il lavoro che il
-// dominio ha fatto per produrlo.
+// I motivi di `assegnaCompito` portano un significato che il docente deve
+// vedere: `esercizi_insufficienti` ed `estrazione_cambiata` portano il
+// riepilogo nuovo (numeri per blocco, nuova estrazione) che la pagina
+// mostra al posto del suo — appiattirli su un messaggio generico le
+// toglierebbe ciò che serve per rimediare. 404 e non 403 per classe e
+// modello, come le altre rotte dei compiti: un 403 confermerebbe che
+// esistono a chi non ha motivo di saperlo.
 const STATI: Record<string, number> = {
-  batteria_non_trovata: 404,
   classe_non_trovata: 404,
-  // 404 e non 403, come per rigeneraCodice e per la pagina delle consegne:
-  // un 403 confermerebbe che quella classe esiste a chi non ha motivo di
-  // saperlo. Il classeId arriva dal corpo della richiesta, quindi puo'
-  // essere qualunque cosa. Le tre risposte erano incoerenti fra loro fino
-  // al 2026-09-08 — stessa domanda, stesso motivo, due risposte diverse.
   non_insegni_questa_classe: 404,
+  modello_non_trovato: 404,
   esercizi_insufficienti: 409,
-  scadenza_prima_apertura: 400,
-  scadenza_nel_passato: 400,
+  estrazione_cambiata: 409,
+  date_non_valide: 400,
+  blocchi_non_validi: 400,
 };
 
 export async function POST(request: Request) {
@@ -46,15 +56,38 @@ export async function POST(request: Request) {
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  const d = parsed.data;
 
-  const esito = await assegna(parsed.data.batteriaId, parsed.data.classeId, teacherId, {
-    opensAt: parsed.data.opensAt,
-    dueAt: parsed.data.dueAt,
+  // La classe serve qui per l'anno dei blocchi argomento (`blocchiConAnno`,
+  // come `compiti/diretto`); `classiDelDocente` è già filtrata per questo
+  // docente e senza le archiviate, quindi una classe assente dalla lista o
+  // non esiste o non è sua: stessa risposta per entrambe.
+  const classe = (await classiDelDocente(teacherId)).find((c) => c.id === d.classeId);
+  if (!classe) return NextResponse.json({ error: "non_insegni_questa_classe" }, { status: 404 });
+
+  const blocchi = blocchiConAnno(d.blocchi, classe.yearLevel);
+  if (!blocchi) return NextResponse.json({ error: "classe_senza_anno" }, { status: 422 });
+
+  const esito = await assegnaCompito({
+    classeId: d.classeId,
+    teacherId,
+    blocchi,
+    modo: d.modo,
+    seme: d.seme,
+    versioniViste: d.versioniViste,
+    opensAt: d.opensAt,
+    dueAt: d.dueAt,
+    salvaModello: d.salvaModello,
+    modelloId: d.modelloId,
   });
 
   if (!esito.ok) {
     return NextResponse.json(
-      { error: esito.motivo, ...(esito.dettaglio !== undefined ? { dettaglio: esito.dettaglio } : {}) },
+      {
+        error: esito.motivo,
+        ...(esito.riepilogo !== undefined ? { riepilogo: esito.riepilogo } : {}),
+        ...(esito.dettaglio !== undefined ? { dettaglio: esito.dettaglio } : {}),
+      },
       { status: STATI[esito.motivo] ?? 400 },
     );
   }

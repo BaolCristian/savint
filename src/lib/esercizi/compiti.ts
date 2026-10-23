@@ -1,7 +1,16 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db/client";
-import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria, formaRegola } from "./batterie";
-import { estraiConDettaglio, ultimeVersioni } from "./estrazione";
+import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria, formaRegola, rifiutoRegole, scriviBatteria } from "./batterie";
+import {
+  baciniDeiBlocchi,
+  estraiConDettaglio,
+  regolaDaBlocco,
+  riepilogoEstrazione,
+  ultimeVersioni,
+  type Blocco,
+  type Riepilogo,
+} from "./estrazione";
+import { estrazioneDaBaciniCongelati, type BacinoCongelato } from "./versioni-compito";
 import { comeDocente, ruoliEsercizi, type Utente } from "./accesso";
 
 type MotivoAssegna =
@@ -399,6 +408,257 @@ export async function assegnaDiretto(input: {
   }
 
   return esito;
+}
+
+/** Ciò che la pagina "Nuovo compito" manda per assegnare (Task 3). `seme`
+ * è il seme dell'estrazione che il docente ha visto nel riepilogo (zona 3);
+ * `versioniViste` (solo modo CLASSE) gli id versione di quell'estrazione,
+ * nell'ordine in cui li ha visti. `salvaModello` crea anche un modello con
+ * gli stessi blocchi; `modelloId` dice da quale modello esistente si è
+ * partiti ("Usa questo modello"). */
+export type InputAssegna = {
+  classeId: string;
+  teacherId: string;
+  blocchi: Blocco[];
+  modo: "CLASSE" | "STUDENTE";
+  seme: string;
+  versioniViste?: string[];
+  opensAt?: Date;
+  dueAt?: Date;
+  salvaModello?: { nome: string };
+  modelloId?: string;
+};
+
+export type MotivoAssegnaCompito =
+  | "classe_non_trovata"
+  | "non_insegni_questa_classe"
+  | "esercizi_insufficienti"
+  | "estrazione_cambiata"
+  | "date_non_valide"
+  | "modello_non_trovato"
+  | "blocchi_non_validi";
+
+/** L'esito di `assegnaCompito`. `riepilogo` accompagna `esercizi_insufficienti`
+ * ed `estrazione_cambiata`: è ciò che la pagina deve mostrare al posto di
+ * quello che aveva (i numeri per blocco, o la nuova estrazione in
+ * anteprima). `dettaglio` accompagna solo `date_non_valide` e dice quale
+ * delle due regole di `motivoDateNonValide` è stata violata — lo stesso
+ * motivo che le rotte di oggi restituiscono come `error`. */
+export type EsitoAssegnaCompito =
+  | { ok: true; compitoId: string }
+  | { ok: false; motivo: MotivoAssegnaCompito; riepilogo?: Riepilogo; dettaglio?: MotivoDate };
+
+/** Il nome della batteria automatica di un compito: ciò che il docente
+ * legge come titolo nell'elenco dei compiti, quindi parole sue — le
+ * etichette dei blocchi (argomento, nome della raccolta, "Esercizi scelti")
+ * con quanti esercizi ciascuno, in ordine: "Equazioni (3) + Percentuali
+ * (2)". Le etichette sono quelle del riepilogo, quindi una raccolta che chi
+ * assegna non vede resta "Raccolta non disponibile" anche qui. Tagliato a
+ * una lunghezza ragionevole: con molti blocchi il titolo diventerebbe un
+ * paragrafo. */
+const NOME_MAX = 120;
+function nomeDelCompito(r: Riepilogo): string {
+  const nome = r.blocchi.map((b) => `${b.etichetta} (${b.richiesti})`).join(" + ");
+  return nome.length <= NOME_MAX ? nome : `${nome.slice(0, NOME_MAX - 1).trimEnd()}…`;
+}
+
+/** Il bacino congelato di un compito "diverse per studente" (Decisioni,
+ * punto 4): per ogni blocco, le ULTIME versioni dei suoi candidati e quanti
+ * pescarne.
+ *
+ * Prima di congelare si applicano le esclusioni dell'estrazione, una volta
+ * per tutte, così i bacini congelati sono DISGIUNTI: gli esercizi scelti a
+ * mano vanno al loro blocco scelti (al primo, se scelti in due) e sono tolti
+ * da tutti i blocchi casuali; ogni altro esercizio va al PRIMO blocco
+ * casuale il cui bacino lo contiene. È più severo dell'estrazione di una
+ * classe, dove un blocco perde solo ciò che i precedenti hanno davvero
+ * PRESO: qui un blocco perde tutto ciò che i precedenti POTEVANO prendere.
+ * Serve perché le estrazioni degli studenti avvengono anche molto dopo, una
+ * per una, ciascuna col proprio seme: con bacini sovrapposti la sufficienza
+ * dipenderebbe dal seme di ogni studente (un blocco che "ce la fa" per uno
+ * potrebbe restare corto per un altro), mentre con bacini disgiunti basta
+ * controllare `versionIds.length >= count` qui, una volta, perché valga per
+ * tutti — "il caso studente con meno esercizi non può più capitare".
+ *
+ * Restituisce anche, per blocco, quanti ne restano dopo le esclusioni e
+ * quanti ne ha persi: i numeri del riepilogo di rifiuto, se un blocco resta
+ * corto. */
+async function congelaBacini(
+  blocchi: Blocco[],
+  chi: { id: string; admin: boolean },
+): Promise<{ bacini: BacinoCongelato[]; tolti: number }> {
+  const risolti = await baciniDeiBlocchi(blocchi, chi);
+  const riservati = new Set(risolti.filter((b) => b.scelti).flatMap((b) => b.candidati));
+  const assegnati = new Set<string>();
+  let tolti = 0;
+  const perBlocco = risolti.map((b) => {
+    const unici = [...new Set(b.candidati)];
+    // Gli scelti restano nell'ordine del docente; i casuali vengono ordinati
+    // comunque dal sorteggio (`estraiConDettaglio`), qui l'ordine non conta.
+    const propri = unici.filter((id) => !assegnati.has(id) && (b.scelti || !riservati.has(id)));
+    for (const id of propri) assegnati.add(id);
+    tolti += unici.length - propri.length;
+    return propri;
+  });
+  const versioni = await ultimeVersioni([...assegnati]);
+  const bacini = risolti.map((b, i) => ({
+    count: b.richiesti,
+    // Un esercizio la cui versione è sparita fra le due query resta fuori,
+    // e il controllo sulla lunghezza lo conta come mancante.
+    versionIds: perBlocco[i]!.flatMap((id) => {
+      const v = versioni.get(id);
+      return v ? [v.versioneId] : [];
+    }),
+    ...(b.scelti ? { scelti: true as const } : {}),
+  }));
+  return { bacini, tolti };
+}
+
+/** Assegnare un compito dal "Nuovo compito" (spec 2026-10-22): i blocchi, il
+ * modo, il seme. L'unica strada di assegnazione dopo il Task 7 (che toglierà
+ * `assegna` e `assegnaDiretto`).
+ *
+ * Tutti i controlli prima di qualunque scrittura, nell'ordine: date (le
+ * stesse regole di `assegna`, `motivoDateNonValide`); blocchi (almeno uno,
+ * e ciascuno valido per `rifiutoRegole`, la STESSA convalida di
+ * `creaBatteria` — un "scelti" vuoto o con doppioni, un `quanti` non
+ * positivo ⇒ `blocchi_non_validi`); classe (esistente, non archiviata,
+ * insegnata da chi assegna: stessi motivi di `assegna`); modello indicato
+ * (deve esistere ed essere un modello, cioè non automatico); estrazione.
+ *
+ * L'estrazione è sempre COME DOCENTE (`comeDocente`): un ADMIN che insegna
+ * pesca fra ciò che vedrebbe da docente, come in `assegna`.
+ *
+ * **Modo CLASSE — si assegna ciò che si è visto.** Si rifà il riepilogo con
+ * lo stesso `seme`: stessi bacini e stesso seme danno la stessa estrazione
+ * (`estraiConDettaglio` è deterministica). Se il docente ha mandato le
+ * versioni viste e non coincidono — stesso ordine compreso: l'ordine è
+ * quello del compito — vuol dire che il bacino è cambiato nel frattempo (un
+ * collega ha reso privato un esercizio, ne è uscita una versione nuova) e
+ * si risponde `estrazione_cambiata` con il riepilogo nuovo, senza scrivere
+ * niente: il docente deve vedere ciò che assegna. Senza `versioniViste`
+ * (non ha mai aperto l'anteprima) si assegna l'estrazione del riepilogo.
+ * `drawSeed` = il seme, `drawnVersionIds` = le versioni estratte.
+ *
+ * **Modo STUDENTE — diverse per studente.** Il riepilogo deve essere
+ * sufficiente; poi si congela il bacino (`congelaBacini`, con il suo
+ * controllo più severo: un blocco corto dopo il congelamento ⇒
+ * `esercizi_insufficienti` con il riepilogo corretto con quei numeri).
+ * `drawnVersionIds` resta vuoto, `bacini` è il bacino congelato, e ogni
+ * studente iscritto ORA riceve subito la sua `EstrazioneStudente` (seme
+ * `${seme}:${studentId}`, `estrazioneDaBaciniCongelati`: lo stesso calcolo
+ * che `estrazioneDelloStudente` farà per chi si iscrive dopo).
+ *
+ * **Scritture, tutte in una transazione** (Decisioni, punto 2): la batteria
+ * automatica, copia dei blocchi, propria del compito; con `salvaModello`
+ * anche un modello nuovo (batteria non automatica, stessi blocchi), che
+ * diventa il `modelloId` del compito — vince su un `modelloId` passato
+ * insieme, perché i blocchi assegnati sono quelli del modello nuovo; il
+ * compito; le estrazioni degli iscritti. Un fallimento a metà non lascia
+ * niente: è la ragione per cui la scrittura di `creaBatteria` è stata
+ * staccata in `scriviBatteria` — `assegnaDiretto` doveva cancellare a mano
+ * la batteria dopo un rifiuto, qui non ce n'è bisogno.
+ *
+ * Un blocco "argomento" senza `anno` pesca fra tutti gli anni: è la rotta a
+ * riempire l'anno con quello della classe, come `compiti/diretto`. */
+export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompito> {
+  const date = motivoDateNonValide(i.opensAt ?? null, i.dueAt ?? null, true);
+  if (date) return { ok: false, motivo: "date_non_valide", dettaglio: date };
+
+  // Nessun blocco = nessun esercizio: un compito vuoto non è apribile da
+  // nessuno (lo stesso difetto che `conteggio_non_valido` chiude in
+  // `creaBatteria`). Ogni blocco valido chiede almeno un esercizio, quindi
+  // "almeno un blocco" basta perché il totale sia positivo.
+  if (i.blocchi.length === 0) return { ok: false, motivo: "blocchi_non_validi" };
+  const regole = i.blocchi.map(regolaDaBlocco);
+  const chi = comeDocente(i.teacherId);
+
+  const classe = await prisma.classe.findUnique({ where: { id: i.classeId } });
+  if (!classe) return { ok: false, motivo: "classe_non_trovata" };
+  if (classe.archivedAt != null) return { ok: false, motivo: "non_insegni_questa_classe" };
+  const insegna = await prisma.classeDocente.findUnique({
+    where: { classeId_teacherId: { classeId: i.classeId, teacherId: i.teacherId } },
+  });
+  if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
+
+  if (i.modelloId !== undefined && !i.salvaModello) {
+    const modello = await prisma.batteria.findUnique({ where: { id: i.modelloId }, select: { automatica: true } });
+    if (!modello || modello.automatica) return { ok: false, motivo: "modello_non_trovato" };
+  }
+
+  const rifiuto = await rifiutoRegole(i.teacherId, regole);
+  if (rifiuto && rifiuto.motivo !== "contenitore_non_trovato") return { ok: false, motivo: "blocchi_non_validi" };
+
+  // Una raccolta che chi assegna non vede (`contenitore_non_trovato` qui
+  // sopra) ha bacino vuoto: il riepilogo la mostra come "Raccolta non
+  // disponibile" con zero disponibili, che è la risposta più utile per il
+  // docente — la stessa che la pagina gli mostrava già.
+  const riepilogo = await riepilogoEstrazione(i.blocchi, chi, i.seme);
+  if (!riepilogo.sufficiente || rifiuto) return { ok: false, motivo: "esercizi_insufficienti", riepilogo };
+
+  let drawnVersionIds: string[] = [];
+  let bacini: BacinoCongelato[] | null = null;
+  if (i.modo === "CLASSE") {
+    drawnVersionIds = riepilogo.esercizi.map((x) => x.versioneId);
+    const viste = i.versioniViste;
+    if (viste && (viste.length !== drawnVersionIds.length || viste.some((v, k) => v !== drawnVersionIds[k]))) {
+      return { ok: false, motivo: "estrazione_cambiata", riepilogo };
+    }
+  } else {
+    const congelati = await congelaBacini(i.blocchi, chi);
+    bacini = congelati.bacini;
+    if (bacini.some((b) => b.versionIds.length < b.count)) {
+      return {
+        ok: false,
+        motivo: "esercizi_insufficienti",
+        riepilogo: {
+          ...riepilogo,
+          blocchi: riepilogo.blocchi.map((b, k) => ({ ...b, disponibili: bacini![k]!.versionIds.length })),
+          duplicatiTolti: congelati.tolti,
+          sufficiente: false,
+          esercizi: [],
+        },
+      };
+    }
+  }
+
+  const nome = nomeDelCompito(riepilogo);
+  const compitoId = await prisma.$transaction(async (tx) => {
+    const batteriaId = await scriviBatteria(tx, i.teacherId, nome, regole, undefined, true);
+    const modelloId = i.salvaModello
+      ? await scriviBatteria(tx, i.teacherId, i.salvaModello.nome, regole, undefined, false)
+      : i.modelloId ?? null;
+    const compito = await tx.compito.create({
+      data: {
+        batteriaId,
+        classeId: i.classeId,
+        assignedById: i.teacherId,
+        drawSeed: i.seme,
+        drawnVersionIds,
+        modo: i.modo,
+        bacini: bacini ?? undefined,
+        modelloId,
+        opensAt: i.opensAt,
+        dueAt: i.dueAt,
+      },
+    });
+    if (bacini) {
+      const congelati = bacini;
+      const iscritti = await tx.classeStudente.findMany({ where: { classeId: i.classeId }, select: { studentId: true } });
+      if (iscritti.length > 0) {
+        await tx.estrazioneStudente.createMany({
+          data: iscritti.map(({ studentId }) => ({
+            compitoId: compito.id,
+            studentId,
+            versionIds: estrazioneDaBaciniCongelati(congelati, `${i.seme}:${studentId}`),
+          })),
+        });
+      }
+    }
+    return compito.id;
+  });
+
+  return { ok: true, compitoId };
 }
 
 /** Controlla che un `compitoId` arrivato dalla query string (il link nella

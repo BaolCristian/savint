@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { comeDocente, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
 
@@ -317,12 +318,27 @@ export async function creaBatteria(
   // validazione dell'invariante, stessa transazione — non un secondo percorso
   // di scrittura per il caso automatico.
   automatica = false,
-): Promise<
-  | { ok: true; id: string }
+): Promise<{ ok: true; id: string } | RifiutoRegole> {
+  const rifiuto = await rifiutoRegole(createdById, regole);
+  if (rifiuto) return rifiuto;
+  const id = await prisma.$transaction((tx) => scriviBatteria(tx, createdById, name, regole, description, automatica));
+  return { ok: true, id };
+}
+
+/** I tre rifiuti possibili di un elenco di regole (vedi `creaBatteria`). */
+export type RifiutoRegole =
   | { ok: false; motivo: "contenitore_non_trovato"; dettaglio: { contenitoreId: string } }
   | { ok: false; motivo: "regola_malformata"; dettaglio: { index: number } }
-  | { ok: false; motivo: "conteggio_non_valido"; dettaglio: { index: number; count: number } }
-> {
+  | { ok: false; motivo: "conteggio_non_valido"; dettaglio: { index: number; count: number } };
+
+/** La convalida di `creaBatteria`, staccata dalla scrittura (Nuovo compito,
+ * Task 3) perché `assegnaCompito` (compiti.ts) deve scrivere la copia dei
+ * blocchi, l'eventuale modello, il compito e le estrazioni degli studenti
+ * in UNA transazione sola: non può chiamare `creaBatteria`, che apre la
+ * propria. Deve però convalidare esattamente come lei, quindi la
+ * convalida è una sola, qui, e `creaBatteria` la usa per prima. `null` =
+ * le regole vanno bene. Nessuna scrittura. */
+export async function rifiutoRegole(createdById: string, regole: RegolaInput[]): Promise<RifiutoRegole | null> {
   for (let i = 0; i < regole.length; i++) {
     const r = regole[i]!;
     const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null, esercizioIds: r.esercizioIds });
@@ -358,33 +374,45 @@ export async function creaBatteria(
     }
   }
 
-  const id = await prisma.$transaction(async (tx) => {
-    const b = await tx.batteria.create({ data: { createdById, name, description, automatica } });
-    if (regole.length > 0) {
-      await tx.batteriaRegola.createMany({
-        data: regole.map((r, i) => {
-          // Rivalidato (già controllato sopra, prima di qualunque
-          // scrittura): normalizza i campi dell'altra forma a null invece
-          // di persistere ciò che il chiamante ha eventualmente passato per
-          // sbaglio insieme a un contenitoreId — una riga non deve mai
-          // portare campi di una forma che non è la sua.
-          const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null, esercizioIds: r.esercizioIds });
-          return {
-            batteriaId: b.id,
-            order: i,
-            count: r.count,
-            contenitoreId: forma === "contenitore" ? r.contenitoreId! : null,
-            argomento: forma === "filtro" ? r.argomento! : null,
-            anno: forma === "filtro" ? r.anno ?? null : null,
-            difficoltaMax: forma === "filtro" ? r.difficoltaMax ?? null : null,
-            esercizioIds: forma === "scelti" ? r.esercizioIds! : [],
-          };
-        }),
-      });
-    }
-    return b.id;
-  });
-  return { ok: true, id };
+  return null;
+}
+
+/** La scrittura di `creaBatteria`, dentro una transazione data da chi
+ * chiama (vedi `rifiutoRegole` per il perché è separata). NON convalida: si
+ * chiama solo dopo che `rifiutoRegole` ha restituito `null` per le stesse
+ * regole. Restituisce l'id della batteria. */
+export async function scriviBatteria(
+  tx: Prisma.TransactionClient,
+  createdById: string,
+  name: string,
+  regole: RegolaInput[],
+  description: string | undefined,
+  automatica: boolean,
+): Promise<string> {
+  const b = await tx.batteria.create({ data: { createdById, name, description, automatica } });
+  if (regole.length > 0) {
+    await tx.batteriaRegola.createMany({
+      data: regole.map((r, i) => {
+        // Rivalidato (già controllato sopra, prima di qualunque
+        // scrittura): normalizza i campi dell'altra forma a null invece
+        // di persistere ciò che il chiamante ha eventualmente passato per
+        // sbaglio insieme a un contenitoreId — una riga non deve mai
+        // portare campi di una forma che non è la sua.
+        const forma = formaRegola({ contenitoreId: r.contenitoreId ?? null, argomento: r.argomento ?? null, esercizioIds: r.esercizioIds });
+        return {
+          batteriaId: b.id,
+          order: i,
+          count: r.count,
+          contenitoreId: forma === "contenitore" ? r.contenitoreId! : null,
+          argomento: forma === "filtro" ? r.argomento! : null,
+          anno: forma === "filtro" ? r.anno ?? null : null,
+          difficoltaMax: forma === "filtro" ? r.difficoltaMax ?? null : null,
+          esercizioIds: forma === "scelti" ? r.esercizioIds! : [],
+        };
+      }),
+    });
+  }
+  return b.id;
 }
 
 /** Tutte le batterie create a mano (esclude quelle `automatica`, generate
