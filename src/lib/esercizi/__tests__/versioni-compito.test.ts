@@ -157,8 +157,16 @@ describe("le letture del compito nel modo STUDENTE", () => {
     const esercizio = await esercizioDi(mia);
     await prisma.esercizio.update({ where: { id: esercizio }, data: { accessoScuola: null } });
     expect(await esercizioApribileDaStudente(studenti[0]!, esercizio)).toBe(true);
-    const senza = studenti.find((s) => !tutte.get(s)!.includes(mia));
-    if (senza) expect(await esercizioApribileDaStudente(senza, esercizio)).toBe(false);
+    // Uno studente che quell'esercizio non l'ha: gli id degli studenti sono
+    // casuali, quindi le loro estrazioni pure; se per caso tutti e cinque
+    // l'hanno (≈1%), se ne iscrivono altri finché uno non l'ha.
+    let senza = studenti.find((s) => !tutte.get(s)!.includes(mia));
+    for (let i = 0; !senza && i < 30; i++) {
+      const altro = await nuovoStudente(`senza${i}`);
+      if (!(await versioniDelloStudente(c.id, altro))!.includes(mia)) senza = altro;
+    }
+    expect(senza).toBeDefined();
+    expect(await esercizioApribileDaStudente(senza!, esercizio)).toBe(false);
   });
 
   it("compitiDellaClasse: esercizi = somma dei count dei blocchi", async () => {

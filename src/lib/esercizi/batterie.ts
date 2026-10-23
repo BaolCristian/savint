@@ -162,70 +162,35 @@ export async function bacinoRegola(
 
 /** L'elenco degli argomenti che gli esercizi dichiarano davvero, con quanti
  * esercizi ciascuno — la lista da cui il docente sceglie "+ Aggiungi da un
- * argomento" nel Nuovo compito (nata per il modulo di assegnazione diretta,
- * Task 2 docente-via-veloce, tolto nel Task 7 del Nuovo compito): un campo a
- * scelta, non libero, così non si può chiedere un argomento che non esiste.
- * Nel racconto che segue, `quantiCorrispondono` è il conteggio (tolto con
- * quel modulo) che la voce del menu doveva eguagliare; oggi lo stesso
- * vale per i "disponibili" del riepilogo del Nuovo compito.
+ * argomento" nel Nuovo compito: un campo a scelta, non libero, così non si
+ * può chiedere un argomento che non esiste. Il conteggio di una voce
+ * coincide con i "disponibili" che il riepilogo del Nuovo compito mostra
+ * per un blocco con quell'argomento (senza `difficoltaMax`): una voce di
+ * menu non deve mai promettere più esercizi di quanti selezionarla ne
+ * raggiunga.
  *
  * NON fonde grafie diverse («equazioni» ed «Equazioni», o «equazioni » con
  * uno spazio in coda): ognuna resta la sua voce, col proprio conteggio
- * ESATTO. Giro di correzioni 1 (Task 2, docente-via-veloce) — la specifica
- * diceva inizialmente sia "diventa due voci nel menu" sia "si normalizza in
- * lettura per il menu" (contraddittorio, corretto in cae8f1a): fondere
- * significa mostrarne una sola con la somma dei conteggi, ma il filtro che
- * pesca (`bacinoRegola`, via `quantiCorrispondono`) confronta il testo
- * ESATTO — con 99 esercizi «equazioni» e 1 «Equazioni» il menu fuso direbbe
- * «Equazioni — 100» e selezionarla ne troverebbe 1, lo stesso contatore che
- * dovrebbe prevenire la sorpresa a contraddirsi da solo sulla stessa
- * schermata, e 99 esercizi diventati permanentemente inassegnabili da qui.
- * Una lista con voci duplicate è più lunga ma sempre raggiungibile; una
- * fusa è più corta ma mente su quanti esercizi selezionarla raggiunge.
+ * ESATTO, perché il filtro che pesca (`bacinoRegola`) confronta il testo
+ * esatto — una voce fusa «Equazioni — 100» che selezionata ne trova 1
+ * mentirebbe, e gli altri 99 diventerebbero inassegnabili da qui.
  *
- * Ordina ignorando la cassa (non il testo esatto): le grafie diverse dello
- * stesso argomento finiscono così adiacenti nella lista, visibili a colpo
- * d'occhio come il segnale che quei metadati vanno sistemati — nasconderle
- * nasconderebbe il problema. A parità di cassa, l'ordine è quello del testo
- * originale: deterministico, non "quella arrivata per prima dalla query"
- * (Prisma non garantisce un ordine senza `orderBy`).
+ * Ordina ignorando la cassa: le grafie diverse dello stesso argomento
+ * finiscono adiacenti, visibili come il segnale che quei metadati vanno
+ * sistemati. A parità di cassa, l'ordine è quello del testo originale
+ * (deterministico: Prisma non garantisce un ordine senza `orderBy`).
  *
- * NON tocca la riga salvata (solo `select`, nessuna scrittura): normalizzare
- * sul serio i dati è un lavoro diverso, deliberatamente fuori da questo task.
+ * NON tocca la riga salvata (solo `select`): normalizzare davvero i dati è
+ * un altro lavoro.
  *
  * `anno`, se passato, filtra per `yearLevel` esatto — lo stesso significato
  * che ha in un blocco argomento.
  *
- * **Conta solo ciò che il sorteggio può davvero consegnare (Onda di
- * correzioni sui numeri): stesso filtro di disponibilità di versione di
- * `idsConVersione`, non l'appartenenza grezza al topic.** Dimostrato dal
- * revisore sul database di sviluppo: 16 esercizi col topic «prova», di cui
- * 3 senza `EsercizioVersione` (lo stato ordinario di uno che il docente ha
- * appena creato e non ancora salvato) — il menu diceva «prova — 16», la
- * riga sotto («N esercizi disponibili», da `quantiCorrispondono`) diceva
- * 13, le due cifre in contraddizione sulla stessa schermata. È la stessa
- * famiglia del difetto che questo ramo ha già rifiutato di spedire (Giro
- * di correzioni 1, sopra, sulla fusione delle grafie): una voce di menu
- * non deve mai promettere più esercizi di quanti selezionarla raggiunga.
- * La versione precedente di questo commento derubricava il caso a
- * "sotto-promessa accettabile" insieme alla difficoltà — sbagliando verso:
- * dal lato del docente è il MENU a sovra-promettere, non
- * `quantiCorrispondono` a sotto-consegnare.
- *
- * Resta invece un limite superiore legittimo, non un difetto, rispetto a
- * `difficoltaMax`: quel filtro si applica dopo, quando il docente ha già
- * scelto la voce e sta decidendo quanti esercizi chiederne (lo stesso
- * momento in cui chiama `quantiCorrispondono`) — a questa schermata la
- * difficoltà non è ancora stata scelta, quindi non c'è nulla da contare
- * qui. Per costruzione — stesso `topic` esatto, stesso `anno` esatto,
- * stesso filtro di versione — il conteggio qui e quello di
- * `quantiCorrispondono` per la stessa voce coincidono SEMPRE quando
- * `difficoltaMax` non viene passato: non una stima, la stessa risoluzione
- * (`idsConVersione`, condivisa) applicata alla stessa identica domanda.
- *
- * Per lo stesso motivo conta solo gli esercizi che `chi` vede, come fa
+ * Conta solo ciò che il sorteggio può davvero consegnare: gli esercizi con
+ * una versione (`idsConVersione`, lo stesso filtro dell'estrazione — uno
+ * appena creato e mai salvato non ne ha) e che `chi` vede, come
  * `bacinoRegola`: un argomento fatto solo di esercizi privati altrui non
- * compare nemmeno nel menu (spec, anti-obiettivo sui conteggi). */
+ * compare nemmeno nel menu. */
 export async function argomentiDisponibili(
   chi: Utente,
   anno?: number,

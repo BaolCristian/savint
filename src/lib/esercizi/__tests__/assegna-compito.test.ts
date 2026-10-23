@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
 import { assegnaCompito, riepilogoPerModo, type InputAssegna } from "../compiti";
 import { riepilogoEstrazione, type Blocco } from "../estrazione";
-import { estrazioneDelloStudente, estrazioneDaBaciniCongelati, type BacinoCongelato } from "../versioni-compito";
+import {
+  estrazioneDelloStudente,
+  estrazioneDaBaciniCongelati,
+  versioniDelloStudente,
+  type BacinoCongelato,
+} from "../versioni-compito";
 
 // Prefisso proprio di questo file: un blocco "argomento" interroga l'intera
 // tabella Esercizio, quindi l'argomento deve essere unico (vedi il commento
@@ -244,6 +249,29 @@ describe("assegnaCompito — modo STUDENTE (diverse per studente)", () => {
     expect(riepilogo.sufficiente).toBe(true);
   });
 
+  it("un blocco precedente toglie al più gli esercizi in comune: raccolta e1+e7..e10 (4) + argomento e1..e6 (3), 6−min(4,1)=5 ≥ 3", async () => {
+    // Prima si toglieva tutto il quanti della raccolta (6−4=2 < 3, rifiuto):
+    // ma la raccolta tocca l'argomento in un solo esercizio, e1.
+    const mista = (await prisma.contenitore.create({ data: { name: `${P}Mista`, createdById: docenteId } })).id;
+    await prisma.contenitoreEsercizio.createMany({
+      data: [1, 7, 8, 9, 10].map((n) => ({ contenitoreId: mista, esercizioId: e(n) })),
+    });
+    const blocchi: Blocco[] = [
+      { tipo: "raccolta", contenitoreId: mista, quanti: 4 },
+      { tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 },
+    ];
+    const { riepilogo, bacini } = await riepilogoPerModo(blocchi, docente(), "s", "STUDENTE");
+    expect(riepilogo.blocchi.map((b) => b.disponibili)).toEqual([5, 5]);
+    expect(riepilogo.sufficiente).toBe(true);
+    for (let k = 0; k < 500; k++) {
+      const v = estrazioneDaBaciniCongelati(bacini!, `seme-${k}:studente`);
+      expect(v).toHaveLength(7);
+      expect(new Set(v).size).toBe(7);
+    }
+    const esito = await assegnaCompito(input({ modo: "STUDENTE", blocchi }));
+    expect(esito.ok).toBe(true);
+  });
+
   it("nessuno studente resta corto, per nessun seme, al limite del caso peggiore", async () => {
     // 6 − 3 = 3 ≥ 3: il limite esatto; più gli scelti e un blocco disgiunto.
     const blocchi: Blocco[] = [
@@ -267,6 +295,65 @@ describe("assegnaCompito — modo STUDENTE (diverse per studente)", () => {
     const esito = await assegnaCompito(input({ modo: "STUDENTE", blocchi: [{ tipo: "argomento", argomento: ALTRO, anno: 2, quanti: 5 }] }));
     expect(esito).toMatchObject({ ok: false, motivo: "esercizi_insufficienti" });
     expect(await righe()).toEqual(prima);
+  });
+});
+
+describe("un compito già dato non cambia dopo", () => {
+  /** Una versione nuova per ciascuno dei dieci esercizi (come se il collega
+   * li avesse modificati tutti dopo l'assegnazione). */
+  async function versioniNuoveDiTutti() {
+    await prisma.esercizioVersione.createMany({
+      data: Array.from({ length: 10 }, (_, i) => ({ esercizioId: e(i + 1), version: 9, content: { nuova: i }, hash: `${P}nuova${i}` })),
+    });
+    return new Set((await prisma.esercizioVersione.findMany({ where: { version: 9, esercizioId: { startsWith: P } } })).map((v) => v.id));
+  }
+
+  /** Le versioni di ogni iscritto, più quelle di uno che arriva adesso. */
+  async function versioniDiTutti(compitoId: string, tardivo?: string) {
+    const chi = tardivo ? [...studenti, tardivo] : studenti;
+    return Promise.all(chi.map(async (s) => (await versioniDelloStudente(compitoId, s))!));
+  }
+
+  it.each(["CLASSE", "STUDENTE"] as const)("%s: una versione nuova di un esercizio estratto non cambia il compito", async (modo) => {
+    const esito = await assegnaCompito(input({ modo, blocchi: [{ tipo: "argomento", argomento: TOPIC, anno: 2, quanti: 3 }] }));
+    if (!esito.ok) throw new Error(esito.motivo);
+    const prima = await versioniDiTutti(esito.compitoId);
+    const c = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+
+    const nuove = await versioniNuoveDiTutti();
+    const tardivo = (await prisma.user.create({ data: { email: `${P}tardivo@test.it`, role: "STUDENT" } })).id;
+    await prisma.classeStudente.create({ data: { classeId, studentId: tardivo } });
+
+    const dopo = await versioniDiTutti(esito.compitoId, tardivo);
+    expect(dopo.slice(0, studenti.length)).toEqual(prima);
+    // Nemmeno chi arriva dopo riceve una versione nuova: pesca dal bacino
+    // congelato (STUDENTE) o riceve drawnVersionIds (CLASSE).
+    for (const v of dopo.flat()) expect(nuove.has(v)).toBe(false);
+    const ora = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+    expect(ora.drawnVersionIds).toEqual(c.drawnVersionIds);
+    expect(ora.bacini).toEqual(c.bacini);
+  });
+
+  it.each(["CLASSE", "STUDENTE"] as const)("%s: cambiare la raccolta dopo l'assegnazione non cambia l'estrazione", async (modo) => {
+    const esito = await assegnaCompito(input({ modo, blocchi: [{ tipo: "raccolta", contenitoreId: raccoltaId, quanti: 4 }] }));
+    if (!esito.ok) throw new Error(esito.motivo);
+    const prima = await versioniDiTutti(esito.compitoId);
+    const c = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+
+    // La raccolta perde e1..e5 e guadagna e7..e10: tutt'altra raccolta.
+    await prisma.contenitoreEsercizio.deleteMany({ where: { contenitoreId: raccoltaId, esercizioId: { in: [1, 2, 3, 4, 5].map(e) } } });
+    await prisma.contenitoreEsercizio.createMany({ data: [7, 8, 9, 10].map((n) => ({ contenitoreId: raccoltaId, esercizioId: e(n) })) });
+    const tardivo = (await prisma.user.create({ data: { email: `${P}tardivo@test.it`, role: "STUDENT" } })).id;
+    await prisma.classeStudente.create({ data: { classeId, studentId: tardivo } });
+
+    const dopo = await versioniDiTutti(esito.compitoId, tardivo);
+    expect(dopo.slice(0, studenti.length)).toEqual(prima);
+    // Chi arriva dopo pesca ancora fra e1..e6, la raccolta di allora.
+    const diAllora = new Set(await Promise.all([1, 2, 3, 4, 5, 6].map(versioneDi)));
+    for (const v of dopo[studenti.length]!) expect(diAllora.has(v)).toBe(true);
+    const ora = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
+    expect(ora.drawnVersionIds).toEqual(c.drawnVersionIds);
+    expect(ora.bacini).toEqual(c.bacini);
   });
 });
 

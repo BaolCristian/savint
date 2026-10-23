@@ -29,8 +29,9 @@ export type BacinoCongelato = { count: number; versionIds: string[]; scelti?: tr
  * riserva degli scelti qui non toglie niente: congelando, gli scelti sono
  * già stati tolti dai bacini casuali. All'assegnazione
  * (`riepilogoPerModo`, compiti.ts) ogni blocco casuale ha almeno `count`
- * versioni anche nel caso peggiore — tolti `count` esercizi per ogni blocco
- * precedente che lo tocca — quindi l'estrazione non può risultare corta,
+ * versioni anche nel caso peggiore — tolti, per ogni blocco casuale
+ * precedente, `count` esercizi o quelli in comune se sono meno — quindi
+ * l'estrazione non può risultare corta,
  * con nessun seme. Se lo fosse — un
  * `Compito.bacini` scritto a mano, o rotto — si lancia: uno studente con
  * meno esercizi è proprio il caso che il bacino congelato esiste per

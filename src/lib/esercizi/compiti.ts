@@ -112,11 +112,12 @@ function nomeDelCompito(r: Riepilogo): string {
  *
  * Sufficienza, nel caso peggiore: le estrazioni degli studenti avvengono
  * anche molto dopo, ciascuna col proprio seme, e nessuno studente deve mai
- * restare con meno esercizi. Un blocco casuale k può perdere, per i blocchi
- * casuali precedenti j il cui bacino tocca il suo, al più `count_j`
- * esercizi ciascuno; quindi gli restano almeno
- * `|bacino_k| − Σ count_j` (j precedente, casuale, bacino_j ∩ bacino_k ≠ ∅),
- * qualunque seme. Se questo numero è ≥ `count_k` per ogni blocco,
+ * restare con meno esercizi. Un blocco casuale k può perdere, per ciascun
+ * blocco casuale precedente j, al più `min(count_j, |bacino_j ∩ bacino_k|)`
+ * esercizi: j non ne prende più di quanti ne chiede, né più di quanti dei
+ * suoi stanno anche nel bacino di k. Quindi gli restano almeno
+ * `|bacino_k| − Σ min(count_j, |bacino_j ∩ bacino_k|)` (j precedente,
+ * casuale; un bacino disgiunto non toglie niente), qualunque seme. Se questo numero è ≥ `count_k` per ogni blocco,
  * l'estrazione di ogni studente è piena. È più severo della sufficienza di
  * una classe (dove un blocco perde solo ciò che i precedenti hanno DAVVERO
  * preso con quel seme) e la implica: per questo nel modo STUDENTE il
@@ -155,8 +156,8 @@ async function congelaBacini(
     const mio = new Set(b.versionIds);
     const toltiAlPiu = bacini
       .slice(0, k)
-      .filter((j) => !j.scelti && j.versionIds.some((v) => mio.has(v)))
-      .reduce((s, j) => s + j.count, 0);
+      .filter((j) => !j.scelti)
+      .reduce((s, j) => s + Math.min(j.count, j.versionIds.filter((v) => mio.has(v)).length), 0);
     return Math.max(0, b.versionIds.length - toltiAlPiu);
   });
   return { bacini, disponibili };
