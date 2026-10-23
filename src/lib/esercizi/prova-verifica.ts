@@ -80,6 +80,11 @@ const rifiuto = (motivo: MotivoProva): Rifiuto => ({ ok: false, motivo });
 
 /** Quanti eventi al massimo in una chiamata. */
 export const MAX_EVENTI = 50;
+/** Quanti eventi al massimo per prova: quelli in più si ignorano. */
+export const MAX_EVENTI_PROVA = 500;
+/** Dopo la consegna gli eventi si accettano ancora per questo tempo: un
+ * rientro arriva spesso dopo. Oltre si ignorano. */
+export const EVENTI_DOPO_CONSEGNA_MS = 2 * 60_000;
 
 const iscritto = async (classeId: string, studentId: string) =>
   (await prisma.classeStudente.findUnique({ where: { classeId_studentId: { classeId, studentId } } })) != null;
@@ -206,6 +211,13 @@ export async function verificheDelloStudente(
  * `entrataAt: null` prima dei tentativi. La seconda transazione aspetta il
  * blocco della riga, non la trova più da entrare e non crea niente; i
  * tentativi si rileggono dopo, quindi entrambe le risposte sono uguali.
+ *
+ * Un «Chiudi» del docente arrivato fra la lettura e l'ingresso: la
+ * transazione prende per prima il blocco della riga della verifica (un
+ * `updateMany` senza effetti, condizionato a «non chiusa», come
+ * `salvaMisureVerifica`). Se il «Chiudi» è passato prima, non la trova e lo
+ * studente non entra (`chiusa`), salvo un recupero aperto; se passa dopo,
+ * aspetta, e la sua lettura delle prove aperte trova questa già entrata.
  */
 export async function entraNellaProva(
   compitoId: string,
@@ -247,17 +259,25 @@ export async function entraNellaProva(
     const posizioni = posizioniDellaProva(v.layout, versioni.map((id) => esercizioDi.get(id) ?? ""), prova.menoEsercizi)
       .map((p) => p.posizione);
     const provaId = prova.id;
-    await prisma.$transaction(async (tx) => {
+    const recuperoAperto = prova.recupero && prova.consegnataAt == null;
+    const entrato = await prisma.$transaction(async (tx) => {
+      const { count: aperta } = await tx.verifica.updateMany({
+        where: { compitoId, chiusaAt: null },
+        data: { minutiExtra: { increment: 0 } },
+      });
+      if (aperta === 0 && !recuperoAperto) return false;
       const { count } = await tx.provaVerifica.updateMany({
         where: { id: provaId, entrataAt: null },
         data: { entrataAt: ora, posizioni },
       });
-      if (count === 0) return;
+      if (count === 0) return true;
       await tx.tentativo.createMany({
         data: posizioni.map((k) => ({ studentId, esercizioVersioneId: versioni[k]!, compitoId, provaId, seed: randomUUID() })),
         skipDuplicates: true,
       });
+      return true;
     });
+    if (!entrato) return rifiuto("chiusa");
     prova = (await leggiProva(compitoId, studentId))!;
   }
 
@@ -303,6 +323,11 @@ export async function entraNellaProva(
  * in corso: un «Chiudi» del docente o una «Consegna» da un'altra scheda
  * arrivati nel frattempo la fanno cadere (`consegnata`), senza toccare lo
  * stato salvato prima.
+ *
+ * Lo studente tolto dalla classe non salva più (`non_trovata`). A verifica
+ * non più in corso salva solo un recupero aperto: una prova aperta sfuggita
+ * al «Chiudi» si consegna qui, automaticamente, all'ora della chiusura
+ * (`chiusa`).
  */
 export async function salvaRisposta(
   compitoId: string,
@@ -313,7 +338,7 @@ export async function salvaRisposta(
   locale: Locale = "it",
 ): Promise<{ ok: true; salvatoAt: Date; scadenza: Date } | Rifiuto> {
   const v = await sincronizzaVerifica(compitoId, ora);
-  if (!v) return rifiuto("non_trovata");
+  if (!v || !(await iscritto(v.classeId, studentId))) return rifiuto("non_trovata");
   const t = await prisma.tentativo.findUnique({
     where: { id: tentativoId },
     include: { prova: true, versione: { select: { content: true } } },
@@ -325,6 +350,11 @@ export async function salvaRisposta(
   if (!scadenza) return rifiuto("non_trovata");
   if (ora.getTime() > scadenza.getTime() + GRAZIA_MS) return rifiuto("tempo_scaduto");
   if (t.prova.consegnataAt) return rifiuto("consegnata");
+  if (v.stato !== "IN_CORSO" && !t.prova.recupero) {
+    const provaId = t.prova.id;
+    await prisma.$transaction((tx) => consegnaProvaTx(tx, provaId, v.chiusaAt ?? ora, true));
+    return rifiuto("chiusa");
+  }
 
   let esito;
   try {
@@ -342,25 +372,39 @@ export async function salvaRisposta(
 }
 
 /** Lo studente consegna. Idempotente: una prova già consegnata (da lui,
- * dal docente o alla scadenza) è un successo, non un errore. */
+ * dal docente o alla scadenza) è un successo, non un errore.
+ *
+ * `automatica`: la consegna che il client fa da sé allo zero del suo
+ * orologio. Vale solo a scadenza passata: se nel frattempo il docente ha
+ * dato minuti in più, il server rifiuta (`non_scaduta`) con la scadenza
+ * nuova e lo studente torna alla prova. */
 export async function consegnaProva(
   compitoId: string,
   studentId: string,
   ora: Date = new Date(),
-): Promise<{ ok: true } | Rifiuto> {
+  automatica = false,
+): Promise<{ ok: true } | Rifiuto | { ok: false; motivo: "non_scaduta"; scadenza: Date }> {
   const v = await sincronizzaVerifica(compitoId, ora);
   if (!v) return rifiuto("non_trovata");
   const prova = await leggiProva(compitoId, studentId);
   if (!prova?.entrataAt) return rifiuto("non_trovata");
   if (prova.consegnataAt) return { ok: true };
-  await prisma.$transaction((tx) => consegnaProvaTx(tx, prova.id, ora, false));
+  if (automatica) {
+    const scadenza = scadenzaDellaProva(v, prova);
+    if (scadenza && ora.getTime() < scadenza.getTime()) return { ok: false, motivo: "non_scaduta", scadenza };
+  }
+  await prisma.$transaction((tx) => consegnaProvaTx(tx, prova.id, ora, automatica));
   return { ok: true };
 }
 
 /** Le uscite dalla pagina e i rientri. Mai prima dell'ingresso; accettati
- * anche dopo la consegna (un rientro arriva spesso dopo). L'ora dichiarata
- * dal client è limitata a [ingresso, ora] e la durata a [0, ora −
- * ingresso]: un orologio sbagliato non sposta niente fuori dalla prova. */
+ * anche dopo la consegna, ma solo per `EVENTI_DOPO_CONSEGNA_MS` (un rientro
+ * arriva spesso dopo), e al massimo `MAX_EVENTI_PROVA` per prova: il resto
+ * si ignora senza errore. L'ora dichiarata dal client è limitata a
+ * [ingresso, ora] e la durata a [0, ora − ingresso]: un orologio sbagliato
+ * non sposta niente fuori dalla prova. Il conteggio sta in una transazione
+ * che blocca prima la riga della prova: due lotti concorrenti non superano
+ * il massimo. */
 export async function registraEventi(
   compitoId: string,
   studentId: string,
@@ -373,21 +417,28 @@ export async function registraEventi(
   const prova = await leggiProva(compitoId, studentId);
   if (!prova?.entrataAt) return rifiuto("non_trovata");
   if (eventi.length === 0) return { ok: true };
+  if (prova.consegnataAt && ora.getTime() > prova.consegnataAt.getTime() + EVENTI_DOPO_CONSEGNA_MS) return { ok: true };
 
   const entrata = prova.entrataAt.getTime();
   const fine = Math.max(entrata, ora.getTime());
   const limita = (x: number, min: number, max: number) => Math.min(max, Math.max(min, x));
-  await prisma.eventoVerifica.createMany({
-    data: eventi.map((ev) => {
-      const at = Date.parse(ev.at);
-      return {
-        provaId: prova.id,
-        tipo: ev.tipo,
-        motivo: ev.motivo ?? null,
-        at: new Date(Number.isNaN(at) ? fine : limita(at, entrata, fine)),
-        durataMs: ev.durataMs === undefined ? null : Math.round(limita(ev.durataMs, 0, fine - entrata)),
-      };
-    }),
+  const provaId = prova.id;
+  await prisma.$transaction(async (tx) => {
+    await tx.provaVerifica.updateMany({ where: { id: provaId }, data: { minutiExtra: { increment: 0 } } });
+    const posto = MAX_EVENTI_PROVA - (await tx.eventoVerifica.count({ where: { provaId } }));
+    if (posto <= 0) return;
+    await tx.eventoVerifica.createMany({
+      data: eventi.slice(0, posto).map((ev) => {
+        const at = Date.parse(ev.at);
+        return {
+          provaId,
+          tipo: ev.tipo,
+          motivo: ev.motivo ?? null,
+          at: new Date(Number.isNaN(at) ? fine : limita(at, entrata, fine)),
+          durataMs: ev.durataMs === undefined ? null : Math.round(limita(ev.durataMs, 0, fine - entrata)),
+        };
+      }),
+    });
   });
   return { ok: true };
 }

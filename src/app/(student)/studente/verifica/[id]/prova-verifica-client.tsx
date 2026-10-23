@@ -134,6 +134,10 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   // L'ultima ora del server già usata per lo scarto: la coda ripete quella
   // vecchia negli stati di errore, e ricalcolarla adesso sposterebbe l'orologio.
   const ultimaOraServerRef = useRef<string | null>(null);
+  // Scadenza e scarto anche fuori dal render: il limite dei tentativi di
+  // consegna allo scadere segue la scadenza più recente.
+  const scadenzaRef = useRef<string | null>(null);
+  const scartoRef = useRef(0);
 
   const inProva = fase.tipo === "prova";
 
@@ -161,9 +165,13 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   const aggiornaTempo = useCallback((oraServer: string | undefined, nuovaScadenza: string | undefined) => {
     if (oraServer && oraServer !== ultimaOraServerRef.current) {
       ultimaOraServerRef.current = oraServer;
-      setScarto(scartoDa(oraServer, Date.now()));
+      scartoRef.current = scartoDa(oraServer, Date.now());
+      setScarto(scartoRef.current);
     }
-    if (nuovaScadenza) setScadenza(nuovaScadenza);
+    if (nuovaScadenza) {
+      scadenzaRef.current = nuovaScadenza;
+      setScadenza(nuovaScadenza);
+    }
   }, []);
 
   /** La schermata finale. `mantieniCoda`: allo scadere la coda continua a
@@ -274,39 +282,66 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
     }
   }, [base, concludi]);
 
+  /** Si torna alla prova dalla schermata del tempo scaduto: il server ha
+   * detto che la scadenza non è ancora passata (minuti aggiunti). La coda è
+   * ancora viva; lo schermo intero, fuori da un gesto, il browser può
+   * rifiutarlo: lo dirà la sorveglianza. */
+  const riapri = useCallback(() => {
+    finitaRef.current = false;
+    consegnaAvviataRef.current = false;
+    setAdesso(Date.now());
+    setFase({ tipo: "prova" });
+    void chiediSchermoIntero();
+  }, []);
+
   /**
    * Allo zero dell'orologio: subito la schermata «Tempo scaduto», ma la coda
-   * resta viva e si continua a svuotarla e poi a consegnare finché il server
-   * non risponde in modo definitivo o non passa la grazia (sull'ora del
-   * server, `limitePc` è già tradotto sull'ora del PC). Oltre la grazia la
-   * consegna la fa comunque il server.
+   * resta viva e si continua a svuotarla e poi a consegnare (come
+   * automatica) finché il server non risponde in modo definitivo o non
+   * passa la grazia. Il limite si ricalcola a ogni giro dalla scadenza più
+   * recente, tradotta sull'ora del PC. Oltre la grazia la consegna la fa
+   * comunque il server. Se il docente ha aggiunto minuti, il server rifiuta
+   * (`non_scaduta`) con la scadenza nuova e si torna alla prova.
    */
-  const consegnaAllaScadenza = useCallback(async (limitePc: number) => {
+  const consegnaAllaScadenza = useCallback(async () => {
     if (consegnaAvviataRef.current || finitaRef.current) return;
     consegnaAvviataRef.current = true;
     (document.activeElement as HTMLElement | null)?.blur?.();
     const coda = codaRef.current;
     concludi("tempo_scaduto", true);
     const fermo = () => smontataRef.current || codaChiusaRef.current;
+    const limitePc = () => Date.parse(scadenzaRef.current ?? "") - scartoRef.current + GRAZIA_MS;
+    let riaperta = false;
     try {
       while (!fermo()) {
         await coda?.svuota();
         if (fermo()) break;
         if (!coda || coda.pendenti().size === 0) {
           try {
-            const r = await fetch(withBasePath(`${base}/prova/consegna`), { method: "POST" });
+            const r = await fetch(withBasePath(`${base}/prova/consegna`), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ automatica: true }),
+            });
+            const corpo = r.status === 409 ? await leggiCorpo(r) : null;
+            if (corpo?.error === "non_scaduta" && corpo.scadenza) {
+              aggiornaTempo(corpo.oraServer, corpo.scadenza);
+              riaperta = true;
+              riapri();
+              break;
+            }
             if (r.ok || r.status === 404 || r.status === 409) break;
           } catch {
             // Rete assente: si riprova al prossimo giro.
           }
         }
-        if (Date.now() >= limitePc) break;
+        if (!(Date.now() < limitePc())) break;
         await new Promise((fatto) => setTimeout(fatto, RITENTA_CONSEGNA_MS));
       }
     } finally {
-      coda?.ferma();
+      if (!riaperta) coda?.ferma();
     }
-  }, [base, concludi]);
+  }, [base, concludi, aggiornaTempo, riapri]);
 
   // Il conto alla rovescia.
   useEffect(() => {
@@ -321,8 +356,8 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   // finita, se fallisce `consegnando` torna falso e si passa da qui (altrimenti
   // lo studente resterebbe a 00:00 con l'errore).
   useEffect(() => {
-    if (scaduto && scadenza && !consegnando) void consegnaAllaScadenza(Date.parse(scadenza) - scarto + GRAZIA_MS);
-  }, [scaduto, scadenza, scarto, consegnando, consegnaAllaScadenza]);
+    if (scaduto && scadenza && !consegnando) void consegnaAllaScadenza();
+  }, [scaduto, scadenza, consegnando, consegnaAllaScadenza]);
 
   // Ogni 20 s il tempo dal server: minuti aggiunti dal docente, consegna
   // fatta da lui o allo scadere.

@@ -154,6 +154,18 @@ describe("POST .../prova/consegna", () => {
     vi.mocked(consegnaProva).mockResolvedValue({ ok: false, motivo: "non_trovata" });
     expect((await POST_CONSEGNA(richiesta(`${BASE}/prova/consegna`, "POST"), { params })).status).toBe(404);
   });
+  it("senza corpo è manuale; { automatica: true } passa al dominio; non_scaduta ⇒ 409 con scadenza e oraServer", async () => {
+    vi.mocked(consegnaProva).mockResolvedValue({ ok: true });
+    await POST_CONSEGNA(richiesta(`${BASE}/prova/consegna`, "POST"), { params });
+    expect(vi.mocked(consegnaProva).mock.calls[0]![3]).toBe(false);
+    await POST_CONSEGNA(richiesta(`${BASE}/prova/consegna`, "POST", { automatica: true }), { params });
+    expect(vi.mocked(consegnaProva).mock.calls[1]![3]).toBe(true);
+
+    vi.mocked(consegnaProva).mockResolvedValue({ ok: false, motivo: "non_scaduta", scadenza: SCADENZA });
+    const r = await POST_CONSEGNA(richiesta(`${BASE}/prova/consegna`, "POST", { automatica: true }), { params });
+    expect(r.status).toBe(409);
+    expect(await r.json()).toEqual({ error: "non_scaduta", scadenza: SCADENZA.toISOString(), oraServer: expect.any(String) });
+  });
 });
 
 describe("POST .../prova/eventi", () => {

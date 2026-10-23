@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { loadQuestion, type NumbasQuestionJSON, type QuestionState } from "@savint/engine";
 import { prisma } from "@/lib/db/client";
 import { assegnaCompito, compitiDelloStudente, type DatiVerifica } from "../compiti";
@@ -15,6 +15,23 @@ import {
   type EventoInput,
   type ProvaAperta,
 } from "../prova-verifica";
+
+// Un gancio che gira subito dopo la `sincronizzaVerifica` della prova: per
+// infilare un «Chiudi» del docente fra la lettura e la scrittura.
+const ganci = vi.hoisted(() => ({ dopoSincronizza: null as null | (() => Promise<unknown>) }));
+vi.mock("../verifiche", async (importOriginal) => {
+  const originale = await importOriginal<typeof import("../verifiche")>();
+  return {
+    ...originale,
+    sincronizzaVerifica: async (...a: Parameters<typeof originale.sincronizzaVerifica>) => {
+      const v = await originale.sincronizzaVerifica(...a);
+      const gancio = ganci.dopoSincronizza;
+      ganci.dopoSincronizza = null;
+      if (gancio) await gancio();
+      return v;
+    },
+  };
+});
 
 // Modalità verifica, Task 6: la prova dello studente sul server. Ogni
 // funzione che dipende dal tempo riceve `ora` esplicita.
@@ -63,6 +80,7 @@ async function pulisci() {
 }
 
 beforeEach(async () => {
+  ganci.dopoSincronizza = null;
   await pulisci();
   docenteId = (await prisma.user.create({ data: { email: `${P}d@test.it`, name: "D", role: "TEACHER" } })).id;
   estraneoId = (await prisma.user.create({ data: { email: `${P}x@test.it`, name: "X", role: "TEACHER" } })).id;
@@ -232,6 +250,15 @@ describe("entraNellaProva", () => {
     expect((await entra(id, studenti[1]!, dopo(121))).scadenza).toEqual(dopo(198));
   });
 
+  it("un «Chiudi» arrivato fra la lettura e l'ingresso ⇒ chiusa, nessun tentativo, prova non entrata", async () => {
+    const id = await avviata();
+    ganci.dopoSincronizza = async () => expect(await chiudiVerifica(id, docenteId, dopo(2))).toEqual({ ok: true });
+    expect(await entraNellaProva(id, studenti[0]!, dopo(2))).toEqual({ ok: false, motivo: "chiusa" });
+    expect(await prisma.tentativo.count({ where: { compitoId: id } })).toBe(0);
+    const riga = await prisma.provaVerifica.findUnique({ where: { compitoId_studentId: { compitoId: id, studentId: studenti[0]! } } });
+    expect(riga?.entrataAt ?? null).toBeNull();
+  });
+
   it("recupero di chi era entrato: stesse posizioni, stessi tentativi e semi", async () => {
     await prisma.misurePdp.create({ data: { classeId, studentId: studenti[1]!, menoEsercizi: true } });
     const id = await avviata();
@@ -324,6 +351,36 @@ describe("salvaRisposta", () => {
     expect(p.consegnaAutomatica).toBe(true);
   });
 
+  it("verifica chiusa con la prova ancora aperta (sfuggita al «Chiudi») ⇒ chiusa, e la prova si consegna alla chiusura", async () => {
+    const id = await avviata();
+    const t = (await entra(id, studenti[0]!)).esercizi[0]!;
+    // Come se il «Chiudi» non avesse visto la riga: chiusaAt scritto, prova aperta.
+    await prisma.verifica.update({ where: { compitoId: id }, data: { chiusaAt: dopo(3) } });
+    expect(await salvaRisposta(id, studenti[0]!, t.tentativoId, statoConRisposta(t.seed), dopo(4)))
+      .toEqual({ ok: false, motivo: "chiusa" });
+    expect((await prisma.tentativo.findUniqueOrThrow({ where: { id: t.tentativoId } })).state).toBeNull();
+    const p = await prisma.provaVerifica.findUniqueOrThrow({ where: { compitoId_studentId: { compitoId: id, studentId: studenti[0]! } } });
+    expect(p.consegnataAt).toEqual(dopo(3));
+    expect(p.consegnaAutomatica).toBe(true);
+  });
+
+  it("un recupero aperto a verifica chiusa salva ancora", async () => {
+    const id = await avviata();
+    expect(await chiudiVerifica(id, docenteId, dopo(5))).toEqual({ ok: true });
+    expect(await avviaRecupero(id, docenteId, [studenti[0]!], dopo(10))).toEqual({ ok: true });
+    const t = (await entra(id, studenti[0]!, dopo(11))).esercizi[0]!;
+    expect(await salvaRisposta(id, studenti[0]!, t.tentativoId, statoConRisposta(t.seed), dopo(12))).toMatchObject({ ok: true });
+  });
+
+  it("studente tolto dalla classe ⇒ non_trovata, niente scritto", async () => {
+    const id = await avviata();
+    const t = (await entra(id, studenti[0]!)).esercizi[0]!;
+    await prisma.classeStudente.delete({ where: { classeId_studentId: { classeId, studentId: studenti[0]! } } });
+    expect(await salvaRisposta(id, studenti[0]!, t.tentativoId, statoConRisposta(t.seed), dopo(2)))
+      .toEqual({ ok: false, motivo: "non_trovata" });
+    expect((await prisma.tentativo.findUniqueOrThrow({ where: { id: t.tentativoId } })).state).toBeNull();
+  });
+
   it("uno stato che il motore non ricostruisce ⇒ invalid_state, niente scritto", async () => {
     const id = await avviata();
     const t = (await entra(id, studenti[0]!)).esercizi[0]!;
@@ -350,6 +407,30 @@ describe("consegnaProva", () => {
   it("senza essere entrato ⇒ non_trovata", async () => {
     const id = await avviata();
     expect(await consegnaProva(id, studenti[0]!, dopo(1))).toEqual({ ok: false, motivo: "non_trovata" });
+  });
+
+  it("automatica prima della scadenza (minuti aggiunti) ⇒ non_scaduta con la scadenza nuova, niente scritto", async () => {
+    const id = await avviata();
+    await entra(id, studenti[0]!);
+    await prisma.verifica.update({ where: { compitoId: id }, data: { minutiExtra: 10 } });
+    expect(await consegnaProva(id, studenti[0]!, dopo(60), true)).toEqual({ ok: false, motivo: "non_scaduta", scadenza: dopo(70) });
+    const p = await prisma.provaVerifica.findUniqueOrThrow({ where: { compitoId_studentId: { compitoId: id, studentId: studenti[0]! } } });
+    expect(p.consegnataAt).toBeNull();
+    const stati = await prisma.tentativo.findMany({ where: { provaId: p.id }, select: { status: true } });
+    expect(stati.every((s) => s.status === "IN_PROGRESS")).toBe(true);
+  });
+
+  it("automatica dopo la scadenza ⇒ ok, consegnaAutomatica true; la manuale resta false", async () => {
+    const id = await avviata();
+    await entra(id, studenti[0]!);
+    await entra(id, studenti[1]!);
+    expect(await consegnaProva(id, studenti[0]!, new Date(dopo(60).getTime() + 5000), true)).toEqual({ ok: true });
+    const a = await prisma.provaVerifica.findUniqueOrThrow({ where: { compitoId_studentId: { compitoId: id, studentId: studenti[0]! } } });
+    expect(a.consegnataAt).toEqual(new Date(dopo(60).getTime() + 5000));
+    expect(a.consegnaAutomatica).toBe(true);
+    expect(await consegnaProva(id, studenti[1]!, dopo(30), false)).toEqual({ ok: true });
+    const b = await prisma.provaVerifica.findUniqueOrThrow({ where: { compitoId_studentId: { compitoId: id, studentId: studenti[1]! } } });
+    expect(b.consegnaAutomatica).toBe(false);
   });
 });
 
@@ -381,6 +462,32 @@ describe("registraEventi", () => {
     await consegnaProva(id, studenti[0]!, dopo(3));
     expect(await registraEventi(id, studenti[0]!, [{ tipo: "RIENTRO", at: dopo(4).toISOString(), durataMs: 1000 }], dopo(4))).toEqual({ ok: true });
     expect(await prisma.eventoVerifica.count({ where: { prova: { compitoId: id } } })).toBe(1);
+  });
+});
+
+describe("registraEventi — limiti", () => {
+  const uscita = (ora: Date): EventoInput => ({ tipo: "USCITA", motivo: "FOCUS", at: ora.toISOString() });
+
+  it("dopo la consegna solo entro 2 minuti; oltre ⇒ ok ma ignorati", async () => {
+    const id = await avviata();
+    await entra(id, studenti[0]!);
+    await consegnaProva(id, studenti[0]!, dopo(3));
+    expect(await registraEventi(id, studenti[0]!, [uscita(dopo(4))], dopo(4))).toEqual({ ok: true });
+    expect(await registraEventi(id, studenti[0]!, [uscita(dopo(5))], new Date(dopo(5).getTime() + 1000))).toEqual({ ok: true });
+    expect(await prisma.eventoVerifica.count({ where: { prova: { compitoId: id } } })).toBe(1);
+  });
+
+  it("al massimo 500 eventi per prova: quelli in più si ignorano", async () => {
+    const id = await avviata();
+    await entra(id, studenti[0]!);
+    const lotto = Array(50).fill(uscita(dopo(2))) as EventoInput[];
+    for (let i = 0; i < 9; i++) expect(await registraEventi(id, studenti[0]!, lotto, dopo(2))).toEqual({ ok: true });
+    expect(await registraEventi(id, studenti[0]!, Array(30).fill(uscita(dopo(2))), dopo(2))).toEqual({ ok: true });
+    expect(await prisma.eventoVerifica.count({ where: { prova: { compitoId: id } } })).toBe(480);
+    expect(await registraEventi(id, studenti[0]!, lotto, dopo(2))).toEqual({ ok: true });
+    expect(await prisma.eventoVerifica.count({ where: { prova: { compitoId: id } } })).toBe(500);
+    expect(await registraEventi(id, studenti[0]!, [uscita(dopo(2))], dopo(2))).toEqual({ ok: true });
+    expect(await prisma.eventoVerifica.count({ where: { prova: { compitoId: id } } })).toBe(500);
   });
 });
 

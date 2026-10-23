@@ -215,6 +215,41 @@ describe("ProvaVerificaClient", () => {
     nienteCorrezione();
   });
 
+  it("allo zero la consegna dice al server che è automatica", async () => {
+    rotte["POST /api/esercizi/verifiche/v1/prova"] = () => json(provaAperta({ scadenza: ORA_PC + 10_000 }));
+    await entra();
+    await act(() => vi.advanceTimersByTimeAsync(11_000));
+    const [, init] = chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")[0]!;
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({ automatica: true });
+  });
+
+  it("allo zero con minuti aggiunti dal docente (409 non_scaduta): si torna alla prova col tempo nuovo", async () => {
+    rotte["POST /api/esercizi/verifiche/v1/prova"] = () => json(provaAperta({ scadenza: ORA_PC + 10_000 }));
+    rotte["POST /api/esercizi/verifiche/v1/prova/consegna"] = () =>
+      json({ error: "non_scaduta", scadenza: iso(ORA_PC + 5 * 60_000), oraServer: iso(Date.now()) }, 409);
+    // Salvataggi e polling sanno anch'essi della scadenza nuova.
+    rotte["PUT /api/esercizi/verifiche/v1/prova/risposte"] = () =>
+      json({ salvatoAt: iso(Date.now()), scadenza: iso(ORA_PC + 5 * 60_000), oraServer: iso(Date.now()) });
+    rotte["GET /api/esercizi/verifiche/v1/prova"] = () =>
+      json({ scadenza: iso(ORA_PC + 5 * 60_000), oraServer: iso(Date.now()), consegnata: false });
+    await entra();
+    await act(() => vi.advanceTimersByTimeAsync(11_000));
+
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(1);
+    expect(screen.queryByText(p.tempoScaduto)).toBeNull();
+    expect(screen.getByRole("timer").textContent).toBe("04:49");
+    expect(screen.getAllByRole("textbox")[0]).toBeInTheDocument();
+
+    // Le risposte si salvano ancora, e allo zero nuovo si consegna di nuovo.
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, { target: { value: "r1" } });
+    await act(() => vi.advanceTimersByTimeAsync(700));
+    expect(chiamate("PUT", "/api/esercizi/verifiche/v1/prova/risposte")).toHaveLength(1);
+    rotte["POST /api/esercizi/verifiche/v1/prova/consegna"] = () => json({ ok: true });
+    await act(() => vi.advanceTimersByTimeAsync(5 * 60_000));
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(2);
+    expect(screen.getByText(p.tempoScaduto)).toBeInTheDocument();
+  });
+
   it("«Consegna» con una parte vuota chiede conferma col numero, poi consegna", async () => {
     rotte["POST /api/esercizi/verifiche/v1/prova"] = () => json(provaAperta({ esercizi: 2 }));
     await entra();
