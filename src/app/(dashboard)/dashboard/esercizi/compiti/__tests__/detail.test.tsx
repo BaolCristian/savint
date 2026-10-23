@@ -230,4 +230,43 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
       await expect(Page({ params: Promise.resolve({ id: "comp1" }) })).rejects.toThrow("NEXT_NOT_FOUND");
     });
   });
+  describe("anteprima e modo di estrazione (Nuovo compito)", () => {
+    const compito = (modo: "CLASSE" | "STUDENTE") =>
+      ({ id: "comp1", classe: { name: "1A" }, batteria: { name: "Verifica 1" }, dueAt: null, modo }) as never;
+    const righe = [
+      { studentId: "s1", nome: "Mario Rossi", fatti: 1, totali: 3, punteggio: 2, massimo: 5 },
+      { studentId: "s2", nome: "Lia Bianchi", fatti: 0, totali: 4, punteggio: 0, massimo: 0 },
+    ];
+
+    it("offre l'anteprima come la vedono i ragazzi", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compito("CLASSE"));
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      await rendi();
+      expect(screen.getByRole("link", { name: "anteprimaLink" })).toHaveAttribute("href", "/dashboard/esercizi/compiti/comp1/anteprima");
+    });
+
+    it("dice il modo di estrazione", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compito("CLASSE"));
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      await rendi();
+      expect(screen.getByText('modo:{"modo":"modoClasse"}')).toBeInTheDocument();
+    });
+
+    it("modo stesse domande: nessuna colonna \"ha N esercizi\" (sono gli stessi per tutti)", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compito("CLASSE"));
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe });
+      await rendi();
+      expect(screen.queryByRole("columnheader", { name: "eserciziCol" })).not.toBeInTheDocument();
+    });
+
+    it("modo diverse per studente: le consegne dicono quanti esercizi ha ciascuno", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue(compito("STUDENTE"));
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe });
+      await rendi();
+      expect(screen.getByText('modo:{"modo":"modoStudente"}')).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: "eserciziCol" })).toBeInTheDocument();
+      const riga = screen.getByRole("row", { name: /Lia Bianchi/ });
+      expect(within(riga).getByText('haEsercizi:{"n":4}')).toBeInTheDocument();
+    });
+  });
 });

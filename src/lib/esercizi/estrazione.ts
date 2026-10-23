@@ -409,3 +409,29 @@ export async function riepilogoEstrazione(blocchi: Blocco[], chi: Utente, seme: 
     esercizi: sufficiente ? esercizi : [],
   };
 }
+
+/** Il catalogo di "+ scegli esercizi" del Nuovo compito: gli esercizi che un
+ * blocco "scelti" di `chi` potrebbe davvero assegnare — visibili COME
+ * DOCENTE (`comeDocente`, come `baciniDeiBlocchi`: un ADMIN che insegna
+ * sceglie fra ciò che vedrebbe da docente) e con almeno una versione
+ * (`idsConVersione`). Offrire un esercizio che il riepilogo segnerebbe
+ * subito "non più disponibile" sarebbe una contraddizione sulla stessa
+ * pagina. Solo ciò che serve a cercare e a mostrare la riga: titolo,
+ * argomento, anno; in ordine di titolo. */
+export async function eserciziAssegnabili(
+  chi: Utente,
+): Promise<{ id: string; titolo: string; argomento: string; anno: number }[]> {
+  const visibili = await ruoliEsercizi(comeDocente(chi));
+  if (visibili.size === 0) return [];
+  const [righe, conVersione] = await Promise.all([
+    prisma.esercizio.findMany({
+      where: { id: { in: [...visibili.keys()] } },
+      orderBy: [{ title: "asc" }, { id: "asc" }],
+      select: { id: true, title: true, topic: true, yearLevel: true },
+    }),
+    idsConVersione([...visibili.keys()]),
+  ]);
+  return righe
+    .filter((r) => conVersione.has(r.id))
+    .map((r) => ({ id: r.id, titolo: r.title, argomento: r.topic, anno: r.yearLevel }));
+}

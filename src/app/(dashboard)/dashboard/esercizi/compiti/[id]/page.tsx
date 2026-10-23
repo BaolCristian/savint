@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Printer } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
@@ -56,6 +56,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const tUi = await getTranslations("teacherExercisesUi");
   const tE = await getTranslations("esercizi");
   const tStampa = await getTranslations("esercizi.stampa");
+  const tNc = await getTranslations("esercizi.nuovoCompito");
+  const tDett = await getTranslations("esercizi.nuovoCompito.dettaglio");
+  // Nel modo "diverse per studente" ognuno ha la sua estrazione: la colonna
+  // dice quanti esercizi ha ciascuno (`totali` delle consegne, sulle SUE
+  // versioni). Nel modo "stesse domande" sarebbe lo stesso numero ripetuto.
+  const perStudente = compito.modo === "STUDENTE";
 
   return (
     <div className="space-y-6">
@@ -70,13 +76,25 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <p className="text-sm text-muted-foreground">
           {compito.dueAt ? t("compitoScadenza", { quando: compito.dueAt.toLocaleDateString("it-IT") }) : t("nessunaScadenza")}
         </p>
-        <Link
-          href={`/stampa/compito/${compito.id}`}
-          className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:underline"
-        >
-          <Printer aria-hidden="true" className="size-4" />
-          {tStampa("link")}
-        </Link>
+        <p className="text-sm text-muted-foreground">
+          {tDett("modo", { modo: perStudente ? tNc("modoStudente") : tNc("modoClasse") })}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+          <Link
+            href={`/dashboard/esercizi/compiti/${compito.id}/anteprima`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:underline"
+          >
+            <Eye aria-hidden="true" className="size-4" />
+            {tDett("anteprimaLink")}
+          </Link>
+          <Link
+            href={`/stampa/compito/${compito.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:underline"
+          >
+            <Printer aria-hidden="true" className="size-4" />
+            {tStampa("link")}
+          </Link>
+        </div>
       </div>
 
       <GestioneCompito compitoId={compito.id} opensAt={perCampoData(compito.opensAt)} dueAt={perCampoData(compito.dueAt)} />
@@ -88,6 +106,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <thead>
             <tr className="border-b text-left">
               <th className="p-2 font-medium">{t("nomeCol")}</th>
+              {perStudente && <th className="p-2 font-medium">{tDett("eserciziCol")}</th>}
               <th className="p-2 font-medium">{t("fattiCol")}</th>
               <th className="p-2 font-medium">{t("punteggioCol")}</th>
             </tr>
@@ -96,6 +115,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {consegne.map((r) => (
               <tr key={r.studentId} className="border-b">
                 <td className="p-2">{r.nome}</td>
+                {perStudente && <td className="p-2">{tDett("haEsercizi", { n: r.totali })}</td>}
                 <td className="p-2">
                   {r.totali === 0 ? tUi("tasks.progressToDo") : `${r.fatti}/${r.totali}`}
                 </td>

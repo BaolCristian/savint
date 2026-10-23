@@ -6,6 +6,7 @@ import {
   estraiConDettaglio,
   riepilogoEstrazione,
   ultimeVersioni,
+  eserciziAssegnabili,
   bloccoDaRegola,
   regolaDaBlocco,
   type Blocco,
@@ -326,6 +327,36 @@ describe("ultimeVersioni", () => {
     expect([...m.keys()].sort()).toEqual([e(1), e(2)]);
     expect(m.get(e(1))).toMatchObject({ titolo: "E1", content: { v: 2 } });
     expect(m.get(e(2))).toMatchObject({ titolo: "E2", content: { v: 1 } });
+  });
+});
+
+describe("eserciziAssegnabili", () => {
+  // Il catalogo di "+ scegli esercizi" nel Nuovo compito: solo ciò che un
+  // blocco "scelti" potrebbe davvero assegnare — visibile a chi assegna e
+  // con almeno una versione — perché un esercizio offerto lì e poi segnato
+  // "non più disponibile" dal riepilogo sarebbe una contraddizione.
+  const nostri = (l: { id: string }[]) => l.filter((x) => x.id.startsWith(P));
+
+  it("visibili e con versione, con titolo, argomento e anno, in ordine di titolo", async () => {
+    const l = nostri(await eserciziAssegnabili(docente()));
+    expect(l.map((x) => x.id)).toEqual([1, 2, 3, 4, 5, 6].map(e));
+    expect(l[0]).toEqual({ id: e(1), titolo: "E1", argomento: TOPIC, anno: 2 });
+  });
+
+  it("niente esercizi privati altrui né senza versione", async () => {
+    const ids = nostri(await eserciziAssegnabili(docente())).map((x) => x.id);
+    expect(ids).not.toContain(`${P}priv`);
+    expect(ids).not.toContain(`${P}nov`);
+  });
+
+  it("un ADMIN vede il catalogo come docente, come nell'estrazione", async () => {
+    const ids = nostri(await eserciziAssegnabili({ id: adminId, admin: true })).map((x) => x.id);
+    expect(ids).not.toContain(`${P}priv`);
+  });
+
+  it("il collega vede anche il suo privato", async () => {
+    const ids = nostri(await eserciziAssegnabili({ id: collegaId, admin: false })).map((x) => x.id);
+    expect(ids).toContain(`${P}priv`);
   });
 });
 
