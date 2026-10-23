@@ -596,7 +596,7 @@ function QuizCard({
                   {tc("duplicate")}
                 </button>
                 <a
-                  href={`/api/quiz/${quiz.id}/export`}
+                  href={withBasePath(`/api/quiz/${quiz.id}/export`)}
                   download
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"

@@ -53,7 +53,7 @@ export function HubQuizDetailActions({ quizId, qlzAvailable = true }: Props) {
 
       {qlzAvailable && (
         <a
-          href={`/api/hub/quizzes/${quizId}/download`}
+          href={withBasePath(`/api/hub/quizzes/${quizId}/download`)}
           download
           className={buttonVariants({ variant: "outline" })}
         >

@@ -3,6 +3,7 @@ import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { prisma } from "@/lib/db/client";
 import { getHubOAuthConfig } from "@/lib/hub/oauth-config";
 import Link from "next/link";
+import { withBasePath } from "@/lib/base-path";
 import { RevokeButton } from "./revoke-button";
 import { SetupCodeForm } from "./setup-code-form";
 
@@ -58,7 +59,7 @@ export default async function HubLinkPage() {
             <p className="text-sm text-gray-500">{t("notLinked")}</p>
             {connectUrl && (
               <a
-                href={`/api/hub/oauth/start`}
+                href={withBasePath("/api/hub/oauth/start")}
                 className="inline-block rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
               >
                 {t("connect")}
