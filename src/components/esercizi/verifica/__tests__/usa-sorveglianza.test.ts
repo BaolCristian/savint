@@ -38,8 +38,15 @@ beforeEach(() => {
   Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => schermoIntero });
   Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => schermoAbilitato });
 });
+const requestFullscreenOriginale = document.documentElement.requestFullscreen;
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  // Via le proprietà finte: tornano quelle di jsdom (del prototipo).
+  for (const nome of ["visibilityState", "fullscreenElement", "fullscreenEnabled"]) {
+    delete (document as unknown as Record<string, unknown>)[nome];
+  }
+  document.documentElement.requestFullscreen = requestFullscreenOriginale;
   vi.useRealTimers();
 });
 
@@ -152,7 +159,7 @@ describe("InvioEventi", () => {
 
   it("manda gli eventi dello stesso giro in un solo lotto", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
-    global.fetch = fetchMock as typeof fetch;
+    vi.stubGlobal("fetch", fetchMock);
     const invio = new InvioEventi({ compitoId: "v1" });
     invio.aggiungi(ev(1));
     invio.aggiungi(ev(2));
@@ -168,7 +175,7 @@ describe("InvioEventi", () => {
     const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>()
       .mockRejectedValueOnce(new TypeError("offline"))
       .mockResolvedValue(new Response(null, { status: 204 }));
-    global.fetch = fetchMock as typeof fetch;
+    vi.stubGlobal("fetch", fetchMock);
     const invio = new InvioEventi({ compitoId: "v1", ritardi: [1000] });
     invio.aggiungi(ev(1));
     await act(() => vi.advanceTimersByTimeAsync(0));
@@ -181,7 +188,7 @@ describe("InvioEventi", () => {
 
   it("un lotto che continua a fallire si perde e non blocca i successivi", async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 503 }));
-    global.fetch = fetchMock as typeof fetch;
+    vi.stubGlobal("fetch", fetchMock);
     const invio = new InvioEventi({ compitoId: "v1", ritardi: [1000] });
     invio.aggiungi(ev(1));
     await act(() => vi.advanceTimersByTimeAsync(1000));
@@ -195,7 +202,7 @@ describe("InvioEventi", () => {
 
   it("un rifiuto del server (4xx) scarta il lotto senza ritentare", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: "non_trovata" }), { status: 404 }));
-    global.fetch = fetchMock as typeof fetch;
+    vi.stubGlobal("fetch", fetchMock);
     const invio = new InvioEventi({ compitoId: "v1", ritardi: [1000] });
     invio.aggiungi(ev(1));
     await act(() => vi.advanceTimersByTimeAsync(5000));

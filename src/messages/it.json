@@ -1998,7 +1998,8 @@
       "statoChiusa": "Chiusa",
       "statoRisultati": "Risultati pubblicati",
       "apri": "Apri la verifica",
-      "vediRisultati": "Vedi i risultati"
+      "vediRisultati": "Vedi i risultati",
+      "erroreNonSalvate": "Alcune risposte non sono ancora salvate: controlla la connessione e riprova a consegnare."
     }
   },
   "eserciziIngresso": {

@@ -51,6 +51,7 @@ const json = (corpo: unknown, status = 200) => new Response(JSON.stringify(corpo
 type Rotta = (init: RequestInit | undefined) => Response | Promise<Response>;
 let rotte: Record<string, Rotta>;
 let fetchMock: ReturnType<typeof vi.fn>;
+const requestFullscreenOriginale = document.documentElement.requestFullscreen;
 
 function chiamate(metodo: string, url: string) {
   return fetchMock.mock.calls.filter(([u, init]) => u === url && ((init as RequestInit | undefined)?.method ?? "GET") === metodo);
@@ -73,11 +74,13 @@ beforeEach(() => {
     if (!rotta) throw new Error(`rotta non prevista: ${init?.method ?? "GET"} ${url}`);
     return rotta(init);
   });
-  global.fetch = fetchMock as unknown as typeof fetch;
+  vi.stubGlobal("fetch", fetchMock);
   document.documentElement.requestFullscreen = vi.fn(async () => {});
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  document.documentElement.requestFullscreen = requestFullscreenOriginale;
   vi.useRealTimers();
 });
 
@@ -227,6 +230,49 @@ describe("ProvaVerificaClient", () => {
     expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(1);
     expect(screen.getByText(p.consegnata)).toBeInTheDocument();
     nienteCorrezione();
+  });
+
+  it("«Consegna» con una risposta non salvata: niente consegna, e lo dice", async () => {
+    rotte["PUT /api/esercizi/verifiche/v1/prova/risposte"] = () => json({ error: "boom" }, 500);
+    await entra();
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, { target: { value: "r1" } });
+    await act(() => vi.advanceTimersByTimeAsync(700));
+
+    fireEvent.click(screen.getByRole("button", { name: p.consegna }));
+    fireEvent.click(screen.getByRole("button", { name: p.consegnaConferma }));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(0);
+    expect(screen.getByRole("alert").textContent).toBe(p.erroreNonSalvate);
+    expect(screen.queryByText(p.consegnata)).toBeNull();
+  });
+
+  it("allo zero con il salvataggio che fallisce: ritenta nella grazia e consegna solo dopo il salvataggio", async () => {
+    let salvaOk = false;
+    const esitiPut: boolean[] = [];
+    rotte["POST /api/esercizi/verifiche/v1/prova"] = () => json(provaAperta({ scadenza: ORA_PC + 10_000 }));
+    rotte["PUT /api/esercizi/verifiche/v1/prova/risposte"] = () => {
+      esitiPut.push(salvaOk);
+      return salvaOk
+        ? json({ salvatoAt: iso(Date.now()), scadenza: iso(ORA_PC + 10_000), oraServer: iso(Date.now()) })
+        : json({ error: "boom" }, 500);
+    };
+    await entra();
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, { target: { value: "r1" } });
+    await act(() => vi.advanceTimersByTimeAsync(10_500));
+
+    // Schermata finale subito, ma la consegna aspetta il salvataggio.
+    expect(screen.getByText(p.tempoScaduto)).toBeInTheDocument();
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(0);
+
+    salvaOk = true;
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+
+    expect(esitiPut.at(-1)).toBe(true);
+    const indici = fetchMock.mock.calls.map(([u, init]) => `${(init as RequestInit | undefined)?.method ?? "GET"} ${u}`);
+    const consegna = indici.indexOf("POST /api/esercizi/verifiche/v1/prova/consegna");
+    expect(consegna).toBeGreaterThan(indici.lastIndexOf("PUT /api/esercizi/verifiche/v1/prova/risposte"));
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(1);
   });
 
   it("consegnata dal docente: il polling porta alla schermata finale", async () => {

@@ -8,7 +8,7 @@ import type { QuestionState } from "@savint/engine";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { withBasePath } from "@/lib/base-path";
-import { haRisposta } from "@/lib/esercizi/verifica-regole";
+import { GRAZIA_MS, haRisposta } from "@/lib/esercizi/verifica-regole";
 // Solo i tipi: prova-verifica.ts legge il database e non entra nel bundle.
 import type { EsercizioProva, IntroProva, ProvaAperta } from "@/lib/esercizi/prova-verifica";
 import { CalcolatricePannello } from "@/components/esercizi/verifica/calcolatrice-pannello";
@@ -32,6 +32,8 @@ const POLLING_MS = 20_000;
 /** Sotto questa soglia il conto alla rovescia diventa rosso. */
 const ULTIMI_MINUTI_MS = 5 * 60_000;
 const FINE_PROVA = new Set(["tempo_scaduto", "consegnata", "chiusa"]);
+/** Allo scadere, ogni quanto si riprova a salvare e consegnare. */
+const RITENTA_CONSEGNA_MS = 2000;
 
 /**
  * Come la coda dei salvataggi legge la risposta di `PUT .../prova/risposte`:
@@ -117,13 +119,17 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   const [adesso, setAdesso] = useState(() => Date.now());
   const [dialogo, setDialogo] = useState(false);
   const [consegnando, setConsegnando] = useState(false);
-  const [erroreConsegna, setErroreConsegna] = useState(false);
+  const [erroreConsegna, setErroreConsegna] = useState<"erroreConsegna" | "erroreNonSalvate" | null>(null);
   const [calcolatrice, setCalcolatrice] = useState(false);
   const [formulario, setFormulario] = useState(false);
 
   const codaRef = useRef<CodaSalvataggi | null>(null);
   const eventiRef = useRef<InvioEventi | null>(null);
   const finitaRef = useRef(false);
+  // La coda chiusa dal server (prova finita per lui) e la pagina smontata:
+  // fermano i tentativi di consegna allo scadere.
+  const codaChiusaRef = useRef(false);
+  const smontataRef = useRef(false);
   const consegnaAvviataRef = useRef(false);
   // L'ultima ora del server già usata per lo scarto: la coda ripete quella
   // vecchia negli stati di errore, e ricalcolarla adesso sposterebbe l'orologio.
@@ -134,7 +140,9 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   useEffect(() => {
     const eventi = new InvioEventi({ compitoId });
     eventiRef.current = eventi;
+    smontataRef.current = false;
     return () => {
+      smontataRef.current = true;
       eventi.ferma();
       codaRef.current?.ferma();
     };
@@ -143,7 +151,11 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   const { fuori, rientra } = useSorveglianza({
     attiva: inProva,
     scartoMs: scarto,
-    onEvento: (e) => eventiRef.current?.aggiungi(e),
+    // Finita la prova non si registra più niente: l'uscita dallo schermo
+    // intero alla consegna non è un'uscita.
+    onEvento: (e) => {
+      if (!finitaRef.current) eventiRef.current?.aggiungi(e);
+    },
   });
 
   const aggiornaTempo = useCallback((oraServer: string | undefined, nuovaScadenza: string | undefined) => {
@@ -154,10 +166,13 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
     if (nuovaScadenza) setScadenza(nuovaScadenza);
   }, []);
 
-  const concludi = useCallback((motivo: Finale) => {
+  /** La schermata finale. `mantieniCoda`: allo scadere la coda continua a
+   * salvare nella grazia, finché `consegnaAllaScadenza` non la ferma. */
+  const concludi = useCallback((motivo: Finale, mantieniCoda = false) => {
     if (finitaRef.current) return;
+    // Prima di lasciare lo schermo intero: la sorveglianza guarda questo.
     finitaRef.current = true;
-    codaRef.current?.ferma();
+    if (!mantieniCoda) codaRef.current?.ferma();
     esciDaSchermoIntero();
     setDialogo(false);
     setFase({ tipo: "finale", motivo });
@@ -166,7 +181,10 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   const suCambioCoda = useCallback((s: StatoCoda) => {
     setStatoCoda(s);
     aggiornaTempo(s.oraServer, s.scadenza);
-    if (s.fase === "chiuso") concludi(finaleDa(s.motivo));
+    if (s.fase === "chiuso") {
+      codaChiusaRef.current = true;
+      concludi(finaleDa(s.motivo));
+    }
   }, [aggiornaTempo, concludi]);
 
   function apriProva(p: ProvaJson) {
@@ -225,30 +243,68 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
     else setFase({ tipo: "intro", errore: true });
   }
 
-  const consegna = useCallback(async (automatica: boolean) => {
+  /** La consegna dello studente. Se dopo lo svuotamento qualche risposta
+   * non è ancora sul server, non si consegna: andrebbe persa. */
+  const consegna = useCallback(async () => {
     if (consegnaAvviataRef.current || finitaRef.current) return;
     consegnaAvviataRef.current = true;
     setConsegnando(true);
-    setErroreConsegna(false);
-    // Il campo ancora attivo passa al motore la sua ultima risposta (onBlur),
-    // così entra nella coda prima dello svuotamento.
-    (document.activeElement as HTMLElement | null)?.blur?.();
-    await codaRef.current?.svuota();
-    if (finitaRef.current) return;
-    try {
-      const r = await fetch(withBasePath(`${base}/prova/consegna`), { method: "POST" });
-      if (r.ok) return concludi(automatica ? "tempo_scaduto" : "consegnata");
-      const corpo = await leggiCorpo(r);
-      if (r.status === 404 || r.status === 409) return concludi(automatica ? "tempo_scaduto" : finaleDa(corpo?.error));
-      throw new Error(`consegna: ${r.status}`);
-    } catch {
-      // Allo zero dell'orologio la prova è finita comunque: oltre la grazia
-      // la consegna il server da sé.
-      if (automatica) return concludi("tempo_scaduto");
+    setErroreConsegna(null);
+    const fallita = (errore: "erroreConsegna" | "erroreNonSalvate") => {
       consegnaAvviataRef.current = false;
       setConsegnando(false);
       setDialogo(false);
-      setErroreConsegna(true);
+      setErroreConsegna(errore);
+    };
+    // Il campo ancora attivo passa al motore la sua ultima risposta (onBlur),
+    // così entra nella coda prima dello svuotamento.
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    const coda = codaRef.current;
+    await coda?.svuota();
+    if (finitaRef.current) return;
+    if (coda && coda.pendenti().size > 0) return fallita("erroreNonSalvate");
+    try {
+      const r = await fetch(withBasePath(`${base}/prova/consegna`), { method: "POST" });
+      if (r.ok) return concludi("consegnata");
+      const corpo = await leggiCorpo(r);
+      if (r.status === 404 || r.status === 409) return concludi(finaleDa(corpo?.error));
+      throw new Error(`consegna: ${r.status}`);
+    } catch {
+      fallita("erroreConsegna");
+    }
+  }, [base, concludi]);
+
+  /**
+   * Allo zero dell'orologio: subito la schermata «Tempo scaduto», ma la coda
+   * resta viva e si continua a svuotarla e poi a consegnare finché il server
+   * non risponde in modo definitivo o non passa la grazia (sull'ora del
+   * server, `limitePc` è già tradotto sull'ora del PC). Oltre la grazia la
+   * consegna la fa comunque il server.
+   */
+  const consegnaAllaScadenza = useCallback(async (limitePc: number) => {
+    if (consegnaAvviataRef.current || finitaRef.current) return;
+    consegnaAvviataRef.current = true;
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    const coda = codaRef.current;
+    concludi("tempo_scaduto", true);
+    const fermo = () => smontataRef.current || codaChiusaRef.current;
+    try {
+      while (!fermo()) {
+        await coda?.svuota();
+        if (fermo()) break;
+        if (!coda || coda.pendenti().size === 0) {
+          try {
+            const r = await fetch(withBasePath(`${base}/prova/consegna`), { method: "POST" });
+            if (r.ok || r.status === 404 || r.status === 409) break;
+          } catch {
+            // Rete assente: si riprova al prossimo giro.
+          }
+        }
+        if (Date.now() >= limitePc) break;
+        await new Promise((fatto) => setTimeout(fatto, RITENTA_CONSEGNA_MS));
+      }
+    } finally {
+      coda?.ferma();
     }
   }, [base, concludi]);
 
@@ -262,8 +318,8 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
   const residuo = scadenza ? millisecondiResidui(scadenza, scarto, adesso) : null;
   const scaduto = inProva && residuo === 0;
   useEffect(() => {
-    if (scaduto) void consegna(true);
-  }, [scaduto, consegna]);
+    if (scaduto && scadenza) void consegnaAllaScadenza(Date.parse(scadenza) - scarto + GRAZIA_MS);
+  }, [scaduto, scadenza, scarto, consegnaAllaScadenza]);
 
   // Ogni 20 s il tempo dal server: minuti aggiunti dal docente, consegna
   // fatta da lui o allo scadere.
@@ -435,7 +491,7 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
               <ChevronRight aria-hidden="true" className="size-4" />
             </Button>
           </div>
-          {erroreConsegna && <p role="alert" className="text-sm font-medium text-red-700">{t("erroreConsegna")}</p>}
+          {erroreConsegna && <p role="alert" className="text-sm font-medium text-red-700">{t(erroreConsegna)}</p>}
         </div>
       </main>
 
@@ -470,7 +526,7 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
                 type="button"
                 className="min-h-11"
                 disabled={consegnando}
-                onClick={() => void consegna(false)}
+                onClick={() => void consegna()}
               >
                 {consegnando ? t("consegnaInCorso") : t("consegnaConferma")}
               </Button>
