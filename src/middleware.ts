@@ -70,5 +70,9 @@ export const config = {
     // Ogni percorso che nomina "uploads", in qualunque cassa: il controllo
     // vero (`percorsoPrivato`) lo fa il codice, sul percorso normalizzato.
     "/(.*[Uu][Pp][Ll][Oo][Aa][Dd][Ss].*)",
+    // E ogni percorso con un carattere codificato: "/%75ploads/privati/..."
+    // non nomina "uploads" per il matcher, ma il server dei file statici lo
+    // decodifica e lo servirebbe.
+    "/(.*%.*)",
   ],
 };

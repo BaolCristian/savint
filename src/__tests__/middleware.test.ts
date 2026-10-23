@@ -43,6 +43,17 @@ describe("middleware — caricamenti privati", () => {
     }
   });
 
+  it("percorsi con lettere codificate (%75ploads): il matcher li prende e il middleware dà 404", () => {
+    process.env.SAVINT_MODE = "installation";
+    for (const basePath of [undefined, "/savint"]) {
+      for (const p of ["/%75ploads/privati/formulari/x.pdf", "/%55PLOADS/privati/formulari/x.pdf", "/upl%6Fads/privati/x.pdf"]) {
+        const url = `http://x${basePath ?? ""}${p}`;
+        expect(unstable_doesMiddlewareMatch({ config, url, nextConfig: basePath ? { basePath } : {} }), url).toBe(true);
+        expect(esegui(url, basePath).status, url).toBe(404);
+      }
+    }
+  });
+
   it("404 per un formulario, in installazione e in hub, anche sotto basePath", async () => {
     for (const m of ["installation", "hub"]) {
       process.env.SAVINT_MODE = m;
