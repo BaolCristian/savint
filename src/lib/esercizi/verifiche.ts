@@ -6,6 +6,7 @@ import { esisteFormulario } from "./formulari";
 import { MISURE_VUOTE, haMisure, misurePdpSchema, type MisurePdpValori } from "./misure-pdp";
 import {
   GRAZIA_MS,
+  durataValida,
   haRisposta,
   posizioniDellaProva,
   scadenzaProva,
@@ -60,8 +61,6 @@ const VALORE_NON_VALIDO = { ok: false, motivo: "valore_non_valido" } as const;
 
 const SELEZIONE_MISURE = { tempoExtraPct: true, menoEsercizi: true, calcolatrice: true, formulario: true } as const;
 
-const DURATA_MIN = 5;
-const DURATA_MAX = 300;
 const MINUTI_MAX = 120;
 
 /** La verifica com'è ora nel database, null se non c'è, non è una verifica
@@ -208,7 +207,13 @@ export async function sincronizzaVerifica(compitoId: string, ora: Date = new Dat
     }
   }
 
-  // 3. Chiusura automatica.
+  // 3. Chiusura automatica. Le prove e gli iscritti letti sopra sono una
+  // fotografia: una consegna o un ingresso arrivati nel frattempo non ci
+  // sono. Va bene così: la fotografia può solo far chiudere più tardi (un
+  // consegnato visto come aperto), mai prima, perché chi non ha consegnato
+  // conta solo con la scadenza + grazia già alle spalle, dopo la quale il
+  // server non accetta più niente da lui; e la scrittura è condizionata a
+  // `chiusaAt: null`, quindi una chiusura concorrente non si sovrascrive.
   if (v.stato === "IN_CORSO") {
     const chiusura = await chiusuraDiDiritto(v, prove, ora);
     if (chiusura) {
@@ -489,7 +494,7 @@ export async function modificaVerificaPreparata(
   if (v.stato !== "PREPARATA") return STATO_NON_VALIDO;
 
   const d = campi.durataMinuti;
-  if (d !== undefined && (!Number.isInteger(d) || d < DURATA_MIN || d > DURATA_MAX)) return VALORE_NON_VALIDO;
+  if (d !== undefined && !durataValida(d)) return VALORE_NON_VALIDO;
   const avvio = campi.avvioProgrammatoAt;
   if (avvio && !(avvio.getTime() > ora.getTime())) return VALORE_NON_VALIDO;
   const file = campi.formularioFile;
@@ -690,7 +695,12 @@ export async function monitoraggioVerifica(
         uscitaAperta = null;
       }
     }
-    if (uscitaAperta) fuoriMs += Math.max(0, ora.getTime() - uscitaAperta.getTime());
+    // Un'uscita ancora aperta conta fino a ora, ma non oltre la consegna:
+    // chi esce e non torna più non resta «fuori» per giorni.
+    if (uscitaAperta) {
+      const fine = Math.min(ora.getTime(), p?.consegnataAt?.getTime() ?? ora.getTime());
+      fuoriMs += Math.max(0, fine - uscitaAperta.getTime());
+    }
 
     righe.push({
       studentId: i.studentId,

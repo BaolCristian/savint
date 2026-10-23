@@ -20,7 +20,7 @@ import {
 } from "./versioni-compito";
 import { comeDocente, type Utente } from "./accesso";
 import { esisteFormulario } from "./formulari";
-import { posizioniDellaProva, type LayoutBlocco } from "./verifica-regole";
+import { durataValida, posizioniDellaProva, type LayoutBlocco } from "./verifica-regole";
 
 type MotivoDate = "scadenza_prima_apertura" | "scadenza_nel_passato";
 
@@ -95,9 +95,6 @@ export type MotivoAssegnaCompito =
   | "pdp_senza_esercizi"
   | "formulario_non_trovato";
 
-const DURATA_MIN = 5;
-const DURATA_MAX = 300;
-
 /** Il layout di una verifica (congelato in `Verifica.layout`): un
  * `LayoutBlocco` per blocco, con `quanti = richiesti[k]` (gli esercizi che
  * il blocco mette nell'estrazione di ogni studente). Default: 1 punto per
@@ -147,9 +144,7 @@ async function rifiutoVerifica(
 ): Promise<"verifica_non_valida" | "pdp_senza_esercizi" | "formulario_non_trovato" | null> {
   const v = i.verifica;
   if (!v) return "verifica_non_valida";
-  if (!Number.isInteger(v.durataMinuti) || v.durataMinuti < DURATA_MIN || v.durataMinuti > DURATA_MAX) {
-    return "verifica_non_valida";
-  }
+  if (!durataValida(v.durataMinuti)) return "verifica_non_valida";
   if (v.avvioProgrammatoAt !== undefined && !(v.avvioProgrammatoAt.getTime() > Date.now())) return "verifica_non_valida";
 
   const layout = layoutDaBlocchi(i.blocchi, i.blocchi.map(quantiDelBlocco));

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { assegnaCompito, type DatiVerifica } from "../compiti";
 import { MISURE_VUOTE } from "../misure-pdp";
 import { GRAZIA_MS } from "../verifica-regole";
+import { versioniDelloStudente } from "../versioni-compito";
 import {
   aggiungiMinuti,
   avviaRecupero,
@@ -82,13 +83,13 @@ const stato = (compitoId: string, ora: Date) => sincronizzaVerifica(compitoId, o
 /** Uno studente entra nella prova (in attesa del Task 6): la riga con
  * `entrataAt`, le posizioni e un tentativo per esercizio. */
 async function entra(compitoId: string, studentId: string, quando: Date) {
-  const compito = await prisma.compito.findUniqueOrThrow({ where: { id: compitoId } });
+  const versioni = (await versioniDelloStudente(compitoId, studentId))!;
   const prova = await prisma.provaVerifica.upsert({
     where: { compitoId_studentId: { compitoId, studentId } },
     create: { compitoId, studentId, entrataAt: quando, posizioni: [0, 1, 2] },
     update: { entrataAt: quando, posizioni: [0, 1, 2] },
   });
-  for (const [k, esercizioVersioneId] of compito.drawnVersionIds.entries()) {
+  for (const [k, esercizioVersioneId] of versioni.entries()) {
     await prisma.tentativo.create({
       data: { studentId, esercizioVersioneId, compitoId, provaId: prova.id, seed: `seme-${studentId}-${k}` },
     });
@@ -411,7 +412,7 @@ describe("monitoraggioVerifica", () => {
     await prisma.misurePdp.create({ data: { classeId, studentId: studenti[1]!, menoEsercizi: true } });
     await avviaVerifica(id, docenteId, T0);
     const p0 = await entra(id, studenti[0]!, dopo(1));
-    await prisma.tentativo.updateMany({ where: { provaId: p0.id, esercizioVersioneId: (await prisma.compito.findUniqueOrThrow({ where: { id } })).drawnVersionIds[0] }, data: { state: statoRisposto, score: 1, maxScore: 1 } });
+    await prisma.tentativo.updateMany({ where: { provaId: p0.id, esercizioVersioneId: (await versioniDelloStudente(id, studenti[0]!))![0] }, data: { state: statoRisposto, score: 1, maxScore: 1 } });
     await prisma.provaVerifica.update({ where: { id: p0.id }, data: { ultimoSalvataggioAt: dopo(5) } });
     await prisma.eventoVerifica.createMany({
       data: [
@@ -444,5 +445,15 @@ describe("monitoraggioVerifica", () => {
     expect(m.conTempoResiduo).toBe(3);
 
     expect(await monitoraggioVerifica(id, estraneoId, dopo(10))).toBeNull();
+  });
+
+  it("un'uscita mai chiusa su una prova consegnata conta solo fino alla consegna", async () => {
+    const id = await creaVerifica();
+    await avviaVerifica(id, docenteId, T0);
+    const p = await entra(id, studenti[0]!, dopo(1));
+    await prisma.eventoVerifica.create({ data: { provaId: p.id, tipo: "USCITA", motivo: "SCHEDA", at: dopo(50) } });
+    // Mai rientrato: consegnato automaticamente alla scadenza (avvio + 60).
+    const m = (await monitoraggioVerifica(id, docenteId, dopo(60 * 24)))!;
+    expect(m.righe.find((r) => r.studentId === studenti[0])).toMatchObject({ stato: "consegnato_auto", uscite: 1, secondiFuori: 10 * 60 });
   });
 });

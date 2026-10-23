@@ -8,6 +8,15 @@ import type { QuestionState, PartState } from "@savint/engine";
  * scadenza della prova (rete lenta, coda di salvataggi in volo). */
 export const GRAZIA_MS = 30_000;
 
+/** La durata di una verifica, in minuti: la stessa regola alla creazione
+ * (`assegnaCompito`) e alla modifica in PREPARATA. */
+export const DURATA_MIN = 5;
+export const DURATA_MAX = 300;
+
+export function durataValida(minuti: number): boolean {
+  return Number.isInteger(minuti) && minuti >= DURATA_MIN && minuti <= DURATA_MAX;
+}
+
 export type StatoVerifica = "PREPARATA" | "IN_CORSO" | "CHIUSA" | "PUBBLICATA";
 
 /** Lo stato di una verifica si legge dalle sue date: vince la più avanzata. */
