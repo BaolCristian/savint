@@ -33,17 +33,24 @@ function sceltaIniziale(pct: number): Scelta {
  * (mai diagnosi o note). `endpoint` arriva senza basePath — lo stesso dialogo
  * serve la classe e, più avanti, una singola verifica — e riceve un PUT
  * `{ studentId, misure }`. Dopo il salvataggio la pagina si rilegge, così il
- * segno «PDP» accanto all'iscritto segue quel che è stato salvato. */
+ * segno «PDP» accanto all'iscritto segue quel che è stato salvato.
+ * `etichetta` cambia il testo del pulsante (e il suo nome accessibile, che
+ * deve contenere il testo visibile); `onSalvato` serve a chi tiene le misure
+ * in uno stato suo, che `router.refresh()` non rilegge. */
 export function MisurePdpDialog({
   studentId,
   nome,
   iniziali,
   endpoint,
+  etichetta,
+  onSalvato,
 }: {
   studentId: string;
   nome: string;
   iniziali: MisurePdpValori;
   endpoint: string;
+  etichetta?: { testo: string; accessibile: string };
+  onSalvato?: () => void;
 }) {
   const t = useTranslations("esercizi.misurePdp");
   const router = useRouter();
@@ -96,6 +103,7 @@ export function MisurePdpDialog({
       }
       setAperta(false);
       router.refresh();
+      onSalvato?.();
     } catch {
       setErrore(t("errore"));
     } finally {
@@ -113,9 +121,9 @@ export function MisurePdpDialog({
     <Dialog open={aperta} onOpenChange={cambiaApertura}>
       <DialogTrigger
         render={<button type="button" className="text-sm text-brand-blue hover:underline" />}
-        aria-label={t("pulsanteDi", { nome })}
+        aria-label={etichetta?.accessibile ?? t("pulsanteDi", { nome })}
       >
-        {t("pulsante")}
+        {etichetta?.testo ?? t("pulsante")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="pr-8">

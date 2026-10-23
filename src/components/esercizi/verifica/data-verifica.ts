@@ -9,3 +9,14 @@ export function formattaQuando(quando: Date, locale: "it" | "en"): string {
     timeZone: "Europe/Rome",
   });
 }
+
+/** Solo l'ora (con i secondi), sempre sull'ora italiana: l'ultimo
+ * salvataggio di uno studente nel monitoraggio del docente. */
+export function formattaOra(quando: Date, locale: "it" | "en"): string {
+  return quando.toLocaleTimeString(locale === "en" ? "en-GB" : "it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "Europe/Rome",
+  });
+}

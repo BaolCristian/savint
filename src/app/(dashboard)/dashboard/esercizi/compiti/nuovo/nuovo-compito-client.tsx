@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AnteprimaCompito } from "@/components/esercizi/compito/anteprima-compito";
 import { withBasePath } from "@/lib/base-path";
+import { caricaFormulario } from "@/components/esercizi/verifica/carica-formulario";
 import type { Blocco, Riepilogo } from "@/lib/esercizi/estrazione";
 import { DURATA_MAX, DURATA_MIN, durataValida } from "@/lib/esercizi/verifica-regole";
 
@@ -393,29 +394,22 @@ export function NuovoCompitoClient({
 
   // Il formulario si carica appena scelto: la verifica porta solo il nome
   // che il server gli ha dato (`formularioFile`).
-  async function caricaFormulario(file: File) {
+  async function scegliFormulario(file: File) {
     setCaricaFormularioInCorso(true);
     setErroreFormulario(null);
-    const dati = new FormData();
-    dati.append("file", file);
-    try {
-      const res = await fetch(withBasePath("/api/esercizi/verifiche/formulari"), { method: "POST", body: dati });
-      const corpo = await res.json().catch(() => ({}));
-      if (res.ok && typeof corpo.file === "string") {
-        setFormulario({ file: corpo.file, nome: file.name });
-      } else {
-        setErroreFormulario(
-          corpo.error === "tipo_non_ammesso"
-            ? tV("erroreFormularioTipo")
-            : corpo.error === "troppo_grande"
-              ? tV("erroreFormularioGrande")
-              : res.status === 429
-                ? t("erroreTroppeRichieste")
-                : tV("erroreFormularioCaricamento"),
-        );
-      }
-    } catch {
-      setErroreFormulario(tV("erroreFormularioCaricamento"));
+    const esito = await caricaFormulario(file);
+    if (esito.ok) {
+      setFormulario({ file: esito.file, nome: file.name });
+    } else {
+      setErroreFormulario(
+        esito.motivo === "tipo"
+          ? tV("erroreFormularioTipo")
+          : esito.motivo === "grande"
+            ? tV("erroreFormularioGrande")
+            : esito.motivo === "troppe_richieste"
+              ? t("erroreTroppeRichieste")
+              : tV("erroreFormularioCaricamento"),
+      );
     }
     setCaricaFormularioInCorso(false);
   }
@@ -718,7 +712,7 @@ export function NuovoCompitoClient({
                     const file = e.target.files?.[0];
                     // Svuotato subito: lo stesso file si può riscegliere dopo un errore.
                     e.target.value = "";
-                    if (file) void caricaFormulario(file);
+                    if (file) void scegliFormulario(file);
                   }}
                   className="max-w-full text-sm file:mr-3 file:h-9 file:rounded-lg file:border file:border-input file:bg-background file:px-3 file:text-sm file:font-medium hover:file:bg-muted"
                 />
