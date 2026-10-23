@@ -15,11 +15,16 @@ import { bacinoRegola, formaRegola, idsConVersione, type RegolaInput } from "./b
  * nel database esistono regole a filtro nate senza anno (batterie composte
  * a mano prima del Nuovo compito), e `bloccoDaRegola` deve poterle
  * rappresentare invece di lanciare o di inventarsi un anno — un anno
- * inventato restringerebbe in silenzio il bacino di un modello. */
+ * inventato restringerebbe in silenzio il bacino di un modello.
+ *
+ * Modalità verifica: `punti` (di ogni esercizio del blocco), `quantiPdp`
+ * (blocchi casuali: quanti ne fa chi ha la misura «meno esercizi») e
+ * `nonPerPdp` (blocchi scelti: gli esercizi esclusi per quella misura). Un
+ * compito normale li ignora (`senzaCampiVerifica`, compiti.ts). */
 export type Blocco =
-  | { tipo: "argomento"; argomento: string; anno?: number; difficoltaMax?: number; quanti: number }
-  | { tipo: "raccolta"; contenitoreId: string; quanti: number }
-  | { tipo: "scelti"; esercizioIds: string[] };
+  | { tipo: "argomento"; argomento: string; anno?: number; difficoltaMax?: number; quanti: number; punti?: number; quantiPdp?: number }
+  | { tipo: "raccolta"; contenitoreId: string; quanti: number; punti?: number; quantiPdp?: number }
+  | { tipo: "scelti"; esercizioIds: string[]; punti?: number; nonPerPdp?: string[] };
 
 /** Un esercizio estratto, con l'ULTIMA versione (Decisioni, punto 3: "si
  * assegna l'ultima versione"): ciò che serve all'anteprima (titolo e
@@ -88,13 +93,25 @@ export function bloccoDaRegola(regola: {
   difficoltaMax: number | null;
   count: number;
   esercizioIds: readonly string[];
+  // Modalità verifica: facoltativi nel tipo (chi costruisce una regola a
+  // mano non li passa); nulli o vuoti = il blocco non li porta.
+  punti?: number | null;
+  quantiPdp?: number | null;
+  nonPerPdp?: readonly string[];
 }): Blocco {
   const forma = formaRegola(regola);
+  const punti = regola.punti != null ? { punti: regola.punti } : {};
+  const quantiPdp = regola.quantiPdp != null ? { quantiPdp: regola.quantiPdp } : {};
   switch (forma) {
     case "scelti":
-      return { tipo: "scelti", esercizioIds: [...regola.esercizioIds] };
+      return {
+        tipo: "scelti",
+        esercizioIds: [...regola.esercizioIds],
+        ...punti,
+        ...((regola.nonPerPdp?.length ?? 0) > 0 ? { nonPerPdp: [...regola.nonPerPdp!] } : {}),
+      };
     case "contenitore":
-      return { tipo: "raccolta", contenitoreId: regola.contenitoreId!, quanti: regola.count };
+      return { tipo: "raccolta", contenitoreId: regola.contenitoreId!, quanti: regola.count, ...punti, ...quantiPdp };
     case "filtro":
       return {
         tipo: "argomento",
@@ -102,6 +119,8 @@ export function bloccoDaRegola(regola: {
         ...(regola.anno != null ? { anno: regola.anno } : {}),
         ...(regola.difficoltaMax != null ? { difficoltaMax: regola.difficoltaMax } : {}),
         quanti: regola.count,
+        ...punti,
+        ...quantiPdp,
       };
     default:
       throw new Error(
@@ -115,6 +134,7 @@ export function bloccoDaRegola(regola: {
  * un blocco "scelti" è quanti sono gli scelti — l'unico valore che
  * `creaBatteria` accetta per quella forma. */
 export function regolaDaBlocco(b: Blocco): RegolaInput {
+  const punti = b.punti != null ? { punti: b.punti } : {};
   switch (b.tipo) {
     case "argomento":
       return {
@@ -122,11 +142,18 @@ export function regolaDaBlocco(b: Blocco): RegolaInput {
         ...(b.anno != null ? { anno: b.anno } : {}),
         ...(b.difficoltaMax != null ? { difficoltaMax: b.difficoltaMax } : {}),
         count: b.quanti,
+        ...punti,
+        ...(b.quantiPdp != null ? { quantiPdp: b.quantiPdp } : {}),
       };
     case "raccolta":
-      return { contenitoreId: b.contenitoreId, count: b.quanti };
+      return { contenitoreId: b.contenitoreId, count: b.quanti, ...punti, ...(b.quantiPdp != null ? { quantiPdp: b.quantiPdp } : {}) };
     case "scelti":
-      return { esercizioIds: [...b.esercizioIds], count: b.esercizioIds.length };
+      return {
+        esercizioIds: [...b.esercizioIds],
+        count: b.esercizioIds.length,
+        ...punti,
+        ...((b.nonPerPdp?.length ?? 0) > 0 ? { nonPerPdp: [...b.nonPerPdp!] } : {}),
+      };
   }
 }
 

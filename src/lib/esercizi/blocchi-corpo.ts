@@ -24,6 +24,13 @@ const BLOCCHI_MAX = 30;
  * riepilogo dava per assegnabile. */
 export const TOTALE_MAX = BLOCCHI_MAX * Math.max(QUANTI_MAX, SCELTI_MAX);
 
+// Modalità verifica: i punti di un esercizio vanno a mezzi punti, da 0,5 a
+// 100; `quantiPdp` fra 0 e `quanti` (il tetto superiore lo controlla il
+// `refine` qui sotto, che vede entrambi i campi). Un compito normale li
+// riceve e li ignora.
+const puntiSchema = z.number().min(0.5).max(100).multipleOf(0.5).optional();
+const quantiPdpSchema = z.number().int().min(0).max(QUANTI_MAX).optional();
+
 const bloccoSchema = z.discriminatedUnion("tipo", [
   z.object({
     tipo: z.literal("argomento"),
@@ -31,17 +38,23 @@ const bloccoSchema = z.discriminatedUnion("tipo", [
     anno: z.number().int().min(1).max(5).optional(),
     difficoltaMax: z.number().int().min(1).max(3).optional(),
     quanti: z.number().int().positive().max(QUANTI_MAX),
+    punti: puntiSchema,
+    quantiPdp: quantiPdpSchema,
   }),
   z.object({
     tipo: z.literal("raccolta"),
     contenitoreId: z.string().min(1).max(100),
     quanti: z.number().int().positive().max(QUANTI_MAX),
+    punti: puntiSchema,
+    quantiPdp: quantiPdpSchema,
   }),
   z.object({
     tipo: z.literal("scelti"),
     esercizioIds: z.array(z.string().min(1).max(100)).max(SCELTI_MAX),
+    punti: puntiSchema,
+    nonPerPdp: z.array(z.string().min(1).max(100)).max(SCELTI_MAX).optional(),
   }),
-]);
+]).refine((b) => b.tipo === "scelti" || b.quantiPdp == null || b.quantiPdp <= b.quanti);
 
 export const blocchiSchema = z.array(bloccoSchema).max(BLOCCHI_MAX);
 

@@ -21,6 +21,19 @@ const bodySchema = z.object({
   dueAt: z.coerce.date().optional(),
   salvaModello: z.object({ nome: z.string().trim().min(1).max(200) }).optional(),
   modelloId: z.string().min(1).max(100).optional(),
+  // Modalità verifica: senza `tipo` è un compito. Qui solo la forma; i
+  // limiti (durata, avvio nel futuro, formulario esistente) li controlla
+  // `assegnaCompito`, che risponde coi suoi motivi.
+  tipo: z.enum(["COMPITO", "VERIFICA"]).optional(),
+  verifica: z
+    .object({
+      durataMinuti: z.number().int(),
+      avvioProgrammatoAt: z.coerce.date().optional(),
+      calcolatrice: z.enum(["NESSUNO", "SOLO_PDP", "TUTTI"]),
+      formulario: z.enum(["NESSUNO", "SOLO_PDP", "TUTTI"]),
+      formularioFile: z.string().min(1).max(100).optional(),
+    })
+    .optional(),
 });
 
 // I motivi di `assegnaCompito` portano un significato che il docente deve
@@ -38,6 +51,9 @@ const STATI: Record<string, number> = {
   estrazione_cambiata: 409,
   date_non_valide: 400,
   blocchi_non_validi: 400,
+  verifica_non_valida: 400,
+  pdp_senza_esercizi: 400,
+  formulario_non_trovato: 400,
 };
 
 export async function POST(request: Request) {
@@ -79,6 +95,8 @@ export async function POST(request: Request) {
     dueAt: d.dueAt,
     salvaModello: d.salvaModello,
     modelloId: d.modelloId,
+    tipo: d.tipo,
+    verifica: d.verifica,
   });
 
   if (!esito.ok) {

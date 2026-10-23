@@ -21,6 +21,13 @@ export interface RegolaInput {
    * esercizi scelti dal docente, tutti assegnati. Da sola: niente
    * `contenitoreId` né `argomento`, e `count` uguale a quanti sono. */
   esercizioIds?: string[];
+  /** Modalità verifica: i punti di ogni esercizio della regola; `quantiPdp`
+   * (solo regole a raccolta o argomento, al più `count`) quanti ne fa chi
+   * ha la misura «meno esercizi»; `nonPerPdp` (solo «scelti», sottoinsieme
+   * di `esercizioIds`) gli esercizi esclusi per quella misura. */
+  punti?: number;
+  quantiPdp?: number;
+  nonPerPdp?: string[];
 }
 
 /** L'invariante, in un solo posto: "contenitore" se la regola ha SOLO
@@ -299,6 +306,23 @@ export async function rifiutoRegole(createdById: string, regole: RegolaInput[]):
     if (!Number.isInteger(r.count) || r.count <= 0 || (forma === "scelti" && r.count !== r.esercizioIds!.length)) {
       return { ok: false, motivo: "conteggio_non_valido", dettaglio: { index: i, count: r.count } };
     }
+    // Modalità verifica: le misure PDP stanno nella forma che le usa.
+    // `nonPerPdp` solo su un blocco scelti e solo fra i suoi esercizi (un
+    // escluso che il blocco non ha non escluderebbe niente: è un errore di
+    // chi chiama); `quantiPdp` solo sui casuali, fra 0 e `count`.
+    const nonPerPdp = r.nonPerPdp ?? [];
+    if (nonPerPdp.length > 0 && (forma !== "scelti" || nonPerPdp.some((id) => !r.esercizioIds!.includes(id)))) {
+      return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
+    }
+    if (r.punti != null && !(Number.isFinite(r.punti) && r.punti > 0)) {
+      return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
+    }
+    if (r.quantiPdp != null) {
+      if (forma === "scelti") return { ok: false, motivo: "regola_malformata", dettaglio: { index: i } };
+      if (!Number.isInteger(r.quantiPdp) || r.quantiPdp < 0 || r.quantiPdp > r.count) {
+        return { ok: false, motivo: "conteggio_non_valido", dettaglio: { index: i, count: r.count } };
+      }
+    }
   }
 
   // Una raccolta che chi crea non vede è "non trovata", come una che non
@@ -351,6 +375,9 @@ export async function scriviBatteria(
           anno: forma === "filtro" ? r.anno ?? null : null,
           difficoltaMax: forma === "filtro" ? r.difficoltaMax ?? null : null,
           esercizioIds: forma === "scelti" ? r.esercizioIds! : [],
+          punti: r.punti ?? null,
+          quantiPdp: forma !== "scelti" ? r.quantiPdp ?? null : null,
+          nonPerPdp: forma === "scelti" ? r.nonPerPdp ?? [] : [],
         };
       }),
     });
@@ -462,7 +489,17 @@ export async function caricaModello(id: string): Promise<{ id: string; nome: str
       automatica: true,
       regole: {
         orderBy: { order: "asc" },
-        select: { contenitoreId: true, argomento: true, anno: true, difficoltaMax: true, count: true, esercizioIds: true },
+        select: {
+          contenitoreId: true,
+          argomento: true,
+          anno: true,
+          difficoltaMax: true,
+          count: true,
+          esercizioIds: true,
+          punti: true,
+          quantiPdp: true,
+          nonPerPdp: true,
+        },
       },
     },
   });

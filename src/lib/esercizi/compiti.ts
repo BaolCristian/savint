@@ -1,4 +1,4 @@
-import type { TipoCompito } from "@prisma/client";
+import type { ModoStrumento, TipoCompito } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { rifiutoRegole, scriviBatteria } from "./batterie";
 import {
@@ -19,6 +19,8 @@ import {
   type BacinoCongelato,
 } from "./versioni-compito";
 import { comeDocente, type Utente } from "./accesso";
+import { leggiFormulario } from "./formulari";
+import { posizioniDellaProva, type LayoutBlocco } from "./verifica-regole";
 
 type MotivoDate = "scadenza_prima_apertura" | "scadenza_nel_passato";
 
@@ -63,6 +65,22 @@ export type InputAssegna = {
   dueAt?: Date;
   salvaModello?: { nome: string };
   modelloId?: string;
+  /** Modalità verifica: `VERIFICA` crea, insieme al compito, la sua riga
+   * `Verifica` con i dati di `verifica` (obbligatori per quel tipo). Senza
+   * `tipo` è un compito normale, e `verifica` si ignora. */
+  tipo?: "COMPITO" | "VERIFICA";
+  verifica?: DatiVerifica;
+};
+
+/** Ciò che una verifica ha in più di un compito: la durata della prova,
+ * l'eventuale avvio programmato, chi può usare calcolatrice e formulario,
+ * e il formulario caricato (`formulari.ts`). */
+export type DatiVerifica = {
+  durataMinuti: number;
+  avvioProgrammatoAt?: Date;
+  calcolatrice: ModoStrumento;
+  formulario: ModoStrumento;
+  formularioFile?: string;
 };
 
 export type MotivoAssegnaCompito =
@@ -72,7 +90,83 @@ export type MotivoAssegnaCompito =
   | "estrazione_cambiata"
   | "date_non_valide"
   | "modello_non_trovato"
-  | "blocchi_non_validi";
+  | "blocchi_non_validi"
+  | "verifica_non_valida"
+  | "pdp_senza_esercizi"
+  | "formulario_non_trovato";
+
+const DURATA_MIN = 5;
+const DURATA_MAX = 300;
+
+/** Il layout di una verifica (congelato in `Verifica.layout`): un
+ * `LayoutBlocco` per blocco, con `quanti = richiesti[k]` (gli esercizi che
+ * il blocco mette nell'estrazione di ogni studente). Default: 1 punto per
+ * esercizio; chi ha «meno esercizi» li fa tutti (`quantiPdp = quanti`), e
+ * per un blocco scelti ne fa tanti quanti gli scelti non esclusi. */
+export function layoutDaBlocchi(blocchi: Blocco[], richiesti: number[]): LayoutBlocco[] {
+  return blocchi.map((b, k) => {
+    const quanti = richiesti[k]!;
+    if (b.tipo === "scelti") {
+      const nonPerPdp = b.nonPerPdp ?? [];
+      const esclusi = new Set(nonPerPdp.filter((id) => b.esercizioIds.includes(id))).size;
+      return { quanti, punti: b.punti ?? 1, quantiPdp: quanti - esclusi, scelti: true, nonPerPdp };
+    }
+    return { quanti, punti: b.punti ?? 1, quantiPdp: b.quantiPdp ?? quanti, scelti: false, nonPerPdp: [] };
+  });
+}
+
+/** Un blocco senza i campi della verifica: un compito normale li ignora, e
+ * la sua copia dei blocchi (e l'eventuale modello) non li porta. */
+function senzaCampiVerifica(b: Blocco): Blocco {
+  switch (b.tipo) {
+    case "argomento": {
+      const { punti: _p, quantiPdp: _q, ...resto } = b;
+      return resto;
+    }
+    case "raccolta": {
+      const { punti: _p, quantiPdp: _q, ...resto } = b;
+      return resto;
+    }
+    case "scelti": {
+      const { punti: _p, nonPerPdp: _n, ...resto } = b;
+      return resto;
+    }
+  }
+}
+
+/** I controlli propri di una verifica, prima di qualunque lettura pesante:
+ * niente date da compito (una verifica ha avvio e durata, non apertura e
+ * scadenza), durata in [5, 300] minuti, avvio programmato nel futuro,
+ * qualcosa da fare anche per chi ha «meno esercizi», formulario esistente.
+ *
+ * Il controllo PDP guarda il layout: per un blocco scelti la posizione k è
+ * il k-esimo dei suoi esercizi (è l'ordine in cui l'estrazione li mette),
+ * per un blocco casuale basta `quantiPdp`. */
+async function rifiutoVerifica(
+  i: InputAssegna,
+): Promise<"verifica_non_valida" | "pdp_senza_esercizi" | "formulario_non_trovato" | null> {
+  const v = i.verifica;
+  if (!v || i.opensAt !== undefined || i.dueAt !== undefined) return "verifica_non_valida";
+  if (!Number.isInteger(v.durataMinuti) || v.durataMinuti < DURATA_MIN || v.durataMinuti > DURATA_MAX) {
+    return "verifica_non_valida";
+  }
+  if (v.avvioProgrammatoAt !== undefined && !(v.avvioProgrammatoAt.getTime() > Date.now())) return "verifica_non_valida";
+
+  const layout = layoutDaBlocchi(i.blocchi, i.blocchi.map(quantiDelBlocco));
+  const idPerPosizione = i.blocchi.flatMap((b, k) =>
+    b.tipo === "scelti" ? b.esercizioIds : Array<string>(layout[k]!.quanti).fill(""),
+  );
+  if (posizioniDellaProva(layout, idPerPosizione, true).length === 0) return "pdp_senza_esercizi";
+
+  if (v.formularioFile !== undefined && !(await leggiFormulario(v.formularioFile))) return "formulario_non_trovato";
+  return null;
+}
+
+/** Quanti esercizi un blocco mette nell'estrazione: `quanti`, o tutti gli
+ * scelti (lo stesso `richiesti` di `baciniDeiBlocchi`). */
+function quantiDelBlocco(b: Blocco): number {
+  return b.tipo === "scelti" ? new Set(b.esercizioIds).size : b.quanti;
+}
 
 /** L'esito di `assegnaCompito`. `riepilogo` accompagna `esercizi_insufficienti`
  * ed `estrazione_cambiata`: è ciò che la pagina deve mostrare al posto di
@@ -276,8 +370,19 @@ export async function riepilogoPerModo(
  * un rifiuto.
  *
  * Un blocco "argomento" senza `anno` pesca fra tutti gli anni: è la rotta a
- * riempire l'anno con quello della classe (`blocchiConAnno`). */
-export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompito> {
+ * riempire l'anno con quello della classe (`blocchiConAnno`).
+ *
+ * **Verifica** (`tipo: "VERIFICA"`): dopo i blocchi, `rifiutoVerifica`
+ * (`verifica_non_valida`, `pdp_senza_esercizi`, `formulario_non_trovato`);
+ * estrazione e modi restano quelli di un compito. Nella stessa transazione il
+ * compito nasce `VERIFICA` senza apertura né scadenza, con la sua riga
+ * `Verifica` e il layout dei blocchi (`layoutDaBlocchi`); la copia dei
+ * blocchi e il modello portano punti e misure PDP nelle loro regole. */
+export async function assegnaCompito(input: InputAssegna): Promise<EsitoAssegnaCompito> {
+  const verifica = input.tipo === "VERIFICA";
+  // Un compito normale ignora i campi della verifica, nei blocchi e fuori.
+  const i: InputAssegna = verifica ? input : { ...input, blocchi: input.blocchi.map(senzaCampiVerifica), verifica: undefined };
+
   const date = motivoDateNonValide(i.opensAt ?? null, i.dueAt ?? null, true);
   if (date) return { ok: false, motivo: "date_non_valide", dettaglio: date };
 
@@ -305,6 +410,11 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
   const rifiuto = await rifiutoRegole(i.teacherId, regole);
   if (rifiuto && rifiuto.motivo !== "contenitore_non_trovato") return { ok: false, motivo: "blocchi_non_validi" };
 
+  if (verifica) {
+    const motivo = await rifiutoVerifica(i);
+    if (motivo) return { ok: false, motivo };
+  }
+
   // Una raccolta che chi assegna non vede (`contenitore_non_trovato` qui
   // sopra) ha bacino vuoto: il riepilogo la mostra come "Raccolta non
   // disponibile" con zero disponibili, che è la risposta più utile per il
@@ -326,6 +436,7 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
   }
 
   const nome = nomeDelCompito(riepilogo);
+  const layout = verifica ? layoutDaBlocchi(i.blocchi, riepilogo.blocchi.map((b) => b.richiesti)) : null;
   const compitoId = await prisma.$transaction(async (tx) => {
     const batteriaId = await scriviBatteria(tx, i.teacherId, nome, regole, undefined, true);
     const modelloId = i.salvaModello
@@ -343,8 +454,23 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
         modelloId,
         opensAt: i.opensAt,
         dueAt: i.dueAt,
+        ...(verifica ? { tipo: "VERIFICA" as const } : {}),
       },
     });
+    if (layout) {
+      const v = i.verifica!;
+      await tx.verifica.create({
+        data: {
+          compitoId: compito.id,
+          durataMinuti: v.durataMinuti,
+          avvioProgrammatoAt: v.avvioProgrammatoAt ?? null,
+          calcolatrice: v.calcolatrice,
+          formulario: v.formulario,
+          formularioFile: v.formularioFile ?? null,
+          layout,
+        },
+      });
+    }
     if (bacini) {
       const congelati = bacini;
       const iscritti = await tx.classeStudente.findMany({ where: { classeId: i.classeId }, select: { studentId: true } });

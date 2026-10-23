@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, stat } from "fs/promises";
-import { join, extname } from "path";
+import { join, extname, posix } from "path";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -15,6 +15,16 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path: segments } = await params;
+
+  // I caricamenti privati (i formulari delle verifiche) vivono sotto
+  // public/uploads/privati ma non si servono mai da qui. Si guarda il
+  // percorso normalizzato ("./privati", "/privati" e simili arrivano alla
+  // stessa cartella) e senza badare alla cassa (macOS non la distingue).
+  const primo = posix.normalize(segments.join("/")).replace(/^\/+/, "").split("/")[0]!;
+  if (primo.toLowerCase() === "privati") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const relativePath = segments.join("/");
 
   // Prevent directory traversal

@@ -162,4 +162,43 @@ describe("POST /api/esercizi/compiti", () => {
       expect(await r.json()).toEqual({ error: motivo, ...(dettaglio ? { dettaglio } : {}) });
     }
   });
+  it("201 per una verifica: inoltra tipo e verifica, con l'avvio come data", async () => {
+    const verifica = {
+      durataMinuti: 50,
+      avvioProgrammatoAt: "2026-11-10T08:00:00.000Z",
+      calcolatrice: "SOLO_PDP",
+      formulario: "TUTTI",
+      formularioFile: "0f3c2a1e-1b2c-4d5e-8f90-a1b2c3d4e5f6.pdf",
+    };
+    const blocchi = [{ tipo: "raccolta", contenitoreId: "r1", quanti: 3, quantiPdp: 2, punti: 1.5 }];
+    const r = await POST(richiesta({ ...corpoValido, blocchi, tipo: "VERIFICA", verifica }));
+    expect(r.status).toBe(201);
+    expect(await r.json()).toEqual({ compitoId: "compito1" });
+    const arg = vi.mocked(assegnaCompito).mock.calls[0]![0];
+    expect(arg.tipo).toBe("VERIFICA");
+    expect(arg.blocchi).toEqual(blocchi);
+    expect(arg.verifica).toEqual({ ...verifica, avvioProgrammatoAt: new Date("2026-11-10T08:00:00.000Z") });
+  });
+
+  it("400 per i campi della verifica fuori forma nei blocchi", async () => {
+    for (const blocchi of [
+      [{ tipo: "raccolta", contenitoreId: "r1", quanti: 3, punti: 0.3 }],
+      [{ tipo: "raccolta", contenitoreId: "r1", quanti: 3, punti: 101 }],
+      [{ tipo: "raccolta", contenitoreId: "r1", quanti: 3, quantiPdp: 4 }],
+      [{ tipo: "raccolta", contenitoreId: "r1", quanti: 3, quantiPdp: -1 }],
+      [{ tipo: "scelti", esercizioIds: ["a"], nonPerPdp: Array.from({ length: 201 }, (_, i) => `x${i}`) }],
+    ]) {
+      expect((await POST(richiesta({ ...corpoValido, blocchi }))).status).toBe(400);
+    }
+    expect(assegnaCompito).not.toHaveBeenCalled();
+  });
+
+  it("400 per i rifiuti della verifica", async () => {
+    for (const motivo of ["verifica_non_valida", "pdp_senza_esercizi", "formulario_non_trovato"]) {
+      vi.mocked(assegnaCompito).mockResolvedValue({ ok: false, motivo } as never);
+      const r = await POST(richiesta({ ...corpoValido, tipo: "VERIFICA" }));
+      expect(r.status).toBe(400);
+      expect(await r.json()).toEqual({ error: motivo });
+    }
+  });
 });
