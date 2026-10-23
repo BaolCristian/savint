@@ -317,9 +317,12 @@ export function ProvaVerificaClient({ compitoId, studentId, intro, locale }: Pro
 
   const residuo = scadenza ? millisecondiResidui(scadenza, scarto, adesso) : null;
   const scaduto = inProva && residuo === 0;
+  // Con una consegna manuale in volo si aspetta: se va a buon fine la prova è
+  // finita, se fallisce `consegnando` torna falso e si passa da qui (altrimenti
+  // lo studente resterebbe a 00:00 con l'errore).
   useEffect(() => {
-    if (scaduto && scadenza) void consegnaAllaScadenza(Date.parse(scadenza) - scarto + GRAZIA_MS);
-  }, [scaduto, scadenza, scarto, consegnaAllaScadenza]);
+    if (scaduto && scadenza && !consegnando) void consegnaAllaScadenza(Date.parse(scadenza) - scarto + GRAZIA_MS);
+  }, [scaduto, scadenza, scarto, consegnando, consegnaAllaScadenza]);
 
   // Ogni 20 s il tempo dal server: minuti aggiunti dal docente, consegna
   // fatta da lui o allo scadere.

@@ -275,6 +275,29 @@ describe("ProvaVerificaClient", () => {
     expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(1);
   });
 
+  it("una consegna manuale che fallisce quando l'orologio è già a zero passa alla consegna allo scadere", async () => {
+    rotte["POST /api/esercizi/verifiche/v1/prova"] = () => json(provaAperta({ scadenza: ORA_PC + 10_000 }));
+    let falliscePrima!: () => void;
+    rotte["POST /api/esercizi/verifiche/v1/prova/consegna"] = () =>
+      new Promise<Response>((_, rifiuta) => { falliscePrima = () => rifiuta(new TypeError("rete assente")); });
+    await entra();
+    await act(() => vi.advanceTimersByTimeAsync(8000));
+    fireEvent.click(screen.getByRole("button", { name: p.consegna }));
+    fireEvent.click(screen.getByRole("button", { name: p.consegnaConferma }));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(1);
+
+    // L'orologio arriva a zero mentre la consegna manuale è ancora in volo.
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    rotte["POST /api/esercizi/verifiche/v1/prova/consegna"] = () => json({ ok: true });
+    await act(async () => { falliscePrima(); await vi.advanceTimersByTimeAsync(0); });
+
+    // Non resta a 00:00 con l'errore: schermata del tempo scaduto e nuova consegna.
+    expect(screen.queryByText(p.erroreConsegna)).toBeNull();
+    expect(screen.getByText(p.tempoScaduto)).toBeInTheDocument();
+    expect(chiamate("POST", "/api/esercizi/verifiche/v1/prova/consegna")).toHaveLength(2);
+  });
+
   it("consegnata dal docente: il polling porta alla schermata finale", async () => {
     await entra();
     rotte["GET /api/esercizi/verifiche/v1/prova"] = () => json({ error: "consegnata", oraServer: iso(Date.now()) }, 409);
