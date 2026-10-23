@@ -16,9 +16,18 @@ export type StatoCoda = {
   scadenza?: string;
 };
 
+/** L'esito di un invio, come lo traduce la pagina dalla risposta HTTP:
+ * - `ok`: 200;
+ * - `definitivo: true`: la prova è finita per il server — 409
+ *   `tempo_scaduto`/`consegnata`/`chiusa` e 404. La coda si chiude;
+ * - `scarta: true`: 400 `invalid_state`. Il server non accetterà mai QUELLO
+ *   stato: si toglie solo quel tentativo (mai ritentato all'infinito, mai la
+ *   prova chiusa) e gli altri proseguono; un `metti` successivo lo riporta;
+ * - altrimenti (rete, 5xx, 409 `non_iniziata`): si ritenta più tardi. */
 export type EsitoInvio =
   | { ok: true; oraServer: string; scadenza: string }
-  | { ok: false; definitivo: boolean; motivo?: string; oraServer?: string };
+  | { ok: false; definitivo: true; motivo?: string; oraServer?: string }
+  | { ok: false; definitivo: false; scarta?: boolean; motivo?: string; oraServer?: string };
 
 type Storage_ = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -44,6 +53,10 @@ function storageDelBrowser(): Storage_ | undefined {
 
 export class CodaSalvataggi {
   private readonly coda = new Map<string, QuestionState>();
+  // I tentativi il cui ultimo stato il server ha rifiutato (`scarta`): finché
+  // uno di loro non viene salvato, la prova non risulta «salvata».
+  private readonly rifiutati = new Set<string>();
+  private motivoRifiuto: string | undefined;
   private readonly chiave: string;
   private readonly storage: Storage_ | undefined;
   private readonly ritardi: number[];
@@ -151,21 +164,41 @@ export class CodaSalvataggi {
       if (esito.ok) {
         // Uno stato più nuovo arrivato durante l'invio resta in coda.
         if (this.coda.get(tentativoId) === state) this.coda.delete(tentativoId);
+        this.rifiutati.delete(tentativoId);
         this.scrivi();
         this.fallimenti = 0;
-        this.stato = {
-          fase: this.coda.size > 0 ? "in_salvataggio" : "salvato",
+        const fase = this.coda.size > 0 ? "in_salvataggio" : this.rifiutati.size > 0 ? "non_salvato" : "salvato";
+        // A ogni salvataggio riuscito, anche con altro ancora in coda: ora
+        // del server e scadenza fresche tengono allineato l'orologio.
+        this.cambia({
+          fase,
+          motivo: fase === "non_salvato" ? this.motivoRifiuto : undefined,
           ultimoSalvataggio: new Date(),
           oraServer: esito.oraServer,
           scadenza: esito.scadenza,
-        };
-        if (this.coda.size === 0) this.cambia(this.stato);
+        });
         continue;
       }
 
       if (esito.definitivo) {
         this.chiudi(esito.motivo, esito.oraServer);
         return;
+      }
+
+      if (esito.scarta) {
+        // Solo questo stato si butta: un `metti` più nuovo arrivato durante
+        // l'invio resta in coda e verrà provato a sua volta.
+        if (this.coda.get(tentativoId) === state) this.coda.delete(tentativoId);
+        this.rifiutati.add(tentativoId);
+        this.scrivi();
+        this.motivoRifiuto = esito.motivo;
+        this.cambia({
+          ...this.stato,
+          fase: "non_salvato",
+          motivo: esito.motivo,
+          oraServer: esito.oraServer ?? this.stato.oraServer,
+        });
+        continue;
       }
 
       const ritardo = this.ritardi[Math.min(this.fallimenti, this.ritardi.length - 1)];
@@ -187,6 +220,7 @@ export class CodaSalvataggi {
   private chiudi(motivo: string | undefined, oraServer: string | undefined): void {
     this.chiuso = true;
     this.coda.clear();
+    this.rifiutati.clear();
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
     try {

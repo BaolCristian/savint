@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { NumbasQuestionJSON, QuestionState } from "@savint/engine";
+import { parts, type NumbasQuestionJSON, type QuestionState } from "@savint/engine";
 import type { EsercizioProva } from "@/lib/esercizi/prova-verifica";
 import messaggiIt from "@/messages/it.json";
 import { EsercizioVerifica } from "../esercizio-verifica";
@@ -46,6 +46,7 @@ beforeEach(() => {
   vi.useFakeTimers();
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -96,6 +97,61 @@ describe("EsercizioVerifica", () => {
     // Il timer già partito non manda un secondo stato identico.
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(onStato).toHaveBeenCalledTimes(1);
+  });
+
+  it("passando a un altro campo della stessa parte non segnala l'uscita", () => {
+    const gapfill = {
+      name: "Due spazi",
+      statement: "<p>Testo</p>",
+      variables: {},
+      parts: [
+        {
+          type: "gapfill",
+          prompt: "<p>[[0]] e [[1]]</p>",
+          gaps: [
+            { type: "patternmatch", marks: 1, matchMode: "exact", answer: "a" },
+            { type: "patternmatch", marks: 1, matchMode: "exact", answer: "b" },
+          ],
+        },
+      ],
+    } as unknown as NumbasQuestionJSON;
+    const { onUscitaCampo } = monta({ esercizio: { ...esercizio, content: gapfill } });
+    const [primo, secondo] = screen.getAllByRole("textbox");
+    fireEvent.blur(primo, { relatedTarget: secondo });
+    expect(onUscitaCampo).not.toHaveBeenCalled();
+    fireEvent.blur(secondo, { relatedTarget: document.body });
+    expect(onUscitaCampo).toHaveBeenCalledTimes(1);
+  });
+
+  it("se il motore lancia, la parte torna all'ultima risposta valida e conta come non risposta", () => {
+    const submit = parts.PartBase.prototype.submit;
+    vi.spyOn(parts.PartBase.prototype, "submit").mockImplementation(function (this: InstanceType<typeof parts.PartBase>, answer) {
+      if (answer === "rotta") {
+        // Come un errore a metà correzione: la risposta è già registrata.
+        this.storeAnswer(answer);
+        this.answered = true;
+        throw new Error("risposta illeggibile");
+      }
+      return submit.call(this, answer);
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { onStato } = monta();
+    const [primo] = screen.getAllByRole("textbox");
+    scrivi(primo, "uno");
+    fireEvent.blur(primo);
+    expect(onStato).toHaveBeenLastCalledWith("t1", expect.anything(), true);
+
+    scrivi(primo, "rotta");
+    fireEvent.blur(primo);
+    const [, state, risposto] = onStato.mock.calls.at(-1)!;
+    expect(risposto).toBe(false);
+    expect(state.parts.find((p) => p.path === "p0")).toMatchObject({ answered: true, answer: "uno" });
+
+    // Tornata valida, la parte conta di nuovo.
+    scrivi(primo, "due");
+    fireEvent.blur(primo);
+    expect(onStato.mock.calls.at(-1)?.[2]).toBe(true);
+    expect(onStato.mock.calls.at(-1)?.[1].parts.find((p) => p.path === "p0")?.answer).toBe("due");
   });
 
   it("un campo svuotato conta come non risposto", async () => {

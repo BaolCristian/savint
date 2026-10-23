@@ -119,7 +119,9 @@ export function EsercizioVerifica({ esercizio, locale, disabilitato, onStato, on
         nonValideRef.current.delete(path);
       } catch (e) {
         // Risposta che il motore non sa leggere: la parte torna allo stato
-        // di prima e il campo conta come non risposto.
+        // di prima e il campo conta come non risposto. A `onStato` va lo
+        // stato ricostruito, cioè l'ultima risposta valida di questa parte
+        // (o nessuna), mai la risposta illeggibile.
         console.warn("[esercizi/verifica] risposta non interpretabile", e);
         nonValideRef.current.add(path);
         ripristina(q, prima);
@@ -156,8 +158,13 @@ export function EsercizioVerifica({ esercizio, locale, disabilitato, onStato, on
     timerRef.current.set(path, setTimeout(() => passaAlMotore(path), ATTESA_MS));
   }
 
-  function esciDalCampo(path: string) {
+  /** Il fuoco lascia un campo della parte: la risposta passa subito al
+   * motore; `onUscitaCampo` solo se il fuoco esce dalla parte (non quando va
+   * da uno spazio all'altro di un gapfill o fra le scelte). */
+  function esciDalCampo(e: React.FocusEvent<HTMLDivElement>, path: string) {
     passaAlMotore(path);
+    const verso = e.relatedTarget as Node | null;
+    if (verso && e.currentTarget.contains(verso)) return;
     onUscitaCampo();
   }
 
@@ -188,7 +195,7 @@ export function EsercizioVerifica({ esercizio, locale, disabilitato, onStato, on
             onCopy={bloccaCopia}
             onCut={bloccaCopia}
             onContextMenu={bloccaCopia}
-            onBlur={() => esciDalCampo(parte.path)}
+            onBlur={(e) => esciDalCampo(e, parte.path)}
             className="select-none space-y-4 rounded-2xl border border-slate-200 bg-white p-5 focus-within:border-brand-blue/40 sm:p-7 [&_input]:min-h-11 [&_input]:select-text [&_textarea]:min-h-24 [&_textarea]:select-text"
           >
             <InputParte

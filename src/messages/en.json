@@ -1944,7 +1944,6 @@
       }
     },
     "provaStudente": {
-      "esercizioNumero": "Exercise {n}",
       "calcolatrice": "Calculator",
       "chiudiCalcolatrice": "Close the calculator",
       "espressione": "Expression to calculate",

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { QuestionState } from "@savint/engine";
-import { CodaSalvataggi, type StatoCoda } from "../coda-salvataggi";
+import { CodaSalvataggi, type EsitoInvio, type StatoCoda } from "../coda-salvataggi";
 
 const stato = (answer: string) =>
   ({ seed: "s", parts: [{ path: "p0", answered: true, answer }] }) as unknown as QuestionState;
@@ -124,6 +124,63 @@ describe("CodaSalvataggi", () => {
     await vi.runAllTimersAsync();
     expect(invia).toHaveBeenCalledTimes(1);
     expect(storage.dati.has(CHIAVE)).toBe(false);
+  });
+
+  it("invalid_state scarta solo quel tentativo: gli altri partono, lui non si ritenta", async () => {
+    const invia = vi.fn(async (id: string) =>
+      id === "t1" ? { ok: false as const, definitivo: false as const, scarta: true, motivo: "invalid_state" } : ok,
+    );
+    const storage = memoria();
+    const { coda, fasi } = nuova({ invia, storage });
+    coda.metti("t1", stato("a"));
+    coda.metti("t2", stato("b"));
+    await vi.runAllTimersAsync();
+    expect(invia.mock.calls.map((c) => c[0])).toEqual(["t1", "t2"]);
+    expect(coda.pendenti().size).toBe(0);
+    expect(storage.dati.has(CHIAVE)).toBe(false);
+    expect(fasi.at(-1)).toMatchObject({ fase: "non_salvato", motivo: "invalid_state" });
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(invia).toHaveBeenCalledTimes(2);
+
+    // Un nuovo stato di t1 che il server accetta riporta la prova a «salvato».
+    invia.mockImplementation(async () => ok);
+    coda.metti("t1", stato("c"));
+    await vi.runAllTimersAsync();
+    expect(invia).toHaveBeenLastCalledWith("t1", stato("c"));
+    expect(fasi.at(-1)?.fase).toBe("salvato");
+  });
+
+  it("un metti più nuovo di t1 durante l'invio rifiutato non si perde", async () => {
+    let rifiuta: (e: EsitoInvio) => void = () => {};
+    const invia = vi
+      .fn<(id: string, s: QuestionState) => Promise<EsitoInvio>>()
+      .mockImplementationOnce(() => new Promise((r) => { rifiuta = r; }))
+      .mockResolvedValue(ok);
+    const { coda, fasi } = nuova({ invia, storage: memoria() });
+    coda.metti("t1", stato("a"));
+    await vi.advanceTimersByTimeAsync(0);
+    coda.metti("t1", stato("b"));
+    rifiuta({ ok: false, definitivo: false, scarta: true, motivo: "invalid_state" });
+    await vi.runAllTimersAsync();
+    expect(invia).toHaveBeenCalledTimes(2);
+    expect(invia).toHaveBeenLastCalledWith("t1", stato("b"));
+    expect(fasi.at(-1)?.fase).toBe("salvato");
+  });
+
+  it("con altro ancora in coda ogni salvataggio riuscito aggiorna ora del server e scadenza", async () => {
+    const invia = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, oraServer: "2026-10-23T10:00:01.000Z", scadenza: "2026-10-23T11:00:00.000Z" })
+      .mockResolvedValueOnce(ok);
+    const { coda, fasi } = nuova({ invia, storage: memoria() });
+    coda.metti("t1", stato("a"));
+    coda.metti("t2", stato("b"));
+    await vi.runAllTimersAsync();
+    expect(fasi).toContainEqual(
+      expect.objectContaining({ fase: "in_salvataggio", oraServer: "2026-10-23T10:00:01.000Z" }),
+    );
+    expect(fasi.at(-1)?.fase).toBe("salvato");
   });
 
   it("una nuova coda con lo stesso storage ritrova i pendenti", async () => {
