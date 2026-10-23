@@ -142,6 +142,10 @@ model User {
   eserciziAggiunti        ContenitoreEsercizio[]    @relation("eserciziAggiunti")
   commentiEsercizi        CommentoEsercizio[]       @relation("commentiScritti")
   commentiRisolti         CommentoEsercizio[]       @relation("commentiRisolti")
+
+  // Modalità verifica
+  proveVerifica ProvaVerifica[]
+  misurePdp     MisurePdp[]
 }
 
 model Account {
@@ -730,6 +734,14 @@ model Tentativo {
   studentId           String
   esercizioVersioneId String
   compitoId           String?
+  // Modalità verifica: il tentativo appartiene alla prova di uno studente,
+  // al massimo uno per esercizio (vincolo unico qui sotto). Null per i
+  // tentativi di compiti e pratica: due NULL non collidono, quindi per loro
+  // non cambia niente.
+  provaId             String?
+  // Il punteggio dato a mano dal docente in correzione, in punti della
+  // verifica: se non è null vince sul calcolo del motore.
+  puntiManuali        Float?
   seed                String
   state               Json?
   score               Float             @default(0)
@@ -741,7 +753,9 @@ model Tentativo {
   student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
   versione            EsercizioVersione @relation(fields: [esercizioVersioneId], references: [id], onDelete: Cascade)
   compito             Compito?          @relation(fields: [compitoId], references: [id], onDelete: SetNull)
+  prova               ProvaVerifica?    @relation(fields: [provaId], references: [id], onDelete: Cascade)
 
+  @@unique([provaId, esercizioVersioneId])
   @@index([studentId, esercizioVersioneId])
   @@index([lastActivityAt])
 }
@@ -764,6 +778,7 @@ model Classe {
   studenti         ClasseStudente[]
   docenti          ClasseDocente[]
   compiti          Compito[]
+  misurePdp        MisurePdp[]
 }
 
 // GRUPPO = creata da allineaClassi al segno di un gruppo Google; CODICE =
@@ -877,6 +892,13 @@ model BatteriaRegola {
   // Id di Esercizio, non chiavi esterne: un esercizio reso privato o eliminato
   // rende il blocco insufficiente, non cancella la regola.
   esercizioIds  String[]     @default([])
+  // Modalità verifica: i punti di ogni esercizio del blocco, quanti
+  // esercizi ne fa chi ha la misura «meno esercizi» (blocchi casuali) e,
+  // solo per i blocchi «scelti», gli id di Esercizio esclusi per chi ha
+  // quella misura. Nulli/vuoti per le regole dei compiti.
+  punti         Float?
+  quantiPdp     Int?
+  nonPerPdp     String[]     @default([])
   batteria      Batteria     @relation(fields: [batteriaId], references: [id], onDelete: Cascade)
   contenitore   Contenitore? @relation(fields: [contenitoreId], references: [id], onDelete: Restrict)
 
@@ -919,6 +941,9 @@ model Compito {
   // serve solo a contare "usato N volte". SetNull: eliminare il modello lo
   // azzera e il compito resta intatto (i suoi blocchi sono nella `batteria`).
   modelloId       String?
+  // Modalità verifica: VERIFICA ha una riga Verifica 1:1 e una ProvaVerifica
+  // per studente. Default COMPITO: ogni compito già assegnato resta com'era.
+  tipo            TipoCompito          @default(COMPITO)
   createdAt       DateTime             @default(now())
   batteria        Batteria             @relation(fields: [batteriaId], references: [id], onDelete: Restrict)
   modello         Batteria?            @relation("CompitiDaModello", fields: [modelloId], references: [id], onDelete: SetNull)
@@ -926,6 +951,8 @@ model Compito {
   assignedBy      User                 @relation(fields: [assignedById], references: [id])
   tentativi       Tentativo[]
   estrazioni      EstrazioneStudente[]
+  verifica        Verifica?
+  prove           ProvaVerifica[]
 
   @@index([classeId, dueAt])
   @@index([modelloId])
@@ -953,4 +980,115 @@ model EstrazioneStudente {
 
   @@id([compitoId, studentId])
   @@index([studentId])
+}
+
+// Modalità verifica: un Compito è un compito da svolgere a casa (COMPITO) o
+// una verifica online a tempo (VERIFICA).
+enum TipoCompito {
+  COMPITO
+  VERIFICA
+}
+
+// A chi spetta uno strumento (calcolatrice, formulario) durante la verifica.
+enum ModoStrumento {
+  NESSUNO
+  SOLO_PDP
+  TUTTI
+}
+
+// Modalità verifica: i dati della verifica, 1:1 con il suo Compito. Lo stato
+// si legge dalle date (vedi statoVerifica in verifica-regole.ts): preparata,
+// avviata, chiusa, pubblicata. `layout` è il LayoutBlocco[] congelato
+// all'assegnazione (quanti esercizi, punti, sottoinsieme PDP per blocco).
+// `minutiExtra` sono i minuti dati a tutti a prova in corso: non valgono per
+// i recuperi.
+model Verifica {
+  compitoId          String        @id
+  durataMinuti       Int
+  avvioProgrammatoAt DateTime?
+  avviataAt          DateTime?
+  chiusaAt           DateTime?
+  pubblicataAt       DateTime?
+  minutiExtra        Int           @default(0)
+  calcolatrice       ModoStrumento @default(SOLO_PDP)
+  formulario         ModoStrumento @default(SOLO_PDP)
+  formularioFile     String?
+  layout             Json
+  createdAt          DateTime      @default(now())
+  compito            Compito       @relation(fields: [compitoId], references: [id], onDelete: Cascade)
+}
+
+// Modalità verifica: la prova di uno studente. Le misure PDP sono copiate
+// qui (e da qui non cambiano più); `inizioAt` null = conta
+// Verifica.avviataAt, valorizzato solo per un recupero. `posizioni` sono gli
+// indici (da 0) nell'estrazione dello studente che la prova gli chiede,
+// fissati al primo ingresso. Sparisce con il compito o con lo studente.
+model ProvaVerifica {
+  id                  String           @id @default(cuid())
+  compitoId           String
+  studentId           String
+  tempoExtraPct       Int              @default(0)
+  menoEsercizi        Boolean          @default(false)
+  calcolatrice        Boolean          @default(false)
+  formulario          Boolean          @default(false)
+  minutiExtra         Int              @default(0)
+  inizioAt            DateTime?
+  recupero            Boolean          @default(false)
+  posizioni           Int[]            @default([])
+  entrataAt           DateTime?
+  ultimoSalvataggioAt DateTime?
+  consegnataAt        DateTime?
+  consegnaAutomatica  Boolean          @default(false)
+  pubblicataAt        DateTime?
+  createdAt           DateTime         @default(now())
+  compito             Compito          @relation(fields: [compitoId], references: [id], onDelete: Cascade)
+  student             User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tentativi           Tentativo[]
+  eventi              EventoVerifica[]
+
+  @@unique([compitoId, studentId])
+  @@index([studentId])
+}
+
+enum TipoEventoVerifica {
+  USCITA
+  RIENTRO
+}
+
+enum MotivoUscita {
+  SCHERMO_INTERO
+  SCHEDA
+  FOCUS
+}
+
+// Modalità verifica: un'uscita dalla prova (schermo intero, scheda, focus) o
+// il rientro, con quanto è durata l'uscita. Sparisce con la prova.
+model EventoVerifica {
+  id       String             @id @default(cuid())
+  provaId  String
+  tipo     TipoEventoVerifica
+  motivo   MotivoUscita?
+  at       DateTime
+  durataMs Int?
+  prova    ProvaVerifica      @relation(fields: [provaId], references: [id], onDelete: Cascade)
+
+  @@index([provaId, at])
+}
+
+// Modalità verifica: le misure PDP di uno studente in una classe. Solo
+// misure, mai diagnosi o note (nessun campo di testo libero). Cascata sulla
+// Classe e sullo studente separatamente, non su ClasseStudente: una
+// disiscrizione temporanea di allineaClassi non deve cancellare le misure.
+model MisurePdp {
+  classeId      String
+  studentId     String
+  tempoExtraPct Int      @default(0)
+  menoEsercizi  Boolean  @default(false)
+  calcolatrice  Boolean  @default(false)
+  formulario    Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+  classe        Classe   @relation(fields: [classeId], references: [id], onDelete: Cascade)
+  studente      User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([classeId, studentId])
 }
