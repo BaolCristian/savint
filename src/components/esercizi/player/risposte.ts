@@ -19,7 +19,22 @@ export function rispostaDaStato(parte: PartePubblica, stati: PartState[] | undef
   if (parte.type === "gapfill") {
     return (parte.gaps ?? []).map((gap) => rispostaDaStato(gap, stato?.gaps));
   }
-  return (stato?.answer ?? null) as Answer;
+  const risposta = (stato?.answer ?? null) as Answer;
+  if (parte.type === "1_n_2" || parte.type === "m_n_2") return scelteDaSpunte(parte.type, risposta);
+  return risposta;
+}
+
+/** Il motore salva le scelte di `1_n_2` e `m_n_2` come matrice di spunte,
+ * una riga per scelta (`[[false], [true], …]`), mentre i campi vogliono
+ * l'indice scelto (`1_n_2`) o un booleano per scelta (`m_n_2`): senza questa
+ * conversione, dopo un ricaricamento la scelta salvata non risultava segnata.
+ * Una risposta già nella forma dei campi passa com'è. */
+function scelteDaSpunte(tipo: "1_n_2" | "m_n_2", risposta: Answer): Answer {
+  if (!Array.isArray(risposta) || !risposta.every(Array.isArray)) return risposta;
+  const spunte = (risposta as unknown[][]).map((riga) => riga[0] === true);
+  if (tipo === "m_n_2") return spunte;
+  const scelta = spunte.indexOf(true);
+  return scelta === -1 ? null : scelta;
 }
 
 /** Segnalazione del coordinatore: un gap mai toccato viaggia come `null`
