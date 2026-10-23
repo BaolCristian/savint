@@ -156,7 +156,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                     <td className="p-2">{r.titolo}</td>
                     <td className="p-2">{r.argomento}</td>
                     <td className="p-2">
-                      <span>{tE("statistiche.completatiValore", { completati: r.completati, iscritti: r.assegnatoA })}</span>
+                      {/* Nel modo STUDENTE ogni esercizio ha i suoi destinatari:
+                          "3 su 4" farebbe pensare a 4 iscritti, quindi si dice
+                          a quanti è stato assegnato. */}
+                      <span>
+                        {perStudente
+                          ? tE("statistiche.completatiValoreAssegnato", { completati: r.completati, assegnatoA: r.assegnatoA })
+                          : tE("statistiche.completatiValore", { completati: r.completati, iscritti: r.assegnatoA })}
+                      </span>
                       {sottoMeta && (
                         <span className="ml-2 rounded bg-brand-orange/20 px-1.5 py-0.5 text-xs font-medium">
                           {tE("statistiche.sottoMeta")}

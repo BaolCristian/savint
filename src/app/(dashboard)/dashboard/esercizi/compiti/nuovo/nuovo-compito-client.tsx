@@ -215,6 +215,12 @@ export function NuovoCompitoClient({
   // non far saltare la pagina a ogni cifra; ma non vale per assegnare.
   const mostrato = corpoRiepilogo !== null && risultato && "riepilogo" in risultato ? risultato : null;
   const riepilogo = mostrato?.riepilogo ?? null;
+  // Il corpo a cui il riepilogo mostrato risponde: il suo modo e i suoi
+  // blocchi, che durante un ricalcolo possono non essere più quelli dei
+  // controlli (il docente ha appena cambiato modo). Frasi ed etichette del
+  // riepilogo seguono QUESTI, non lo stato dei controlli.
+  const corpoMostrato = mostrato ? (JSON.parse(mostrato.chiave) as { blocchi: Blocco[]; modo: Modo }) : null;
+  const modoMostrato = corpoMostrato?.modo ?? modo;
   const pronto = aggiornato && riepilogo !== null && riepilogo.sufficiente && riepilogo.esercizi.length > 0;
   const assegnabile = classe !== null && aggiornato && riepilogo !== null && riepilogo.sufficiente && !invio
     && (!salvaModello || nomeModello.trim().length > 0);
@@ -343,14 +349,25 @@ export function NuovoCompitoClient({
   // modo "diverse per studente" il numero è il caso peggiore — ciò che è
   // garantito a OGNI studente — e la frase lo dice, altrimenti "ce ne sono
   // 3" sembrerebbe smentito dal catalogo che ne mostra di più.
+  //
+  // L'etichetta: quella del server per argomento e raccolta visibile (il
+  // testo dell'argomento, il nome della raccolta), ma le parole fisse del
+  // server ("Esercizi scelti", "Raccolta non disponibile") sono italiane —
+  // per quei blocchi si usano quelle della pagina, nella lingua del docente.
+  const etichettaRiga = (b: Riepilogo["blocchi"][number], i: number): string => {
+    const blocco = corpoMostrato?.blocchi[i];
+    if (blocco?.tipo === "scelti") return t("scelti");
+    if (blocco?.tipo === "raccolta" && !nomiRaccolte.has(blocco.contenitoreId)) return t("raccoltaNonDisponibile");
+    return b.etichetta;
+  };
   const righeInsufficienti = riepilogo
     ? riepilogo.blocchi.flatMap((b, i) => {
         if (b.disponibili >= b.richiesti) return [];
         const scelti = mostrato!.tipi[i] === "scelti" || b.nonDisponibili.length > 0;
-        const valori = { etichetta: b.etichetta, richiesti: b.richiesti, disponibili: b.disponibili };
+        const valori = { etichetta: etichettaRiga(b, i), richiesti: b.richiesti, disponibili: b.disponibili };
         const frase = scelti
           ? t("sceltiInsufficiente", valori)
-          : JSON.parse(mostrato!.chiave).modo === "STUDENTE"
+          : modoMostrato === "STUDENTE"
             ? t("insufficienteStudente", valori)
             : t("insufficiente", valori);
         return [{ chiave: `${i}`, frase, nonDisponibili: b.nonDisponibili }];
@@ -627,10 +644,20 @@ export function NuovoCompitoClient({
             <p className="text-muted-foreground">{t("calcolo")}</p>
           ) : (
             <div className={`space-y-2 transition-opacity ${aggiornato ? "" : "opacity-60"}`}>
-              <p>
-                <strong className="font-semibold">{t("totale", { n: riepilogo.totale })}</strong>{" "}
-                {modo === "CLASSE" ? t("fraseClasse") : t("fraseStudente")}
-              </p>
+              {/* Insufficiente: niente "ogni studente riceverà N", che non
+                  è vero finché i blocchi in rosso non si correggono. Senza
+                  righe in rosso (una versione sparita fra due letture) il
+                  riepilogo va solo ricalcolato. */}
+              {riepilogo.sufficiente ? (
+                <p>
+                  <strong className="font-semibold">{t("totale", { n: riepilogo.totale })}</strong>{" "}
+                  {modoMostrato === "CLASSE" ? t("fraseClasse") : t("fraseStudente")}
+                </p>
+              ) : (
+                <p className="font-semibold text-destructive">
+                  {righeInsufficienti.length > 0 ? t("mancanoEsercizi") : t("erroreRiepilogo")}
+                </p>
+              )}
               {righeInsufficienti.length > 0 && (
                 <ul className="space-y-1 rounded-lg bg-destructive/10 px-3 py-2 text-destructive">
                   {righeInsufficienti.map((r) => (
@@ -647,8 +674,7 @@ export function NuovoCompitoClient({
                   ))}
                 </ul>
               )}
-              {righeInsufficienti.length > 0 && <p className="text-muted-foreground">{t("correggi")}</p>}
-              {modo === "CLASSE" && riepilogo.duplicatiTolti > 0 && (
+              {modoMostrato === "CLASSE" && riepilogo.duplicatiTolti > 0 && (
                 <p className="text-muted-foreground">{t("duplicati", { n: riepilogo.duplicatiTolti })}</p>
               )}
               {!aggiornato && <p className="text-muted-foreground">{t("calcolo")}</p>}
@@ -698,14 +724,14 @@ export function NuovoCompitoClient({
                 {t("estraiDiNuovo")}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">{modo === "CLASSE" ? t("spiegazioneClasse") : t("spiegazioneStudente")}</p>
+            <p className="text-sm text-muted-foreground">{modoMostrato === "CLASSE" ? t("spiegazioneClasse") : t("spiegazioneStudente")}</p>
             {anteprimaAperta && (
               <div className="rounded-lg border border-brand-green/40 p-2 sm:p-3">
                 <AnteprimaCompito
                   key={riepilogo.esercizi.map((e) => e.versioneId).join(",")}
                   esercizi={riepilogo.esercizi}
                   locale={locale}
-                  avviso={modo === "STUDENTE" ? t("esempio") : undefined}
+                  avviso={modoMostrato === "STUDENTE" ? t("esempio") : undefined}
                 />
               </div>
             )}

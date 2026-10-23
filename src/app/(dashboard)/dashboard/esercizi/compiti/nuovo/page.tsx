@@ -73,9 +73,17 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
   const blocchi: Blocco[] = [...(modello?.blocchi ?? [])];
   const raccolta = p.raccolta ? raccolte.find((r) => r.id === p.raccolta) : undefined;
   if (raccolta) blocchi.push({ tipo: "raccolta", contenitoreId: raccolta.id, quanti: quantiDa(raccolta.esercizi) });
-  if (p.argomento) {
-    const n = annoClasse != null ? argomentiPerAnno[String(annoClasse)]?.find((a) => a.argomento === p.argomento)?.quanti : undefined;
-    blocchi.push({ tipo: "argomento", argomento: p.argomento, quanti: quantiDa(n) });
+  // Un argomento solo se esiste davvero (testo esatto, come lo pesca il
+  // blocco): fra quelli dell'anno della classe se la classe è scelta,
+  // altrimenti fra quelli di un anno qualunque delle sue classi.
+  const voceArgomento = p.argomento
+    ? (annoClasse != null ? (argomentiPerAnno[String(annoClasse)] ?? []) : Object.values(argomentiPerAnno).flat()).find(
+        (a) => a.argomento === p.argomento,
+      )
+    : undefined;
+  if (voceArgomento) {
+    const n = annoClasse != null ? voceArgomento.quanti : undefined;
+    blocchi.push({ tipo: "argomento", argomento: voceArgomento.argomento, quanti: quantiDa(n) });
   }
   if (p.esercizio && catalogo.some((e) => e.id === p.esercizio)) blocchi.push({ tipo: "scelti", esercizioIds: [p.esercizio] });
 

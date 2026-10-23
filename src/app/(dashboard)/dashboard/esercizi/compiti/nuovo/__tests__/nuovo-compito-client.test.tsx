@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messaggiIt from "@/messages/it.json";
+import messaggiEn from "@/messages/en.json";
 import type { Riepilogo } from "@/lib/esercizi/estrazione";
 
 const push = vi.fn();
@@ -44,7 +45,7 @@ function riepilogo(p: Partial<Riepilogo> = {}): Riepilogo {
 }
 
 type Risposta = { status: number; body: unknown };
-let risposteEstrai: ((corpo: Record<string, unknown>) => Risposta) | null;
+let risposteEstrai: ((corpo: Record<string, unknown>) => Risposta | Promise<Risposta>) | null;
 let risposteAssegna: Risposta[];
 const chiamate = (url: string) =>
   vi.mocked(global.fetch).mock.calls.filter(([u]) => String(u) === url).map(([, init]) => JSON.parse(String(init!.body)));
@@ -55,17 +56,24 @@ beforeEach(() => {
   risposteAssegna = [{ status: 201, body: { compitoId: "comp9" } }];
   global.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
     const corpo = JSON.parse(String(init?.body ?? "{}"));
-    const r = String(url) === "/api/esercizi/compiti/estrai" ? risposteEstrai!(corpo) : risposteAssegna.shift()!;
+    const r = String(url) === "/api/esercizi/compiti/estrai" ? await risposteEstrai!(corpo) : risposteAssegna.shift()!;
     return new Response(JSON.stringify(r.body), { status: r.status });
   }) as typeof fetch;
 });
 
-function rendi(props: Partial<NuovoCompitoProps> = {}) {
+function rendi(props: Partial<NuovoCompitoProps> = {}, lingua: "it" | "en" = "it") {
   return render(
-    <NextIntlClientProvider locale="it" messages={messaggiIt}>
+    <NextIntlClientProvider locale={lingua} messages={lingua === "en" ? messaggiEn : messaggiIt}>
       <NuovoCompitoClient {...PROPS} {...props} />
     </NextIntlClientProvider>,
   );
+}
+
+/** Una risposta di /estrai che arriva quando la prova lo decide. */
+function differita() {
+  let risolvi!: (r: Risposta) => void;
+  const promessa = new Promise<Risposta>((ok) => (risolvi = ok));
+  return { promessa, risolvi };
 }
 
 const assegna = () => screen.getByRole("button", { name: /^Assegna a/ });
@@ -240,9 +248,78 @@ describe("NuovoCompitoClient", () => {
         esercizi: [],
       }),
     });
-    rendi();
+    rendi({ iniziale: { ...PROPS.iniziale, blocchi: [{ tipo: "scelti", esercizioIds: ["e1", "e2"] }] } });
     expect(await screen.findByText("Lo sconto non è più disponibile", {}, { timeout: 2000 })).toBeInTheDocument();
-    expect(screen.getByText("Esercizi scelti: ne hai scelti 2, ne sono disponibili 1")).toBeInTheDocument();
+    expect(screen.getByText("Scelti a mano: ne hai scelti 2, ne sono disponibili 1")).toBeInTheDocument();
+  });
+
+  it("le righe insufficienti di scelti e raccolta non disponibile usano le parole della pagina, non quelle (italiane) del server", async () => {
+    risposteEstrai = () => ({
+      status: 200,
+      body: riepilogo({
+        blocchi: [
+          { etichetta: "Esercizi scelti", richiesti: 2, disponibili: 1, nonDisponibili: [] },
+          { etichetta: "Raccolta non disponibile", richiesti: 3, disponibili: 0, nonDisponibili: [] },
+        ],
+        totale: 5,
+        sufficiente: false,
+        esercizi: [],
+      }),
+    });
+    rendi(
+      {
+        iniziale: {
+          ...PROPS.iniziale,
+          blocchi: [{ tipo: "scelti", esercizioIds: ["e1", "e2"] }, { tipo: "raccolta", contenitoreId: "altrui", quanti: 3 }],
+        },
+      },
+      "en",
+    );
+    expect(await screen.findByText("Hand-picked: you chose 2, 1 are available", {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.getByText("Collection not available: you ask for 3, there are 0")).toBeInTheDocument();
+  });
+
+  it("un riepilogo insufficiente non promette il totale: dice che mancano esercizi", async () => {
+    risposteEstrai = () => ({
+      status: 200,
+      body: riepilogo({
+        blocchi: [{ etichetta: "Equazioni", richiesti: 5, disponibili: 3, nonDisponibili: [] }],
+        totale: 5,
+        sufficiente: false,
+        esercizi: [],
+      }),
+    });
+    rendi();
+    expect(await screen.findByText("Mancano esercizi: correggi i blocchi segnati in rosso.", {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.queryByText(/Ogni studente riceverà/)).toBeNull();
+  });
+
+  it("la frase del modo è quella del riepilogo mostrato, non del modo appena scelto", async () => {
+    const studente = differita();
+    risposteEstrai = (c) => (c.modo === "STUDENTE" ? studente.promessa : { status: 200, body: riepilogo() });
+    rendi();
+    await attendiRiepilogo();
+    fireEvent.click(screen.getByLabelText("Domande diverse per ogni studente"));
+    await waitFor(() => expect(chiamate("/api/esercizi/compiti/estrai").at(-1)!.modo).toBe("STUDENTE"), { timeout: 2000 });
+    // Il riepilogo a schermo è ancora quello "stesse domande".
+    expect(screen.getByText(/Gli esercizi sono gli stessi per tutta la classe/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ogni studente riceve la sua estrazione/)).toBeNull();
+    studente.risolvi({ status: 200, body: riepilogo() });
+    expect(await screen.findByText(/Ogni studente riceve la sua estrazione/, {}, { timeout: 2000 })).toBeInTheDocument();
+  });
+
+  it("due risposte di /estrai arrivate al contrario: la più vecchia si ignora", async () => {
+    const vecchia = differita();
+    risposteEstrai = (c) =>
+      (c.blocchi as { quanti: number }[])[0]!.quanti === 2 ? vecchia.promessa : { status: 200, body: riepilogo({ totale: 3 }) };
+    rendi();
+    await waitFor(() => expect(chiamate("/api/esercizi/compiti/estrai")).toHaveLength(1), { timeout: 2000 });
+    fireEvent.change(screen.getByLabelText("Quanti esercizi prendere da Percentuali 2ª"), { target: { value: "3" } });
+    expect(await screen.findByText("Ogni studente riceverà 3 esercizi.", {}, { timeout: 2000 })).toBeInTheDocument();
+    vecchia.risolvi({ status: 200, body: riepilogo({ totale: 2 }) });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByText("Ogni studente riceverà 3 esercizi.")).toBeInTheDocument();
+    expect(screen.queryByText("Ogni studente riceverà 2 esercizi.")).toBeNull();
   });
 
   it("senza classe niente riepilogo e Assegna disabilitato", async () => {

@@ -191,6 +191,19 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
       expect(within(righe[1]!).getByText("statistiche.nessunaMedia")).toBeInTheDocument();
     });
 
+    it("modo STUDENTE: ogni riga dice a quanti studenti l'esercizio è assegnato", async () => {
+      vi.mocked(prisma.compito.findUnique).mockResolvedValue({ ...compitoValido, modo: "STUDENTE" } as never);
+      vi.mocked(consegneDelCompito).mockResolvedValue({ ok: true, righe: [] });
+      vi.mocked(statisticheDelCompito).mockResolvedValue({
+        ok: true,
+        iscritti: 4,
+        righe: [{ esercizioId: "e1", titolo: "Uno", argomento: "a", assegnatoA: 2, completati: 1, iniziati: 0, mediaPercentuale: 50 }],
+      });
+      await rendi();
+      const [riga] = within(screen.getByRole("table", { name: "statistiche.perEsercizioTitolo" })).getAllByRole("row").slice(1);
+      expect(within(riga!).getByText('statistiche.completatiValoreAssegnato:{"completati":1,"assegnatoA":2}')).toBeInTheDocument();
+    });
+
     // L'evidenza è un testo, non solo un colore: si legge anche senza
     // distinguere i colori, e da uno screen reader.
     it("segnala a parole gli esercizi completati da meno della metà della classe", async () => {

@@ -80,6 +80,23 @@ describe("pagina Nuovo compito", () => {
     expect(screen.getByText("(12 disponibili)")).toBeInTheDocument();
   });
 
+  it("?argomento= che l'anno della classe non ha non crea niente", async () => {
+    // Geometria c'è solo per la 3ª; la classe scelta è una 2ª.
+    await rendi({ argomento: "Geometria", classe: "c1" });
+    expect(screen.queryByRole("button", { name: "Togli il blocco Geometria" })).toBeNull();
+    expect(screen.getByText(/Aggiungi almeno un blocco/)).toBeInTheDocument();
+  });
+
+  it("?argomento= inesistente, senza classe scelta, non crea niente", async () => {
+    await rendi({ argomento: "Inventato" });
+    expect(screen.getByText(/Aggiungi almeno un blocco/)).toBeInTheDocument();
+  });
+
+  it("?argomento= senza classe scelta: vale se esiste per un anno delle sue classi", async () => {
+    await rendi({ argomento: "Geometria" });
+    expect(screen.getByRole("button", { name: "Togli il blocco Geometria" })).toBeInTheDocument();
+  });
+
   it("?esercizio= crea un blocco di scelti a mano", async () => {
     await rendi({ esercizio: "e1" });
     expect(screen.getByText("Lo sconto")).toBeInTheDocument();
