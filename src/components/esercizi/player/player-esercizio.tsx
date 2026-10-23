@@ -12,7 +12,6 @@ import {
   type Answer,
   type FeedbackItem,
   type NumbasQuestionJSON,
-  type PartState,
   type QuestionState,
   type jme,
   Question,
@@ -24,7 +23,12 @@ import { ContenutoHtml } from "./contenuto-html";
 import { InputParte, type PartePubblica } from "./parti";
 import { costruisciParte, RispostaAttesa } from "./risposta-attesa";
 import { abbandonaTentativo, completaTentativo, inviaRisposta } from "./usa-tentativo";
+import { preparaRispostaPerMotore, rispostaDaStato, trovaStato } from "./risposte";
 import { opzioniMotore } from "@/lib/esercizi/opzioni-motore";
+
+// La prova di verifica (src/components/esercizi/verifica) riusa queste parti
+// del player così come sono.
+export { RispostaAttesa };
 
 type Fase = "caricamento" | "esercizio" | "riepilogo" | "errore";
 type PartBase = InstanceType<typeof parts.PartBase>;
@@ -91,46 +95,6 @@ function statoGiaRisposto(stato: QuestionState | null): boolean {
   return (stato?.parts ?? []).some((p) => p.answered);
 }
 
-function trovaStato(path: string, stati: PartState[] | undefined): PartState | undefined {
-  return stati?.find((s) => s.path === path);
-}
-
-/** La risposta da cui ripartire per una parte, ricostruita dallo stato
- * salvato. Per un `gapfill` lo stato tiene le risposte sui gap, mai sulla
- * parte madre (Task 8 dell'engine, `state.ts`): si ricompone l'array
- * ricorsivamente dagli stati dei gap. Un gap senza risposta nello stato
- * diventa `null` — il contratto di `InputGapfill` per "mai risposto", non
- * ancora la risposta che va al motore (vedi `preparaRispostaPerMotore`). */
-function rispostaDaStato(parte: PartePubblica, stati: PartState[] | undefined): Answer {
-  const stato = trovaStato(parte.path, stati);
-  if (parte.type === "gapfill") {
-    return (parte.gaps ?? []).map((gap) => rispostaDaStato(gap, stato?.gaps));
-  }
-  return (stato?.answer ?? null) as Answer;
-}
-
-/** Segnalazione del coordinatore: un gap mai toccato viaggia come `null`
- * nell'array della risposta di un `gapfill` — l'unica scelta type-legale
- * per `InputGapfill`, dato che `Answer` non ammette `undefined`. Ma
- * `GapFillPart#storeAnswer` (engine, `gapfill-part.ts`) inoltra ogni voce
- * dell'array al gap corrispondente INVARIATA: solo `undefined` significa
- * davvero "nessuna risposta"; `null` diventa una risposta letterale. Per un
- * gap di testo/numero il risultato è solo un'altra risposta sbagliata
- * (innocuo ma comunque falso: quel gap non è stato risposto). Per un gap a
- * scelta multipla (`1_n_2`/`m_n_2`/`m_n_x`) è peggio: la sua
- * `setStudentAnswer` chiama `.map()` sulla risposta, e un `null` la fa
- * incappare in un `TypeError` che risale fino a rompere l'invio
- * dell'INTERA parte gapfill (verificato al banco). Un gap davvero mai
- * risposto deve quindi arrivare al motore — e finire nello stato che si
- * manda al server — come OMESSO, non come `null`: la conversione va fatta
- * qui, al confine con `parts.PartBase#submit`, prima che l'array lasci il
- * player. */
-function preparaRispostaPerMotore(parte: PartePubblica, valore: Answer): Answer {
-  if (parte.type !== "gapfill" || !Array.isArray(valore)) return valore;
-  const senzaNull = valore.map((v) => (v === null ? undefined : v));
-  return senzaNull as unknown as Answer;
-}
-
 /** Una voce di feedback del motore.
  *
  * Il messaggio NON è testo semplice: una quindicina di voci di
@@ -149,7 +113,7 @@ function preparaRispostaPerMotore(parte: PartePubblica, valore: Answer): Answer 
  * screen reader. Qui il colore e l'icona la danno a vista, e un testo
  * `sr-only` — un nome vero, non un attributo su un elemento che non lo
  * ammette — la dà a chi ascolta. */
-function VoceFeedback({ voce }: { voce: FeedbackItem }) {
+export function VoceFeedback({ voce }: { voce: FeedbackItem }) {
   const t = useTranslations("esercizi");
   const corretta = voce.type === "correct";
   const sbagliata = voce.type === "incorrect";
@@ -194,7 +158,7 @@ function VoceFeedback({ voce }: { voce: FeedbackItem }) {
  * Il contenuto rivelato è in un `role="status"` (live region "polite",
  * annunciata da sé): comparire in silenzio, senza che chi usa uno screen
  * reader se ne accorga, sarebbe come non comparire affatto. */
-function SpiegazioneParte({
+export function SpiegazioneParte({
   parte,
   parteEngine,
   adviceHtml,

@@ -1942,6 +1942,18 @@
         "erroreFormularioGrande": "Il file è troppo grande: al massimo 10 MB.",
         "erroreFormularioCaricamento": "Non riesco a caricare il formulario. Riprova."
       }
+    },
+    "provaStudente": {
+      "esercizioNumero": "Esercizio {n}",
+      "calcolatrice": "Calcolatrice",
+      "chiudiCalcolatrice": "Chiudi la calcolatrice",
+      "espressione": "Espressione da calcolare",
+      "risultato": "Risultato",
+      "erroreCalcolo": "Espressione non valida",
+      "cancellaTutto": "Cancella tutto",
+      "cancellaUltimo": "Cancella l'ultimo carattere",
+      "formulario": "Formulario",
+      "chiudiFormulario": "Chiudi il formulario"
     }
   },
   "eserciziIngresso": {

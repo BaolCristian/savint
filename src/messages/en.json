@@ -1942,6 +1942,18 @@
         "erroreFormularioGrande": "The file is too large: 10 MB at most.",
         "erroreFormularioCaricamento": "Could not upload the formula sheet. Try again."
       }
+    },
+    "provaStudente": {
+      "esercizioNumero": "Exercise {n}",
+      "calcolatrice": "Calculator",
+      "chiudiCalcolatrice": "Close the calculator",
+      "espressione": "Expression to calculate",
+      "risultato": "Result",
+      "erroreCalcolo": "Invalid expression",
+      "cancellaTutto": "Clear all",
+      "cancellaUltimo": "Delete the last character",
+      "formulario": "Formula sheet",
+      "chiudiFormulario": "Close the formula sheet"
     }
   },
   "eserciziIngresso": {
