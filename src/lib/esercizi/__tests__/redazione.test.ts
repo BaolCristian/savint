@@ -10,7 +10,8 @@ import {
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { creaContenitore, aggiungiEsercizi, contenutoContenitore } from "../contenitori";
-import { assegna, consegneDelCompito } from "../compiti";
+import { consegneDelCompito } from "../compiti";
+import { assegnaPerProva } from "./assegna-per-prova";
 import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import type { EsercizioEditor } from "../editor/modello";
 import type { Utente } from "../accesso";
@@ -220,7 +221,7 @@ describe("salvaNuovaVersione", () => {
     await aggiungiEsercizi(contenitoreId, [creato.esercizioId], { id: docenteId, admin: false });
     const batteria = await creaBatteriaGrezza(docenteId, `${PREFIX}Batteria`, [{ contenitoreId, count: 1 }]);
     if (!batteria.ok) throw new Error("creazione batteria fallita");
-    const assegnazione = await assegna(batteria.id, classeId, docenteId);
+    const assegnazione = await assegnaPerProva(batteria.id, classeId, docenteId);
     if (!assegnazione.ok) throw new Error("assegnazione fallita");
 
     const compitoPrima = await prisma.compito.findUniqueOrThrow({ where: { id: assegnazione.compitoId } });

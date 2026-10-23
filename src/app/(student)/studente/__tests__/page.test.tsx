@@ -20,7 +20,7 @@ vi.mock("next-intl/server", () => ({
 }));
 // Stesso schema, per il modulo client "next-intl" (usato dal form
 // d'iscrizione con codice, che traduce l'esito solo noto a runtime — stesso
-// motivo di compito-form.tsx).
+// motivo di gestione-compito.tsx).
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(() => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),

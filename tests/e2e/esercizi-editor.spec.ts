@@ -12,7 +12,7 @@
  * appena scritto, ricevono due NUMERI diversi. Non "due pagine diverse", non
  * "due tentativi diversi" — il valore letto dalla formula che il motore ha
  * generato per ciascuno, estratto dal DOM vero dopo un giro completo
- * (editor -> salvataggio -> contenitore -> batteria -> compito -> player).
+ * (editor -> salvataggio -> raccolta -> Nuovo compito -> player).
  * Il docente dichiara una variabile `n` casuale su un intervallo di un
  * milione di valori (`random(1..1000000)`, vedi `ESERCIZIO_BUONO` sotto):
  * con un intervallo così largo la probabilità che due sorteggi indipendenti
@@ -89,7 +89,9 @@ const STUDENT_B_NAME = `E2E Editor Studente B ${RUN_ID}`;
 const CLASSE_EMAIL = `e2e-editor-${RUN_ID}@scuola.it`;
 const CLASSE_NOME = `E2E Editor Classe ${RUN_ID}`;
 const CONTENITORE_NOME = `E2E Editor Contenitore ${RUN_ID}`;
-const BATTERIA_NOME = `E2E Editor Batteria ${RUN_ID}`;
+// Il nome che il Nuovo compito dà al compito: l'etichetta del blocco (la
+// raccolta) con quanti esercizi — qui uno.
+const COMPITO_NOME = `${CONTENITORE_NOME} (1)`;
 
 // L'esercizio vero: una variabile casuale su un intervallo enorme e una
 // parte numerica la cui risposta corretta È quella variabile — lo stesso
@@ -173,9 +175,13 @@ test.afterAll(async () => {
     await prisma.tentativo.deleteMany({ where: { studentId: { in: studentIds } } });
   }
 
+  // La batteria automatica di ogni compito di questa classe va via con lui
+  // (dopo il compito: `Compito.batteria` è Restrict).
+  let batteriaIds: string[] = [];
   if (classeId) {
-    const compiti = await prisma.compito.findMany({ where: { classeId }, select: { id: true } });
+    const compiti = await prisma.compito.findMany({ where: { classeId }, select: { id: true, batteriaId: true } });
     const compitoIds = compiti.map((c) => c.id);
+    batteriaIds = compiti.map((c) => c.batteriaId);
     if (compitoIds.length > 0) {
       await prisma.tentativo.deleteMany({ where: { compitoId: { in: compitoIds } } });
       await prisma.compito.deleteMany({ where: { id: { in: compitoIds } } });
@@ -185,8 +191,6 @@ test.afterAll(async () => {
     await prisma.classe.delete({ where: { id: classeId } }).catch(() => {});
   }
 
-  const batterie = await prisma.batteria.findMany({ where: { name: BATTERIA_NOME }, select: { id: true } });
-  const batteriaIds = batterie.map((b) => b.id);
   if (batteriaIds.length > 0) {
     await prisma.batteriaRegola.deleteMany({ where: { batteriaId: { in: batteriaIds } } });
     await prisma.batteria.deleteMany({ where: { id: { in: batteriaIds } } });
@@ -408,28 +412,26 @@ test.describe("Editor esercizi — dalla scrittura alla soluzione dello studente
     await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
     await expect(page.getByRole("button", { name: "Rimuovi", exact: true })).toHaveCount(1, { timeout: 10_000 });
 
-    // === Compone una batteria che lo pesca (un solo esercizio nel
-    // contenitore, quantità 1: nessuna scelta casuale da indovinare — stesso
-    // principio di `esercizi-compiti.spec.ts`) ===
-    await gotoStabile(page, "/dashboard/esercizi/batterie");
-    await page.locator("#batteria-nome").fill(BATTERIA_NOME);
-    await page.locator("#batteria-contenitore-0").selectOption({ label: CONTENITORE_NOME });
-    await page.locator("#batteria-quantita-0").fill("1");
-    await page.getByRole("button", { name: "Crea batteria", exact: true }).click();
-    await expect(page.getByText(BATTERIA_NOME)).toBeVisible({ timeout: 10_000 });
+    // === Dalla raccolta, "Assegna questa raccolta": il Nuovo compito ===
+    // Un solo esercizio nella raccolta, e il blocco ne prende tutti (cinque,
+    // o tutti se sono meno): nessuna scelta casuale da indovinare — stesso
+    // principio di `esercizi-compiti.spec.ts`.
+    await page.getByRole("link", { name: "Assegna questa raccolta", exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/nuovo\?raccolta=/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
 
     // === Lo assegna alla classe (due studenti, scritti in beforeAll) ===
-    await gotoStabile(page, "/dashboard/esercizi/compiti");
-    await page.locator("#compito-batteria").selectOption({ label: BATTERIA_NOME });
-    await page.locator("#compito-classe").selectOption({ label: CLASSE_NOME });
-    await page.getByRole("button", { name: "Assegna", exact: true }).click();
-    await expect(page.getByText(/compito assegnato\./i)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("link", { name: BATTERIA_NOME })).toBeVisible({ timeout: 10_000 });
+    await page.locator("#nc-classe").selectOption({ label: CLASSE_NOME });
+    await expect(page.getByText("Ogni studente riceverà 1 esercizio.")).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: `Assegna a ${CLASSE_NOME}`, exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/(?!nuovo)[^/?]+$/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    await expect(page.getByRole("heading", { name: COMPITO_NOME })).toBeVisible({ timeout: 15_000 });
 
     // === Studente A apre l'esercizio e legge il SUO numero ===
     await cambiaAttore(page, STUDENT_A_EMAIL);
     await gotoStabile(page, "/studente");
-    const compitoCardA = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCardA = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCardA).toBeVisible({ timeout: 20_000 });
     // Prima di svolgere niente: zero su uno, non un valore qualunque.
     await expect(compitoCardA.getByText("0 su 1 esercizi completati")).toBeVisible();
@@ -441,7 +443,7 @@ test.describe("Editor esercizi — dalla scrittura alla soluzione dello studente
     // === Studente B apre LO STESSO esercizio e legge il SUO numero ===
     await cambiaAttore(page, STUDENT_B_EMAIL);
     await gotoStabile(page, "/studente");
-    const compitoCardB = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCardB = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCardB).toBeVisible({ timeout: 20_000 });
     await expect(compitoCardB.getByText("0 su 1 esercizi completati")).toBeVisible();
     await compitoCardB.getByRole("link", { name: ESERCIZIO_BUONO.titolo }).click();
@@ -474,7 +476,7 @@ test.describe("Editor esercizi — dalla scrittura alla soluzione dello studente
     // link del compito è l'unico modo di riaprire lo STESSO tentativo.
     await cambiaAttore(page, STUDENT_A_EMAIL);
     await gotoStabile(page, "/studente");
-    const compitoCardA2 = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCardA2 = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCardA2).toBeVisible({ timeout: 20_000 });
     await compitoCardA2.getByRole("link", { name: ESERCIZIO_BUONO.titolo }).click();
     await page.waitForURL(new RegExp(`/studente/esercizio/${esercizioBuonoId}\\?compitoId=`), { timeout: 20_000 });

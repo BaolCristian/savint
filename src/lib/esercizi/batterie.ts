@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { comeDocente, ruoliContenitori, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
 import { bloccoDaRegola, type Blocco } from "./estrazione";
@@ -48,8 +48,8 @@ export function formaRegola(r: {
 
 /** Gli id, fra quelli passati, che hanno almeno una `EsercizioVersione`: un
  * esercizio senza versione non può mai essere consegnato a uno studente,
- * quindi non conta come "disponibile" — né per `verificaBatteria` né per la
- * pesca vera in `assegna` (compiti.ts). Una query sola per tutti gli
+ * quindi non conta come "disponibile" — né per il riepilogo né per la
+ * pesca vera (`baciniDeiBlocchi`, estrazione.ts). Una query sola per tutti gli
  * esercizi coinvolti, non una per regola. */
 export async function idsConVersione(esercizioIds: string[]): Promise<Set<string>> {
   if (esercizioIds.length === 0) return new Set();
@@ -80,8 +80,9 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
  * come disponibile (Fix round 1). Una regola malformata non dovrebbe mai
  * esistere — `creaBatteria` la rifiuta in scrittura — ma questa funzione
  * non si fida di quel controllo esterno: lo riverifica, perché è l'unico
- * punto che TUTTE le letture (`verificaBatteria` qui sotto, `assegna` in
- * compiti.ts) attraversano per risolvere una regola in candidati.
+ * punto che TUTTE le letture (`baciniDeiBlocchi` in estrazione.ts, quindi
+ * riepilogo e assegnazione) attraversano per risolvere una regola in
+ * candidati.
  *
  * Proprietà e condivisione (spec "Batterie"): il bacino è sempre ristretto
  * agli esercizi che `chi` — il docente che assegna o che conta — vede. Le
@@ -99,8 +100,8 @@ export async function idsConVersione(esercizioIds: string[]): Promise<Set<string
  * conteggio di questo modulo e di compiti.ts.
  *
  * `visibili` è la mappa di `ruoliEsercizi(comeDocente(chi))` già calcolata:
- * chi risolve più regole nella stessa richiesta (`assegna`,
- * `verificaBatteria`) la calcola una volta sola e la passa, perché carica
+ * chi risolve più regole nella stessa richiesta (`baciniDeiBlocchi`) la
+ * calcola una volta sola e la passa, perché carica
  * tutti gli esercizi. Senza, la calcola qui. */
 export async function bacinoRegola(
   regola: {
@@ -109,7 +110,7 @@ export async function bacinoRegola(
     anno: number | null;
     difficoltaMax: number | null;
     // Facoltativo nel tipo perché i chiamanti che costruiscono una regola a
-    // mano (test, `quantiCorrispondono`) non lo passano; le righe lette da
+    // mano (test, `rigaDaBlocco`) non lo passano; le righe lette da
     // Prisma lo portano sempre (default `[]`).
     esercizioIds?: readonly string[];
   },
@@ -160,9 +161,13 @@ export async function bacinoRegola(
 }
 
 /** L'elenco degli argomenti che gli esercizi dichiarano davvero, con quanti
- * esercizi ciascuno — la lista da cui il docente sceglie nel modulo di
- * assegnazione diretta (Task 2, docente-via-veloce): un campo a scelta, non
- * libero, così non si può chiedere un argomento che non esiste.
+ * esercizi ciascuno — la lista da cui il docente sceglie "+ Aggiungi da un
+ * argomento" nel Nuovo compito (nata per il modulo di assegnazione diretta,
+ * Task 2 docente-via-veloce, tolto nel Task 7 del Nuovo compito): un campo a
+ * scelta, non libero, così non si può chiedere un argomento che non esiste.
+ * Nel racconto che segue, `quantiCorrispondono` è il conteggio (tolto con
+ * quel modulo) che la voce del menu doveva eguagliare; oggi lo stesso
+ * vale per i "disponibili" del riepilogo del Nuovo compito.
  *
  * NON fonde grafie diverse («equazioni» ed «Equazioni», o «equazioni » con
  * uno spazio in coda): ognuna resta la sua voce, col proprio conteggio
@@ -189,7 +194,7 @@ export async function bacinoRegola(
  * sul serio i dati è un lavoro diverso, deliberatamente fuori da questo task.
  *
  * `anno`, se passato, filtra per `yearLevel` esatto — lo stesso significato
- * che ha in `FiltroDiretto` (compiti.ts).
+ * che ha in un blocco argomento.
  *
  * **Conta solo ciò che il sorteggio può davvero consegnare (Onda di
  * correzioni sui numeri): stesso filtro di disponibilità di versione di
@@ -257,8 +262,7 @@ export async function argomentiDisponibili(
 
 /** L'etichetta con cui una regola compare nei messaggi rivolti al docente:
  * il nome del contenitore per una regola a raccolta, l'argomento per una a
- * filtro. Usata da `elencoBatterie` qui sotto e da `assegna` (compiti.ts)
- * nel dettaglio di un rifiuto per capienza insufficiente. */
+ * filtro (e "Esercizi scelti"). Usata dall'elenco dei modelli qui sotto. */
 export function etichettaRegola(regola: {
   contenitore: { name: string } | null;
   argomento: string | null;
@@ -272,52 +276,25 @@ export function etichettaRegola(regola: {
  * tutte, o niente. L'ordine delle regole (per la pesca, più avanti) è
  * l'ordine in cui compaiono nell'array.
  *
- * Controlla PRIMA (prima di qualunque interrogazione: costa niente) che
- * ogni regola rispetti l'invariante — il contenitore, oppure l'argomento,
- * mai entrambi, mai nessuno dei due (Task 1, docente-via-veloce) — E che il
- * suo `count` sia un intero positivo (Onda di correzioni sui numeri).
- * Quest'ultimo controllo mancava: `creaBatteria` verificava la FORMA di una
- * regola ma non guardava mai il suo conteggio, così `count: 0` o `count:
- * -3` arrivavano intatti fino alla scrittura. Dimostrato dal revisore
- * attraverso `assegnaDiretto` (compiti.ts, che delega qui per la sua unica
- * regola): un `Compito` con `drawnVersionIds: []` veniva comunque creato —
- * mai apribile (`compitoApribile` ritorna `null` su un sorteggio vuoto) — e
- * la batteria automatica dietro di esso restava per sempre, perché la
- * pulizia di `assegnaDiretto` scatta solo quando `assegna` RIFIUTA, e con
- * zero regole da soddisfare non c'è nulla da rifiutare.
+ * Prima di scrivere, `rifiutoRegole`: ogni regola rispetta l'invariante
+ * (una sola forma fra raccolta, argomento e scelti a mano), il suo `count`
+ * è un intero positivo (Onda di correzioni sui numeri: un `count` zero
+ * produceva un compito vuoto, mai apribile), e ogni `contenitoreId`
+ * nominato esiste (Fix round finale, item 5: altrimenti la chiave esterna
+ * lasciava scappare un errore grezzo di Prisma). Un rifiuto è un `{ ok:
+ * false, motivo, dettaglio }`, non un'eccezione.
  *
- * Il guardiano vive QUI e non in `assegnaDiretto` — o in una singola rotta
- * — perché `creaBatteria` è l'UNICO punto di scrittura di una `Batteria`
- * per ENTRAMBE le provenienze (a mano, automatica) e per qualunque
- * chiamante futuro (un bulk import, uno script) che non passi da nessuna
- * rotta HTTP: una convalida qui protegge tutti loro con un solo controllo,
- * lo stesso principio già scelto per l'invariante contenitore/argomento.
- * Ripeterla in `assegnaDiretto` sarebbe un secondo posto dove sbagliarla —
- * esattamente il rischio contro cui il commento di `assegnaDiretto` mette
- * in guardia.
- *
- * Poi controlla che ogni `contenitoreId` nominato da una regola esista
- * davvero: senza questo secondo controllo (Fix round finale, item 5) un id
- * inesistente arrivava intatto fino a `batteriaRegola.createMany`, che
- * violava il vincolo di chiave esterna e lasciava scappare l'errore grezzo
- * di Prisma — la rotta lo trasformava in un 500 senza nessun messaggio utile
- * al docente, l'unico punto di questo modulo dove un input scorretto non
- * produceva un rifiuto con un motivo. Stessa forma delle funzioni gemelle
- * (`assegna`, `eliminaContenitore`): un `{ ok: false,
- * motivo, dettaglio }`, non un'eccezione. */
+ * Dal Task 7 del Nuovo compito nessuna rotta la chiama più (l'assegnazione
+ * scrive con `scriviBatteria` dentro la propria transazione, e la
+ * scorciatoia `assegnaDiretto` che la usava è stata tolta): resta il punto
+ * di scrittura convalidato per script e prove. */
 export async function creaBatteria(
   createdById: string,
   name: string,
   regole: RegolaInput[],
   description?: string,
-  // Task 2 (docente-via-veloce): `automatica` marca una batteria generata
-  // dal sistema per un'assegnazione diretta (vedi `assegnaDiretto` in
-  // compiti.ts), non composta a mano dal docente. Quinto parametro
-  // opzionale, in coda: ogni chiamata esistente (route comprese) ne passa
-  // al più quattro e riceve `false` di default, lo stesso comportamento di
-  // sempre. Un solo punto di creazione per ENTRAMBE le provenienze — stessa
-  // validazione dell'invariante, stessa transazione — non un secondo percorso
-  // di scrittura per il caso automatico.
+  // `automatica` marca una batteria generata dal sistema per un compito
+  // (la sua copia dei blocchi), non un modello del docente.
   automatica = false,
 ): Promise<{ ok: true; id: string } | RifiutoRegole> {
   const rifiuto = await rifiutoRegole(createdById, regole);
@@ -414,138 +391,6 @@ export async function scriviBatteria(
     });
   }
   return b.id;
-}
-
-/** Tutte le batterie create a mano (esclude quelle `automatica`, generate
- * dal sistema per un'assegnazione diretta: sono provenienza di un Compito,
- * non contenuto che il docente componga o gestisca da qui — vedi il
- * commento su `Batteria.automatica` nello schema), con le loro regole
- * (l'etichetta della regola + quanti) e il numero di compiti a cui sono
- * già state assegnate. */
-export async function elencoBatterie(): Promise<
-  { id: string; name: string; regole: { contenitore: string; count: number }[]; compiti: number }[]
-> {
-  const righe = await prisma.batteria.findMany({
-    where: { automatica: false },
-    orderBy: { name: "asc" },
-    include: {
-      regole: { orderBy: { order: "asc" }, include: { contenitore: true } },
-      _count: { select: { compiti: true } },
-    },
-  });
-  return righe.map((b) => ({
-    id: b.id,
-    name: b.name,
-    regole: b.regole.map((r) => ({ contenitore: etichettaRegola(r), count: r.count })),
-    compiti: b._count.compiti,
-  }));
-}
-
-/** Confronta, per ogni regola della batteria, quanti esercizi chiede contro
- * quanti il suo contenitore può davvero fornire — tenendo conto sia del
- * filtro di disponibilità di versione (un esercizio senza
- * `EsercizioVersione` non conta mai) sia della sovrapposizione con le
- * regole precedenti, con una stima **per difetto** (Fix round 2), non con
- * un sorteggio simulato.
- *
- * CONTRATTO, e perché è cambiato: qui non esiste ancora un seme (nessuna
- * assegnazione è avvenuta), quindi non si può sapere con certezza QUALI
- * esercizi condivisi una regola precedente "si prenderebbe" — dipende dal
- * sorteggio vero, che è casuale. Un tentativo di simularlo con una scelta
- * qualunque (per id, ad esempio) è un'esecuzione ARBITRARIA, non la
- * PEGGIORE: un'assegnazione vera sfortunata può consumare più
- * sovrapposizione di quanto quella scelta arbitraria preveda, facendo dire
- * qui "ok" a una batteria che poi fallisce — lo stesso difetto per cui
- * questa funzione è stata corretta nel giro precedente, spostato di un
- * livello. Per questo la stima assume il caso PEGGIORE possibile: per ogni
- * regola, quanti dei suoi esercizi potrebbero essere già stati consumati
- * dalle regole precedenti è limitato da due cose — non più di quanti
- * esercizi condivisi esistono davvero (`overlap`), e non più di quanti le
- * regole precedenti possono complessivamente pescare in tutto
- * (`sum(count precedenti)`); il minore dei due è un limite superiore vero
- * al consumo reale, in QUALUNQUE esecuzione, non una stima plausibile.
- *
- * Il contratto che ne segue: un verdetto positivo (`{ ok: true }`)
- * GARANTISCE che `assegna` (compiti.ts) su questa batteria non fallirà per
- * `esercizi_insufficienti`, qualunque seme venga estratto. Un verdetto
- * negativo NON garantisce il contrario: può capitare che un'assegnazione
- * vera avrebbe comunque avuto successo (la stima è per difetto, non
- * esatta) — in tal caso il rimedio più economico è aggiungere un esercizio
- * al contenitore scarso, non ignorare l'avviso. Errare da questo lato
- * costa un minuto al docente; l'errore opposto — dire "ok" e poi fallire —
- * gli costa un'assegnazione persa dopo che gli era stato detto che andava
- * bene.
- *
- * Non guarda i compiti già assegnati: è un controllo "questa batteria è
- * ancora assegnabile?", non uno storico.
- *
- * Task 1 (docente-via-veloce) — il contratto RI-verificato, non ereditato,
- * per le regole a filtro: la dimostrazione sopra (limite superiore =
- * min(overlap, somma dei count precedenti)) non usa in nessun punto COME
- * il bacino di una regola sia stato calcolato — dipende solo dal fatto che
- * sia un INSIEME di id, e dal fatto che `assegna` non possa mai prendere
- * più di `count` id distinti da quell'insieme. Una regola a filtro produce
- * un insieme (via `bacinoRegola`) esattamente come una a contenitore: la
- * prova vale, invariata, anche quando i bacini coinvolti vengono da forme
- * diverse nella stessa batteria. La garanzia regge perché — non solo
- * perché — questa funzione e `assegna` (compiti.ts) risolvono OGNI regola
- * attraverso la STESSA `bacinoRegola`: non c'è un secondo modo di
- * calcolare "quanti esercizi ha questa regola" che possa divergere da
- * quello usato alla pesca vera.
- *
- * Il verdetto vale per `chi`: due docenti possono avere bacini diversi per
- * la stessa batteria comune, perché ciascuno pesca solo fra ciò che vede
- * (vedi `bacinoRegola`). */
-export async function verificaBatteria(
-  batteriaId: string,
-  chi: Utente,
-): Promise<{ ok: true } | { ok: false; mancanti: { contenitore: string; richiesti: number; disponibili: number }[] }> {
-  const batteria = await prisma.batteria.findUniqueOrThrow({
-    where: { id: batteriaId },
-    include: {
-      regole: {
-        orderBy: { order: "asc" },
-        include: { contenitore: true },
-      },
-    },
-  });
-
-  // Il bacino grezzo di ciascuna regola, quale che sia la sua forma —
-  // bacinoRegola lancia se una regola non rispetta l'invariante, invece di
-  // restituire un bacino vuoto (vedi il suo commento).
-  // Da docente qualunque, come `bacinoRegola`.
-  const docente = comeDocente(chi);
-  const visibili = await ruoliEsercizi(docente);
-  const baciniGrezzi = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, docente, visibili)));
-  const tuttiGliId = [...new Set(baciniGrezzi.flat())];
-  const conVersione = await idsConVersione(tuttiGliId);
-
-  // Il bacino di ciascuna regola, filtrato sulla disponibilità di versione
-  // (non ancora sulla sovrapposizione con le regole precedenti: quella si
-  // stima per difetto qui sotto, regola per regola).
-  const bacini = baciniGrezzi.map((ids) => new Set(ids.filter((id) => conVersione.has(id))));
-
-  const mancanti: { contenitore: string; richiesti: number; disponibili: number }[] = [];
-  const precedentiUnione = new Set<string>();
-  let sommaContiPrecedenti = 0;
-  for (let i = 0; i < batteria.regole.length; i++) {
-    const regola = batteria.regole[i]!;
-    const bacino = bacini[i]!;
-
-    const overlap = [...bacino].filter((id) => precedentiUnione.has(id)).length;
-    const consumoPeggiore = Math.min(overlap, sommaContiPrecedenti);
-    const disponibili = bacino.size - consumoPeggiore;
-
-    if (disponibili < regola.count) {
-      mancanti.push({ contenitore: etichettaRegola(regola), richiesti: regola.count, disponibili });
-    }
-
-    for (const id of bacino) precedentiUnione.add(id);
-    sommaContiPrecedenti += regola.count;
-  }
-
-  if (mancanti.length > 0) return { ok: false, mancanti };
-  return { ok: true };
 }
 
 /** L'etichetta con cui una raccolta che chi guarda NON vede compare
@@ -681,11 +526,28 @@ export async function eliminaModello(
   const b = await prisma.batteria.findUnique({ where: { id }, select: { createdById: true, automatica: true } });
   if (!b || b.automatica || (!chi.admin && b.createdById !== chi.id)) return { ok: false, motivo: "non_trovato" };
 
-  const legacy = await prisma.compito.count({ where: { batteriaId: id } });
-  if (legacy > 0) {
-    await prisma.batteria.update({ where: { id }, data: { automatica: true } });
-  } else {
-    await prisma.batteria.delete({ where: { id } });
+  // Fra il conteggio e la scrittura passa un istante (Nuovo compito, Task
+  // 7). Se intanto un compito ha cominciato a puntare al modello con
+  // `batteriaId`, il vincolo Restrict rifiuta la cancellazione (P2003): si
+  // ripiega sul nascondere, come se il conteggio l'avesse visto. Se intanto
+  // qualcuno l'ha già eliminato (P2025, su una scrittura o sull'altra), è
+  // `non_trovato` come un id che non esiste — non un errore 500.
+  const nascondi = () => prisma.batteria.update({ where: { id }, data: { automatica: true } });
+  try {
+    const legacy = await prisma.compito.count({ where: { batteriaId: id } });
+    if (legacy > 0) {
+      await nascondi();
+    } else {
+      try {
+        await prisma.batteria.delete({ where: { id } });
+      } catch (e) {
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003")) throw e;
+        await nascondi();
+      }
+    }
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") return { ok: false, motivo: "non_trovato" };
+    throw e;
   }
   return { ok: true };
 }

@@ -1,10 +1,12 @@
 /**
  * E2E — Ciclo intero dei compiti: assegna, svolgi, verifica (Task 8)
  *
- * Copre il motivo per cui esistono classi, contenitori, batterie e compiti
- * tutti insieme: un docente dichiara di insegnare una classe, costruisce un
- * contenitore con due esercizi, li compone in una batteria che li pesca
- * ENTRAMBI, e la assegna alla classe. Uno studente di quella classe entra,
+ * Copre il motivo per cui esistono classi, raccolte e compiti tutti
+ * insieme: un docente dichiara di insegnare una classe, costruisce una
+ * raccolta con due esercizi e, dalla raccolta, "Assegna questa raccolta"
+ * apre il Nuovo compito con un blocco che li pesca ENTRAMBI (Nuovo compito,
+ * Task 7: prima passava da una batteria composta a parte e dal modulo dei
+ * compiti preparati, tolti). Uno studente di quella classe entra,
  * vede il compito e ne svolge solo uno dei due. Il docente ricarica la
  * pagina delle consegne e deve vedere uno su due — non due su due, non
  * zero su due. Questa è l'unica asserzione che conta davvero: una prova che
@@ -12,10 +14,10 @@
  * (lo stesso principio di `esercizi-player.spec.ts`, il modello più vicino
  * a questa prova).
  *
- * Perché una batteria che pesca ENTRAMBI gli esercizi del contenitore
- * (`quantità = 2` su un contenitore di due) e non uno a caso: il sorteggio
- * in `assegna` (dominio, compiti.ts) è seminato con un `randomUUID()` nuovo
- * a ogni assegnazione, quindi non deterministico. Con un contenitore di
+ * Perché un blocco che pesca ENTRAMBI gli esercizi della raccolta
+ * (`prendi 2` su una raccolta di due: il Nuovo compito ne propone cinque,
+ * o tutti se sono meno) e non uno a caso: il seme dell'estrazione è nuovo
+ * a ogni apertura della pagina, quindi non deterministico. Con un contenitore di
  * taglia ESATTAMENTE pari a quanto la regola richiede non c'è scelta da
  * fare: `drawnVersionIds` contiene sempre entrambe le versioni, e la prova
  * non deve indovinare quale dei due l'assegnazione ha scelto per sapere
@@ -86,7 +88,7 @@ const STUDENT_EMAIL = "studente@scuola.it";
 const STUDENT_NAME = "Studente Demo";
 
 // Due esercizi reali del bacino (mai creati né cancellati da questa prova):
-// bastano un contenitore che li porti entrambi e una batteria che ne peschi
+// bastano una raccolta che li porti entrambi e un blocco che ne peschi
 // esattamente due per avere un compito con un esito deterministico.
 const ESERCIZIO_UNO = { id: "01-equazione-primo-grado", title: "Equazione di primo grado" };
 const ESERCIZIO_DUE = {
@@ -98,7 +100,10 @@ const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,
 const CLASSE_EMAIL = `e2e-compiti-${RUN_ID}@scuola.it`;
 const CLASSE_NOME = `E2E Compiti Classe ${RUN_ID}`;
 const CONTENITORE_NOME = `E2E Compiti Contenitore ${RUN_ID}`;
-const BATTERIA_NOME = `E2E Compiti Batteria ${RUN_ID}`;
+// Il nome del compito è quello che il Nuovo compito gli dà (la batteria
+// automatica del compito): le etichette dei blocchi con quanti esercizi
+// ciascuno — qui la raccolta, due esercizi.
+const COMPITO_NOME = `${CONTENITORE_NOME} (2)`;
 
 let prisma: PrismaClient;
 let classeId: string;
@@ -144,9 +149,13 @@ test.afterAll(async () => {
   // intera (vedi il commento in testa al file). Se `classeId` non è mai
   // stato assegnato (beforeAll fallito prima di crearla) non c'è niente da
   // pulire.
+  // La batteria automatica di ogni compito di questa classe va via con lui
+  // (dopo il compito: `Compito.batteria` è Restrict).
+  let batteriaIds: string[] = [];
   if (classeId) {
-    const compiti = await prisma.compito.findMany({ where: { classeId }, select: { id: true } });
+    const compiti = await prisma.compito.findMany({ where: { classeId }, select: { id: true, batteriaId: true } });
     const compitoIds = compiti.map((c) => c.id);
+    batteriaIds = compiti.map((c) => c.batteriaId);
     if (compitoIds.length > 0) {
       await prisma.tentativo.deleteMany({ where: { compitoId: { in: compitoIds } } });
       await prisma.compito.deleteMany({ where: { id: { in: compitoIds } } });
@@ -156,8 +165,6 @@ test.afterAll(async () => {
     await prisma.classe.delete({ where: { id: classeId } }).catch(() => {});
   }
 
-  const batterie = await prisma.batteria.findMany({ where: { name: BATTERIA_NOME }, select: { id: true } });
-  const batteriaIds = batterie.map((b) => b.id);
   if (batteriaIds.length > 0) {
     await prisma.batteriaRegola.deleteMany({ where: { batteriaId: { in: batteriaIds } } });
     await prisma.batteria.deleteMany({ where: { id: { in: batteriaIds } } });
@@ -283,26 +290,28 @@ test.describe("Ciclo compiti — assegna, svolgi, verifica", () => {
       timeout: 10_000,
     });
 
-    // === Compone una batteria che pesca ENTRAMBI gli esercizi ===
-    await gotoStabile(page, "/dashboard/esercizi/batterie");
-    await page.locator("#batteria-nome").fill(BATTERIA_NOME);
-    await page.locator("#batteria-contenitore-0").selectOption({ label: CONTENITORE_NOME });
-    await page.locator("#batteria-quantita-0").fill("2");
-    await page.getByRole("button", { name: "Crea batteria", exact: true }).click();
-    await expect(page.getByText(BATTERIA_NOME)).toBeVisible({ timeout: 10_000 });
+    // === Dalla raccolta, "Assegna questa raccolta": il Nuovo compito ===
+    // Il blocco sulla raccolta arriva già, con "prendi 2" (cinque, o tutti
+    // se sono meno): pesca ENTRAMBI gli esercizi.
+    await page.getByRole("link", { name: "Assegna questa raccolta", exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/nuovo\?raccolta=/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    await page.locator("#nc-classe").selectOption({ label: CLASSE_NOME });
+    await expect(page.getByRole("spinbutton", { name: `Quanti esercizi prendere da ${CONTENITORE_NOME}` })).toHaveValue("2", {
+      timeout: 15_000,
+    });
+    await expect(page.getByText("Ogni studente riceverà 2 esercizi.")).toBeVisible({ timeout: 15_000 });
 
-    // === Assegna la batteria alla classe ===
-    await gotoStabile(page, "/dashboard/esercizi/compiti");
-    await page.locator("#compito-batteria").selectOption({ label: BATTERIA_NOME });
-    await page.locator("#compito-classe").selectOption({ label: CLASSE_NOME });
-    await page.getByRole("button", { name: "Assegna", exact: true }).click();
-    await expect(page.getByText(/compito assegnato\./i)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("link", { name: BATTERIA_NOME })).toBeVisible({ timeout: 10_000 });
+    // === Assegna alla classe: si arriva al compito appena dato ===
+    await page.getByRole("button", { name: `Assegna a ${CLASSE_NOME}`, exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/(?!nuovo)[^/?]+$/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    await expect(page.getByRole("heading", { name: COMPITO_NOME })).toBeVisible({ timeout: 15_000 });
 
     // === Lo studente entra, vede il compito e ne svolge SOLO UNO ===
     await cambiaAttore(page, STUDENT_EMAIL);
     await gotoStabile(page, "/studente");
-    const compitoCard = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCard = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCard).toBeVisible({ timeout: 20_000 });
     // Prima di svolgere niente: zero su due, non un valore qualunque.
     await expect(compitoCard.getByText("0 su 2 esercizi completati")).toBeVisible();
@@ -338,10 +347,10 @@ test.describe("Ciclo compiti — assegna, svolgi, verifica", () => {
     // === Il docente ricarica le consegne: uno su due, non due su due ===
     await cambiaAttore(page, TEACHER_EMAIL);
     await gotoStabile(page, "/dashboard/esercizi/compiti");
-    await page.getByRole("link", { name: BATTERIA_NOME }).click();
+    await page.getByRole("link", { name: COMPITO_NOME }).click();
     await page.waitForURL(/\/dashboard\/esercizi\/compiti\/[^/]+$/, { timeout: 15_000 });
     await attendiEventualeReload(page);
-    await expect(page.getByRole("heading", { name: BATTERIA_NOME })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: COMPITO_NOME })).toBeVisible({ timeout: 15_000 });
 
     // Questa è l'asserzione che conta in tutta la prova: il numero che torna
     // dal server dopo un giro vero (creazione, svolgimento, ricarica), non

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
  * scrittura, non una lettura, e questa pagina segue già quella disciplina
  * per `dichiaraInsegnamento` (vedi `classi-form.tsx`).
  *
- * Nessuna prop: come `compito-form.tsx`, l'esito arriva solo a runtime nel
+ * Nessuna prop: come `gestione-compito.tsx`, l'esito arriva solo a runtime nel
  * corpo della risposta HTTP (quale errore, se c'è) — non lo si può tradurre
  * lato server nella pagina, che gira prima che la richiesta parta.
  *

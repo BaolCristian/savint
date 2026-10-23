@@ -19,7 +19,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-4">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
       <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
       <p className="max-w-2xl text-sm text-muted-foreground">{t("descrizione")}</p>
 
@@ -42,6 +42,10 @@ export default async function Page() {
             filtroMiei: t("filtroMiei"),
             usa: t("usa"),
             elimina: t("elimina"),
+            eliminaConfermaTitolo: t("eliminaConfermaTitolo"),
+            eliminaConfermaTesto: t("eliminaConfermaTesto"),
+            eliminaConferma: t("eliminaConferma"),
+            annulla: t("annulla"),
             nessunoMio: t("nessunoMio"),
             erroreGenerico: t("erroreGenerico"),
           }}

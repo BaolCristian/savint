@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/db/client";
 import {
   creaBatteria as creaBatteriaGrezza,
-  elencoBatterie,
-  verificaBatteria,
   bacinoRegola,
   idsConVersione,
   elencoModelli,
@@ -52,8 +50,8 @@ beforeEach(async () => {
   const a1 = (await prisma.esercizio.create({ data: { id: `${P}a1`, title: "A1", ...base } })).id;
   const a2 = (await prisma.esercizio.create({ data: { id: `${P}a2`, title: "A2", ...base } })).id;
   const b1 = (await prisma.esercizio.create({ data: { id: `${P}b1`, title: "B1", ...base } })).id;
-  // Ognuno ha una versione: verificaBatteria conta solo esercizi con una
-  // EsercizioVersione risolvibile come "disponibili" (Fix round 1).
+  // Ognuno ha una versione: si contano come "disponibili" solo esercizi con
+  // una EsercizioVersione (Fix round 1).
   await prisma.esercizioVersione.createMany({
     data: [a1, a2, b1].map((esercizioId, i) => ({ esercizioId, version: 1, content: {}, hash: `h${i}` })),
   });
@@ -76,147 +74,6 @@ describe("batterie", () => {
     expect(regole).toHaveLength(2);
     expect(regole[0]).toMatchObject({ order: 0, contenitoreId: contA, count: 2 });
     expect(regole[1]).toMatchObject({ order: 1, contenitoreId: contB, count: 1 });
-  });
-
-  it("l'elenco riporta le regole col nome del contenitore e il conteggio dei compiti", async () => {
-    const b = await creaBatteria(teacherId, `${P}Mista`, [{ contenitoreId: contA, count: 2 }]);
-    const elenco = (await elencoBatterie()).filter((x) => x.name.startsWith(P));
-    expect(elenco).toHaveLength(1);
-    expect(elenco[0]).toMatchObject({
-      id: b.id,
-      name: `${P}Mista`,
-      regole: [{ contenitore: `${P}Equazioni`, count: 2 }],
-      compiti: 0,
-    });
-  });
-
-  it("il conteggio dei compiti sale quando la batteria viene assegnata", async () => {
-    const b = await creaBatteria(teacherId, `${P}Mista`, [{ contenitoreId: contA, count: 1 }]);
-    const classe = await prisma.classe.create({
-      data: { googleGroupEmail: `${P}c@scuola.it`, name: "C", yearLevel: 2 },
-    });
-    await prisma.compito.create({
-      data: { batteriaId: b.id, classeId: classe.id, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] },
-    });
-    const elenco = (await elencoBatterie()).filter((x) => x.name.startsWith(P));
-    expect(elenco[0]!.compiti).toBe(1);
-  });
-
-  it("verificaBatteria dice ok quando ogni contenitore ne ha abbastanza", async () => {
-    const b = await creaBatteria(teacherId, `${P}Ok`, [
-      { contenitoreId: contA, count: 2 },
-      { contenitoreId: contB, count: 1 },
-    ]);
-    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
-  });
-
-  it("verificaBatteria elenca il contenitore e i due numeri quando manca qualcosa", async () => {
-    const b = await creaBatteria(teacherId, `${P}Corta`, [
-      { contenitoreId: contA, count: 2 },
-      { contenitoreId: contB, count: 5 },
-    ]);
-    const r = await verificaBatteria(b.id, docente());
-    expect(r).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: `${P}Sistemi`, richiesti: 5, disponibili: 1 }],
-    });
-  });
-
-  it("verificaBatteria su una batteria inesistente lancia invece di dire ok in silenzio", async () => {
-    await expect(verificaBatteria("non-esiste", docente())).rejects.toThrow();
-  });
-
-  it("verificaBatteria non conta un esercizio senza versione come disponibile", async () => {
-    const senzaVersione = (await prisma.esercizio.create({
-      data: { id: `${P}senza-versione`, title: "Senza versione", yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" },
-    })).id;
-    await prisma.contenitoreEsercizio.create({ data: { contenitoreId: contA, esercizioId: senzaVersione } });
-    // contA ha ora 3 membri (a1, a2 con versione, senza-versione senza): una
-    // regola che ne chiede 3 deve vedersi dire che ne sono disponibili 2.
-    const b = await creaBatteria(teacherId, `${P}TreSuTre`, [{ contenitoreId: contA, count: 3 }]);
-    expect(await verificaBatteria(b.id, docente())).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: `${P}Equazioni`, richiesti: 3, disponibili: 2 }],
-    });
-  });
-
-  // Fix round 2: la stima di verificaBatteria deve essere PER DIFETTO, non
-  // arbitraria. Qui il sorteggio vero potrebbe andare bene o male a seconda
-  // del seme (contIncerto ha 4 esercizi e la sua regola ne chiede 2: un
-  // sorteggio potrebbe prenderne 0, 1 o 2 dei due condivisi con contRischio);
-  // se ne prendesse i due condivisi, a contRischio (che li condivide
-  // entrambi e ne chiede 2 su un bacino di 3) resterebbe un solo esercizio
-  // proprio: insufficiente. Una stima arbitraria (per id) potrebbe non
-  // consumare nessuno dei due condivisi e dire "ok" nonostante quell'esito
-  // sfortunato resti possibile; la stima per difetto deve rifiutare
-  // comunque, perché assume che le regole precedenti abbiano consumato la
-  // sovrapposizione al massimo possibile.
-  it("verificaBatteria rifiuta quando la sovrapposizione rende il sorteggio incerto", async () => {
-    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
-    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1`, title: "Shared1", ...base } })).id;
-    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2`, title: "Shared2", ...base } })).id;
-    const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1`, title: "AOnly1", ...base } })).id;
-    const aOnly2 = (await prisma.esercizio.create({ data: { id: `${P}aonly2`, title: "AOnly2", ...base } })).id;
-    const bOnly1 = (await prisma.esercizio.create({ data: { id: `${P}bonly1`, title: "BOnly1", ...base } })).id;
-    await prisma.esercizioVersione.createMany({
-      data: [shared1, shared2, aOnly1, aOnly2, bOnly1].map((esercizioId, i) => ({
-        esercizioId, version: 1, content: {}, hash: `hh${i}`,
-      })),
-    });
-
-    const contIncerto = (await prisma.contenitore.create({ data: { name: `${P}Incerto`, createdById: teacherId } })).id;
-    await prisma.contenitoreEsercizio.createMany({
-      data: [shared1, shared2, aOnly1, aOnly2].map((esercizioId) => ({ contenitoreId: contIncerto, esercizioId })),
-    });
-    const contRischio = (await prisma.contenitore.create({ data: { name: `${P}Rischio`, createdById: teacherId } })).id;
-    await prisma.contenitoreEsercizio.createMany({
-      data: [shared1, shared2, bOnly1].map((esercizioId) => ({ contenitoreId: contRischio, esercizioId })),
-    });
-
-    const b = await creaBatteria(teacherId, `${P}Incerta`, [
-      { contenitoreId: contIncerto, count: 2 },
-      { contenitoreId: contRischio, count: 2 },
-    ]);
-
-    expect(await verificaBatteria(b.id, docente())).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: `${P}Rischio`, richiesti: 2, disponibili: 1 }],
-    });
-  });
-
-  // Stessa sovrapposizione del test sopra, ma la seconda regola ne chiede
-  // solo 1: anche nel caso peggiore (i due condivisi consumati per intero
-  // dalla prima regola) resta comunque il suo esercizio proprio. La
-  // prudenza della stima non deve rendere la funzione inutile sui casi in
-  // cui la capienza regge anche nello scenario più sfortunato.
-  it("verificaBatteria non rifiuta quando la capienza regge anche nel caso peggiore", async () => {
-    const base = { yearLevel: 2, topic: "prova", tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
-    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}shared1b`, title: "Shared1", ...base } })).id;
-    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}shared2b`, title: "Shared2", ...base } })).id;
-    const aOnly1 = (await prisma.esercizio.create({ data: { id: `${P}aonly1b`, title: "AOnly1", ...base } })).id;
-    const aOnly2 = (await prisma.esercizio.create({ data: { id: `${P}aonly2b`, title: "AOnly2", ...base } })).id;
-    const bOnly1 = (await prisma.esercizio.create({ data: { id: `${P}bonly1b`, title: "BOnly1", ...base } })).id;
-    await prisma.esercizioVersione.createMany({
-      data: [shared1, shared2, aOnly1, aOnly2, bOnly1].map((esercizioId, i) => ({
-        esercizioId, version: 1, content: {}, hash: `hb${i}`,
-      })),
-    });
-
-    const contIncerto = (await prisma.contenitore.create({ data: { name: `${P}Ample`, createdById: teacherId } })).id;
-    await prisma.contenitoreEsercizio.createMany({
-      data: [shared1, shared2, aOnly1, aOnly2].map((esercizioId) => ({ contenitoreId: contIncerto, esercizioId })),
-    });
-    const contComodo = (await prisma.contenitore.create({ data: { name: `${P}Comodo`, createdById: teacherId } })).id;
-    await prisma.contenitoreEsercizio.createMany({
-      data: [shared1, shared2, bOnly1].map((esercizioId) => ({ contenitoreId: contComodo, esercizioId })),
-    });
-
-    const b = await creaBatteria(teacherId, `${P}Ample`, [
-      { contenitoreId: contIncerto, count: 2 },
-      { contenitoreId: contComodo, count: 1 },
-    ]);
-
-    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
   });
 
   // Fix round finale, item 5: prima del fix, questa chiamata non restituiva
@@ -250,8 +107,8 @@ describe("batterie", () => {
 // mai entrambi, mai nessuno dei due". Il database non può esprimere questo
 // vincolo (Prisma non modella i CHECK), quindi il dominio lo impone in
 // scrittura (creaBatteria, sotto) e lo riverifica in lettura (bacinoRegola,
-// il punto che TUTTE le letture — verificaBatteria qui, assegna in
-// compiti.ts — attraversano per risolvere una regola in candidati).
+// il punto che TUTTE le letture attraversano per risolvere una regola in
+// candidati).
 describe("la regola a due forme", () => {
   it("una regola con contenitore e argomento insieme è rifiutata in scrittura", async () => {
     const r = await creaBatteriaGrezza(teacherId, `${P}Doppia`, [
@@ -347,49 +204,6 @@ describe("la regola a due forme", () => {
     expect(bacino).toEqual([alSoglia]);
   });
 
-  // Regressione: la stessa stima per-difetto (Fix round 2) applicata a una
-  // batteria con regole di forma DIVERSA deve contare la sovrapposizione
-  // esattamente come farebbe fra due regole a contenitore. `argomento` è
-  // un valore GLOBALE (il filtro interroga tutta la tabella Esercizio, non
-  // solo quelli di questo test) e quindi deliberatamente unico per prefisso
-  // — non il "prova" condiviso dal beforeEach, che nel database di sviluppo
-  // condiviso corrisponde già a decine di righe estranee a questo test.
-  it("verificaBatteria applica la stessa stima peggiore-caso a una batteria con regole miste", async () => {
-    const argomentoMisto = `${P}mista-argomento`;
-    const base = { yearLevel: 2, topic: argomentoMisto, tags: [], difficulty: 1, accessoScuola: "EDITOR" as const };
-    const shared1 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared1`, title: "S1", ...base } })).id;
-    const shared2 = (await prisma.esercizio.create({ data: { id: `${P}mista-shared2`, title: "S2", ...base } })).id;
-    const soloArgomento = (await prisma.esercizio.create({ data: { id: `${P}mista-solo`, title: "Solo", ...base } })).id;
-    await prisma.esercizioVersione.createMany({
-      data: [shared1, shared2, soloArgomento].map((esercizioId, i) => ({
-        esercizioId, version: 1, content: {}, hash: `mista-h${i}`,
-      })),
-    });
-    const contMista = (await prisma.contenitore.create({ data: { name: `${P}Mista`, createdById: teacherId } })).id;
-    await prisma.contenitoreEsercizio.createMany({
-      data: [shared1, shared2].map((esercizioId) => ({ contenitoreId: contMista, esercizioId })),
-    });
-
-    // contMista = {shared1, shared2} (2); la regola a filtro risolve a
-    // {shared1, shared2, soloArgomento} (3) — gli stessi due condivisi con
-    // contMista. Caso peggiore: overlap=2, somma precedenti=2,
-    // consumoPeggiore=2, disponibili=3-2=1.
-    const b = await creaBatteria(teacherId, `${P}Mista3`, [
-      { contenitoreId: contMista, count: 2 },
-      { argomento: argomentoMisto, count: 1 },
-    ]);
-    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
-
-    const b2 = await creaBatteria(teacherId, `${P}Mista4`, [
-      { contenitoreId: contMista, count: 2 },
-      { argomento: argomentoMisto, count: 2 },
-    ]);
-    expect(await verificaBatteria(b2.id, docente())).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: argomentoMisto, richiesti: 2, disponibili: 1 }],
-    });
-  });
-
   // La regressione esplicita che il task chiede di scrivere e mantenere:
   // ogni batteria esistente ha regole SOLO a contenitore — questo test (e
   // tutti quelli sopra, nel describe "batterie", nessuno dei quali è stato
@@ -404,40 +218,15 @@ describe("la regola a due forme", () => {
     expect(regole).toHaveLength(2);
     expect(regole[0]).toMatchObject({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null, count: 2 });
     expect(regole[1]).toMatchObject({ contenitoreId: contB, argomento: null, anno: null, difficoltaMax: null, count: 1 });
-    expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
-    const elenco = (await elencoBatterie()).filter((x) => x.name === `${P}SoloContenitore`);
-    expect(elenco[0]).toMatchObject({
-      regole: [{ contenitore: `${P}Equazioni`, count: 2 }, { contenitore: `${P}Sistemi`, count: 1 }],
-    });
   });
 });
 
-// Dimostrato dal revisore su `assegnaDiretto` (docente-via-veloce, onda di
-// correzioni sui numeri): `assegnaDiretto quanti=0` e `quanti=-3`
-// riuscivano entrambi, creando un Compito che non promette nessun
-// esercizio (mai apribile) e lasciando indietro la batteria automatica che
-// lo produce. `assegnaDiretto` delega interamente a `creaBatteria` per
-// scrivere la sua regola — la stessa funzione che ogni altro chiamante
-// (il modulo a mano, un futuro import massivo) attraversa per scrivere
-// QUALUNQUE regola. `creaBatteria` verifica già la FORMA di una regola
-// (contenitore oppure argomento, mai entrambi né nessuno dei due) prima di
-// qualunque scrittura, ma non guardava affatto il suo `count` — un buco
-// che qualunque chiamante di `creaBatteria`, non solo `assegnaDiretto`,
-// eredita.
-//
-// Il guardiano vive QUI, non in `assegnaDiretto`: è la stessa scelta già
-// fatta per l'invariante contenitore/argomento (Task 1) — un solo punto di
-// scrittura, una sola convalida, per ENTRAMBE le provenienze (a mano,
-// automatica) ed eventuali future. Metterlo solo in `assegnaDiretto`
-// protegge un'unica strada e ripete lì una convalida che la specifica
-// della rotta a monte (`compiti/diretto/route.ts`, `count: z.number().int()
-// .positive()`) già duplica altrove — esattamente il rischio contro cui il
-// commento di `assegnaDiretto` mette in guardia ("un secondo posto dove
-// sbagliare"). Un secondo chiamante di `creaBatteria` che componga una
-// regola a mano (`/api/esercizi/batterie`, la sua stessa validazione zod)
-// resta comunque protetto per lo stesso motivo — ma un chiamante che non
-// passi da NESSUNA rotta (uno script, un import) non lo sarebbe, senza
-// questo controllo nel dominio.
+// Onda di correzioni sui numeri: `creaBatteria` verificava la FORMA di una
+// regola ma non il suo `count`, e una regola da zero esercizi produceva un
+// compito vuoto, mai apribile (lo ha dimostrato il revisore sulla vecchia
+// scorciatoia `assegnaDiretto`, tolta nel Task 7 del Nuovo compito). Il
+// guardiano vive in `rifiutoRegole`, l'unica convalida di ogni scrittura di
+// regole, quale che sia il chiamante.
 describe("il conteggio di una regola", () => {
   it.each([0, -1, -3])(
     "una regola con count=%i viene rifiutata in scrittura, non lascia scappare una batteria che non pesca mai nulla",
@@ -476,19 +265,13 @@ describe("il conteggio di una regola", () => {
 // Spec "Batterie": la batteria è comune, il bacino no — ciascuno pesca solo
 // fra ciò che vede. Una raccolta senza ruolo dà zero, non un errore.
 describe("il bacino rispetta la visibilità", () => {
-  it("una regola su una raccolta privata altrui dà un bacino vuoto, e verificaBatteria lo dice", async () => {
+  it("una regola su una raccolta privata altrui dà un bacino vuoto", async () => {
     const estraneo = (await prisma.user.create({ data: { email: `${P}estraneo@test.it`, name: "E", role: "TEACHER" } })).id;
     const chiEstraneo: Utente = { id: estraneo, admin: false };
     const regola = { contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null };
     expect(await bacinoRegola(regola, chiEstraneo)).toEqual([]);
     // Il proprietario, invece, la pesca intera.
     expect((await bacinoRegola(regola, docente())).sort()).toEqual([`${P}a1`, `${P}a2`]);
-
-    const b = await creaBatteria(teacherId, `${P}Altrui`, [{ contenitoreId: contA, count: 1 }]);
-    expect(await verificaBatteria(b.id, chiEstraneo)).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: `${P}Equazioni`, richiesti: 1, disponibili: 0 }],
-    });
   });
 
   it("dentro una raccolta visibile resta fuori l'esercizio privato che chi pesca non vede", async () => {
@@ -534,9 +317,9 @@ describe("creaBatteria e le raccolte invisibili", () => {
   });
 });
 
-// Un ADMIN conta e verifica da docente: le bozze private dei colleghi non
-// entrano nel suo bacino.
-describe("bacino e verifica di un ADMIN", () => {
+// Un ADMIN conta da docente: le bozze private dei colleghi non entrano nel
+// suo bacino.
+describe("il bacino di un ADMIN", () => {
   it("la bozza privata di un collega non entra; la sua sì", async () => {
     const admin = (await prisma.user.create({ data: { email: `${P}admin@test.it`, name: "Adm", role: "ADMIN" } })).id;
     const topic = `${P}admin-argomento`;
@@ -551,12 +334,6 @@ describe("bacino e verifica di un ADMIN", () => {
     expect(await bacinoRegola(regola, chi)).toEqual([`${P}dell-admin`]);
     // Né la raccolta privata del collega.
     expect(await bacinoRegola({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null }, chi)).toEqual([]);
-
-    const b = await creaBatteria(admin, `${P}AdminVerifica`, [{ argomento: topic, anno: 2, count: 2 }]);
-    expect(await verificaBatteria(b.id, chi)).toEqual({
-      ok: false,
-      mancanti: [{ contenitore: topic, richiesti: 2, disponibili: 1 }],
-    });
   });
 });
 
@@ -739,5 +516,49 @@ describe("modelli", () => {
     const dopo = await prisma.compito.findUnique({ where: { id: c.id } });
     expect(dopo).toMatchObject({ batteriaId: c.batteriaId, modelloId: null });
     expect(await prisma.batteriaRegola.count({ where: { batteriaId: c.batteriaId } })).toBe(1);
+  });
+
+  // Nuovo compito, Task 7: fra il conteggio dei compiti e la cancellazione
+  // passa un istante. Se in quell'istante un compito comincia a puntare al
+  // modello con `batteriaId`, il vincolo Restrict rifiuta la cancellazione
+  // (P2003): si ripiega sul nascondere, come se il conteggio l'avesse
+  // visto. Se invece qualcuno l'ha già eliminato (P2025), è `non_trovato`
+  // e non un errore 500.
+  describe("eliminaModello e le corse", () => {
+    // Niente `vi.restoreAllMocks()`: sui modelli del client Prisma (un
+    // proxy) il ripristino lascia il metodo `undefined`. Le finte qui sono
+    // tutte "Once": dopo la prima chiamata la spia passa al metodo vero.
+
+    it("un compito che arriva dopo il conteggio (P2003) fa nascondere il modello invece di cancellarlo", async () => {
+      const m = await creaBatteria(teacherId, `${P}Corsa`, [{ contenitoreId: contA, count: 1 }]);
+      const c = await compitoLegacy(m.id);
+      // Il conteggio "non vede" il compito appena scritto.
+      vi.spyOn(prisma.compito, "count").mockResolvedValueOnce(0);
+      expect(await eliminaModello(m.id, docente())).toEqual({ ok: true });
+      expect(await prisma.batteria.findUnique({ where: { id: m.id } })).toMatchObject({ automatica: true });
+      expect(await prisma.compito.findUnique({ where: { id: c.id } })).toMatchObject({ batteriaId: m.id });
+    });
+
+    it("un modello eliminato da qualcun altro nel frattempo (P2025) è non_trovato", async () => {
+      const m = await creaBatteria(teacherId, `${P}Sparito`, [{ contenitoreId: contA, count: 1 }]);
+      vi.spyOn(prisma.compito, "count").mockImplementationOnce((async () => {
+        await prisma.batteria.delete({ where: { id: m.id } });
+        return 0;
+      }) as never);
+      expect(await eliminaModello(m.id, docente())).toEqual({ ok: false, motivo: "non_trovato" });
+    });
+
+    it("un modello legacy eliminato da qualcun altro nel frattempo (P2025 sul nascondere) è non_trovato", async () => {
+      const m = await creaBatteria(teacherId, `${P}SparitoLegacy`, [{ contenitoreId: contA, count: 1 }]);
+      // Il metodo vero, preso PRIMA della spia: una chiamata alla spia da
+      // dentro la sua stessa finta "Once" non arriva al metodo vero.
+      const aggiornaVero = prisma.batteria.update.bind(prisma.batteria);
+      vi.spyOn(prisma.compito, "count").mockResolvedValueOnce(1);
+      vi.spyOn(prisma.batteria, "update").mockImplementationOnce((async () => {
+        await prisma.batteria.delete({ where: { id: m.id } });
+        return aggiornaVero({ where: { id: m.id }, data: { automatica: true } });
+      }) as never);
+      expect(await eliminaModello(m.id, docente())).toEqual({ ok: false, motivo: "non_trovato" });
+    });
   });
 });

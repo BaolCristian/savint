@@ -1,6 +1,6 @@
 /**
  * E2E — La via veloce: assegnare in una schermata sola (Task 6, docente-via-
- * veloce)
+ * veloce; riscritta nel Task 7 del Nuovo compito)
  *
  * Copre il motivo per cui l'intero programma esiste (design doc,
  * `docs/superpowers/specs/2026-09-09-docente-via-veloce-design.md`): prima
@@ -8,37 +8,35 @@
  * venerdì" doveva dichiarare la classe, scrivere o raccogliere esercizi,
  * metterli in un Contenitore, comporli in una Batteria, e SOLO ALLORA
  * assegnarla — cinque schermate travestite da scelta. Questa prova dimostra
- * che il percorso nuovo è uno solo: classe, argomento, quanti esercizi,
- * entro quando — sulla stessa pagina, senza passare né da una raccolta né
- * da una batteria — e che lo studente li vede davvero dall'altra parte.
+ * che il percorso è uno solo: dalla Panoramica, "Nuovo compito"; lì classe,
+ * un blocco "argomento" con quanti esercizi, entro quando — sulla stessa
+ * pagina, senza passare né da una raccolta né da un modello — e che lo
+ * studente li vede davvero dall'altra parte.
  *
- * L'ASSERZIONE CHE PORTA IL TASK (brief): l'intero percorso avviene su UNA
- * schermata sola. Non basta "non ho cliccato un link verso /contenitori":
- * bisogna dimostrarlo strutturalmente. Qui lo si fa in due modi indipendenti,
- * entrambi verificati per tutta la durata dell'assegnazione:
- *  1. l'URL del browser non cambia mai (nessuna `page.goto`, nessun click su
- *     un link diverso da "Assegna" fra l'apertura della pagina e il "Compito
- *     assegnato.");
+ * Fino al Task 7 del Nuovo compito questa strada era il modulo
+ * `AssegnaForm` in cima alla Panoramica (rotta `compiti/diretto`): tolto,
+ * la Panoramica porta con un grande link alla pagina Nuovo compito, l'unico
+ * posto dove si dà un compito (spec 2026-10-22).
+ *
+ * L'ASSERZIONE CHE PORTA IL TASK (brief): l'intera composizione avviene su
+ * UNA schermata sola. Non basta "non ho cliccato un link verso
+ * /contenitori": bisogna dimostrarlo strutturalmente. Qui lo si fa in due
+ * modi indipendenti, entrambi verificati fino al clic su "Assegna":
+ *  1. l'URL del browser resta quello del Nuovo compito (nessuna
+ *     `page.goto`, nessun clic su un link) fino all'arrivo sul compito
+ *     appena assegnato;
  *  2. l'insieme delle richieste HTTP verso `/api/esercizi/*` osservate in
- *     quella finestra non include mai `contenitori` o `batterie` — non solo
- *     "non li ho cliccati", ma "nessuna chiamata di rete li ha mai
- *     raggiunti", il che copre anche un eventuale prefetch automatico dei
- *     `<Link>` di Next.js verso le sezioni rimaste in fondo alla pagina
- *     (Task 4). La batteria automatica che `assegnaDiretto` crea per questa
- *     assegnazione (dominio, compiti.ts — vedi il suo commento) nasce da una
- *     chiamata Prisma diretta dentro la stessa route `/api/esercizi/compiti
- *     /diretto`, mai da un secondo giro HTTP verso `/api/esercizi/batterie`:
- *     la prova di rete la rende osservabile dall'esterno, non solo vera per
- *     costruzione.
+ *     quella finestra non include mai `contenitori`, `batterie` o
+ *     `modelli`, e l'unica scrittura è la POST di `/api/esercizi/compiti`
+ *     (le POST di `/compiti/estrai` sono il riepilogo, che non scrive).
+ *     La batteria automatica del compito nasce dentro quella stessa rotta
+ *     (`assegnaCompito`, compiti.ts), mai da un secondo giro HTTP.
  *
  * SECONDA ASSERZIONE (brief): chiedere più esercizi di quanti ne esistano
- * viene rifiutato con ENTRAMBI i numeri nel messaggio — non un errore
- * generico. `assegnaDiretto` (dominio) → la rotta (`/api/esercizi/compiti/
- * diretto`) → `AssegnaForm` (`messaggioErrore`) portano `dettaglio:
- * {contenitore, richiesti, disponibili}` attraverso tre livelli senza
- * perderlo: qui si verifica che sopravviva fino allo schermo, parola per
- * parola (stringa esatta, non solo "contiene i due numeri da qualche
- * parte").
+ * viene rifiutato con ENTRAMBI i numeri — non un errore generico. Nel Nuovo
+ * compito il rifiuto arriva prima di assegnare: il riepilogo segna il
+ * blocco ("ne chiedi 11, ce ne sono 10") e "Assegna" resta disabilitato,
+ * quindi nessuna POST di assegnazione parte e nessuna batteria nasce.
  *
  * Perché un argomento con prefisso RUN_ID, non "prova"
  * -------------------------------------------------------
@@ -46,9 +44,7 @@
  * filtro (`bacinoRegola`, batterie.ts) interroga l'INTERA tabella
  * `Esercizio` su `topic` (+ `yearLevel` esatto). Il database di sviluppo
  * condiviso porta già 16 esercizi con l'argomento "prova" — la convenzione
- * di quasi ogni fixture di questo repository (vedi il commento omologo in
- * `assegna-diretto.test.ts`, l'integrazione di dominio più vicina a questa
- * prova) — quindi filtrare su "prova" pescherebbe in silenzio righe mai
+ * di quasi ogni fixture di questo repository — quindi filtrare su "prova" pescherebbe in silenzio righe mai
  * create da questa esecuzione, e il conteggio "10 disponibili" atteso più
  * sotto non sarebbe più garantito. L'argomento qui (`ARGOMENTO`) porta
  * `RUN_ID`: nessun'altra riga nel database, di questa esecuzione o di una
@@ -56,7 +52,7 @@
  *
  * Il conteggio è una fotografia, non un totale
  * ----------------------------------------------
- * "Quanti esercizi corrispondono" (`quantiCorrispondono`) legge lo stato
+ * Il conteggio accanto all'argomento (`argomentiDisponibili`) legge lo stato
  * del database nell'istante in cui il docente sceglie, non un valore
  * fissato una volta per tutte (design doc, "Rischi accettati": "il
  * conteggio... è una fotografia"). Le asserzioni qui sotto non assumono mai
@@ -72,17 +68,11 @@
  * dietro l'editor ricco — variabili, parti, LaTeX). Usarla per produrre
  * dieci esercizi usa e getta, il cui unico scopo è avere un argomento e un
  * anno su cui filtrare, testerebbe l'editor — già coperto altrove
- * (`esercizi-editor.spec.ts`) — non l'assegnazione. Stessa scelta già presa
- * da `assegna-diretto.test.ts` (integrazione di dominio) per lo stesso
- * identico motivo: `Esercizio` e `EsercizioVersione` scritti direttamente,
- * con `content: {}` — un contenuto Numbas vuoto che `daNumbas`
- * (`elencoRedazione`, chiamata dalla pagina `/dashboard/esercizi`) rifiuta
- * con un motivo ("l'esercizio non ha nessuna domanda al suo interno"),
- * MAI lanciando un'eccezione: la pagina si carica comunque, l'esercizio
- * compare comunque nell'elenco con `ultimaVersione: 1` (quello che serve
- * per contare come "disponibile" e per finire fra i `candidati`
- * dell'anteprima), semplicemente non è "modificabile" dall'editor — cosa
- * che questa prova non gli chiede mai di essere. Lo studente non apre né
+ * (`esercizi-editor.spec.ts`) — non l'assegnazione. `Esercizio` e
+ * `EsercizioVersione` si scrivono direttamente, con `content: {}`: una
+ * versione c'è (è quello che serve per contare come "disponibile"), e il
+ * riepilogo del Nuovo compito ne mostra solo i titoli — nessuno apre né
+ * corregge quel contenuto vuoto. Lo studente non apre né
  * svolge nessuno di questi esercizi (il brief chiede solo che li VEDA):
  * `esercizi-compiti.spec.ts` (il modello di questa prova) copre già lo
  * svolgimento vero, con gli esercizi reali del bacino condiviso.
@@ -131,19 +121,19 @@ const STUDENT_EMAIL = "studente@scuola.it";
 const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 const CLASSE_EMAIL = `e2e-viaveloce-${RUN_ID}@scuola.it`;
 const CLASSE_NOME = `E2E Via Veloce Classe ${RUN_ID}`;
-// L'argomento raggiunge sia `Esercizio.topic` (scrittura) sia il valore
-// dell'opzione nel `<select>` del modulo (lettura): stessa stringa, mai
+// L'argomento raggiunge sia `Esercizio.topic` (scrittura) sia la voce del
+// menu "+ Aggiungi da un argomento" (lettura): stessa stringa, mai
 // normalizzata nel mezzo (vedi il commento su `argomentiDisponibili` in
 // batterie.ts — grafie diverse restano voci diverse).
 const ARGOMENTO = `E2E Via Veloce ${RUN_ID}`;
-const ANNO = 2; // La classe porta questo stesso anno: il campo "anno" del
-// modulo non deve mai comparire (design doc: "preso dalla classe, non
+const ANNO = 2; // La classe porta questo stesso anno: gli argomenti del
+// menu sono quelli del suo anno (design doc: "preso dalla classe, non
 // chiesto").
 const QUANTI_CREATI = 10; // "dieci esercizi" — esattamente il numero del brief.
 
 let prisma: PrismaClient;
 let classeId: string;
-let esercizioIds: string[] = [];
+const esercizioIds: string[] = [];
 
 test.beforeAll(async () => {
   prisma = new PrismaClient();
@@ -159,9 +149,9 @@ test.beforeAll(async () => {
 
   // Scaffolding di dominio scritto a mano (vedi il commento in testa al
   // file): la classe e l'insegnamento, come nel modello — nessuna rotta
-  // crea una `Classe` senza Google. `yearLevel` fisso: il modulo chiede
-  // l'anno SOLO quando la classe non ne porta uno, e questa prova non
-  // deve testare quel ramo secondario.
+  // crea una `Classe` senza Google. `yearLevel` fisso: senza anno il menu
+  // degli argomenti non si apre, e questa prova non deve testare quel ramo
+  // secondario.
   const classe = await prisma.classe.create({
     data: { googleGroupEmail: CLASSE_EMAIL, name: CLASSE_NOME, yearLevel: ANNO },
   });
@@ -172,7 +162,7 @@ test.beforeAll(async () => {
   // Dieci esercizi reali nel database (non nel filesystem — vedi il
   // commento in testa al file su perché non passano dall'editor), tutti
   // con lo stesso ARGOMENTO e lo stesso ANNO: esattamente il bacino che il
-  // modulo di assegnazione diretta deve trovare e contare.
+  // blocco "argomento" del Nuovo compito deve trovare e contare.
   for (let i = 1; i <= QUANTI_CREATI; i++) {
     const esercizio = await prisma.esercizio.create({
       data: {
@@ -201,13 +191,11 @@ test.afterAll(async () => {
       await prisma.tentativo.deleteMany({ where: { compitoId: { in: compitoIds } } });
       await prisma.compito.deleteMany({ where: { id: { in: compitoIds } } });
     }
-    // La batteria AUTOMATICA che `assegnaDiretto` ha creato per il compito
-    // riuscito (Test 1): un tentativo rifiutato (Test 2, capienza
-    // insufficiente) si pulisce già da sé dentro `assegnaDiretto` — vedi il
-    // suo commento — quindi qui resta al più UNA batteria, quella del
-    // compito appena cancellato sopra (il vincolo `onDelete: Restrict` da
-    // `Compito` a `Batteria` è già libero, essendo stato cancellato lui per
-    // primo).
+    // La batteria AUTOMATICA che l'assegnazione ha creato per il compito
+    // riuscito (Test 1): il Test 2 non assegna niente (il riepilogo blocca
+    // prima), quindi qui resta al più UNA batteria, quella del compito
+    // appena cancellato sopra (il vincolo `onDelete: Restrict` da `Compito`
+    // a `Batteria` è già libero, essendo stato cancellato lui per primo).
     if (batteriaIds.length > 0) {
       await prisma.batteriaRegola.deleteMany({ where: { batteriaId: { in: batteriaIds } } });
       await prisma.batteria.deleteMany({ where: { id: { in: batteriaIds } } });
@@ -259,7 +247,7 @@ async function gotoStabile(page: Page, url: string) {
 }
 
 test.describe("Via veloce — assegnare in una schermata sola", () => {
-  test("il docente assegna dieci esercizi di un argomento alla classe, con una scadenza, senza toccare raccolte né batterie — e lo studente li vede", async ({
+  test("il docente assegna dieci esercizi di un argomento alla classe, con una scadenza, senza toccare raccolte né modelli — e lo studente li vede", async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -276,63 +264,57 @@ test.describe("Via veloce — assegnare in una schermata sola", () => {
       }
     });
 
+    // === Dalla Panoramica, il grande link "Nuovo compito" ===
     await gotoStabile(page, "/dashboard/esercizi");
-    const urlPagina = new URL(page.url());
-    expect(urlPagina.pathname).toBe("/dashboard/esercizi");
+    // Nessun modulo sulla Panoramica: c'è solo il link.
+    await expect(page.locator("#assegna-classe")).toHaveCount(0);
+    // Il link della carta (titolo e riga che spiega le tre zone), non la
+    // voce omonima del menu laterale.
+    await page.getByRole("link", { name: /^Nuovo compito\s*Per chi/ }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/nuovo$/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    const urlNuovo = new URL(page.url()).pathname;
 
-    // Il modulo (Task 5) è montato in cima alla pagina, non dietro un link:
-    // se questa sezione non ci fosse la prova fallirebbe qui, non più
-    // avanti — la stessa garanzia che il Task 5 si è dato da solo.
-    await expect(page.locator("#assegna-classe")).toBeVisible({ timeout: 20_000 });
+    // === Classe (per id: nessuna ambiguità col nome) ===
+    await expect(page.locator("#nc-classe")).toBeVisible({ timeout: 20_000 });
+    await page.locator("#nc-classe").selectOption(classeId);
 
-    // === Classe (per id: nessuna ambiguità col nome, niente normalizzato
-    // da confrontare) ===
-    await page.locator("#assegna-classe").selectOption(classeId);
-
-    // === Argomento: aspetta che l'elenco (GET senza `argomento`) porti la
-    // nostra voce prima di selezionarla — `selectOption` non aspetta che
-    // un'opzione COMPAIA, solo che l'elemento sia azionabile ===
-    const opzioneArgomento = page.locator(`#assegna-argomento option[value="${ARGOMENTO}"]`);
-    await expect(opzioneArgomento).toBeAttached({ timeout: 15_000 });
-    // Nessun campo "anno" in vista: la classe scelta porta già un anno
-    // (design doc: "preso dalla classe, non chiesto").
-    await expect(page.locator("#assegna-anno")).toHaveCount(0);
-    await page.locator("#assegna-argomento").selectOption(ARGOMENTO);
-
-    // === "Quanti esercizi corrispondono", la fotografia (vedi il commento
-    // in testa al file): con ARGOMENTO unico per questa esecuzione, deve
-    // valere esattamente QUANTI_CREATI — non un totale, il NOSTRO totale ===
-    await expect(page.getByText(`${QUANTI_CREATI} esercizi disponibili`)).toBeVisible({ timeout: 10_000 });
+    // === Un blocco "argomento": la voce porta il conteggio, la fotografia
+    // (vedi il commento in testa al file) — con ARGOMENTO unico per questa
+    // esecuzione, deve valere esattamente QUANTI_CREATI ===
+    await page.getByRole("button", { name: "+ Aggiungi da un argomento", exact: true }).click();
+    await page.getByRole("button", { name: `${ARGOMENTO} — ${QUANTI_CREATI} disponibili`, exact: true }).click();
 
     // === Quanti esercizi, ed entro quando (scadenza — il brief la vuole
     // esplicitamente) ===
-    await page.locator("#assegna-quanti").fill(String(QUANTI_CREATI));
+    await page.getByRole("spinbutton", { name: `Quanti esercizi prendere da ${ARGOMENTO}` }).fill(String(QUANTI_CREATI));
     const scadenza = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    await page.locator("#assegna-scadenza").fill(scadenza);
+    await page.locator("#nc-scadenza").fill(scadenza);
+    await expect(page.getByText(`Ogni studente riceverà ${QUANTI_CREATI} esercizi.`)).toBeVisible({ timeout: 15_000 });
 
-    const assegnazioneInviata = page.waitForResponse(
-      (r) => r.url().includes("/api/esercizi/compiti/diretto") && r.request().method() === "POST",
-    );
-    await page.getByRole("button", { name: "Assegna", exact: true }).click();
+    // 1) Fino a qui l'URL non si è mai mosso dal Nuovo compito.
+    expect(new URL(page.url()).pathname).toBe(urlNuovo);
+
+    const assegnazioneInviata = page.waitForResponse((r) => {
+      const url = new URL(r.url());
+      return url.pathname === "/api/esercizi/compiti" && r.request().method() === "POST";
+    });
+    await page.getByRole("button", { name: `Assegna a ${CLASSE_NOME}`, exact: true }).click();
     const rispostaAssegnazione = await assegnazioneInviata;
     expect(rispostaAssegnazione.status()).toBe(201);
-    await expect(page.getByText(/^compito assegnato\.$/i)).toBeVisible({ timeout: 10_000 });
+    // Assegnato, si arriva al compito appena dato.
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/(?!nuovo)[^/?]+$/, { timeout: 15_000 });
 
-    // === La prova che porta il task: UNA schermata sola ===
-    // 1) l'URL non si è MAI mosso da /dashboard/esercizi durante l'intera
-    // sequenza sopra (nessuna page.goto, nessun click su un link diverso da
-    // "Assegna" prima di questo punto).
-    expect(new URL(page.url()).pathname).toBe("/dashboard/esercizi");
-    // 2) nessuna richiesta verso /api/esercizi/contenitori o
-    // /api/esercizi/batterie è mai partita — non "non l'ho cliccato", ma
-    // "nessuna chiamata di rete li ha mai raggiunti" (copre anche un
-    // eventuale prefetch automatico dei <Link> verso quelle sezioni,
-    // rimaste in fondo alla pagina dal Task 4).
-    const percorsiVietati = chiamateApi.filter((c) => /\/api\/esercizi\/(contenitori|batterie)\b/.test(c));
+    // 2) Nessuna richiesta verso raccolte, batterie o modelli è mai partita
+    // — non "non l'ho cliccato", ma "nessuna chiamata di rete li ha mai
+    // raggiunti" (copre anche un prefetch automatico dei <Link>). E l'unica
+    // scrittura osservata è stata quella vera, una volta sola: le POST di
+    // `/compiti/estrai` sono il riepilogo, che non scrive niente.
+    const percorsiVietati = chiamateApi.filter((c) => /\/api\/esercizi\/(contenitori|batterie|modelli)\b/.test(c));
     expect(percorsiVietati).toEqual([]);
-    // E l'unica scrittura osservata è stata quella vera: la rotta della via
-    // veloce, una volta sola.
-    expect(chiamateApi.filter((c) => c.startsWith("POST"))).toEqual(["POST /api/esercizi/compiti/diretto"]);
+    expect(chiamateApi.filter((c) => c.startsWith("POST") && c !== "POST /api/esercizi/compiti/estrai")).toEqual([
+      "POST /api/esercizi/compiti",
+    ]);
 
     // === Lo studente entra e vede il compito, con tutti e dieci gli
     // esercizi e la scadenza — senza averne svolto nessuno ===
@@ -340,12 +322,10 @@ test.describe("Via veloce — assegnare in una schermata sola", () => {
     await login(page, STUDENT_EMAIL);
     await gotoStabile(page, "/studente");
 
-    // Il nome del compito, per lo studente, è quello che `assegnaDiretto`
-    // genera: argomento e quantità (compiti.ts) — non un nome che questa
-    // prova sceglie. Diceva "Assegnazione diretta: {argomento}" finché quel
-    // gergo interno non è stato tolto dalla vista del docente; se cambia
-    // ancora, è QUI che va aggiornato, e questa prova è ciò che se ne
-    // accorge.
+    // Il nome del compito, per lo studente, è quello che il Nuovo compito
+    // genera: l'etichetta del blocco e quanti (`nomeDelCompito`,
+    // compiti.ts) — non un nome che questa prova sceglie. Se cambia, è QUI
+    // che va aggiornato, e questa prova è ciò che se ne accorge.
     const compitoCard = page.locator("li", { hasText: `${ARGOMENTO} (${QUANTI_CREATI})` });
     await expect(compitoCard).toBeVisible({ timeout: 20_000 });
     await expect(compitoCard.getByText(`0 su ${QUANTI_CREATI} esercizi completati`)).toBeVisible();
@@ -356,56 +336,44 @@ test.describe("Via veloce — assegnare in una schermata sola", () => {
     await expect(compitoCard.locator('a[href*="/studente/esercizio/"]')).toHaveCount(QUANTI_CREATI);
   });
 
-  test("chiedere più esercizi di quanti ne esistano è rifiutato con entrambi i numeri nel messaggio", async ({
+  test("chiedere più esercizi di quanti ne esistano è segnato con entrambi i numeri, e non si può assegnare", async ({
     page,
   }) => {
     await login(page, TEACHER_EMAIL);
-    await gotoStabile(page, "/dashboard/esercizi");
 
-    await page.locator("#assegna-classe").selectOption(classeId);
-    const opzioneArgomento = page.locator(`#assegna-argomento option[value="${ARGOMENTO}"]`);
-    await expect(opzioneArgomento).toBeAttached({ timeout: 15_000 });
-    await page.locator("#assegna-argomento").selectOption(ARGOMENTO);
-    await expect(page.getByText(`${QUANTI_CREATI} esercizi disponibili`)).toBeVisible({ timeout: 10_000 });
-
-    // Uno in più di quanti questa esecuzione ne abbia creati per questo
-    // argomento — non un numero a caso: QUANTI_CREATI è quello che il
-    // conteggio appena verificato sopra dichiara disponibile.
-    const richiesti = QUANTI_CREATI + 1;
-    await page.locator("#assegna-quanti").fill(String(richiesti));
-
-    const rispostaRifiutata = page.waitForResponse(
-      (r) => r.url().includes("/api/esercizi/compiti/diretto") && r.request().method() === "POST",
-    );
-    await page.getByRole("button", { name: "Assegna", exact: true }).click();
-    const risposta = await rispostaRifiutata;
-    expect(risposta.status()).toBe(409);
-    const corpo = await risposta.json();
-    // I due numeri, verificati anche nel corpo grezzo della risposta HTTP —
-    // non solo nel testo che lo schermo mostra: la garanzia parte dal
-    // dominio (`assegna`, compiti.ts), non da come il modulo la formatta.
-    expect(corpo).toMatchObject({
-      error: "esercizi_insufficienti",
-      dettaglio: { contenitore: ARGOMENTO, richiesti, disponibili: QUANTI_CREATI },
+    const scritture: string[] = [];
+    page.on("request", (req) => {
+      const url = new URL(req.url());
+      if (req.method() === "POST" && url.pathname === "/api/esercizi/compiti") scritture.push(url.pathname);
     });
 
-    // La stringa esatta che il docente legge: entrambi i numeri, non un
-    // errore generico che li perderebbe (messaggioErrore, assegna-form.tsx).
-    // Scoperto qui: Next.js porta un SECONDO elemento con `role="alert"` a
-    // livello di root layout (`__next-route-announcer__`, per i lettori di
-    // schermo sui cambi di rotta) — `getByRole("alert")` da solo è ambiguo.
-    // Il nostro è dentro il `<form>` del modulo, l'unico su questa pagina.
-    const messaggio = page.locator("form").getByRole("alert");
-    await expect(messaggio).toBeVisible({ timeout: 10_000 });
-    await expect(messaggio).toHaveText(
-      `Per "${ARGOMENTO}" non ci sono abbastanza esercizi: richiesti ${richiesti}, disponibili ${QUANTI_CREATI}.`,
+    // Classe e argomento arrivano già dall'indirizzo, come da "Assegna
+    // questo argomento" nel catalogo: il blocco c'è, con cinque esercizi.
+    await gotoStabile(
+      page,
+      `/dashboard/esercizi/compiti/nuovo?classe=${encodeURIComponent(classeId)}&argomento=${encodeURIComponent(ARGOMENTO)}`,
     );
+    const quanti = page.getByRole("spinbutton", { name: `Quanti esercizi prendere da ${ARGOMENTO}` });
+    await expect(quanti).toHaveValue("5", { timeout: 20_000 });
 
-    // Nessun compito creato da un tentativo rifiutato, e nessuna batteria
-    // orfana lasciata indietro (Fix round 1 del Task 3, riverificato qui
-    // dall'esterno): la pulizia di questo file in `afterAll` non deve
-    // trovare più di UNA batteria automatica per questo run (quella del
-    // primo test, riuscito).
+    // Uno in più di quanti questa esecuzione ne abbia creati per questo
+    // argomento — non un numero a caso: QUANTI_CREATI è il totale del
+    // nostro argomento, unico per questa esecuzione.
+    const richiesti = QUANTI_CREATI + 1;
+    await quanti.fill(String(richiesti));
+
+    // La stringa esatta che il docente legge: entrambi i numeri, non un
+    // errore generico che li perderebbe.
+    await expect(page.getByText(`${ARGOMENTO}: ne chiedi ${richiesti}, ce ne sono ${QUANTI_CREATI}`, { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: `Assegna a ${CLASSE_NOME}`, exact: true })).toBeDisabled();
+
+    // Nessuna assegnazione tentata, quindi nessun compito e nessuna
+    // batteria nuova: la pulizia di questo file in `afterAll` non deve
+    // trovare più di UNA batteria automatica per questo argomento (quella
+    // del primo test, riuscito).
+    expect(scritture).toEqual([]);
     const batterieResidue = await prisma.batteria.findMany({
       where: { name: `${ARGOMENTO} (${QUANTI_CREATI})` },
       select: { id: true },

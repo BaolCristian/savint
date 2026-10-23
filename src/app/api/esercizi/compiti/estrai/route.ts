@@ -26,7 +26,7 @@ const bodySchema = z.object({
  * La classe deve essere del docente (`classiDelDocente`, che esclude le
  * archiviate): altrimenti 404, non 403, come le altre rotte dei compiti — un
  * 403 confermerebbe che quella classe esiste. Serve la classe per l'anno dei
- * blocchi argomento (`blocchiConAnno`, come `compiti/diretto`).
+ * blocchi argomento (`blocchiConAnno`).
  *
  * Tetto più largo delle rotte che scrivono: la pagina chiama questa a ogni
  * modifica, e un docente che compone tre blocchi ne fa decine al minuto. */

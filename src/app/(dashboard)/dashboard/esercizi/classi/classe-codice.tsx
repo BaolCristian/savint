@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
  * basta dirlo nel dominio (`rigeneraCodice`, classi.ts) — va detto qui, nel
  * testo che il docente legge PRIMA di premere conferma.
  *
- * Nessuna prop coi testi già tradotti: come `compito-form.tsx`, qui serve
+ * Nessuna prop coi testi già tradotti: come `gestione-compito.tsx`, qui serve
  * interpolare il nome della classe nella traduzione ad ogni apertura del
  * dialogo, cosa che un componente server può fare ma che non cambia il
  * fatto che tutto il resto del widget è comunque interattivo — tenerlo

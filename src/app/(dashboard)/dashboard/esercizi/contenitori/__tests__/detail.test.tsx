@@ -60,6 +60,26 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
+  // Nuovo compito, Task 7: dalla raccolta si assegna direttamente.
+  it("\"Assegna questa raccolta\" apre il Nuovo compito con la raccolta", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({
+      id: "cont1", name: "Equazioni", description: null, ...MIA,
+      esercizi: [{ id: "e1", title: "Primo grado", yearLevel: 1, topic: "algebra", difficulty: 1 }],
+    });
+    await rendi();
+    expect(screen.getByRole("link", { name: "assegna" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/compiti/nuovo?raccolta=cont1",
+    );
+  });
+
+  it("una raccolta vuota non offre di essere assegnata", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({
+      id: "cont1", name: "Equazioni", description: null, esercizi: [], ...MIA,
+    });
+    await rendi();
+    expect(screen.queryByRole("link", { name: "assegna" })).toBeNull();
+  });
+
   it("404 se il contenitore non esiste", async () => {
     vi.mocked(contenutoContenitore).mockResolvedValue(null);
     await expect(Page({ params: Promise.resolve({ id: "boh" }) })).rejects.toThrow("NEXT_NOT_FOUND");

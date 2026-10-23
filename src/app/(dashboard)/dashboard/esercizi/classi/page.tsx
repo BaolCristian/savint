@@ -36,8 +36,8 @@ export default async function Page() {
   // intatta. Tradotto già qui, non nel client component: un client
   // component non può ricevere funzioni come prop (`useTranslations` è
   // l'unica via, e qui il nome della classe e l'elenco dei compiti sono già
-  // noti server-side, senza bisogno del pattern usato da `compito-form.tsx`
-  // per il dettaglio di `esercizi_insufficienti`, noto solo a runtime).
+  // noti server-side, senza bisogno del pattern usato da `gestione-compito.tsx`
+  // per il motivo di un rifiuto, noto solo a runtime).
   // Nessun giro di rete in più: `compitiDellaClasse` è la stessa funzione
   // già usata dalla pagina dei compiti.
   const nomeClasse = new Map(disponibili.map((c) => [c.id, c.name]));
@@ -79,7 +79,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
         <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
@@ -99,9 +99,16 @@ export default async function Page() {
               <Card key={c.id} className="gap-3 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-medium">{c.nome}</p>
-                  <Link href={`/dashboard/esercizi/classi/${c.id}/andamento`} className="text-sm text-brand-blue hover:underline">
-                    {tE("statistiche.linkAndamento")}
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Nuovo compito, Task 7: un compito a questa classe,
+                        con la classe già scelta. */}
+                    <Link href={`/dashboard/esercizi/compiti/nuovo?classe=${encodeURIComponent(c.id)}`} className="text-sm font-medium text-brand-blue hover:underline">
+                      {t("nuovoCompito")}
+                    </Link>
+                    <Link href={`/dashboard/esercizi/classi/${c.id}/andamento`} className="text-sm text-brand-blue hover:underline">
+                      {tE("statistiche.linkAndamento")}
+                    </Link>
+                  </div>
                 </div>
                 {c.codice && <ClasseCodice classeId={c.id} classeNome={c.nome} codiceIniziale={c.codice} />}
                 <div className="space-y-1">

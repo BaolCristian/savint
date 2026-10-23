@@ -15,7 +15,7 @@ export default async function Page() {
     <div className="space-y-4 p-6">
       <TeacherExercisesNav labels={{
         label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"),
+        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
       }} />
       <div className="max-w-3xl space-y-6">
         <h1 className="text-2xl font-semibold">{t("titoloPagina")}</h1>

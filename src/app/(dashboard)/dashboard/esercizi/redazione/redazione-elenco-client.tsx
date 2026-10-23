@@ -43,6 +43,9 @@ export interface VoceElenco {
    * loro descrizione già tradotta dalla pagina ("2 commenti aperti"). */
   commentiAperti: number;
   commentiApertiTesto: string;
+  /** Ha almeno una versione salvata, quindi si può dare in un compito
+   * (Nuovo compito, Task 7): senza versione non c'è niente da consegnare. */
+  assegnabile: boolean;
 }
 
 interface Testi extends DuplicaButtonTesti {
@@ -55,6 +58,10 @@ interface Testi extends DuplicaButtonTesti {
    * nessun altro modo per un docente di vedere quell'esercizio (vedi il
    * brief del task). */
   anteprima: string;
+  /** "Assegna" sulla riga e "Assegna questo argomento" sul gruppo: aprono
+   * il Nuovo compito con l'esercizio o l'argomento (Task 7). */
+  assegna: string;
+  assegnaArgomento: string;
   cerca: string;
   anno: string;
   argomento: string;
@@ -163,9 +170,22 @@ export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: Vo
                 {/* L'argomento si condivide solo per gli esercizi propri: il
                     pulsante c'è se nel gruppo ce n'è almeno uno (anche per
                     l'ADMIN, che qui condivide i suoi). */}
-                {g.voci.some((v) => v.diChi === "miei") && (
-                  <CondividiDialog risorsa={{ tipo: "argomento", argomento: g.argomento }} titolo={maiuscola(g.argomento)} testi={testi.condivisione} compatto />
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Un argomento si assegna se almeno uno dei suoi esercizi
+                      ha una versione: altrimenti il blocco non pescherebbe
+                      niente. */}
+                  {g.voci.some((v) => v.assegnabile) && (
+                    <Link
+                      href={`/dashboard/esercizi/compiti/nuovo?argomento=${encodeURIComponent(g.argomento)}`}
+                      className="text-sm font-medium text-brand-blue hover:underline"
+                    >
+                      {testi.assegnaArgomento}
+                    </Link>
+                  )}
+                  {g.voci.some((v) => v.diChi === "miei") && (
+                    <CondividiDialog risorsa={{ tipo: "argomento", argomento: g.argomento }} titolo={maiuscola(g.argomento)} testi={testi.condivisione} compatto />
+                  )}
+                </div>
               </div>
               <ul className="divide-y divide-border px-4">
                 {g.voci.map((v) => (
@@ -201,6 +221,11 @@ export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: Vo
                         <Link href={`/dashboard/esercizi/anteprima/${v.id}`} className="text-sm text-brand-blue hover:underline">
                           {testi.anteprima}
                         </Link>
+                        {v.assegnabile && (
+                          <Link href={`/dashboard/esercizi/compiti/nuovo?esercizio=${encodeURIComponent(v.id)}`} className="text-sm text-brand-blue hover:underline">
+                            {testi.assegna}
+                          </Link>
+                        )}
                         {apribile(v) && (
                           <Link href={`/dashboard/esercizi/redazione/${v.id}`} className="text-sm text-brand-blue hover:underline">
                             {testi.apri}

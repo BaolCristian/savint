@@ -6,7 +6,8 @@
       "catalog": "Catalog",
       "collections": "Collections",
       "assignments": "Assignments",
-      "classes": "Classes"
+      "classes": "Classes",
+      "models": "Templates"
     },
     "catalog": {
       "search": "Search the catalog",
@@ -39,10 +40,7 @@
       "topic": "Topic",
       "all": "All",
       "noResults": "No exercises match these filters.",
-      "selected": "{count, plural, one {# exercise selected} other {# exercises selected}}",
-      "prepareTitle": "Prepare an assignment",
-      "prepareDescription": "A collection organizes exercises. Prepare an assignment by choosing how many exercises to take from each collection, then assign it to a class.",
-      "prepareAction": "Prepare an assignment"
+      "selected": "{count, plural, one {# exercise selected} other {# exercises selected}}"
     },
     "tasks": {
       "progressToDo": "To complete",
@@ -52,13 +50,6 @@
       "createSection": "Create a class",
       "teachingSection": "Classes you teach",
       "managementSection": "Codes and enrolled students"
-    },
-    "preparation": {
-      "title": "Prepare an assignment",
-      "description": "Choose which collections to draw exercises from and how many to take. When it is ready, assign it to one of your classes from the Assignments page.",
-      "sourceCollection": "Source collection",
-      "preparedTask": "Prepared assignment",
-      "assignAction": "Go to assignments"
     }
   },
   "common": {
@@ -110,7 +101,8 @@
     "createExercisesWithAI": "Create exercises with AI",
     "importExercises": "Import exercises",
     "assignments": "Assignments",
-    "classes": "Classes"
+    "classes": "Classes",
+    "newAssignment": "New assignment"
   },
   "login": {
     "loginWithSchoolAccount": "Sign in with your school account",
@@ -1200,8 +1192,6 @@
     "navContenitori": "Collections",
     "navCompiti": "Assigned work",
     "navRedazione": "My exercises",
-    "assegnaTitolo": "Assign exercises",
-    "assegnaDescrizione": "Choose the class, the topic, how many exercises, and by when.",
     "titoloStudente": "Your exercises",
     "annoArgomento": "Year {anno} · {argomento}",
     "difficolta": "Difficulty {livello}",
@@ -1265,17 +1255,18 @@
         "erroreNonValido": "Invalid code.",
         "erroreGiaIscritto": "You're already enrolled in this class.",
         "erroreGenerico": "Could not complete enrollment. Please try again."
-      }
+      },
+      "nuovoCompito": "Give an assignment"
     },
     "contenitori": {
       "titolo": "Collections",
-      "descrizione": "Collect here the exercises you want to assign together.",
+      "descrizione": "Collections are folders to keep your exercises in order.",
       "nome": "Name",
       "descrizioneCampo": "Description (optional)",
       "crea": "Create",
       "elimina": "Delete",
       "nessunContenitore": "You haven't created any collections yet.",
-    "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
+      "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
       "erroreInUso": "It can't be deleted: it's used in an assignment.",
       "erroreGenerico": "Something went wrong. Please try again.",
       "torna": "Back to collections",
@@ -1288,24 +1279,8 @@
       "anteprima": "Preview",
       "avvisoPrivato": "This exercise is private: if you add it, people with access to the collection will see it too.",
       "confermaAggiunta": "Add anyway",
-      "annulla": "Cancel"
-    },
-    "batterie": {
-      "titolo": "Batteries",
-      "descrizione": "Compose a set of exercises by choosing, for each source collection, how many to draw. This is the long way: to assign, topic and quantity are enough, from “Assign exercises”.",
-      "nome": "Name",
-      "contenitore": "Container",
-      "quantita": "Quantity",
-      "aggiungiRegola": "Add rule",
-      "rimuoviRegola": "Remove",
-      "crea": "Create battery",
-      "elimina": "Delete",
-      "nessunaBatteria": "You haven't created any batteries yet.",
-      "regolaLabel": "{count} from {contenitore}",
-      "compitiCount": "Used in {n} assignments",
-      "erroreInUso": "It can't be deleted: it has already been assigned to a class.",
-      "erroreGenerico": "Something went wrong. Please try again.",
-      "necessitaContenitori": "Create at least one container first."
+      "annulla": "Cancel",
+      "assegna": "Assign this collection"
     },
     "nuovoCompito": {
       "titolo": "New assignment",
@@ -1419,40 +1394,11 @@
       "elimina": "Delete",
       "nessunModello": "There are no templates yet. When you assign work, tick “Also save as template” to find it here.",
       "nessunoMio": "You haven't saved any templates yet.",
-      "erroreGenerico": "Something went wrong. Please try again."
-    },
-    "assegnaForm": {
-      "classe": "Class",
-      "anno": "Year",
-      "annoAiuto": "This class has no year set: enter one to choose exercises.",
-      "argomento": "Topic",
-      "argomentoOpzione": "{argomento} — {quanti}",
-      "nessunArgomentoDisponibile": "No topic available for this class.",
-      "quanti": "How many exercises",
-      "quantiSegnaposto": "e.g. 10",
-      "difficolta": "Difficulty",
-      "difficoltaQualsiasi": "Any",
-      "difficolta1": "Easy",
-      "difficolta2": "Medium",
-      "difficolta3": "Hard",
-      "apertura": "Opening date",
-      "scadenza": "Deadline (optional)",
-      "altreOpzioni": "Difficulty and opening date",
-      "assegna": "Assign",
-      "assegnato": "Assignment created.",
-      "corrispondenti": "{quanti, plural, one {# exercise available} other {# exercises available}}",
-      "calcolando": "Checking…",
-      "anteprima": "Preview",
-      "nessunaClasseInsegnata": "Declare which classes you teach first.",
-      "erroreCapienza": "Not enough exercises for \"{argomento}\": requested {richiesti}, available {disponibili}.",
-      "erroreNonInsegni": "You don't teach this class.",
-      "erroreClasseNonTrovata": "The chosen class no longer exists.",
-      "erroreClasseSenzaAnno": "This class has no year: enter one to continue.",
-      "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
-      "erroreScadenzaPassata": "The deadline is already in the past.",
-      "erroreRateLimited": "Too many attempts in a row: try again shortly.",
       "erroreGenerico": "Something went wrong. Please try again.",
-      "vaiAlleClassi": "Go to My classes"
+      "eliminaConfermaTitolo": "Delete this template?",
+      "eliminaConfermaTesto": "It disappears from the template list. Assignments already given don't change.",
+      "eliminaConferma": "Yes, delete",
+      "annulla": "Cancel"
     },
     "stampa": {
       "titoloPagina": "Print as a test",
@@ -1482,17 +1428,9 @@
     },
     "compiti": {
       "titolo": "Assigned work",
-      "descrizione": "What you have already given your classes. To assign something new, use “Assign exercises” on the exercises page.",
-    "batteria": "Prepared assignment",
-      "classe": "Class",
+      "descrizione": "What you have already given your classes.",
       "apertura": "Opening date (optional)",
       "scadenza": "Deadline (optional)",
-      "assegna": "Assign",
-      "assegnato": "Assignment created.",
-      "erroreCapienza": "The container \"{contenitore}\" isn't enough: requested {richiesti}, available {disponibili}.",
-      "erroreNonInsegni": "You don't teach this class.",
-    "erroreBatteriaNonTrovata": "The chosen prepared assignment no longer exists.",
-      "erroreClasseNonTrovata": "The chosen class no longer exists.",
       "erroreScadenzaPrimaApertura": "The deadline can't be before the opening date.",
       "erroreScadenzaPassata": "The deadline is already in the past.",
       "erroreGenerico": "Something went wrong. Please try again.",
@@ -1501,7 +1439,7 @@
       "nessunaClasseInsegnata": "Declare which classes you teach first.",
       "compitoScadenza": "Due on {quando}",
       "nessunaScadenza": "No deadline",
-    "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
+      "eserciziCount": "{n, plural, one {# exercise} other {# exercises}}",
       "torna": "Back to assignments",
       "titoloConsegne": "Submissions — {batteria} ({classe})",
       "nomeCol": "Student",
@@ -1516,9 +1454,7 @@
       "ritiraConferma": "Yes, withdraw",
       "annulla": "Cancel",
       "erroreCompitoNonTrovato": "This assignment no longer exists or has already been withdrawn.",
-    "daRaccolta": "Assign a prepared assignment",
-    "daRaccoltaAiuto": "A prepared assignment chooses how many exercises to draw from collections. Prepare one before assigning it to a class.",
-    "nessunaRaccolta": "You have no prepared assignments yet. Prepare one from collections before assigning it."
+      "nuovo": "New assignment"
     },
     "statistiche": {
       "perEsercizioTitolo": "Exercise by exercise",
@@ -1816,7 +1752,9 @@
         "nessunEsercizio": "No exercises yet.",
         "anteprima": "Preview",
         "importa": "Import from file",
-        "importati": "{importati, plural, =0 {No exercises imported} one {# exercise imported} other {# exercises imported}}{saltati, plural, =0 {.} other {, # skipped (invalid, already present or not saved).}}"
+        "importati": "{importati, plural, =0 {No exercises imported} one {# exercise imported} other {# exercises imported}}{saltati, plural, =0 {.} other {, # skipped (invalid, already present or not saved).}}",
+        "assegna": "Assign",
+        "assegnaArgomento": "Assign this topic"
       },
       "importa": {
         "titolo": "Import exercises from JSON",

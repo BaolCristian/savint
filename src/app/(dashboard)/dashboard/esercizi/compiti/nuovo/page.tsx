@@ -83,7 +83,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
       <div className="space-y-1">
         <Link href="/dashboard/esercizi/compiti" className="text-sm text-brand-blue hover:underline">
           {tCompiti("torna")}

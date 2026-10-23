@@ -133,7 +133,7 @@ export function regolaDaBlocco(b: Blocco): RegolaInput {
 /** Risolve ogni blocco nel suo bacino, sempre COME DOCENTE: `chi` passa da
  * `comeDocente`, e la mappa dei visibili (`ruoliEsercizi`, che carica tutti
  * gli esercizi) si calcola UNA volta per tutti i blocchi e si passa a
- * `bacinoRegola` — la stessa risoluzione di `assegna` e `verificaBatteria`,
+ * `bacinoRegola` — la stessa risoluzione per riepilogo e assegnazione,
  * non una seconda che possa divergere. Un ADMIN che insegna pesca così solo
  * fra ciò che vedrebbe da docente.
  *
@@ -223,7 +223,7 @@ export async function baciniDeiBlocchi(
 
 /** I candidati che restano a un blocco: tolti quelli `esclusi`, senza
  * doppioni, ORDINATI — così il sorteggio non dipende dall'ordine in cui il
- * database ha restituito il bacino. È la regola che `assegna` ha sempre
+ * database ha restituito il bacino. È la regola che la vecchia `assegna` (tolta nel Task 7) ha sempre
  * applicato (prima in `candidatiDisponibili`, batterie.ts, ora tolta: una
  * copia sola), per i blocchi casuali. */
 function liberiOrdinati(candidati: readonly string[], esclusi: (id: string) => boolean): string[] {
@@ -231,7 +231,7 @@ function liberiOrdinati(candidati: readonly string[], esclusi: (id: string) => b
 }
 
 /** Il sorteggio vero, con il dettaglio che serve al riepilogo (e al
- * messaggio di rifiuto di `assegna`). Pura: nessuna query, solo il seme.
+ * rifiuto `esercizi_insufficienti` di `assegnaCompito`). Pura: nessuna query, solo il seme.
  *
  * **Gli esercizi scelti a mano vincono sempre** (spec, 281721c). Prima di
  * pescare si raccolgono i candidati di TUTTI i blocchi "scelti" (`riservati`)
@@ -242,7 +242,7 @@ function liberiOrdinati(candidati: readonly string[], esclusi: (id: string) => b
  * nuovo" sì e all'altro no. Così un blocco scelti è soddisfatto ogni volta
  * che i suoi esercizi sono disponibili, qualunque seme.
  *
- * Per i blocchi casuali l'algoritmo è quello che `assegna` (compiti.ts) ha
+ * Per i blocchi casuali l'algoritmo è quello che la vecchia `assegna` (compiti.ts) ha
  * sempre usato, e che ora usa da qui: `seedrandom(seme)`, blocchi IN
  * ORDINE, candidati tolti i già presi (e i riservati) e ordinati
  * (`liberiOrdinati`), Fisher–Yates seminato con lo stesso `rng` condiviso
@@ -261,7 +261,7 @@ function liberiOrdinati(candidati: readonly string[], esclusi: (id: string) => b
  * il ciclo CONTINUA sui blocchi seguenti senza che quello prenda niente: il
  * riepilogo vuole i numeri di tutti i blocchi, non solo fino al primo che
  * manca. Il primo blocco insufficiente ha comunque esattamente i numeri che
- * `assegna` ha sempre riportato (tutti i precedenti hanno pescato).
+ * la vecchia `assegna` ha sempre riportato (tutti i precedenti hanno pescato).
  *
  * `duplicatiTolti`: quanti esercizi un blocco ha PERSO perché già presi
  * altrove — la somma, blocco per blocco, dei suoi candidati tolti perché
@@ -300,7 +300,7 @@ export function estraiConDettaglio(
     }
 
     if (!scelti) {
-      // Fisher–Yates seminato, identico a quello che `assegna` ha sempre
+      // Fisher–Yates seminato, identico a quello che la vecchia `assegna` ha sempre
       // fatto: stabile per lo stesso seme, diverso per un seme nuovo.
       for (let i = liberi.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));

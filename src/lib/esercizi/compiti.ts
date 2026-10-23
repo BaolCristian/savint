@@ -1,12 +1,9 @@
-import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db/client";
-import { idsConVersione, bacinoRegola, etichettaRegola, creaBatteria, formaRegola, rifiutoRegole, scriviBatteria } from "./batterie";
+import { rifiutoRegole, scriviBatteria } from "./batterie";
 import {
   baciniDeiBlocchi,
-  estraiConDettaglio,
   regolaDaBlocco,
   riepilogoEstrazione,
-  ultimeVersioni,
   ultimeVersioniIds,
   versioniConContenuto,
   type Blocco,
@@ -20,35 +17,11 @@ import {
   versioniDiTuttiGliStudenti,
   type BacinoCongelato,
 } from "./versioni-compito";
-import { comeDocente, ruoliEsercizi, type Utente } from "./accesso";
-
-type MotivoAssegna =
-  | "batteria_non_trovata"
-  | "classe_non_trovata"
-  | "non_insegni_questa_classe"
-  | "esercizi_insufficienti"
-  | "scadenza_prima_apertura"
-  | "scadenza_nel_passato"
-  // Prodotto SOLO da `assegnaDiretto` (Onda di correzioni sui numeri), mai
-  // da `assegna`: la traduzione, nella forma di `EsitoAssegna`, del rifiuto
-  // `conteggio_non_valido` che `creaBatteria` restituisce quando `quanti`
-  // non è un intero positivo — vedi il commento su `assegnaDiretto` più
-  // sotto per il perché la convalida vive in `creaBatteria` e non qui.
-  | "quantita_non_valida";
-
-/** L'esito di un'assegnazione. Esportato (Task 2, docente-via-veloce) perché
- * da questo task in poi ha DUE produttori — `assegna` (per raccolta) e
- * `assegnaDiretto` (per filtro) — e il secondo deve dichiarare di restituire
- * esattamente lo stesso tipo del primo, a cui delega per intero: un tipo
- * proprio, anche se strutturalmente identico, potrebbe divergere in silenzio
- * a una futura modifica di uno solo dei due. */
-export type EsitoAssegna =
-  | { ok: true; compitoId: string }
-  | { ok: false; motivo: MotivoAssegna; dettaglio?: unknown };
+import { comeDocente, type Utente } from "./accesso";
 
 type MotivoDate = "scadenza_prima_apertura" | "scadenza_nel_passato";
 
-/** Le regole sulle date di un compito, condivise da `assegna` e da
+/** Le regole sulle date di un compito, condivise da `assegnaCompito` e da
  * `modificaDateCompito`: una sola copia, perché una finestra rifiutata
  * all'assegnazione non deve poter entrare dalla porta della modifica.
  *
@@ -70,353 +43,6 @@ function motivoDateNonValide(
   if (opensAt && dueAt && dueAt < opensAt) return "scadenza_prima_apertura";
   if (scadenzaNuova && dueAt && dueAt < new Date()) return "scadenza_nel_passato";
   return null;
-}
-
-/** Assegna una batteria a una classe: pesca UNA volta, con un seme nuovo, e
- * fissa il risultato nel Compito. Da quel momento in poi nessuna modifica al
- * contenitore, alle versioni degli esercizi o una nuova assegnazione della
- * stessa batteria può cambiare cosa quella classe ha ricevuto: il seme e le
- * versioni pescate sono già scritte nella riga.
- *
- * Le regole vengono eseguite nel loro `order`: un esercizio pescato da una
- * regola non può essere ripescato da una regola successiva della stessa
- * batteria (due contenitori possono condividere un esercizio, Task 3).
- * Questo significa che l'ORDINE delle regole decide chi ha la precedenza su
- * un esercizio condiviso — la prima regola che lo trova nel suo contenitore
- * se lo prende, e alla regola successiva non resta più disponibile, anche
- * se questo la fa fallire per insufficienza. Un esercizio senza nessuna
- * `EsercizioVersione` non conta mai come disponibile, per nessuna regola:
- * non potrebbe comunque essere consegnato (vedi `estraiConDettaglio` in
- * estrazione.ts e `idsConVersione` in batterie.ts — quest'ultima condivisa anche da
- * `verificaBatteria`, che stima la stessa cosa senza un sorteggio vero).
- *
- * Tutti i controlli (batteria, classe, insegnamento, capienza dei
- * contenitori) avvengono PRIMA di qualunque scrittura: un fallimento non
- * lascia nessun Compito a metà.
- *
- * **Una classe archiviata non riceve assegnazioni (Fix round 2, Task 3
- * docente-via-veloce).** `archivedAt` non cancella la riga `ClasseDocente`
- * — un docente che insegnava una classe poi archiviata la vede ancora
- * come "sua" per quella tabella — quindi senza questo controllo
- * un'assegnazione qui passava comunque. `classiDelDocente` (classi.ts),
- * che `compiti/diretto/route.ts` usa per il proprio pre-controllo, esclude
- * già `archivedAt` non nullo dal suo elenco: la stessa classe archiviata
- * rispondeva già `non_insegni_questa_classe` da quella rotta. Senza
- * questo controllo QUI, `/api/esercizi/compiti` (che non ha un
- * pre-controllo proprio, delega interamente a questa funzione) rispondeva
- * diversamente alla stessa identica domanda — anzi, non rifiutava affatto.
- * Stesso motivo di "non la insegna" (`non_insegni_questa_classe`), non un
- * terzo nuovo: dal punto di vista di chi assegna, una classe archiviata e
- * una mai insegnata meritano la stessa risposta — nessuna delle due è una
- * classe a cui questo docente possa assegnare lavoro adesso. */
-export async function assegna(
-  batteriaId: string,
-  classeId: string,
-  assignedById: string,
-  opzioni?: { opensAt?: Date; dueAt?: Date },
-): Promise<EsitoAssegna> {
-  // Controllo di forma sulle date, prima di qualunque interrogazione: non
-  // richiede il database, quindi è il più economico da fare per primo.
-  const date = motivoDateNonValide(opzioni?.opensAt ?? null, opzioni?.dueAt ?? null, true);
-  if (date) return { ok: false, motivo: date };
-
-  const batteria = await prisma.batteria.findUnique({
-    where: { id: batteriaId },
-    include: {
-      regole: {
-        orderBy: { order: "asc" },
-        include: { contenitore: true },
-      },
-    },
-  });
-  if (!batteria) return { ok: false, motivo: "batteria_non_trovata" };
-
-  const classe = await prisma.classe.findUnique({ where: { id: classeId } });
-  if (!classe) return { ok: false, motivo: "classe_non_trovata" };
-  // Vedi il commento sopra la funzione: stesso motivo di "non la insegna",
-  // controllata prima della query su ClasseDocente perché una classe
-  // archiviata la rifiuta comunque, quale che sia quella riga.
-  if (classe.archivedAt != null) return { ok: false, motivo: "non_insegni_questa_classe" };
-
-  const insegna = await prisma.classeDocente.findUnique({
-    where: { classeId_teacherId: { classeId, teacherId: assignedById } },
-  });
-  if (!insegna) return { ok: false, motivo: "non_insegni_questa_classe" };
-
-  // Il bacino grezzo di ciascuna regola, quale che sia la sua forma (Task 1:
-  // contenitore o filtro) — bacinoRegola lancia se una regola non rispetta
-  // l'invariante, invece di restituire un bacino vuoto (vedi batterie.ts):
-  // la stessa risoluzione che usa `verificaBatteria`, non una seconda.
-  // Ristretto a ciò che vede chi assegna (spec "Batterie"): la batteria è
-  // comune, la pesca no. Gli esercizi visibili si calcolano UNA volta per
-  // tutta l'assegnazione (`ruoliEsercizi` li carica tutti), non per regola;
-  // una regola su una raccolta che questo docente non vede pesca zero e
-  // finisce nel solito `esercizi_insufficienti` qui sotto. Chi assegna conta
-  // come docente qualunque (`comeDocente`): un ADMIN che insegna non pesca
-  // le bozze private dei colleghi.
-  const chi = comeDocente(assignedById);
-  const visibili = await ruoliEsercizi(chi);
-  const bacini = await Promise.all(batteria.regole.map((r) => bacinoRegola(r, chi, visibili)));
-  const tuttiGliId = [...new Set(bacini.flat())];
-  const conVersione = await idsConVersione(tuttiGliId);
-
-  // Il sorteggio vive in `estraiConDettaglio` (estrazione.ts, Nuovo
-  // compito Task 2): lo STESSO algoritmo che stava qui — seme nuovo, regole
-  // in ordine, esclusione dei già pescati (due contenitori possono
-  // condividere un esercizio, Task 3: senza esclusione un compito "5 da
-  // Equazioni, 3 da Sistemi" potrebbe consegnare meno di 8 esercizi
-  // distinti), candidati ordinati, Fisher–Yates seminato — spostato perché
-  // anche il riepilogo del Nuovo compito lo usa: una copia sola, così
-  // l'anteprima e l'assegnazione non possono estrarre in due modi diversi.
-  // Il candidato senza versione resta fuori come prima (`conVersione`).
-  const daEstrarre = batteria.regole.map((regola, i) => ({
-    candidati: bacini[i]!.filter((id) => conVersione.has(id)),
-    richiesti: regola.count,
-    // Una regola "scelti a mano" vince sempre sulle casuali e non si
-    // mescola (vedi `estraiConDettaglio`).
-    scelti: formaRegola(regola) === "scelti",
-  }));
-  const drawSeed = randomUUID();
-  const { esercizi, disponibili } = estraiConDettaglio(daEstrarre, drawSeed);
-  if (!esercizi) {
-    // Il PRIMO blocco insufficiente: i suoi numeri sono quelli di sempre,
-    // perché tutti i precedenti hanno pescato normalmente.
-    const i = disponibili.findIndex((d, k) => d < daEstrarre[k]!.richiesti);
-    const regola = batteria.regole[i]!;
-    return {
-      ok: false,
-      motivo: "esercizi_insufficienti",
-      dettaglio: {
-        contenitore: etichettaRegola(regola),
-        richiesti: regola.count,
-        disponibili: disponibili[i]!,
-      },
-    };
-  }
-
-  // L'ultima versione di ciascun estratto, nell'ordine dell'estrazione (una
-  // query sola invece di una per esercizio, stesso risultato).
-  const versioni = await ultimeVersioni(esercizi);
-  const drawnVersionIds = esercizi.flatMap((id) => {
-    const v = versioni.get(id);
-    return v ? [v.versioneId] : [];
-  });
-
-  const compito = await prisma.compito.create({
-    data: {
-      batteriaId,
-      classeId,
-      assignedById,
-      drawSeed,
-      drawnVersionIds,
-      opensAt: opzioni?.opensAt,
-      dueAt: opzioni?.dueAt,
-    },
-  });
-
-  return { ok: true, compitoId: compito.id };
-}
-
-/** I filtri di una regola a "argomento" (Task 1: la seconda forma di
- * `BatteriaRegola`, alternativa al contenitore) così come li raccoglie il
- * modulo di assegnazione diretta. `anno` non è mai facoltativo qui: la
- * specifica lo dice esplicitamente ("l'anno non si chiede") — viene sempre
- * dalla classe scelta dal docente, mai da un campo che lui compila. */
-export type FiltroDiretto = { anno: number; argomento: string; difficoltaMax?: number };
-
-/** Quanti esercizi risponderebbero a questo filtro **se si assegnasse ora**
- * — il numero che il docente legge mentre sceglie, prima di impegnarsi
- * ("quanti esercizi corrispondono", nella specifica). Deve contare
- * esattamente ciò che la pesca vera potrebbe consegnare, non l'appartenenza
- * grezza al filtro: passa dalla STESSA risoluzione di `bacinoRegola` —
- * l'unico punto che tutte le letture attraversano (Task 1) — e dallo STESSO
- * filtro di disponibilità di versione di `idsConVersione`, non da una nuova
- * query che potrebbe divergere in silenzio da quella che la pesca userà.
- *
- * Nessuna esclusione per "già pescati" da applicare qui, a differenza del
- * sorteggio (`estraiConDettaglio`, estrazione.ts): una batteria automatica (`assegnaDiretto` più
- * sotto) ha sempre e solo UNA regola, quindi non esiste una regola
- * precedente della stessa batteria con cui accavallarsi — lo stesso motivo
- * per cui `verificaBatteria` (batterie.ts) non ha bisogno di un `presi`
- * prima che un'assegnazione sia mai avvenuta.
- *
- * "Un conteggio che promette più di quanto la pesca consegni sarebbe peggio
- * di nessun conteggio" (dal brief): qui non può succedere per costruzione —
- * non è una stima, è la stessa identica risoluzione che `assegna` userebbe
- * per questa regola — compreso il filtro su ciò che `chi` vede: chi conta
- * deve essere lo stesso docente che poi assegna (`assegnaDiretto` passa il
- * suo `teacherId` ad `assegna`, che lo tratta come docente qualunque con
- * `comeDocente`, come fa `bacinoRegola` qui: un ADMIN conta da docente). */
-export async function quantiCorrispondono(f: FiltroDiretto, chi: Utente): Promise<number> {
-  const bacino = await bacinoRegola({
-    contenitoreId: null,
-    argomento: f.argomento,
-    anno: f.anno,
-    difficoltaMax: f.difficoltaMax ?? null,
-  }, chi);
-  const conVersione = await idsConVersione(bacino);
-  return conVersione.size;
-}
-
-/** L'assegnazione diretta (Task 2, docente-via-veloce): classe, argomento,
- * quanti, entro quando — senza che il docente componga prima una raccolta.
- *
- * **Non è una seconda strada di pesca.** Crea una `Batteria` marcata
- * `automatica` con UNA sola regola a filtro (la forma che Task 1 ha aggiunto
- * a `BatteriaRegola`), e delega interamente ad `assegna`: stessa pesca,
- * stesso controllo di capienza, stesso congelamento in `drawnVersionIds`,
- * stessa esclusione fra regole (qui vuota, non essendocene una seconda),
- * stesso rifiuto col dettaglio — `{ contenitore, richiesti, disponibili }`,
- * dove `contenitore` porta l'argomento e non un nome di raccolta, perché
- * `etichettaRegola` risolve così una regola a filtro. Un secondo percorso di
- * pesca sarebbe un secondo posto dove sbagliare esattamente ciò che
- * `assegna` ha già pagato per correggere due volte (vedi i suoi commenti).
- *
- * La batteria creata qui non compare mai in `elencoBatterie` (che esclude
- * `automatica: true`, Task 1): è provenienza di questo compito, non
- * contenuto che il docente componga o gestisca.
- *
- * `creaBatteria` può rifiutare in tre modi. Due sono impossibili per
- * costruzione — `regola_malformata` (la regola che costruiamo ha sempre e
- * solo `argomento`, mai `contenitoreId`) e `contenitore_non_trovato` (non ne
- * nominiamo mai uno) — un rifiuto lì sarebbe un bug di QUESTA funzione, non
- * un input scorretto del chiamante: si lancia, invece di forzare un
- * `MotivoAssegna` che non esiste per quel caso in `EsitoAssegna`.
- *
- * **Il terzo — `conteggio_non_valido` — è invece raggiungibile (Onda di
- * correzioni sui numeri).** `quanti` viene dal chiamante (un docente, una
- * rotta, uno script) senza che questa funzione lo convalidi prima —
- * `creaBatteria` è dove quel controllo vive (vedi il suo commento: un solo
- * punto di scrittura, una sola convalida, per ogni provenienza, non
- * ripetuta qui). Un `quanti` zero, negativo o non intero non è un bug di
- * `assegnaDiretto`: è esattamente il genere di input scorretto che questa
- * funzione esiste per rifiutare con un motivo, non con un'eccezione — si
- * traduce quindi in `{ ok: false, motivo: "quantita_non_valida", dettaglio:
- * { quanti } }`. Nessuna pulizia da fare in questo ramo: `creaBatteria`
- * rifiuta il conteggio PRIMA di scrivere qualunque riga (stesso ordine
- * della verifica di forma), quindi qui non esiste ancora nessuna batteria
- * — a differenza del ramo `!esito.ok` più sotto, dove la riga è già stata
- * scritta.
- *
- * Prima di questa convalida, `assegnaDiretto` produceva il difetto
- * dimostrato dal revisore: `quanti: 0` (o negativo) superava
- * `creaBatteria` indenne — che verificava la FORMA della regola ma non il
- * suo conteggio — e arrivava fino ad `assegna`, il cui ciclo sulle regole
- * (`batteria.regole`) non ha nulla da rifiutare quando `count` è zero o
- * negativo (`candidati.length < regola.count` è vera per definizione con
- * zero candidati richiesti, e la pesca di `mescolati.slice(0, regola.count)`
- * su un conteggio negativo non pesca semplicemente nulla): un `Compito` con
- * `drawnVersionIds: []` veniva scritto per davvero, mai apribile da nessuno
- * studente, e — poiché non era un rifiuto di `assegna` — la pulizia più
- * sotto non scattava mai: l'unico caso, fra tutti quelli che questo file
- * ripulisce, in cui il tentativo è un SUCCESSO apparente, non un rifiuto né
- * un'eccezione.
- *
- * **Un rifiuto di `assegna` non lascia una batteria orfana (Fix round 1).**
- * La `Batteria` automatica viene scritta PRIMA che `assegna` validi
- * qualunque cosa (date, classe, insegnamento, capienza) — se `assegna`
- * rifiuta, quella riga non è mai servita a nulla e va cancellata, non
- * dimenticata: `elencoBatterie` la nasconde comunque (esclude
- * `automatica: true`), quindi senza questa pulizia resterebbe per sempre
- * un residuo invisibile, uno per ogni tentativo di assegnazione diretta
- * mal dimensionato o su una classe/scadenza sbagliata.
- *
- * Niente pre-controllo prima di cancellare: il contratto di `assegna`
- * ("un fallimento non lascia nessun Compito a metà", vedi il suo commento)
- * garantisce che, nel ramo `!esito.ok`, nessun `Compito` referenzia ancora
- * questa batteria — cancellarla non può quindi incontrare mai il vincolo
- * `onDelete: Restrict` di `Compito.batteria`. Se lo incontrasse (un bug
- * futuro in `assegna` che rifiuta DOPO aver scritto), l'errore di Prisma
- * esplode qui, rumorosamente, invece di essere pre-intercettato con un
- * controllo scritto a mano (come faceva `eliminaBatteria`, che contava i
- * `Compito` prima di cancellare): "cancella solo ciò che non ha prodotto
- * nulla" resta vera per costruzione — il vincolo del database — non per
- * quanto ci si ricorda di controllare qui. `BatteriaRegola` cascata con la
- * sua `Batteria` (`onDelete: Cascade`), quindi non serve una cancellazione
- * separata per la regola.
- *
- * Nessuna validazione duplicata qui per anticipare il rifiuto: sarebbe un
- * secondo posto dove `assegna` potrebbe essere sbagliata — esattamente il
- * rischio che l'intero task è nato per evitare (vedi sopra). Si lascia
- * rifiutare, poi si pulisce.
- *
- * **La pulizia copre anche il caso in cui `assegna` LANCI, non solo quello
- * in cui rifiuti (Fix round 2).** Un rifiuto (`!esito.ok`) e un'eccezione
- * sono la stessa situazione vista da due porte diverse — in entrambe la
- * batteria appena creata non è mai servita a nulla — ma senza un
- * `try/catch` solo la prima veniva ripulita: un'eccezione (un guasto del
- * database a metà chiamata, o una futura modifica di `assegna` che lancia
- * dove oggi rifiuta) avrebbe lasciato lo stesso residuo invisibile che
- * questo giro di correzioni esiste per togliere, dalla porta rimasta
- * aperta. Nessun percorso noto lo raggiunge oggi (la regola che
- * costruiamo qui è valida per costruzione, vedi sopra), ma è esattamente
- * il tipo di regressione che nessuno nota — la garanzia smette di valere
- * in silenzio e nessun test lo dice — quindi vale la pena difendersi ora.
- *
- * Il fallimento della pulizia stessa (qui: solo se `assegna` lancia PRIMA
- * di aver mai scritto nulla che referenzi la batteria — l'unico caso in
- * cui questo ramo viene raggiunto — la cancellazione non dovrebbe mai
- * incontrare `onDelete: Restrict`, ma un guasto del database potrebbe
- * comunque colpire anche lei) viene inghiottito, non propagato: l'errore
- * ORIGINALE è l'unica cosa vera che il chiamante deve vedere — un
- * fallimento della pulizia non deve mai sostituirlo. */
-export async function assegnaDiretto(input: {
-  classeId: string;
-  teacherId: string;
-  filtro: FiltroDiretto;
-  quanti: number;
-  opensAt?: Date;
-  dueAt?: Date;
-}): Promise<EsitoAssegna> {
-  const creazione = await creaBatteria(
-    input.teacherId,
-    // Questo nome finisce SOTTO GLI OCCHI DEL DOCENTE (l'elenco dei compiti
-    // assegnati lo mostra come titolo) e prima diceva "Assegnazione diretta:
-    // polinomi" — cioe' il nostro vocabolario interno, in una funzione che
-    // esiste proprio per togliere dalla vista i concetti del modello. Dice
-    // ora quello che il docente ha scelto: l'argomento e quanti.
-    `${input.filtro.argomento} (${input.quanti})`,
-    [{
-      count: input.quanti,
-      argomento: input.filtro.argomento,
-      anno: input.filtro.anno,
-      difficoltaMax: input.filtro.difficoltaMax,
-    }],
-    undefined,
-    true,
-  );
-  if (!creazione.ok) {
-    if (creazione.motivo === "conteggio_non_valido") {
-      return { ok: false, motivo: "quantita_non_valida", dettaglio: { quanti: input.quanti } };
-    }
-    throw new Error(
-      `creaBatteria (automatica) rifiutata inaspettatamente in assegnaDiretto: ${creazione.motivo}`,
-    );
-  }
-
-  let esito: EsitoAssegna;
-  try {
-    // `assegna` tratta `teacherId` come docente qualunque (`comeDocente`) e
-    // pesca solo fra gli esercizi che lui vede: nessun filtro da ripetere qui.
-    esito = await assegna(creazione.id, input.classeId, input.teacherId, {
-      opensAt: input.opensAt,
-      dueAt: input.dueAt,
-    });
-  } catch (erroreOriginale) {
-    try {
-      await prisma.batteria.delete({ where: { id: creazione.id } });
-    } catch {
-      // Inghiottito: un fallimento della pulizia non deve mai sostituire
-      // l'errore vero nella console di chi chiama.
-    }
-    throw erroreOriginale;
-  }
-
-  if (!esito.ok) {
-    await prisma.batteria.delete({ where: { id: creazione.id } });
-  }
-
-  return esito;
 }
 
 /** Ciò che la pagina "Nuovo compito" manda per assegnare (Task 3). `seme`
@@ -600,19 +226,20 @@ export async function riepilogoPerModo(
 }
 
 /** Assegnare un compito dal "Nuovo compito" (spec 2026-10-22): i blocchi, il
- * modo, il seme. L'unica strada di assegnazione dopo il Task 7 (che toglierà
- * `assegna` e `assegnaDiretto`).
+ * modo, il seme. L'unica strada di assegnazione: il Task 7 ha tolto le
+ * vecchie (`assegnaCompito` per un compito preparato, `assegnaDiretto` per la
+ * scorciatoia della Panoramica).
  *
- * Tutti i controlli prima di qualunque scrittura, nell'ordine: date (le
- * stesse regole di `assegna`, `motivoDateNonValide`); blocchi (almeno uno,
+ * Tutti i controlli prima di qualunque scrittura, nell'ordine: date
+ * (`motivoDateNonValide`, le stesse della modifica); blocchi (almeno uno,
  * e ciascuno valido per `rifiutoRegole`, la STESSA convalida di
  * `creaBatteria` — un "scelti" vuoto o con doppioni, un `quanti` non
  * positivo ⇒ `blocchi_non_validi`); classe (esistente, non archiviata,
- * insegnata da chi assegna: stessi motivi di `assegna`); modello indicato
+ * insegnata da chi assegna); modello indicato
  * (deve esistere ed essere un modello, cioè non automatico); estrazione.
  *
  * L'estrazione è sempre COME DOCENTE (`comeDocente`): un ADMIN che insegna
- * pesca fra ciò che vedrebbe da docente, come in `assegna`.
+ * pesca fra ciò che vedrebbe da docente.
  *
  * **Modo CLASSE — si assegna ciò che si è visto.** Si rifà il riepilogo con
  * lo stesso `seme`: stessi bacini e stesso seme danno la stessa estrazione
@@ -643,11 +270,11 @@ export async function riepilogoPerModo(
  * insieme, perché i blocchi assegnati sono quelli del modello nuovo; il
  * compito; le estrazioni degli iscritti. Un fallimento a metà non lascia
  * niente: è la ragione per cui la scrittura di `creaBatteria` è stata
- * staccata in `scriviBatteria` — `assegnaDiretto` doveva cancellare a mano
- * la batteria dopo un rifiuto, qui non ce n'è bisogno.
+ * staccata in `scriviBatteria`: nessuna batteria da cancellare a mano dopo
+ * un rifiuto.
  *
  * Un blocco "argomento" senza `anno` pesca fra tutti gli anni: è la rotta a
- * riempire l'anno con quello della classe, come `compiti/diretto`. */
+ * riempire l'anno con quello della classe (`blocchiConAnno`). */
 export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompito> {
   const date = motivoDateNonValide(i.opensAt ?? null, i.dueAt ?? null, true);
   if (date) return { ok: false, motivo: "date_non_valide", dettaglio: date };
@@ -753,7 +380,7 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
  * famiglia di scorciatoia che le funzioni sotto (Fix round finale) chiudono
  * dal lato della lettura.
  *
- * Stessa forma delle funzioni gemelle di questo file (`assegna`): tutti i
+ * Stessa forma delle funzioni gemelle di questo file (`assegnaCompito`): tutti i
  * controlli avvengono qui, in un solo posto, prima di qualunque scrittura —
  * non sparsi fra chiamante e dominio.
  *
@@ -903,7 +530,7 @@ export async function compitiDelloStudente(studentId: string): Promise<
  * database (il compito li referenzia comunque).
  *
  * `teacherId` è chi sta guardando: autorizzato se insegna OGGI la classe del
- * compito (`classeDocente`, lo stesso controllo che `assegna` fa già sulla
+ * compito (`classeDocente`, lo stesso controllo che `assegnaCompito` fa già sulla
  * scrittura — Fix round 1) OPPURE se è stato lui ad assegnarlo
  * (`assignedById`, Fix round finale, item 2). La seconda clausola non
  * sostituisce la prima, la allarga: `dichiaraInsegnamento` è una
@@ -917,7 +544,7 @@ export async function compitiDelloStudente(studentId: string): Promise<
  * admin (nessuna eccezione di ruolo qui, invariato dal Fix round 1). Chi ha
  * assegnato un compito deve sempre poter vedere come è andato.
  *
- * Nessuna eccezione per ADMIN: qui vale la stessa regola di `assegna`, per
+ * Nessuna eccezione per ADMIN: qui vale la stessa regola di `assegnaCompito`, per
  * chiunque guardi. */
 export async function consegneDelCompito(
   compitoId: string,
@@ -1063,10 +690,10 @@ async function compitoGestibile(compitoId: string, teacherId: string) {
  * sbagliata non deve restare per sempre). `null` toglie la data.
  *
  * Gli esercizi pescati NON cambiano, ed è voluto: sono congelati in
- * `drawnVersionIds` (vedi `assegna`) e gli studenti possono averci già
+ * `drawnVersionIds` (vedi `assegnaCompito`) e gli studenti possono averci già
  * lavorato — cambiare le date non deve cambiare cosa la classe ha ricevuto.
  *
- * Stesse regole di `assegna` sulle date (`motivoDateNonValide`), con
+ * Stesse regole di `assegnaCompito` sulle date (`motivoDateNonValide`), con
  * un'unica differenza, spiegata lì: una scadenza passata ma INVARIATA non è
  * un errore di battitura fatto adesso, quindi non si rifiuta.
  *

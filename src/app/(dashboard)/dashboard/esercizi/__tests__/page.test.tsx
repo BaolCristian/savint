@@ -4,10 +4,6 @@ import { render, screen } from "@testing-library/react";
 vi.mock("@/lib/auth/require-role", () => ({ redirectUnlessTeacher: vi.fn() }));
 vi.mock("@/lib/esercizi/classi", () => ({ classiDelDocente: vi.fn() }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDellaClasse: vi.fn() }));
-vi.mock("@/lib/esercizi/redazione", () => ({ elencoRedazione: vi.fn() }));
-// Il modulo di assegnazione ha i suoi test (assegna-form.test.tsx): qui
-// interessa che la pagina lo MONTI nel posto giusto, non come si comporta.
-vi.mock("../assegna-form", () => ({ AssegnaForm: () => <div data-testid="assegna-form" /> }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/esercizi" }));
 // getTranslations restituisce la CHIAVE (con il namespace davanti quando non
 // e' quello di base), cosi' le asserzioni parlano di chiavi e non di frasi.
@@ -22,7 +18,6 @@ vi.mock("next-intl/server", () => ({
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
-import { elencoRedazione } from "@/lib/esercizi/redazione";
 import Page from "../page";
 
 const classe = { id: "c1", name: "2A", yearLevel: 2, studenti: 20, codice: null };
@@ -31,7 +26,6 @@ beforeEach(() => {
   vi.mocked(redirectUnlessTeacher).mockReset().mockResolvedValue({ user: { id: "doc1" } } as never);
   vi.mocked(classiDelDocente).mockReset().mockResolvedValue([classe]);
   vi.mocked(compitiDellaClasse).mockReset().mockResolvedValue([]);
-  vi.mocked(elencoRedazione).mockReset().mockResolvedValue([]);
 });
 
 async function rendi() {
@@ -55,24 +49,25 @@ describe("hub della sezione esercizi del docente", () => {
     expect(redirectUnlessTeacher).toHaveBeenCalled();
   });
 
-  // I candidati da assegnare sono solo gli esercizi che il docente vede.
-  it("prende i candidati dall'elenco del docente della sessione", async () => {
-    await rendi();
-    expect(elencoRedazione).toHaveBeenCalledWith({ id: "doc1", admin: false });
+  // Nuovo compito, Task 7: la carta "Assegna esercizi" col suo modulo
+  // (AssegnaForm) lascia il posto a un solo grande link verso la pagina
+  // Nuovo compito, con la riga che ne spiega le tre zone. Nessun modulo
+  // resta sulla Panoramica: c'e' un solo posto dove si da' un compito.
+  it("al posto del modulo c'e' un grande link a Nuovo compito, con la riga che spiega le tre zone", async () => {
+    const { container } = await rendi();
+    const link = screen.getByRole("link", { name: /nuovoCompito\.titolo/ });
+    expect(link).toHaveAttribute("href", "/dashboard/esercizi/compiti/nuovo");
+    expect(screen.getByText("nuovoCompito.descrizione")).toBeInTheDocument();
+    expect(container.querySelector("form")).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByText("assegnaTitolo")).toBeNull();
   });
 
-  it("mostra il blocco per assegnare, con dentro il modulo vero, senza una frase-istruzione sopra", async () => {
+  it("la barra della sezione ha la scheda Modelli", async () => {
     await rendi();
-    const titolo = screen.getByText("assegnaTitolo");
-    expect(titolo.closest("a")).toBeNull();
-    // Il modulo c'e' davvero: senza questa asserzione la prova passerebbe
-    // anche se la sezione fosse rimasta l'intestazione vuota del Task 4.
-    expect(screen.getByTestId("assegna-form")).toBeInTheDocument();
-    // "Scegli la classe, l'argomento, quanti esercizi ed entro quando"
-    // non si stampa piu': lo dicono le etichette del modulo, nello stesso
-    // ordine. Una riga di prosa sopra un modulo che dice la stessa cosa
-    // era una riga in piu' da leggere prima di cominciare.
-    expect(screen.queryByText("assegnaDescrizione")).toBeNull();
+    expect(screen.getByRole("link", { name: "teacherExercisesUi.nav.models" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/modelli",
+    );
   });
 
   it("collega classi, raccolte (contenitori), compiti assegnati e i miei esercizi (redazione)", async () => {
@@ -101,7 +96,7 @@ describe("hub della sezione esercizi del docente", () => {
   it("l'ordine della pagina: prima si assegna, poi si legge cosa si e' gia' assegnato, in fondo dove si prepara il materiale", async () => {
     const { container } = await rendi();
     const testo = container.textContent ?? "";
-    const ordine = posizioni(testo, ["assegnaTitolo", "navCompiti", "navRedazione", "navClassi", "navContenitori"]);
+    const ordine = posizioni(testo, ["nuovoCompito.titolo", "navCompiti", "navRedazione", "navClassi", "navContenitori"]);
 
     expect(ordine.every((p) => p >= 0)).toBe(true);
     expect(ordine).toEqual([...ordine].sort((a, b) => a - b));

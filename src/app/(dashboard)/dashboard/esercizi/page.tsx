@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Users, FolderOpen, Pencil, ChevronRight } from "lucide-react";
+import { Users, FolderOpen, Pencil, ChevronRight, ClipboardPlus } from "lucide-react";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
-import { elencoRedazione } from "@/lib/esercizi/redazione";
-import { utenteDaSessione } from "@/lib/esercizi/accesso";
-import { AssegnaForm } from "./assegna-form";
 import { TeacherExercisesNav } from "./teacher-exercises-nav";
 
 // Quanti compiti gia' dati mostrare qui, per classe. La pagina dei compiti
@@ -23,8 +20,11 @@ const COMPITI_RECENTI_PER_CLASSE = 3;
 // dire che non si poteva ancora usare.
 //
 // Qui la pagina ha tre piani, in ordine di quanto servono:
-//  1. il pannello per ASSEGNARE — l'unica carta sulla pagina, e l'unica
-//     cosa con dentro un pulsante blu;
+//  1. il pannello per ASSEGNARE — l'unica carta sulla pagina. Dal Nuovo
+//     compito (Task 7) non e' piu' un modulo (AssegnaForm, classe +
+//     argomento + quanti) ma un grande link alla pagina Nuovo compito,
+//     l'unico posto dove si da' un compito, con la riga che ne spiega le
+//     tre zone;
 //  2. quello che si e' GIA' assegnato — un elenco, non un riquadro: dopo
 //     aver premuto "Assegna" e' la prima cosa che il docente vuole vedere,
 //     e prima stava dietro un clic su una pagina per due terzi vuota;
@@ -34,26 +34,17 @@ const COMPITI_RECENTI_PER_CLASSE = 3;
 // conosce già, ma il docente non deve più saperla nominare per assegnare.
 export default async function Page() {
   const session = await redirectUnlessTeacher();
-  const [t, tCompiti, tUi, locale] = await Promise.all([
+  const [t, tCompiti, tNuovo, tUi, locale] = await Promise.all([
     getTranslations("esercizi"),
     getTranslations("esercizi.compiti"),
+    getTranslations("esercizi.nuovoCompito"),
     getTranslations("teacherExercisesUi"),
     getLocale(),
   ]);
 
-  // Le classi che il docente ha dichiarato di insegnare, e gli esercizi che
-  // hanno almeno una versione salvata: senza versione l'anteprima direbbe
-  // "nessuna versione salvata" invece di mostrare qualcosa, quindi il filtro
-  // sta qui e non nel modulo (che riceve gia' solo candidati validi).
-  // `elencoRedazione` da' solo gli esercizi che il docente vede: un
-  // esercizio privato di un collega non si puo' assegnare.
-  const [insegnate, esercizi] = await Promise.all([
-    classiDelDocente(session.user.id),
-    elencoRedazione(utenteDaSessione(session)),
-  ]);
-  const candidati = esercizi
-    .filter((e) => e.ultimaVersione > 0)
-    .map((e) => ({ id: e.id, argomento: e.argomento, anno: e.anno }));
+  // Le classi che il docente ha dichiarato di insegnare: servono per i
+  // compiti gia' dati qui sotto.
+  const insegnate = await classiDelDocente(session.user.id);
 
   // I compiti gia' dati, classe per classe (`compitiDellaClasse` lavora per
   // classe), col nome della classe accanto — lo stesso accorpamento della
@@ -78,27 +69,26 @@ export default async function Page() {
     // ereditato dal body resta quello chiaro; dichiararlo qui lo fa
     // risolvere dentro lo scope scuro, e tutto il resto lo eredita.
     <div className="max-w-4xl space-y-8 text-foreground">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
       <div>
         {/* Il nome della sezione e' contesto, non il titolo: lo dice gia' la
             barra laterale. Resta un h1 per chi naviga per intestazioni, ma
             in corpo piccolo, sopra la carta — la parola grande della pagina
             e' l'azione. */}
         <h1 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("titoloDocente")}</h1>
-        <section
-          aria-labelledby="assegna-titolo"
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
+        <Link
+          href="/dashboard/esercizi/compiti/nuovo"
+          className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-brand-blue/50 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-6"
         >
-          <h2 id="assegna-titolo" className="text-2xl font-semibold tracking-tight">
-            {t("assegnaTitolo")}
-          </h2>
-          <div className="mt-5">
-            <AssegnaForm
-              classi={insegnate.map((c) => ({ id: c.id, name: c.name, yearLevel: c.yearLevel }))}
-              candidati={candidati}
-            />
-          </div>
-        </section>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white" aria-hidden>
+            <ClipboardPlus className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-2xl font-semibold tracking-tight group-hover:text-brand-blue">{tNuovo("titolo")}</span>
+            <span className="mt-1 block text-sm text-muted-foreground">{tNuovo("descrizione")}</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
       </div>
 
       {/* Senza classi non puo' esserci nessun compito, e la pagina dei

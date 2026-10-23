@@ -22,17 +22,18 @@ const PAROLE_ATTESE: [string, string, string][] = [
   ["navCompiti", "Compiti assegnati", "Assigned work"],
   ["navRedazione", "I miei esercizi", "My exercises"],
   ["navClassi", "Le mie classi", "My classes"],
-  ["assegnaTitolo", "Assegna esercizi", "Assign exercises"],
-  [
-    "assegnaDescrizione",
-    "Scegli la classe, l'argomento, quanti esercizi ed entro quando.",
-    "Choose the class, the topic, how many exercises, and by when.",
-  ],
+  // Nuovo compito, Task 7: la carta "Assegna esercizi" della Panoramica è
+  // diventata il link alla pagina Nuovo compito, che dà un compito da
+  // ovunque — dalla pagina dei compiti, da una raccolta, da una classe.
+  ["nuovoCompito.titolo", "Nuovo compito", "New assignment"],
+  ["compiti.nuovo", "Nuovo compito", "New assignment"],
+  ["contenitori.assegna", "Assegna questa raccolta", "Assign this collection"],
   ["contenitori.titolo", "Raccolte", "Collections"],
+  // Nuovo compito, Task 7: le raccolte sono solo cartelle.
   [
     "contenitori.descrizione",
-    "Raccogli qui gli esercizi che vuoi assegnare insieme.",
-    "Collect here the exercises you want to assign together.",
+    "Le raccolte sono cartelle per tenere in ordine gli esercizi.",
+    "Collections are folders to keep your exercises in order.",
   ],
   [
     "contenitori.nessunContenitore",
@@ -74,12 +75,17 @@ describe("le parole della pagina d'ingresso del docente (Task 4)", () => {
     expect(leggi(enMessages, "esercizi.navBatterie")).toBeUndefined();
   });
 
-  // Non nel modello, non nella pagina "batterie/[...]": solo fuori dalla
-  // navigazione del docente (vedi il design doc). La chiave che componeva
-  // le regole di una batteria resta intatta.
-  it("il namespace 'batterie' (la pagina, non la navigazione) resta intatto", () => {
-    expect(leggi(itMessages, "esercizi.batterie.titolo")).toBe("Batterie");
-    expect(leggi(enMessages, "esercizi.batterie.titolo")).toBe("Batteries");
+  // Nuovo compito, Task 7: la pagina delle batterie ("Prepara un
+  // compito") è diventata la pagina Modelli (Task 5) e il suo vecchio
+  // indirizzo porta lì; i testi della pagina e del modulo di assegnazione
+  // della Panoramica sono andati con loro.
+  it("i testi delle vecchie strade per assegnare non ci sono più, in entrambe le lingue", () => {
+    for (const messages of [itMessages, enMessages]) {
+      expect(leggi(messages, "esercizi.batterie")).toBeUndefined();
+      expect(leggi(messages, "esercizi.assegnaForm")).toBeUndefined();
+      expect(leggi(messages, "esercizi.assegnaTitolo")).toBeUndefined();
+      expect(leggi(messages, "teacherExercisesUi.preparation")).toBeUndefined();
+    }
   });
 });
 

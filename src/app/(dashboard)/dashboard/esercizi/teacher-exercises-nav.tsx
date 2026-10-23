@@ -10,6 +10,7 @@ export type TeacherExercisesNavLabels = {
   collections: string;
   assignments: string;
   classes: string;
+  models: string;
 };
 
 /** Local navigation deliberately lives on the ordinary management pages,
@@ -21,6 +22,9 @@ export function TeacherExercisesNav({ labels }: { labels: TeacherExercisesNavLab
     { href: "/dashboard/esercizi", label: labels.overview, exact: true },
     { href: "/dashboard/esercizi/redazione", label: labels.catalog },
     { href: "/dashboard/esercizi/contenitori", label: labels.collections },
+    // Nuovo compito, Task 7: i modelli (i compiti salvati) accanto alle
+    // raccolte; la vecchia pagina "Prepara un compito" porta qui.
+    { href: "/dashboard/esercizi/modelli", label: labels.models },
     { href: "/dashboard/esercizi/compiti", label: labels.assignments },
     { href: "/dashboard/esercizi/classi", label: labels.classes },
   ];

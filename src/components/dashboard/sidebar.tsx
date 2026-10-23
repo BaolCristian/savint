@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, Library, LogOut, Moon, Sun, ShieldCheck, Globe, Sigma, FileUp, ClipboardList, Users, type LucideIcon } from "lucide-react";
+import { Menu, Home, BookOpen, Play, BarChart3, Share2, Sparkles, Library, LogOut, Moon, Sun, ShieldCheck, Globe, Sigma, FileUp, ClipboardList, ClipboardPlus, Users, type LucideIcon } from "lucide-react";
 import { useTheme } from "@/components/dashboard/theme-provider";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslations } from "next-intl";
@@ -47,6 +47,9 @@ function SidebarContent({ user, onNavigate, hubEnabled }: { user: any; onNavigat
         { href: "/dashboard/esercizi/redazione", label: t("myExercises"), icon: BookOpen },
         { href: "/dashboard/esercizi/prompt-ia", label: t("createExercisesWithAI"), icon: Sparkles },
         { href: "/dashboard/esercizi/redazione/importa", label: t("importExercises"), icon: FileUp },
+        // Nuovo compito, Task 7: dare un compito ha la sua voce, subito
+        // prima dei compiti già dati.
+        { href: "/dashboard/esercizi/compiti/nuovo", label: t("newAssignment"), icon: ClipboardPlus },
         { href: "/dashboard/esercizi/compiti", label: t("assignments"), icon: ClipboardList },
         { href: "/dashboard/esercizi/classi", label: t("classes"), icon: Users },
       ],

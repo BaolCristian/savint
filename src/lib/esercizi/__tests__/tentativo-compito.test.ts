@@ -8,7 +8,8 @@ import { avviaORiprendi, applicaRisposta, completa } from "../tentativo";
 import { seedEsercizi } from "../seed";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { aggiungiEsercizi } from "../contenitori";
-import { assegna, consegneDelCompito, compitiDelloStudente } from "../compiti";
+import { consegneDelCompito, compitiDelloStudente } from "../compiti";
+import { assegnaPerProva } from "./assegna-per-prova";
 import { salvaNuovaVersione } from "../redazione";
 import type { EsercizioEditor } from "../editor/modello";
 
@@ -93,7 +94,7 @@ beforeEach(async () => {
   await aggiungiEsercizi(contenitore.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
 
   const batteria = await creaBatteria(teacherId, `${PREFIX}Batt`, [{ contenitoreId: contenitore.id, count: 1 }]);
-  const r = await assegna(batteria.id, classeId, teacherId);
+  const r = await assegnaPerProva(batteria.id, classeId, teacherId);
   if (!r.ok) throw new Error("assegnazione fallita nel setup del test");
   compitoId = r.compitoId;
 });
@@ -152,7 +153,7 @@ describe("avviaORiprendi con un compito", () => {
       });
       await aggiungiEsercizi(contAltro.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
       const battAltra = await creaBatteria(teacherId, `${PREFIX}BattAltra`, [{ contenitoreId: contAltro.id, count: 1 }]);
-      const rAltra = await assegna(battAltra.id, classeAltra.id, teacherId);
+      const rAltra = await assegnaPerProva(battAltra.id, classeAltra.id, teacherId);
       if (!rAltra.ok) throw new Error("assegnazione fallita nel setup del test");
 
       const t = await avviaORiprendi(studentId, ESERCIZIO_ID, rAltra.compitoId);
@@ -180,7 +181,7 @@ describe("avviaORiprendi con un compito", () => {
       });
       await aggiungiEsercizi(contFuturo.id, [ESERCIZIO_ID], { id: teacherId, admin: false });
       const battFuturo = await creaBatteria(teacherId, `${PREFIX}BattFuturo`, [{ contenitoreId: contFuturo.id, count: 1 }]);
-      const rFuturo = await assegna(battFuturo.id, classeId, teacherId, {
+      const rFuturo = await assegnaPerProva(battFuturo.id, classeId, teacherId, {
         opensAt: new Date(Date.now() + 7 * 86_400_000),
       });
       if (!rFuturo.ok) throw new Error("assegnazione fallita nel setup del test");

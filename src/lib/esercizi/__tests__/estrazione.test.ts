@@ -12,8 +12,6 @@ import {
   type Blocco,
 } from "../estrazione";
 import type { Utente } from "../accesso";
-import { creaBatteria } from "../batterie";
-import { assegna } from "../compiti";
 
 const P = "estrtest-";
 const TOPIC = `${P}topic`;
@@ -357,34 +355,5 @@ describe("eserciziAssegnabili", () => {
   it("il collega vede anche il suo privato", async () => {
     const ids = nostri(await eserciziAssegnabili({ id: collegaId, admin: false })).map((x) => x.id);
     expect(ids).toContain(`${P}priv`);
-  });
-});
-
-describe("assegna usa lo stesso sorteggio", () => {
-  it("le versioni fissate nel compito sono quelle di estraiDaBacini con il suo seme", async () => {
-    const classeId = (await prisma.classe.create({
-      data: { googleGroupEmail: `${P}classe@scuola.it`, name: "Classe", yearLevel: 2 },
-    })).id;
-    await prisma.classeDocente.create({ data: { classeId, teacherId: docenteId } });
-    const b = await creaBatteria(docenteId, `${P}Batteria`, [
-      { contenitoreId: raccoltaId, count: 3 },
-      { esercizioIds: [e(5), e(1)], count: 2 },
-    ]);
-    if (!b.ok) throw new Error(b.motivo);
-    const esito = await assegna(b.id, classeId, docenteId);
-    if (!esito.ok) throw new Error(esito.motivo);
-    const compito = await prisma.compito.findUniqueOrThrow({ where: { id: esito.compitoId } });
-
-    const atteso = estraiDaBacini(
-      [
-        { candidati: [1, 2, 3, 4, 5, 6].map(e), richiesti: 3 },
-        { candidati: [e(5), e(1)], richiesti: 2, scelti: true },
-      ],
-      compito.drawSeed,
-    )!;
-    const versioni = await ultimeVersioni(atteso);
-    expect(compito.drawnVersionIds).toEqual(atteso.map((id) => versioni.get(id)!.versioneId));
-    // Gli scelti in coda, nell'ordine del docente, con l'ultima versione.
-    expect(atteso.slice(3)).toEqual([e(5), e(1)]);
   });
 });

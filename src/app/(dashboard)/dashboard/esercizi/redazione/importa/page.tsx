@@ -19,7 +19,7 @@ export default async function Page() {
     <div className="space-y-4 p-6">
       <TeacherExercisesNav labels={{
         label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"),
+        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
       }} />
       <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">
         {tElenco("torna")}

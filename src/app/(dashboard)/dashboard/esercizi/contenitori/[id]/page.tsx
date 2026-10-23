@@ -8,6 +8,7 @@ import { accessoEsercizi } from "@/lib/esercizi/redazione";
 import { prisma } from "@/lib/db/client";
 import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-dialog";
 import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 
@@ -57,7 +58,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
       <div>
         <Link href="/dashboard/esercizi/contenitori" className="text-sm text-brand-blue hover:underline">
           {t("torna")}
@@ -69,10 +70,21 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <p className="text-sm text-muted-foreground">{contenitore.description}</p>
             )}
           </div>
-          {/* "Condividi" solo al proprietario della raccolta (o all'ADMIN). */}
-          {puo(contenitore.ruolo, "condividere") && (
-            <CondividiDialog risorsa={{ tipo: "contenitore", id }} titolo={contenitore.name} testi={await testiCondivisione()} admin={chi.admin} />
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Nuovo compito, Task 7: dalla raccolta si assegna direttamente
+                — apre il Nuovo compito con un blocco su questa raccolta. A
+                chiunque la veda (assegnare non la modifica), ma non se è
+                vuota: non ci sarebbe niente da pescare. */}
+            {contenitore.esercizi.length > 0 && (
+              <Link href={`/dashboard/esercizi/compiti/nuovo?raccolta=${encodeURIComponent(id)}`} className={buttonVariants()}>
+                {t("assegna")}
+              </Link>
+            )}
+            {/* "Condividi" solo al proprietario della raccolta (o all'ADMIN). */}
+            {puo(contenitore.ruolo, "condividere") && (
+              <CondividiDialog risorsa={{ tipo: "contenitore", id }} titolo={contenitore.name} testi={await testiCondivisione()} admin={chi.admin} />
+            )}
+          </div>
         </div>
       </div>
 

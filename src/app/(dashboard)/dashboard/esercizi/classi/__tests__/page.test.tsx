@@ -23,7 +23,7 @@ vi.mock("next-intl/server", () => ({
 }));
 // Stesso schema del mock server-side qui sopra, per il modulo client
 // "next-intl" (usato da CreaClasseForm e ClasseCodice, che traducono a
-// runtime — stesso motivo di compito-form.tsx).
+// runtime — stesso motivo di gestione-compito.tsx).
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(() => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
@@ -391,5 +391,17 @@ describe("pagina delle classi del docente", () => {
     await rendi();
     expect(screen.getByRole("link", { name: "statistiche.linkAndamento" }))
       .toHaveAttribute("href", "/dashboard/esercizi/classi/c1/andamento");
+  });
+
+  // Nuovo compito, Task 7: dalla scheda di una classe si dà un compito a
+  // quella classe — il Nuovo compito con la classe già scelta.
+  it("ogni classe insegnata porta al Nuovo compito con la classe già scelta", async () => {
+    vi.mocked(classiDisponibili).mockResolvedValue([{ id: "c1", name: "1A", yearLevel: 1 }]);
+    vi.mocked(classiDelDocente).mockResolvedValue([
+      { id: "c1", name: "1A", yearLevel: 1, studenti: 2, codice: null },
+    ] as never);
+    await rendi();
+    expect(screen.getByRole("link", { name: "nuovoCompito" }))
+      .toHaveAttribute("href", "/dashboard/esercizi/compiti/nuovo?classe=c1");
   });
 });

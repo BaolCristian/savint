@@ -43,8 +43,17 @@ describe("menu laterale", () => {
     monta();
     expect(hrefDi(sezione(t.sectionExercises))).toEqual([
       "/dashboard/esercizi", "/dashboard/esercizi/redazione", "/dashboard/esercizi/prompt-ia",
-      "/dashboard/esercizi/redazione/importa", "/dashboard/esercizi/compiti", "/dashboard/esercizi/classi",
+      "/dashboard/esercizi/redazione/importa", "/dashboard/esercizi/compiti/nuovo", "/dashboard/esercizi/compiti",
+      "/dashboard/esercizi/classi",
     ]);
+  });
+
+  // Nuovo compito, Task 7: dare un compito ha la sua voce nel menu.
+  it("la sezione Esercizi ha la voce Nuovo compito", () => {
+    monta();
+    expect(within(sezione(t.sectionExercises)).getByRole("link", { name: t.newAssignment })).toHaveAttribute(
+      "href", "/dashboard/esercizi/compiti/nuovo",
+    );
   });
 
   it("Home resta fuori dalle sezioni", () => {

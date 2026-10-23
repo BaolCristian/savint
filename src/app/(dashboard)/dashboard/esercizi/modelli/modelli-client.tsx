@@ -21,7 +21,9 @@ interface Modello {
 
 /** L'elenco dei modelli, col filtro Miei/Tutti e l'eliminazione per riga.
  * Il filtro vive qui (nessun giro dal server: l'elenco è già tutto sulla
- * pagina); eliminare ricarica con `router.refresh()`, come le raccolte. */
+ * pagina); eliminare ricarica con `router.refresh()`, come le raccolte.
+ * "Elimina" chiede prima conferma (Nuovo compito, Task 7), con la stessa
+ * conferma inline del ritiro di un compito (gestione-compito.tsx). */
 export function ModelliClient({
   modelli,
   testi,
@@ -33,6 +35,10 @@ export function ModelliClient({
     filtroMiei: string;
     usa: string;
     elimina: string;
+    eliminaConfermaTitolo: string;
+    eliminaConfermaTesto: string;
+    eliminaConferma: string;
+    annulla: string;
     nessunoMio: string;
     erroreGenerico: string;
   };
@@ -41,10 +47,13 @@ export function ModelliClient({
   const [soloMiei, setSoloMiei] = useState(false);
   const [errore, setErrore] = useState<Record<string, string>>({});
   const [eliminando, setEliminando] = useState<string | null>(null);
+  // Il modello di cui si sta chiedendo conferma (uno alla volta).
+  const [daConfermare, setDaConfermare] = useState<string | null>(null);
 
   const visibili = soloMiei ? modelli.filter((m) => m.mio) : modelli;
 
   async function elimina(id: string) {
+    setDaConfermare(null);
     setEliminando(id);
     setErrore((prev) => ({ ...prev, [id]: "" }));
     const res = await fetch(`/api/esercizi/modelli/${id}`, { method: "DELETE" });
@@ -103,13 +112,39 @@ export function ModelliClient({
                       {testi.usa}
                     </Link>
                     {m.eliminabile && (
-                      <Button variant="destructive" size="sm" onClick={() => elimina(m.id)} disabled={eliminando === m.id}>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDaConfermare(m.id)}
+                        disabled={eliminando === m.id || daConfermare === m.id}
+                      >
                         {testi.elimina}
                       </Button>
                     )}
                   </div>
                   {errore[m.id] && <span className="text-xs text-destructive">{errore[m.id]}</span>}
                 </div>
+                {daConfermare === m.id && (
+                  // Stessa conferma inline del ritiro di un compito
+                  // (role="alertdialog": un sì/no immediato). Il testo dice
+                  // che i compiti già dati non cambiano.
+                  <div
+                    role="alertdialog"
+                    aria-label={testi.eliminaConfermaTitolo}
+                    className="basis-full space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+                  >
+                    <p className="font-medium">{testi.eliminaConfermaTitolo}</p>
+                    <p className="text-sm text-muted-foreground">{testi.eliminaConfermaTesto}</p>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={() => setDaConfermare(null)}>
+                        {testi.annulla}
+                      </Button>
+                      <Button type="button" variant="destructive" onClick={() => elimina(m.id)}>
+                        {testi.eliminaConferma}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </Card>
             </li>
           ))}

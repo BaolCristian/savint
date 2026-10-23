@@ -49,12 +49,18 @@ describe("pagina dei contenitori", () => {
     expect(link).toHaveAttribute("href", "/dashboard/esercizi/contenitori/cont1");
   });
 
-  it("porta dalla raccolta alla preparazione di un compito esistente", async () => {
+  // Nuovo compito, Task 7: le raccolte sono solo cartelle. Niente più
+  // "Prepara un compito" né link alla vecchia pagina delle batterie: la
+  // pagina spiega a cosa servono, e si assegna dalla raccolta stessa.
+  it("spiega che le raccolte sono cartelle e non porta più a preparare un compito", async () => {
     vi.mocked(elencoContenitori).mockResolvedValue([]);
     await rendi();
-    expect(screen.getByRole("link", { name: "collections.prepareAction" })).toHaveAttribute(
-      "href", "/dashboard/esercizi/batterie",
-    );
+    expect(screen.getByText("descrizione")).toBeInTheDocument();
+    expect(screen.queryByText("collections.prepareTitle")).toBeNull();
+    expect(screen.queryByRole("link", { name: "collections.prepareAction" })).toBeNull();
+    for (const a of screen.getAllByRole("link")) {
+      expect(a.getAttribute("href")).not.toContain("/batterie");
+    }
   });
 
   it("senza contenitori mostra il messaggio vuoto", async () => {

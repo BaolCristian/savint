@@ -58,8 +58,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   const d = parsed.data;
 
-  // La classe serve qui per l'anno dei blocchi argomento (`blocchiConAnno`,
-  // come `compiti/diretto`); `classiDelDocente` è già filtrata per questo
+  // La classe serve qui per l'anno dei blocchi argomento (`blocchiConAnno`);
+  // `classiDelDocente` è già filtrata per questo
   // docente e senza le archiviate, quindi una classe assente dalla lista o
   // non esiste o non è sua: stessa risposta per entrambe.
   const classe = (await classiDelDocente(teacherId)).find((c) => c.id === d.classeId);

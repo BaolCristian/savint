@@ -50,12 +50,12 @@ export const blocchiSchema = z.array(bloccoSchema).max(BLOCCHI_MAX);
 export const semeSchema = z.string().min(1).max(100);
 
 /** I blocchi con l'anno della classe (ruling del Task 3, come
- * `compiti/diretto`): un blocco "argomento" senza `anno` prende
+ * faceva la vecchia scorciatoia della Panoramica): un blocco "argomento" senza `anno` prende
  * `yearLevel` della classe — si pesca per anno, mescolare anni diversi
  * sarebbe sbagliato. Un blocco che l'anno lo porta già lo tiene (un
  * modello composto per un altro anno resta quello). `null` se un blocco
  * argomento resta senza anno perché la classe non ne ha uno: la rotta
- * risponde `classe_senza_anno` (422), come `compiti/diretto`. */
+ * risponde `classe_senza_anno` (422). */
 export function blocchiConAnno(blocchi: Blocco[], yearLevel: number | null): Blocco[] | null {
   const pieni: Blocco[] = [];
   for (const b of blocchi) {

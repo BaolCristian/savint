@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
  * di assegnazione usa all'andata (`new Date("AAAA-MM-GG")` è mezzanotte
  * UTC), così una data salvata ritorna nel campo identica.
  *
- * `useTranslations` direttamente, come `compito-form.tsx`: il motivo di un
+ * `useTranslations` direttamente, come `crea-classe-form.tsx`: il motivo di un
  * rifiuto è noto solo a runtime, dentro la risposta HTTP. */
 export function GestioneCompito({ compitoId, opensAt: aperturaIniziale, dueAt: scadenzaIniziale }: {
   compitoId: string;

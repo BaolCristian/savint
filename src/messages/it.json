@@ -6,7 +6,8 @@
       "catalog": "Catalogo",
       "collections": "Raccolte",
       "assignments": "Compiti",
-      "classes": "Classi"
+      "classes": "Classi",
+      "models": "Modelli"
     },
     "catalog": {
       "search": "Cerca nel catalogo",
@@ -39,10 +40,7 @@
       "topic": "Argomento",
       "all": "Tutti",
       "noResults": "Nessun esercizio corrisponde ai filtri.",
-      "selected": "{count, plural, one {# esercizio selezionato} other {# esercizi selezionati}}",
-      "prepareTitle": "Prepara un compito",
-      "prepareDescription": "Una raccolta organizza gli esercizi. Prepara un compito scegliendo quanti esercizi prendere da ciascuna raccolta, poi assegnalo a una classe.",
-      "prepareAction": "Prepara un compito"
+      "selected": "{count, plural, one {# esercizio selezionato} other {# esercizi selezionati}}"
     },
     "tasks": {
       "progressToDo": "Da completare",
@@ -52,13 +50,6 @@
       "createSection": "Crea una classe",
       "teachingSection": "Classi che insegni",
       "managementSection": "Codici e iscritti"
-    },
-    "preparation": {
-      "title": "Prepara un compito",
-      "description": "Scegli da quali raccolte estrarre esercizi e quanti prenderne. Quando il compito è pronto, assegnalo a una delle tue classi dalla pagina Compiti.",
-      "sourceCollection": "Raccolta di partenza",
-      "preparedTask": "Compito preparato",
-      "assignAction": "Vai ai compiti"
     }
   },
   "common": {
@@ -110,7 +101,8 @@
     "createExercisesWithAI": "Crea esercizi con l'IA",
     "importExercises": "Importa esercizi",
     "assignments": "Compiti",
-    "classes": "Classi"
+    "classes": "Classi",
+    "newAssignment": "Nuovo compito"
   },
   "login": {
     "loginWithSchoolAccount": "Accedi con il tuo account scolastico",
@@ -1200,8 +1192,6 @@
     "navContenitori": "Raccolte",
     "navCompiti": "Compiti assegnati",
     "navRedazione": "I miei esercizi",
-    "assegnaTitolo": "Assegna esercizi",
-    "assegnaDescrizione": "Scegli la classe, l'argomento, quanti esercizi ed entro quando.",
     "titoloStudente": "I tuoi esercizi",
     "annoArgomento": "Classe {anno} · {argomento}",
     "difficolta": "Difficoltà {livello}",
@@ -1265,17 +1255,18 @@
         "erroreNonValido": "Codice non valido.",
         "erroreGiaIscritto": "Sei già iscritto a questa classe.",
         "erroreGenerico": "Non è stato possibile completare l'iscrizione. Riprova."
-      }
+      },
+      "nuovoCompito": "Assegna un compito"
     },
     "contenitori": {
       "titolo": "Raccolte",
-      "descrizione": "Raccogli qui gli esercizi che vuoi assegnare insieme.",
+      "descrizione": "Le raccolte sono cartelle per tenere in ordine gli esercizi.",
       "nome": "Nome",
       "descrizioneCampo": "Descrizione (opzionale)",
       "crea": "Crea",
       "elimina": "Elimina",
       "nessunContenitore": "Non hai ancora creato nessuna raccolta.",
-    "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
+      "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
       "erroreInUso": "Non è possibile eliminarla: è usata in un'assegnazione.",
       "erroreGenerico": "Si è verificato un errore. Riprova.",
       "torna": "Torna alle raccolte",
@@ -1288,24 +1279,8 @@
       "anteprima": "Anteprima",
       "avvisoPrivato": "Questo esercizio è privato: aggiungendolo, lo vedranno anche le persone che hanno accesso alla raccolta.",
       "confermaAggiunta": "Aggiungi comunque",
-      "annulla": "Annulla"
-    },
-    "batterie": {
-      "titolo": "Batterie",
-      "descrizione": "Componi una raccolta di esercizi scegliendo, per ciascuna raccolta di partenza, quanti pescarne. È la via lunga: per assegnare bastano argomento e quantità, da «Assegna esercizi».",
-      "nome": "Nome",
-      "contenitore": "Contenitore",
-      "quantita": "Quantità",
-      "aggiungiRegola": "Aggiungi regola",
-      "rimuoviRegola": "Rimuovi",
-      "crea": "Crea batteria",
-      "elimina": "Elimina",
-      "nessunaBatteria": "Non hai ancora creato nessuna batteria.",
-      "regolaLabel": "{count} da {contenitore}",
-      "compitiCount": "Usata in {n} compiti",
-      "erroreInUso": "Non è possibile eliminarla: è già stata assegnata a una classe.",
-      "erroreGenerico": "Si è verificato un errore. Riprova.",
-      "necessitaContenitori": "Crea prima almeno un contenitore."
+      "annulla": "Annulla",
+      "assegna": "Assegna questa raccolta"
     },
     "nuovoCompito": {
       "titolo": "Nuovo compito",
@@ -1419,40 +1394,11 @@
       "elimina": "Elimina",
       "nessunModello": "Non c'è ancora nessun modello. Quando assegni un compito, spunta «Salva anche come modello» per ritrovarlo qui.",
       "nessunoMio": "Non hai ancora salvato nessun modello.",
-      "erroreGenerico": "Si è verificato un errore. Riprova."
-    },
-    "assegnaForm": {
-      "classe": "Classe",
-      "anno": "Anno",
-      "annoAiuto": "Questa classe non ha un anno assegnato: indicalo per poter scegliere gli esercizi.",
-      "argomento": "Argomento",
-      "argomentoOpzione": "{argomento} — {quanti}",
-      "nessunArgomentoDisponibile": "Nessun argomento disponibile per questa classe.",
-      "quanti": "Quanti esercizi",
-      "quantiSegnaposto": "es. 10",
-      "difficolta": "Difficoltà",
-      "difficoltaQualsiasi": "Qualsiasi",
-      "difficolta1": "Facile",
-      "difficolta2": "Media",
-      "difficolta3": "Difficile",
-      "apertura": "Data di apertura",
-      "scadenza": "Scadenza (opzionale)",
-      "altreOpzioni": "Difficoltà e data di apertura",
-      "assegna": "Assegna",
-      "assegnato": "Compito assegnato.",
-      "corrispondenti": "{quanti, plural, one {# esercizio disponibile} other {# esercizi disponibili}}",
-      "calcolando": "Verifica in corso…",
-      "anteprima": "Anteprima",
-      "nessunaClasseInsegnata": "Dichiara prima le classi che insegni.",
-      "erroreCapienza": "Per \"{argomento}\" non ci sono abbastanza esercizi: richiesti {richiesti}, disponibili {disponibili}.",
-      "erroreNonInsegni": "Non insegni questa classe.",
-      "erroreClasseNonTrovata": "La classe scelta non esiste più.",
-      "erroreClasseSenzaAnno": "Questa classe non ha un anno: indicalo per continuare.",
-      "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
-      "erroreScadenzaPassata": "La scadenza è già nel passato.",
-      "erroreRateLimited": "Troppi tentativi ravvicinati: riprova tra poco.",
       "erroreGenerico": "Si è verificato un errore. Riprova.",
-      "vaiAlleClassi": "Vai a Le mie classi"
+      "eliminaConfermaTitolo": "Eliminare questo modello?",
+      "eliminaConfermaTesto": "Sparisce dall'elenco dei modelli. I compiti già assegnati non cambiano.",
+      "eliminaConferma": "Sì, elimina",
+      "annulla": "Annulla"
     },
     "stampa": {
       "titoloPagina": "Stampa la verifica",
@@ -1482,17 +1428,9 @@
     },
     "compiti": {
       "titolo": "Compiti assegnati",
-      "descrizione": "Quello che hai già dato alle tue classi. Per darne uno nuovo, usa «Assegna esercizi» nella pagina degli esercizi.",
-    "batteria": "Compito preparato",
-      "classe": "Classe",
+      "descrizione": "Quello che hai già dato alle tue classi.",
       "apertura": "Data di apertura (opzionale)",
       "scadenza": "Scadenza (opzionale)",
-      "assegna": "Assegna",
-      "assegnato": "Compito assegnato.",
-      "erroreCapienza": "Il contenitore \"{contenitore}\" non basta: richiesti {richiesti}, disponibili {disponibili}.",
-      "erroreNonInsegni": "Non insegni questa classe.",
-    "erroreBatteriaNonTrovata": "Il compito preparato scelto non esiste più.",
-      "erroreClasseNonTrovata": "La classe scelta non esiste più.",
       "erroreScadenzaPrimaApertura": "La scadenza non può essere prima della data di apertura.",
       "erroreScadenzaPassata": "La scadenza è già nel passato.",
       "erroreGenerico": "Si è verificato un errore. Riprova.",
@@ -1501,7 +1439,7 @@
       "nessunaClasseInsegnata": "Dichiara prima le classi che insegni.",
       "compitoScadenza": "Scade il {quando}",
       "nessunaScadenza": "Nessuna scadenza",
-    "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
+      "eserciziCount": "{n, plural, one {# esercizio} other {# esercizi}}",
       "torna": "Torna ai compiti",
       "titoloConsegne": "Consegne — {batteria} ({classe})",
       "nomeCol": "Studente",
@@ -1516,9 +1454,7 @@
       "ritiraConferma": "Sì, ritira",
       "annulla": "Annulla",
       "erroreCompitoNonTrovato": "Questo compito non esiste più o è già stato ritirato.",
-    "daRaccolta": "Assegna un compito preparato",
-    "daRaccoltaAiuto": "Un compito preparato sceglie quanti esercizi estrarre dalle raccolte. Preparane uno prima di assegnarlo a una classe.",
-    "nessunaRaccolta": "Non hai ancora compiti preparati. Preparane uno dalle raccolte prima di assegnarlo."
+      "nuovo": "Nuovo compito"
     },
     "statistiche": {
       "perEsercizioTitolo": "Esercizio per esercizio",
@@ -1816,7 +1752,9 @@
         "nessunEsercizio": "Nessun esercizio ancora.",
         "anteprima": "Anteprima",
         "importa": "Importa da file",
-        "importati": "{importati, plural, =0 {Nessun esercizio importato} one {# esercizio importato} other {# esercizi importati}}{saltati, plural, =0 {.} one {, # saltato (non valido, già presente o non salvato).} other {, # saltati (non validi, già presenti o non salvati).}}"
+        "importati": "{importati, plural, =0 {Nessun esercizio importato} one {# esercizio importato} other {# esercizi importati}}{saltati, plural, =0 {.} one {, # saltato (non valido, già presente o non salvato).} other {, # saltati (non validi, già presenti o non salvati).}}",
+        "assegna": "Assegna",
+        "assegnaArgomento": "Assegna questo argomento"
       },
       "importa": {
         "titolo": "Importa esercizi da JSON",

@@ -108,7 +108,9 @@ const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,
 // Google (classifyGroups la maiuscola sempre).
 const CLASSE_NOME = `E2E Codice Classe ${RUN_ID}`.toUpperCase();
 const CONTENITORE_NOME = `E2E Codice Contenitore ${RUN_ID}`;
-const BATTERIA_NOME = `E2E Codice Batteria ${RUN_ID}`;
+// Il nome che il Nuovo compito dà al compito: l'etichetta del blocco (la
+// raccolta) con quanti esercizi — qui uno.
+const COMPITO_NOME = `${CONTENITORE_NOME} (1)`;
 
 let prisma: PrismaClient;
 let studentId: string;
@@ -150,9 +152,17 @@ test.afterAll(async () => {
     await prisma.classe.delete({ where: { id: classeId } }).catch(() => {});
   }
 
-  const batterie = await prisma.batteria.findMany({ where: { name: BATTERIA_NOME }, select: { id: true } });
+  // La batteria automatica del compito, per nome: c'è anche se la prova è
+  // fallita prima di conoscere `classeId` — e allora il suo compito va via
+  // qui, prima di lei (`Compito.batteria` è Restrict).
+  const batterie = await prisma.batteria.findMany({ where: { name: COMPITO_NOME }, select: { id: true } });
   const batteriaIds = batterie.map((b) => b.id);
   if (batteriaIds.length > 0) {
+    const residui = (await prisma.compito.findMany({ where: { batteriaId: { in: batteriaIds } }, select: { id: true } })).map((c) => c.id);
+    if (residui.length > 0) {
+      await prisma.tentativo.deleteMany({ where: { compitoId: { in: residui } } });
+      await prisma.compito.deleteMany({ where: { id: { in: residui } } });
+    }
     await prisma.batteriaRegola.deleteMany({ where: { batteriaId: { in: batteriaIds } } });
     await prisma.batteria.deleteMany({ where: { id: { in: batteriaIds } } });
   }
@@ -241,7 +251,7 @@ test.describe("Iscrizione con codice — crea, iscriviti, sopravvivi a un access
     const codice = codiceFormattato.replace(/\s+/g, "");
     expect(codice).toHaveLength(6);
 
-    // === Contenitore con l'esercizio, batteria che lo pesca, compito assegnato ===
+    // === Raccolta con l'esercizio, e dalla raccolta il compito assegnato ===
     await gotoStabile(page, "/dashboard/esercizi/contenitori");
     await page.locator("#contenitore-nome").fill(CONTENITORE_NOME);
     await page.getByRole("button", { name: "Crea", exact: true }).click();
@@ -257,23 +267,20 @@ test.describe("Iscrizione con codice — crea, iscriviti, sopravvivi a un access
     await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
     await expect(page.getByRole("button", { name: "Rimuovi", exact: true })).toHaveCount(1, { timeout: 10_000 });
 
-    await gotoStabile(page, "/dashboard/esercizi/batterie");
-    await page.locator("#batteria-nome").fill(BATTERIA_NOME);
-    await page.locator("#batteria-contenitore-0").selectOption({ label: CONTENITORE_NOME });
-    // Un solo esercizio nel contenitore: il valore predefinito del campo
-    // (1) è già la quantità giusta, non serve toccarlo — a differenza del
+    // "Assegna questa raccolta" apre il Nuovo compito col blocco sulla
+    // raccolta (un solo esercizio: il blocco lo prende). A differenza del
     // modello (`esercizi-compiti.spec.ts`), questa prova non ha bisogno di
     // un esito deterministico su QUALE esercizio pescare, solo che il
     // compito esista e sia visibile.
-    await page.getByRole("button", { name: "Crea batteria", exact: true }).click();
-    await expect(page.getByText(BATTERIA_NOME)).toBeVisible({ timeout: 10_000 });
-
-    await gotoStabile(page, "/dashboard/esercizi/compiti");
-    await page.locator("#compito-batteria").selectOption({ label: BATTERIA_NOME });
-    await page.locator("#compito-classe").selectOption({ label: CLASSE_NOME });
-    await page.getByRole("button", { name: "Assegna", exact: true }).click();
-    await expect(page.getByText(/compito assegnato\./i)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("link", { name: BATTERIA_NOME })).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("link", { name: "Assegna questa raccolta", exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/nuovo\?raccolta=/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    await page.locator("#nc-classe").selectOption({ label: CLASSE_NOME });
+    await expect(page.getByText("Ogni studente riceverà 1 esercizio.")).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: `Assegna a ${CLASSE_NOME}`, exact: true }).click();
+    await page.waitForURL(/\/dashboard\/esercizi\/compiti\/(?!nuovo)[^/?]+$/, { timeout: 15_000 });
+    await attendiEventualeReload(page);
+    await expect(page.getByRole("heading", { name: COMPITO_NOME })).toBeVisible({ timeout: 15_000 });
 
     // === Lo studente si iscrive con un vero POST innescato da un vero click ===
     await cambiaAttore(page, STUDENT_EMAIL);
@@ -296,7 +303,7 @@ test.describe("Iscrizione con codice — crea, iscriviti, sopravvivi a un access
     // === SECONDA ASSERZIONE: lo studente vede il compito, non solo la classe ===
     // Iscriversi a una classe che non mostra niente è indistinguibile dal
     // non essersi iscritti affatto.
-    const compitoCard = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCard = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCard).toBeVisible({ timeout: 20_000 });
     await expect(compitoCard.getByRole("link", { name: ESERCIZIO.title })).toBeVisible();
 
@@ -363,7 +370,7 @@ test.describe("Iscrizione con codice — crea, iscriviti, sopravvivi a un access
     // il compito.
     await cambiaAttore(page, STUDENT_EMAIL);
     await gotoStabile(page, "/studente");
-    const compitoCardDopo = page.locator("li", { hasText: BATTERIA_NOME });
+    const compitoCardDopo = page.locator("li", { hasText: COMPITO_NOME });
     await expect(compitoCardDopo).toBeVisible({ timeout: 20_000 });
     await expect(compitoCardDopo.getByRole("link", { name: ESERCIZIO.title })).toBeVisible();
   });

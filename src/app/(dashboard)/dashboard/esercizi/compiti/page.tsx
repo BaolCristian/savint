@@ -2,9 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDelDocente } from "@/lib/esercizi/classi";
-import { elencoBatterie } from "@/lib/esercizi/batterie";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
-import { CompitoForm } from "./compito-form";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 export default async function Page() {
@@ -12,10 +11,7 @@ export default async function Page() {
   const t = await getTranslations("esercizi.compiti");
   const tUi = await getTranslations("teacherExercisesUi");
 
-  const [classi, batterie] = await Promise.all([
-    classiDelDocente(session.user.id),
-    elencoBatterie(),
-  ]);
+  const classi = await classiDelDocente(session.user.id);
 
   // I compiti già assegnati alle classi del docente, una classe alla volta:
   // `compitiDellaClasse` lavora per classe, qui si accorpano con il nome
@@ -30,40 +26,22 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes") }} />
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-        <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
+      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      {/* Nuovo compito, Task 7: questa pagina e' lo STORICO, e in alto c'e'
+          la sola strada per dare un compito nuovo. Il <details> "Assegna un
+          compito preparato" (CompitoForm) non c'e' piu': un modello si usa
+          dalla pagina Modelli, che apre lo stesso Nuovo compito. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
+          <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
+        </div>
+        <Link href="/dashboard/esercizi/compiti/nuovo" className={buttonVariants()}>
+          {t("nuovo")}
+        </Link>
       </div>
 
-      {/* Questa pagina e' lo STORICO: e' cio' che la scheda nella pagina
-          d'ingresso promette. Assegnare da una raccolta resta possibile, ma
-          come seconda via — ripiegata, e non come la prima cosa che si
-          incontra. Prima diceva "Assegna una batteria a una classe" e, a
-          una scuola che non ne aveva mai composta una, "Crea prima almeno
-          una batteria": cioe' pretendeva di far costruire il concetto che
-          la specifica aveva tolto, a un clic dalla pagina rinnovata. */}
-      {classi.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("nessunaClasseInsegnata")}</p>
-      ) : (
-        <details className="rounded-xl border border-input p-4">
-          <summary className="cursor-pointer text-sm font-medium">{t("daRaccolta")}</summary>
-          <p className="mt-2 text-sm text-muted-foreground">{t("daRaccoltaAiuto")}</p>
-          <Link href="/dashboard/esercizi/batterie" className="mt-2 inline-flex text-sm font-medium text-brand-blue hover:underline">
-            {tUi("preparation.title")}
-          </Link>
-          <div className="mt-3">
-            {batterie.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("nessunaRaccolta")}</p>
-            ) : (
-              <CompitoForm
-                batterie={batterie.map((b) => ({ id: b.id, label: b.name }))}
-                classi={classi.map((c) => ({ id: c.id, label: c.name }))}
-              />
-            )}
-          </div>
-        </details>
-      )}
+      {classi.length === 0 && <p className="text-sm text-muted-foreground">{t("nessunaClasseInsegnata")}</p>}
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">{t("elencoTitolo")}</h2>

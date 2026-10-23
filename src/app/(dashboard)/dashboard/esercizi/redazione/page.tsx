@@ -85,6 +85,7 @@ export default async function Page({
     motivo: v.modificabile ? null : (v.motivo ?? t("motivoGenerico")),
     commentiAperti: v.commentiAperti,
     commentiApertiTesto: tCommenti("contatore", { n: v.commentiAperti }),
+    assegnabile: v.ultimaVersione > 0,
     ultimaVersione: t("ultimaVersioneDa", {
       autore: v.autoreNome ?? t("autoreSconosciuto"),
       data: formattaData(v.aggiornatoIl),
@@ -95,7 +96,7 @@ export default async function Page({
     <div className="space-y-4 p-6">
       <TeacherExercisesNav labels={{
         label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"),
+        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
       }} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -133,6 +134,8 @@ export default async function Page({
             soloLettura: t("soloLettura"),
             apri: t("apri"),
             anteprima: t("anteprima"),
+            assegna: t("assegna"),
+            assegnaArgomento: t("assegnaArgomento"),
             duplica: t("duplica"),
             duplicaInCorso: t("duplicaInCorso"),
             duplicaErrore: t("duplicaErrore"),

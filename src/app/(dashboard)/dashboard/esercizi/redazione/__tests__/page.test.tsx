@@ -205,6 +205,45 @@ describe("elenco della redazione", () => {
     expect(within(gruppi[1]).getAllByText('catalog.classe:{"anno":2}')).toHaveLength(2);
   });
 
+  // Nuovo compito, Task 7: dal catalogo si assegna un argomento intero
+  // (intestazione del gruppo) o un esercizio (la sua riga). Solo ciò che
+  // ha una versione salvata si può assegnare: una riga senza versione non
+  // ha "Assegna", e un gruppo fatto solo di quelle non ha "Assegna questo
+  // argomento".
+  it("offre \"Assegna questo argomento\" sul gruppo e \"Assegna\" su ogni esercizio assegnabile", async () => {
+    const voce = (id: string, titolo: string, argomento: string, ultimaVersione = 1) => ({
+      id, titolo, argomento, anno: 2, ultimaVersione,
+      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
+    });
+    vi.mocked(elencoRedazione).mockResolvedValue([
+      voce("e1", "Sconti", "percentuali"),
+      voce("e2", "Bozza", "percentuali", 0),
+      voce("e3", "Senza versione", "geometria", 0),
+      voce("e4", "Due & tre", "equazioni di 1° grado"),
+    ]);
+    await rendi();
+
+    const [equazioni, geometria, percentuali] = screen.getAllByRole("region");
+    expect(within(percentuali!).getByRole("link", { name: "assegnaArgomento" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/compiti/nuovo?argomento=percentuali",
+    );
+    expect(within(percentuali!).getAllByRole("link", { name: "assegna" }).map((a) => a.getAttribute("href"))).toEqual([
+      "/dashboard/esercizi/compiti/nuovo?esercizio=e1",
+    ]);
+    expect(within(geometria!).queryByRole("link", { name: "assegnaArgomento" })).toBeNull();
+    expect(within(geometria!).queryByRole("link", { name: "assegna" })).toBeNull();
+    // L'argomento va codificato: lo scrive a mano chi redige.
+    expect(within(equazioni!).getByRole("link", { name: "assegnaArgomento" })).toHaveAttribute(
+      "href", `/dashboard/esercizi/compiti/nuovo?argomento=${encodeURIComponent("equazioni di 1° grado")}`,
+    );
+  });
+
+  it("la barra della sezione ha la scheda Modelli", async () => {
+    vi.mocked(elencoRedazione).mockResolvedValue([]);
+    await rendi();
+    expect(screen.getByRole("link", { name: "nav.models" })).toHaveAttribute("href", "/dashboard/esercizi/modelli");
+  });
+
   it("senza esercizi mostra il messaggio vuoto", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();

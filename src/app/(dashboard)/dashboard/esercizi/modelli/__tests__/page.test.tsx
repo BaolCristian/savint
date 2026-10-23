@@ -85,10 +85,25 @@ describe("pagina dei modelli", () => {
     expect(screen.getByText("nessunoMio")).toBeInTheDocument();
   });
 
-  it("eliminare chiama la rotta dei modelli e aggiorna", async () => {
+  // Nuovo compito, Task 7: "Elimina" chiede conferma, con la stessa
+  // conferma inline del ritiro di un compito (role="alertdialog").
+  it("Elimina chiede conferma prima di chiamare la rotta; Annulla non elimina", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })) as typeof fetch;
     await rendi();
     fireEvent.click(screen.getByRole("button", { name: "elimina" }));
+    expect(global.fetch).not.toHaveBeenCalled();
+    const conferma = screen.getByRole("alertdialog", { name: "eliminaConfermaTitolo" });
+    expect(conferma).toHaveTextContent("eliminaConfermaTesto");
+    fireEvent.click(screen.getByRole("button", { name: "annulla" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("confermando, eliminare chiama la rotta dei modelli e aggiorna", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })) as typeof fetch;
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "elimina" }));
+    fireEvent.click(screen.getByRole("button", { name: "eliminaConferma" }));
     await waitFor(() => expect(refresh).toHaveBeenCalled());
     expect(global.fetch).toHaveBeenCalledWith("/api/esercizi/modelli/m1", { method: "DELETE" });
   });
@@ -97,8 +112,16 @@ describe("pagina dei modelli", () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ error: "non_trovato" }), { status: 404 })) as typeof fetch;
     await rendi();
     fireEvent.click(screen.getByRole("button", { name: "elimina" }));
+    fireEvent.click(screen.getByRole("button", { name: "eliminaConferma" }));
     expect(await screen.findByText("erroreGenerico")).toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("la barra della sezione ha la scheda Modelli, segnata come corrente", async () => {
+    await rendi();
+    const scheda = screen.getByRole("link", { name: "nav.models" });
+    expect(scheda).toHaveAttribute("href", "/dashboard/esercizi/modelli");
+    expect(scheda).toHaveAttribute("aria-current", "page");
   });
 
   it("senza modelli mostra il messaggio vuoto", async () => {
