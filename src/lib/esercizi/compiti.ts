@@ -328,7 +328,7 @@ export async function quantiCorrispondono(f: FiltroDiretto, chi: Utente): Promis
  * `onDelete: Restrict` di `Compito.batteria`. Se lo incontrasse (un bug
  * futuro in `assegna` che rifiuta DOPO aver scritto), l'errore di Prisma
  * esplode qui, rumorosamente, invece di essere pre-intercettato con un
- * controllo scritto a mano (come farebbe `eliminaBatteria`, che conta i
+ * controllo scritto a mano (come faceva `eliminaBatteria`, che contava i
  * `Compito` prima di cancellare): "cancella solo ciò che non ha prodotto
  * nulla" resta vera per costruzione — il vincolo del database — non per
  * quanto ci si ricorda di controllare qui. `BatteriaRegola` cascata con la
@@ -1103,7 +1103,8 @@ export async function modificaDateCompito(
  * Soft delete (`ritiratoAt`), non una cancellazione: i tentativi già svolti
  * restano nel database e restano legati al compito (`onDelete: SetNull` li
  * avrebbe staccati, perdendo di quale assegnazione erano consegna), e la
- * batteria resta "in uso" per `eliminaBatteria`, che il vincolo `Restrict`
+ * batteria resta "in uso" per `eliminaModello` (un vecchio compito
+ * preparato si nasconde invece di cancellarsi), che il vincolo `Restrict`
  * obbligherebbe comunque.
  *
  * Ritirare un compito già ritirato risponde "non trovato" e non sposta la

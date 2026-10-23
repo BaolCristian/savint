@@ -4,9 +4,11 @@ import {
   creaBatteria as creaBatteriaGrezza,
   elencoBatterie,
   verificaBatteria,
-  eliminaBatteria,
   bacinoRegola,
   idsConVersione,
+  elencoModelli,
+  caricaModello,
+  eliminaModello,
 } from "../batterie";
 import type { Utente } from "../accesso";
 
@@ -215,24 +217,6 @@ describe("batterie", () => {
     ]);
 
     expect(await verificaBatteria(b.id, docente())).toEqual({ ok: true });
-  });
-
-  it("una batteria libera si cancella", async () => {
-    const b = await creaBatteria(teacherId, `${P}Libera`, [{ contenitoreId: contA, count: 1 }]);
-    expect(await eliminaBatteria(b.id)).toEqual({ ok: true });
-    expect(await prisma.batteria.findUnique({ where: { id: b.id } })).toBeNull();
-  });
-
-  it("una batteria con compiti assegnati NON si cancella", async () => {
-    const b = await creaBatteria(teacherId, `${P}Assegnata`, [{ contenitoreId: contA, count: 1 }]);
-    const classe = await prisma.classe.create({
-      data: { googleGroupEmail: `${P}elimina@scuola.it`, name: "Elimina", yearLevel: 2 },
-    });
-    await prisma.compito.create({
-      data: { batteriaId: b.id, classeId: classe.id, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] },
-    });
-    expect(await eliminaBatteria(b.id)).toEqual({ ok: false, motivo: "in_uso" });
-    expect(await prisma.batteria.findUnique({ where: { id: b.id } })).not.toBeNull();
   });
 
   // Fix round finale, item 5: prima del fix, questa chiamata non restituiva
@@ -616,5 +600,144 @@ describe("la regola a esercizi scelti", () => {
     await expect(
       bacinoRegola({ contenitoreId: contA, argomento: null, anno: null, difficoltaMax: null, esercizioIds: [`${P}a1`] }, docente()),
     ).rejects.toThrow(/malformata/);
+  });
+});
+
+// Nuovo compito, Task 5: i modelli al posto dei "compiti preparati". Un
+// modello è una `Batteria` non automatica, comune a tutta la scuola; ogni
+// compito ha la sua copia automatica dei blocchi e ricorda il modello con
+// `modelloId`. I vecchi compiti puntano invece al compito preparato
+// direttamente con `batteriaId`.
+describe("modelli", () => {
+  let collega: string;
+  let classeId: string;
+
+  beforeEach(async () => {
+    collega = (await prisma.user.create({ data: { email: `${P}collega-mod@test.it`, name: "Collega", role: "TEACHER" } })).id;
+    classeId = (await prisma.classe.create({ data: { googleGroupEmail: `${P}mod@scuola.it`, name: "M", yearLevel: 2 } })).id;
+  });
+
+  // Un compito "nuovo": la sua copia automatica, e il modello da cui viene.
+  async function compitoDaModello(modelloId: string) {
+    const copia = await creaBatteria(teacherId, `${P}Copia`, [{ contenitoreId: contA, count: 1 }], undefined, true);
+    return prisma.compito.create({
+      data: { batteriaId: copia.id, modelloId, classeId, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] },
+    });
+  }
+  // Un compito "legacy": punta al compito preparato direttamente.
+  async function compitoLegacy(batteriaId: string) {
+    return prisma.compito.create({ data: { batteriaId, classeId, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] } });
+  }
+
+  it("l'elenco ha autore, mio, blocchi in breve e quante volte è usato; niente automatiche", async () => {
+    const mio = await creaBatteria(teacherId, `${P}Mio`, [
+      { contenitoreId: contA, count: 2 },
+      { argomento: "prova", anno: 2, count: 1 },
+    ]);
+    const suo = await creaBatteria(collega, `${P}Suo`, [{ esercizioIds: [`${P}a1`, `${P}b1`], count: 2 }]);
+    await creaBatteria(teacherId, `${P}Automatica`, [{ contenitoreId: contA, count: 1 }], undefined, true);
+
+    // usato = compiti col modello + compiti legacy che puntano direttamente;
+    // un compito che fa entrambe le cose conta una volta sola.
+    await compitoDaModello(mio.id);
+    await compitoDaModello(mio.id);
+    await compitoLegacy(mio.id);
+    await prisma.compito.create({
+      data: { batteriaId: mio.id, modelloId: mio.id, classeId, assignedById: teacherId, drawSeed: "s", drawnVersionIds: [] },
+    });
+
+    const elenco = (await elencoModelli(docente())).filter((m) => m.nome.startsWith(P));
+    expect(elenco.map((m) => m.nome).sort()).toEqual([`${P}Mio`, `${P}Suo`]);
+    expect(elenco.find((m) => m.id === mio.id)).toEqual({
+      id: mio.id,
+      nome: `${P}Mio`,
+      autoreNome: "D",
+      mio: true,
+      blocchi: [
+        { etichetta: `${P}Equazioni`, quanti: 2 },
+        { etichetta: "prova", quanti: 1 },
+      ],
+      usato: 4,
+    });
+    expect(elenco.find((m) => m.id === suo.id)).toMatchObject({
+      autoreNome: "Collega",
+      mio: false,
+      blocchi: [{ etichetta: "Esercizi scelti", quanti: 2 }],
+      usato: 0,
+    });
+  });
+
+  it("il nome di una raccolta che chi guarda non vede non compare", async () => {
+    // contA è privata del docente: il collega vede il modello (comune) ma
+    // non il nome della raccolta.
+    await creaBatteria(teacherId, `${P}Privata`, [{ contenitoreId: contA, count: 1 }]);
+    const [m] = (await elencoModelli({ id: collega, admin: false })).filter((x) => x.nome === `${P}Privata`);
+    expect(m!.blocchi).toEqual([{ etichetta: "Raccolta non disponibile", quanti: 1 }]);
+    expect(m!.mio).toBe(false);
+  });
+
+  it("caricaModello restituisce i blocchi nell'ordine, senza anno se la regola non lo ha", async () => {
+    const m = await creaBatteria(teacherId, `${P}Carica`, [
+      { argomento: "prova", count: 2 },
+      { contenitoreId: contB, count: 1 },
+      { esercizioIds: [`${P}a2`], count: 1 },
+      { argomento: "prova", anno: 3, difficoltaMax: 2, count: 1 },
+    ]);
+    expect(await caricaModello(m.id)).toEqual({
+      id: m.id,
+      nome: `${P}Carica`,
+      blocchi: [
+        { tipo: "argomento", argomento: "prova", quanti: 2 },
+        { tipo: "raccolta", contenitoreId: contB, quanti: 1 },
+        { tipo: "scelti", esercizioIds: [`${P}a2`] },
+        { tipo: "argomento", argomento: "prova", anno: 3, difficoltaMax: 2, quanti: 1 },
+      ],
+    });
+  });
+
+  it("caricaModello non carica una batteria automatica né un id inesistente", async () => {
+    const auto = await creaBatteria(teacherId, `${P}Auto`, [{ contenitoreId: contA, count: 1 }], undefined, true);
+    expect(await caricaModello(auto.id)).toBeNull();
+    expect(await caricaModello(`${P}nessuno`)).toBeNull();
+  });
+
+  it("un altro docente non può eliminare il modello: non_trovato e niente cancellato", async () => {
+    const m = await creaBatteria(teacherId, `${P}Altrui`, [{ contenitoreId: contA, count: 1 }]);
+    expect(await eliminaModello(m.id, { id: collega, admin: false })).toEqual({ ok: false, motivo: "non_trovato" });
+    expect(await prisma.batteria.findUnique({ where: { id: m.id } })).toMatchObject({ automatica: false });
+  });
+
+  it("un id inesistente o una batteria automatica sono non_trovato", async () => {
+    const auto = await creaBatteria(teacherId, `${P}Auto`, [{ contenitoreId: contA, count: 1 }], undefined, true);
+    expect(await eliminaModello(auto.id, docente())).toEqual({ ok: false, motivo: "non_trovato" });
+    expect(await prisma.batteria.findUnique({ where: { id: auto.id } })).not.toBeNull();
+    expect(await eliminaModello(`${P}nessuno`, docente())).toEqual({ ok: false, motivo: "non_trovato" });
+  });
+
+  it("un ADMIN elimina il modello di un collega", async () => {
+    const admin = (await prisma.user.create({ data: { email: `${P}admin-mod@test.it`, name: "Adm", role: "ADMIN" } })).id;
+    const m = await creaBatteria(teacherId, `${P}DaAdmin`, [{ contenitoreId: contA, count: 1 }]);
+    expect(await eliminaModello(m.id, { id: admin, admin: true })).toEqual({ ok: true });
+    expect(await prisma.batteria.findUnique({ where: { id: m.id } })).toBeNull();
+  });
+
+  it("un modello legacy usato da compiti si nasconde (diventa automatico), i compiti restano intatti", async () => {
+    const m = await creaBatteria(teacherId, `${P}Legacy`, [{ contenitoreId: contA, count: 1 }]);
+    const c = await compitoLegacy(m.id);
+    expect(await eliminaModello(m.id, docente())).toEqual({ ok: true });
+    expect(await prisma.batteria.findUnique({ where: { id: m.id } })).toMatchObject({ automatica: true });
+    expect(await prisma.batteriaRegola.count({ where: { batteriaId: m.id } })).toBe(1);
+    expect(await prisma.compito.findUnique({ where: { id: c.id } })).toMatchObject({ batteriaId: m.id });
+    expect((await elencoModelli(docente())).some((x) => x.id === m.id)).toBe(false);
+  });
+
+  it("un modello nuovo usato da compiti si cancella, modelloId torna null, i compiti restano intatti", async () => {
+    const m = await creaBatteria(teacherId, `${P}Nuovo`, [{ contenitoreId: contA, count: 1 }]);
+    const c = await compitoDaModello(m.id);
+    expect(await eliminaModello(m.id, docente())).toEqual({ ok: true });
+    expect(await prisma.batteria.findUnique({ where: { id: m.id } })).toBeNull();
+    const dopo = await prisma.compito.findUnique({ where: { id: c.id } });
+    expect(dopo).toMatchObject({ batteriaId: c.batteriaId, modelloId: null });
+    expect(await prisma.batteriaRegola.count({ where: { batteriaId: c.batteriaId } })).toBe(1);
   });
 });

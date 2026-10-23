@@ -4,10 +4,9 @@ import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { eliminaContenitore } from "@/lib/esercizi/contenitori";
 import { utenteDaSessione } from "@/lib/esercizi/accesso";
 
-// Stessa forma della cancellazione di una batteria (route sorella in
-// batterie/[id]/route.ts): il vincolo onDelete: Restrict a livello di schema
-// resta la rete di sicurezza, `eliminaContenitore` e' cio' che trasforma un
-// errore di Postgres in un motivo comprensibile per il docente.
+// Il vincolo onDelete: Restrict a livello di schema resta la rete di
+// sicurezza, `eliminaContenitore` e' cio' che trasforma un errore di
+// Postgres in un motivo comprensibile per il docente.
 // Solo il proprietario elimina: chi non vede la raccolta riceve 404 (come
 // per una inesistente), chi la vede senza esserne proprietario 403.
 const STATI: Record<string, number> = { non_trovato: 404, sola_lettura: 403, in_uso: 409 };

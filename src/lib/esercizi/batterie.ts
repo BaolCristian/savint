@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
-import { comeDocente, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
+import { comeDocente, ruoliContenitori, ruoliEsercizi, ruoloContenitore, type Ruolo, type Utente } from "./accesso";
+import { bloccoDaRegola, type Blocco } from "./estrazione";
 
 /** Una regola nasce con l'uno o l'altro: `contenitoreId` per pescare da una
  * raccolta a mano, oppure `argomento` (con `anno` e `difficoltaMax`
@@ -302,7 +303,7 @@ export function etichettaRegola(regola: {
  * di Prisma — la rotta lo trasformava in un 500 senza nessun messaggio utile
  * al docente, l'unico punto di questo modulo dove un input scorretto non
  * produceva un rifiuto con un motivo. Stessa forma delle funzioni gemelle
- * (`assegna`, `eliminaBatteria`, `eliminaContenitore`): un `{ ok: false,
+ * (`assegna`, `eliminaContenitore`): un `{ ok: false,
  * motivo, dettaglio }`, non un'eccezione. */
 export async function creaBatteria(
   createdById: string,
@@ -547,14 +548,144 @@ export async function verificaBatteria(
   return { ok: true };
 }
 
-/** Cancella una batteria libera. Se ha già dei `Compito` assegnati, rifiuta
- * prima di tentare — stessa forma di `eliminaContenitore` in
- * contenitori.ts: il vincolo `onDelete: Restrict` sullo schema resta la
- * rete di sicurezza, questo controllo è ciò che dà un messaggio al docente
- * invece di un errore del database. */
-export async function eliminaBatteria(id: string): Promise<{ ok: true } | { ok: false; motivo: "in_uso" }> {
-  const usi = await prisma.compito.count({ where: { batteriaId: id } });
-  if (usi > 0) return { ok: false, motivo: "in_uso" };
-  await prisma.batteria.delete({ where: { id } });
+/** L'etichetta con cui una raccolta che chi guarda NON vede compare
+ * nell'elenco dei modelli: mai il nome vero (stessa regola, e stessa
+ * scritta, del riepilogo del Nuovo compito in estrazione.ts). */
+const RACCOLTA_NON_DISPONIBILE = "Raccolta non disponibile";
+
+/** Un modello nell'elenco (pagina Modelli). */
+export type ModelloInElenco = {
+  id: string;
+  nome: string;
+  autoreNome: string | null;
+  /** Creato da chi guarda: decide il filtro "Miei" e, con ADMIN, "Elimina". */
+  mio: boolean;
+  blocchi: { etichetta: string; quanti: number }[];
+  /** Quante volte è stato usato: vedi `elencoModelli`. */
+  usato: number;
+};
+
+/** I modelli (Nuovo compito, Task 5): tutte le batterie NON automatiche
+ * del database — comuni a tutta la scuola, come lo erano i "compiti
+ * preparati" (Decisioni, punto 1: un'istanza è una scuola) — con l'autore,
+ * i blocchi in breve e quante volte sono stati usati.
+ *
+ * `usato` conta i compiti DISTINTI che vengono dal modello per una delle due
+ * strade: `modelloId` (i compiti del Nuovo compito, che portano con sé una
+ * copia automatica dei blocchi) oppure `batteriaId` (i compiti assegnati da
+ * un vecchio "compito preparato", che puntano a lui direttamente). Un
+ * compito che le avesse entrambe conta una volta sola.
+ *
+ * Etichette dei blocchi come nel riepilogo del Nuovo compito: l'argomento,
+ * "Esercizi scelti", il nome della raccolta solo se `chi` la vede — da
+ * docente qualunque (`comeDocente`), cioè fra le raccolte da cui poi
+ * pescherebbe usando il modello. Un modello è comune, una raccolta privata
+ * no: il suo nome non deve uscire da qui. */
+export async function elencoModelli(chi: Utente): Promise<ModelloInElenco[]> {
+  const [righe, raccolteVisibili] = await Promise.all([
+    prisma.batteria.findMany({
+      where: { automatica: false },
+      orderBy: [{ name: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        createdById: true,
+        createdBy: { select: { name: true } },
+        regole: {
+          orderBy: { order: "asc" },
+          select: { contenitoreId: true, argomento: true, count: true, esercizioIds: true, contenitore: { select: { name: true } } },
+        },
+      },
+    }),
+    ruoliContenitori(comeDocente(chi)),
+  ]);
+  if (righe.length === 0) return [];
+
+  // Una query sola per gli usi di tutti i modelli, sulle due strade; il
+  // Set per modello toglie il doppio conteggio.
+  const ids = righe.map((b) => b.id);
+  const compiti = await prisma.compito.findMany({
+    where: { OR: [{ modelloId: { in: ids } }, { batteriaId: { in: ids } }] },
+    select: { id: true, modelloId: true, batteriaId: true },
+  });
+  const usi = new Map<string, Set<string>>();
+  const conta = (modelloId: string | null, compitoId: string) => {
+    if (modelloId == null) return;
+    const insieme = usi.get(modelloId) ?? new Set<string>();
+    insieme.add(compitoId);
+    usi.set(modelloId, insieme);
+  };
+  for (const c of compiti) {
+    conta(c.modelloId, c.id);
+    conta(c.batteriaId, c.id);
+  }
+
+  return righe.map((b) => ({
+    id: b.id,
+    nome: b.name,
+    autoreNome: b.createdBy.name,
+    mio: b.createdById === chi.id,
+    blocchi: b.regole.map((r) => ({
+      etichetta:
+        r.contenitoreId != null && !raccolteVisibili.has(r.contenitoreId) ? RACCOLTA_NON_DISPONIBILE : etichettaRegola(r),
+      quanti: r.count,
+    })),
+    usato: usi.get(b.id)?.size ?? 0,
+  }));
+}
+
+/** Un modello coi suoi blocchi, per "Usa questo modello" (la pagina Nuovo
+ * compito con `?modello={id}`). `null` se non esiste o se è una batteria
+ * automatica (la copia propria di un compito, o un vecchio compito
+ * preparato "eliminato", cioè nascosto: non sono modelli). I blocchi passano
+ * da `bloccoDaRegola`, nell'ordine delle regole: una regola a filtro nata
+ * senza anno dà un blocco argomento SENZA `anno` — lo riempie la pagina con
+ * l'anno della classe scelta, qui non lo si inventa. Nessun controllo su
+ * chi chiede: i modelli sono comuni, e la pesca resta comunque ristretta a
+ * ciò che chi assegna vede (`bacinoRegola`). */
+export async function caricaModello(id: string): Promise<{ id: string; nome: string; blocchi: Blocco[] } | null> {
+  const b = await prisma.batteria.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      automatica: true,
+      regole: {
+        orderBy: { order: "asc" },
+        select: { contenitoreId: true, argomento: true, anno: true, difficoltaMax: true, count: true, esercizioIds: true },
+      },
+    },
+  });
+  if (!b || b.automatica) return null;
+  return { id: b.id, nome: b.name, blocchi: b.regole.map(bloccoDaRegola) };
+}
+
+/** Elimina un modello (Decisioni, punti 1 e 2). Solo chi l'ha creato o un
+ * ADMIN: per chiunque altro è `non_trovato`, come un id che non esiste o una
+ * batteria automatica (nessun oracolo, e la rotta risponde 404).
+ *
+ * Eliminare è sempre possibile e non tocca MAI un compito:
+ * - se dei compiti puntano al modello con `batteriaId` (vecchi compiti
+ *   assegnati da un "compito preparato": i loro blocchi SONO quelli del
+ *   modello, e il vincolo `Restrict` ne impedisce comunque la
+ *   cancellazione), il modello si NASCONDE diventando automatico — sparisce
+ *   dall'elenco e da `caricaModello`, ma regole e compiti restano;
+ * - altrimenti si cancella davvero (le regole vanno con lui, in cascata) e
+ *   i compiti nati dal modello perdono solo il riferimento (`modelloId`
+ *   torna null per `onDelete: SetNull`): i loro blocchi sono nella loro
+ *   copia automatica. */
+export async function eliminaModello(
+  id: string,
+  chi: Utente,
+): Promise<{ ok: true } | { ok: false; motivo: "non_trovato" }> {
+  const b = await prisma.batteria.findUnique({ where: { id }, select: { createdById: true, automatica: true } });
+  if (!b || b.automatica || (!chi.admin && b.createdById !== chi.id)) return { ok: false, motivo: "non_trovato" };
+
+  const legacy = await prisma.compito.count({ where: { batteriaId: id } });
+  if (legacy > 0) {
+    await prisma.batteria.update({ where: { id }, data: { automatica: true } });
+  } else {
+    await prisma.batteria.delete({ where: { id } });
+  }
   return { ok: true };
 }

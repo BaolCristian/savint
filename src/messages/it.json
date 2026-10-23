@@ -1307,6 +1307,21 @@
       "erroreGenerico": "Si è verificato un errore. Riprova.",
       "necessitaContenitori": "Crea prima almeno un contenitore."
     },
+    "modelli": {
+      "titolo": "Modelli",
+      "descrizione": "Un modello è un compito salvato: i blocchi di esercizi, senza la classe né le date. Usalo per ridare lo stesso compito a un'altra classe. Si crea dal Nuovo compito con «Salva anche come modello».",
+      "filtro": "Mostra",
+      "filtroTutti": "Tutti",
+      "filtroMiei": "Miei",
+      "di": "di {autore}",
+      "blocco": "{quanti} · {etichetta}",
+      "usato": "{n, plural, =0 {Mai usato} one {Usato # volta} other {Usato # volte}}",
+      "usa": "Usa questo modello",
+      "elimina": "Elimina",
+      "nessunModello": "Non c'è ancora nessun modello. Quando assegni un compito, spunta «Salva anche come modello» per ritrovarlo qui.",
+      "nessunoMio": "Non hai ancora salvato nessun modello.",
+      "erroreGenerico": "Si è verificato un errore. Riprova."
+    },
     "assegnaForm": {
       "classe": "Classe",
       "anno": "Anno",

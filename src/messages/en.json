@@ -1307,6 +1307,21 @@
       "erroreGenerico": "Something went wrong. Please try again.",
       "necessitaContenitori": "Create at least one container first."
     },
+    "modelli": {
+      "titolo": "Templates",
+      "descrizione": "A template is a saved assignment: the blocks of exercises, without the class or the dates. Use it to give the same assignment to another class. Create one from New assignment with “Also save as template”.",
+      "filtro": "Show",
+      "filtroTutti": "All",
+      "filtroMiei": "Mine",
+      "di": "by {autore}",
+      "blocco": "{quanti} · {etichetta}",
+      "usato": "{n, plural, =0 {Never used} one {Used # time} other {Used # times}}",
+      "usa": "Use this template",
+      "elimina": "Delete",
+      "nessunModello": "There are no templates yet. When you assign work, tick “Also save as template” to find it here.",
+      "nessunoMio": "You haven't saved any templates yet.",
+      "erroreGenerico": "Something went wrong. Please try again."
+    },
     "assegnaForm": {
       "classe": "Class",
       "anno": "Year",
