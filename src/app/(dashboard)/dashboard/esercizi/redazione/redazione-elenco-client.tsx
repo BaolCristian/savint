@@ -95,6 +95,19 @@ interface Testi extends DuplicaButtonTesti {
  * correzione eccessiva, corretta qui). */
 type Gruppo = { argomento: string; voci: VoceElenco[] };
 
+/** La grafia dell'argomento da mandare a "Assegna questo argomento": quella
+ * ESATTA (non ripulita) più frequente fra gli esercizi assegnabili del
+ * gruppo. Il blocco argomento pesca per testo esatto, quindi «Percentuali»
+ * ripulito non troverebbe i «percentuali » scritti a mano; si sceglie la
+ * grafia che ne raggiunge di più. A parità, la prima in ordine di testo:
+ * deterministico. */
+function grafiaPiuUsata(voci: VoceElenco[]): string {
+  const conteggi = new Map<string, number>();
+  for (const v of voci) if (v.assegnabile) conteggi.set(v.argomento, (conteggi.get(v.argomento) ?? 0) + 1);
+  const [migliore] = [...conteggi.entries()].sort(([a, na], [b, nb]) => nb - na || (a < b ? -1 : a > b ? 1 : 0));
+  return migliore?.[0] ?? voci[0]!.argomento;
+}
+
 /** Gli esercizi per argomento, in ordine alfabetico. "Percentuali" e
  * "percentuali " finiscono nello stesso gruppo: l'argomento lo scrive a mano
  * chi redige, e il catalogo non deve spezzarlo per una maiuscola. */
@@ -176,7 +189,7 @@ export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: Vo
                       niente. */}
                   {g.voci.some((v) => v.assegnabile) && (
                     <Link
-                      href={`/dashboard/esercizi/compiti/nuovo?argomento=${encodeURIComponent(g.argomento)}`}
+                      href={`/dashboard/esercizi/compiti/nuovo?argomento=${encodeURIComponent(grafiaPiuUsata(g.voci))}`}
                       className="text-sm font-medium text-brand-blue hover:underline"
                     >
                       {testi.assegnaArgomento}

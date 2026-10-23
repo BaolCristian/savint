@@ -16,6 +16,14 @@ type Parametri = { classe?: string; raccolta?: string; argomento?: string; model
  * arriva come array, e qui vale il primo. */
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.trim() || undefined;
 
+/** Come `uno`, ma senza ripulire il testo: l'argomento si confronta ESATTO
+ * (come lo pesca il blocco), e «percentuali » con lo spazio è una voce a sé
+ * di `argomentiDisponibili`. Vuoto o solo spazi vale assente. */
+const unoEsatto = (v: string | string[] | undefined) => {
+  const s = Array.isArray(v) ? v[0] : v;
+  return s != null && s.trim() !== "" ? s : undefined;
+};
+
 /** Quanti prenderne da un blocco precompilato: cinque, o tutti se sono
  * meno (lo stesso default dei blocchi aggiunti a mano nella pagina). */
 const quantiDa = (disponibili: number | undefined) => Math.max(1, Math.min(5, disponibili ?? 5));
@@ -44,7 +52,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
   const p: Parametri = {
     classe: uno(grezzi.classe),
     raccolta: uno(grezzi.raccolta),
-    argomento: uno(grezzi.argomento),
+    argomento: unoEsatto(grezzi.argomento),
     modello: uno(grezzi.modello),
     esercizio: uno(grezzi.esercizio),
   };

@@ -87,6 +87,12 @@ describe("pagina Nuovo compito", () => {
     expect(screen.getByText(/Aggiungi almeno un blocco/)).toBeInTheDocument();
   });
 
+  it("?argomento= si confronta col testo esatto, spazi compresi", async () => {
+    vi.mocked(argomentiDisponibili).mockImplementation(async () => [{ argomento: "percentuali ", quanti: 4 }]);
+    await rendi({ argomento: "percentuali ", classe: "c1" });
+    expect(screen.getByText("(4 disponibili)")).toBeInTheDocument();
+  });
+
   it("?argomento= inesistente, senza classe scelta, non crea niente", async () => {
     await rendi({ argomento: "Inventato" });
     expect(screen.getByText(/Aggiungi almeno un blocco/)).toBeInTheDocument();

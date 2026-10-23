@@ -238,6 +238,27 @@ describe("elenco della redazione", () => {
     );
   });
 
+  // Il blocco argomento pesca per testo ESATTO: il link manda la grafia
+  // grezza più frequente fra gli assegnabili del gruppo, non quella ripulita.
+  it("\"Assegna questo argomento\" manda la grafia esatta più usata nel gruppo", async () => {
+    const voce = (id: string, argomento: string, ultimaVersione = 1) => ({
+      id, titolo: id, argomento, anno: 2, ultimaVersione,
+      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
+    });
+    vi.mocked(elencoRedazione).mockResolvedValue([
+      voce("e1", "Percentuali"),
+      voce("e2", "percentuali "),
+      voce("e3", "percentuali "),
+      // Non assegnabili: non contano.
+      voce("e4", "Percentuali", 0),
+      voce("e5", "Percentuali", 0),
+    ]);
+    await rendi();
+    expect(screen.getByRole("link", { name: "assegnaArgomento" })).toHaveAttribute(
+      "href", `/dashboard/esercizi/compiti/nuovo?argomento=${encodeURIComponent("percentuali ")}`,
+    );
+  });
+
   it("la barra della sezione ha la scheda Modelli", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();
