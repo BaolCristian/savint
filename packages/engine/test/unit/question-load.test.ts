@@ -171,6 +171,27 @@ describe("loadQuestion", () => {
     expect(q.scope.getConstant("e")).toBeUndefined();
   });
 
+  // Divergenza (DIVERGENCES.md, «Variabili con il nome di una costante»):
+  // l'ordine è quello in cui PostgreSQL (jsonb) restituisce le chiavi, che
+  // mette `d` prima di `i`. Upstream `p` non dipende da `i` (è una costante)
+  // e, calcolata prima di `i`, indicizza la lista con l'unità immaginaria.
+  it("una variabile con il nome di una costante è una dipendenza, in qualunque ordine", () => {
+    for (let s = 0; s < 20; s++) {
+      const q = loadQuestion(
+        {
+          variables: {
+            d: { name: "d", definition: "p/100" },
+            i: { name: "i", definition: "random(0..4)" },
+            p: { name: "p", definition: "[5, 20, 25, 40, 50][i]" },
+          },
+        },
+        { seed: "s" + s },
+      );
+      const i = q.variables["i"] as number;
+      expect(q.variables["p"]).toBe([5, 20, 25, 40, 50][i]);
+    }
+  });
+
   it("le costanti personalizzate sono definite", () => {
     const q = loadQuestion(
       { name: "c", constants: [{ name: "k", value: "6*7", tex: "k" }], variables: { a: { name: "a", definition: "k" } } },

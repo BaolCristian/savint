@@ -36,6 +36,7 @@ export function buildVariablesTodo(
 ): VariablesTodo {
   const todo: VariablesTodo = {};
   const seen_names: Record<string, boolean> = {};
+  const depScope = scopeDelleDipendenze(definitions, scope);
   for (const def of definitions) {
     const name = normaliseName((def.name ?? "").trim(), scope);
     const names = splitVariableNames(name);
@@ -61,9 +62,29 @@ export function buildVariablesTodo(
     } catch (e) {
       error("variable.error in variable definition", { name: name }, e);
     }
-    todo[name] = { tree: tree, vars: findvars(tree, [], scope) };
+    todo[name] = { tree: tree, vars: findvars(tree, [], depScope) };
   }
   return todo;
+}
+
+/** Lo scope in cui cercare le dipendenze: quello della domanda, senza le
+ * costanti che hanno lo stesso nome di una variabile della domanda.
+ *
+ * upstream: `findvars` salta i nomi delle costanti (jme.js), quindi in
+ * `p = [5, 20, 25][i]` con una variabile `i` la dipendenza da `i` non c'è, e
+ * il risultato dipende dall'ordine delle definizioni: se `p` si calcola
+ * prima di `i`, legge la costante `i` (l'unità immaginaria) e fallisce o dà
+ * un valore sbagliato. L'ordine non è nelle mani del docente: PostgreSQL
+ * (jsonb) riordina le chiavi di `variables`. Qui la variabile è sempre una
+ * dipendenza; la valutazione la preferisce già alla costante
+ * (`Scope.getVariable` prima di `getConstant`). Vedi DIVERGENCES.md. */
+function scopeDelleDipendenze(definitions: QuestionVariableJSON[], scope: Scope): Scope {
+  const nomi = definitions.flatMap((d) => splitVariableNames(normaliseName((d.name ?? "").trim(), scope)));
+  const ombra = nomi.filter((n) => scope.getConstant(n) !== undefined);
+  if (ombra.length === 0) return scope;
+  const s = new Scope([scope]);
+  ombra.forEach((n) => s.deleteConstant(n));
+  return s;
 }
 
 /** Il risultato del ciclo di generazione. */

@@ -160,3 +160,25 @@ describe("notazione decimale dei contenuti", () => {
     expect(giusta).toMatch(/^\d+,\d{2}$/);
   });
 });
+
+/** Le chiavi di un oggetto nell'ordine in cui le restituisce PostgreSQL
+ * (jsonb): prima le più corte, a parità di lunghezza in ordine di byte. È
+ * l'ordine con cui il player riceve `variables` dal database, diverso da
+ * quello del file. */
+function ordineJsonb<T>(o: Record<string, T>): Record<string, T> {
+  const chiavi = Object.keys(o).sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+  return Object.fromEntries(chiavi.map((k) => [k, o[k] as T]));
+}
+
+describe("i contenuti si caricano anche nell'ordine del database", () => {
+  // Il caso che l'ha reso necessario: 14-percentuali-frazioni-decimali ha
+  // una variabile `i` (omonima dell'unità immaginaria); dal database `d`
+  // veniva prima di `i` e `p = [...][i]` falliva nel player.
+  it.each(file)("%s", (nome) => {
+    const { question } = carica(nome);
+    const riordinata = { ...question, variables: ordineJsonb(question.variables ?? {}) };
+    for (const seme of SEMI) {
+      expect(() => loadQuestion(riordinata, { seed: seme, locale: "it", numberStyle: "plain-eu" })).not.toThrow();
+    }
+  });
+});
