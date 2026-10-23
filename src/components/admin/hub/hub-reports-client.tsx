@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { withBasePath } from "@/lib/base-path";
 
 export interface ReportItem {
   id: string;
@@ -29,7 +30,7 @@ export function HubReportsClient({
 
   async function dismiss(id: string) {
     setBusy(id);
-    const res = await fetch(`/api/hub/admin/reports/${id}/dismiss`, {
+    const res = await fetch(withBasePath(`/api/hub/admin/reports/${id}/dismiss`), {
       method: "POST",
     });
     if (!res.ok) {
@@ -45,7 +46,7 @@ export function HubReportsClient({
     const reason = prompt(t("suspendReasonPrompt"));
     if (!reason) return;
     setBusy(id);
-    const res = await fetch(`/api/hub/admin/reports/${id}/suspend`, {
+    const res = await fetch(withBasePath(`/api/hub/admin/reports/${id}/suspend`), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason }),
@@ -63,7 +64,7 @@ export function HubReportsClient({
     const reason = prompt(t("banReasonPrompt"));
     if (!reason) return;
     setBusy(accountId);
-    const res = await fetch(`/api/hub/admin/accounts/${accountId}/ban`, {
+    const res = await fetch(withBasePath(`/api/hub/admin/accounts/${accountId}/ban`), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason }),

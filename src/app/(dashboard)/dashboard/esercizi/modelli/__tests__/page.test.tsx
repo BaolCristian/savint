@@ -117,6 +117,18 @@ describe("pagina dei modelli", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
+  it("un errore di rete mostra l'errore e riabilita Elimina", async () => {
+    global.fetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }) as typeof fetch;
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "elimina" }));
+    fireEvent.click(screen.getByRole("button", { name: "eliminaConferma" }));
+    expect(await screen.findByText("erroreGenerico")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "elimina" })).toBeEnabled();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("la barra della sezione ha la scheda Modelli, segnata come corrente", async () => {
     await rendi();
     const scheda = screen.getByRole("link", { name: "nav.models" });

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { ReportQuizButton } from "./report-quiz-button";
+import { withBasePath } from "@/lib/base-path";
 
 type Props = {
   quizId: string;
@@ -23,7 +24,7 @@ export function HubQuizDetailActions({ quizId, qlzAvailable = true }: Props) {
     if (starting) return;
     setStarting(true);
     try {
-      const res = await fetch("/api/hub/practice/start", {
+      const res = await fetch(withBasePath("/api/hub/practice/start"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quizId }),

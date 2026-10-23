@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 /** Il codice di una classe, grande e leggibile — verrà dettato ad alta voce
  * o scritto alla lavagna (design doc, «Il codice») — con la sua
@@ -43,7 +44,7 @@ export function ClasseCodice({
   async function rigenera() {
     setBusy(true);
     setErrore(null);
-    const res = await fetch(`/api/esercizi/classi/${classeId}/codice`, { method: "POST" });
+    const res = await fetch(withBasePath(`/api/esercizi/classi/${classeId}/codice`), { method: "POST" });
     setBusy(false);
     if (!res.ok) {
       setErrore(t("rigeneraErrore"));

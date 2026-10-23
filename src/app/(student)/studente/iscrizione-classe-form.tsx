@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withBasePath } from "@/lib/base-path";
 
 /** Il campo per iscriversi a una classe con un codice (task 4, design doc:
  * «la sua area» — qui, in cima alla home dello studente). Chiama la rotta
@@ -36,7 +37,7 @@ export function IscrizioneClasseForm() {
     setErrore(null);
     setSuccesso(null);
     try {
-      const res = await fetch("/api/esercizi/classi/iscrizione", {
+      const res = await fetch(withBasePath("/api/esercizi/classi/iscrizione"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ codice }),

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ConfirmDelete } from "./confirm-delete";
+import { withBasePath } from "@/lib/base-path";
 
 export function InstallationActions({
   installationId, active, schoolName,
@@ -15,7 +16,7 @@ export function InstallationActions({
   async function toggle() {
     setError(null);
     const action = active ? "disable" : "enable";
-    const res = await fetch(`/api/hub/admin/installations/${installationId}/${action}`, { method: "POST" });
+    const res = await fetch(withBasePath(`/api/hub/admin/installations/${installationId}/${action}`), { method: "POST" });
     if (!res.ok) { setError(t("actionError")); return; }
     router.refresh();
   }

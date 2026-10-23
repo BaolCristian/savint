@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { withBasePath } from "@/lib/base-path";
 
 interface Modello {
   id: string;
@@ -56,13 +57,20 @@ export function ModelliClient({
     setDaConfermare(null);
     setEliminando(id);
     setErrore((prev) => ({ ...prev, [id]: "" }));
-    const res = await fetch(`/api/esercizi/modelli/${id}`, { method: "DELETE" });
-    setEliminando(null);
-    if (!res.ok) {
+    // Anche un errore di rete (fetch che lancia) mostra l'errore generico:
+    // il pulsante si riabilita comunque nel finally.
+    try {
+      const res = await fetch(withBasePath(`/api/esercizi/modelli/${id}`), { method: "DELETE" });
+      if (!res.ok) {
+        setErrore((prev) => ({ ...prev, [id]: testi.erroreGenerico }));
+        return;
+      }
+      router.refresh();
+    } catch {
       setErrore((prev) => ({ ...prev, [id]: testi.erroreGenerico }));
-      return;
+    } finally {
+      setEliminando(null);
     }
-    router.refresh();
   }
 
   const voceFiltro = (attivo: boolean) =>

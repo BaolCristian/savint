@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 export function SetupCodeForm() {
   const router = useRouter();
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr(null);
-    const res = await fetch("/api/installation/hub/connect", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ setupCode: code.trim() }) });
+    const res = await fetch(withBasePath("/api/installation/hub/connect"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ setupCode: code.trim() }) });
     setBusy(false);
     if (res.ok) router.refresh(); else setErr((await res.json().catch(() => ({}))).error ?? "errore");
   }

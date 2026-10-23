@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { withBasePath } from "@/lib/base-path";
 
 interface Contenitore {
   id: string;
@@ -49,7 +50,7 @@ export function ContenitoriClient({
     e.preventDefault();
     setCreando(true);
     setErroreCrea(null);
-    const res = await fetch("/api/esercizi/contenitori", {
+    const res = await fetch(withBasePath("/api/esercizi/contenitori"), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: nome, description: descrizione || undefined }),
@@ -67,7 +68,7 @@ export function ContenitoriClient({
   async function elimina(id: string) {
     setEliminando(id);
     setErroreElimina((prev) => ({ ...prev, [id]: "" }));
-    const res = await fetch(`/api/esercizi/contenitori/${id}`, { method: "DELETE" });
+    const res = await fetch(withBasePath(`/api/esercizi/contenitori/${id}`), { method: "DELETE" });
     setEliminando(null);
     if (!res.ok) {
       const corpo = await res.json().catch(() => ({}));

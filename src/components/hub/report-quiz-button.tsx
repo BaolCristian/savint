@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { withBasePath } from "@/lib/base-path";
 
 type ReportReason = "COPYRIGHT" | "PERSONAL_DATA" | "OFFENSIVE" | "OTHER";
 
@@ -47,7 +48,7 @@ export function ReportQuizButton({ hubQuizId }: Props) {
     e.preventDefault();
     setStatus("submitting");
     try {
-      const res = await fetch("/api/hub/reports", {
+      const res = await fetch(withBasePath("/api/hub/reports"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ hubQuizId, reason, description: description || undefined }),

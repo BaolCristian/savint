@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 interface Classe {
   id: string;
@@ -70,7 +71,7 @@ export function ClassiForm({
   async function salva() {
     setBusy(true);
     setEsito(null);
-    const res = await fetch("/api/esercizi/classi/insegnate", {
+    const res = await fetch(withBasePath("/api/esercizi/classi/insegnate"), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ classeIds: [...selezionate] }),

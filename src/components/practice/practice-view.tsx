@@ -78,7 +78,7 @@ export function PracticeView({ quiz, backHref = "/explore", backLabel, completeU
   useEffect(() => {
     if (phase !== "review" || !completeUrl || completedRef.current) return;
     completedRef.current = true;
-    fetch(completeUrl, { method: "POST" }).catch(() => {});
+    fetch(withBasePath(completeUrl), { method: "POST" }).catch(() => {});
   }, [phase, completeUrl]);
 
   const totalQuestions = quiz.questions.length;

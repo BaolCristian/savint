@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withBasePath } from "@/lib/base-path";
 
 /** Cambiare le date di un compito già assegnato, o ritirarlo. Le date
  * arrivano già nel formato del campo `type="date"` (AAAA-MM-GG, "" se
@@ -43,7 +44,7 @@ export function GestioneCompito({ compitoId, opensAt: aperturaIniziale, dueAt: s
     setSalvato(false);
     // Un campo svuotato diventa `null`, cioè "togli la data": la rotta vuole
     // sempre entrambe le chiavi, proprio per non dover indovinare.
-    const res = await fetch(`/api/esercizi/compiti/${compitoId}`, {
+    const res = await fetch(withBasePath(`/api/esercizi/compiti/${compitoId}`), {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -63,7 +64,7 @@ export function GestioneCompito({ compitoId, opensAt: aperturaIniziale, dueAt: s
   async function ritira() {
     setBusy(true);
     setErrore(null);
-    const res = await fetch(`/api/esercizi/compiti/${compitoId}`, { method: "DELETE" });
+    const res = await fetch(withBasePath(`/api/esercizi/compiti/${compitoId}`), { method: "DELETE" });
     setBusy(false);
     if (!res.ok) {
       setConfermaRitiro(false);

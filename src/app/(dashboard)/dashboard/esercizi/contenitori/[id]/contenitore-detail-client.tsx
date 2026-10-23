@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 interface EsercizioRiga {
   id: string;
@@ -83,7 +84,7 @@ export function ContenitoreDetailClient({
   async function rimuovi(esercizioId: string) {
     setRimuovendo(esercizioId);
     setErroreRimozione(null);
-    const res = await fetch(`/api/esercizi/contenitori/${contenitoreId}/esercizi`, {
+    const res = await fetch(withBasePath(`/api/esercizi/contenitori/${contenitoreId}/esercizi`), {
       method: "DELETE",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ esercizioId }),
@@ -121,7 +122,7 @@ export function ContenitoreDetailClient({
     setConfermaPrivati(false);
     setAggiungendo(true);
     setErroreAggiunta(null);
-    const res = await fetch(`/api/esercizi/contenitori/${contenitoreId}/esercizi`, {
+    const res = await fetch(withBasePath(`/api/esercizi/contenitori/${contenitoreId}/esercizi`), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ esercizioIds: [...selezionati] }),

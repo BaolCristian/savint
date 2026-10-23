@@ -7,6 +7,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 /** Bottone "Elimina" che apre un dialog di conferma e fa DELETE su `deleteUrl`
  *  (una richiesta di affiliazione o direttamente un'installazione). */
@@ -20,7 +21,7 @@ export function ConfirmDelete({ deleteUrl, label }: { deleteUrl: string; label?:
   async function onConfirm() {
     setBusy(true);
     setError(null);
-    const res = await fetch(deleteUrl, { method: "DELETE" });
+    const res = await fetch(withBasePath(deleteUrl), { method: "DELETE" });
     setBusy(false);
     if (!res.ok) { setError(t("actionError")); return; }
     setOpen(false);

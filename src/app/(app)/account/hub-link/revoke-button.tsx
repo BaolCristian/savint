@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 interface Props {
   revoking: string;
@@ -14,7 +15,7 @@ export function RevokeButton({ revoking, revoke, revoked }: Props) {
   async function handleRevoke() {
     setStatus("loading");
     try {
-      await fetch("/api/hub/oauth/link", { method: "DELETE" });
+      await fetch(withBasePath("/api/hub/oauth/link"), { method: "DELETE" });
       setStatus("done");
     } catch {
       setStatus("idle");

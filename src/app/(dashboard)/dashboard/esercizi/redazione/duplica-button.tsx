@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 export interface DuplicaButtonTesti {
   duplica: string;
@@ -33,7 +34,7 @@ export function DuplicaButton({ esercizioId, testi }: { esercizioId: string; tes
     setInCorso(true);
     setErrore(false);
     try {
-      const res = await fetch(`/api/esercizi/redazione/${esercizioId}/duplica`, { method: "POST" });
+      const res = await fetch(withBasePath(`/api/esercizi/redazione/${esercizioId}/duplica`), { method: "POST" });
       if (!res.ok) {
         setErrore(true);
         return;

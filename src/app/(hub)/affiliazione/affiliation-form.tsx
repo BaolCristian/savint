@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PROVINCES } from "@/lib/affiliation/provinces";
+import { withBasePath } from "@/lib/base-path";
 
 interface Props {
   verified?: boolean;
@@ -28,7 +29,7 @@ export default function AffiliationForm({ verified }: Props) {
     };
 
     try {
-      const res = await fetch("/api/hub/affiliation/request", {
+      const res = await fetch(withBasePath("/api/hub/affiliation/request"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

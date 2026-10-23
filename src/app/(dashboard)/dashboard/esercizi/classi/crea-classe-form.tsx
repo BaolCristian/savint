@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withBasePath } from "@/lib/base-path";
 
 /** Il form per creare una classe a mano (task 4, design doc «Il problema»:
  * il primo giorno di scuola il docente non vede niente finché nessuno dei
@@ -38,7 +39,7 @@ export function CreaClasseForm() {
     setCreando(true);
     setErrore(null);
     setCreata(false);
-    const res = await fetch("/api/esercizi/classi", {
+    const res = await fetch(withBasePath("/api/esercizi/classi"), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ nome, anno: anno ? Number(anno) : undefined }),

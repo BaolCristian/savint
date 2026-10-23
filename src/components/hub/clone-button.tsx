@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 interface CloneButtonProps {
   hubQuizId: string;
@@ -16,7 +17,7 @@ export function CloneButton({ hubQuizId }: CloneButtonProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/dashboard/hub/clone", {
+      const res = await fetch(withBasePath("/api/dashboard/hub/clone"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ hubQuizId }),

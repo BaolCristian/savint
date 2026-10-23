@@ -16,6 +16,7 @@ import { ParteEspressione } from "./parte-espressione";
 import { Anteprima } from "./anteprima";
 import { ImpaginazioneEditor } from "./impaginazione";
 import { SchedaCatalogo } from "./scheda-catalogo";
+import { withBasePath } from "@/lib/base-path";
 
 /** Un esercizio nuovo, vuoto: `parti: []` non è ancora valido per lo schema
  * del dominio (`esercizioEditorSchema.parti.min(1)`) — non deve esserlo qui,
@@ -326,7 +327,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
     setRifiutoSalvataggio(null);
     try {
       const url = esercizioId ? `/api/esercizi/redazione/${esercizioId}` : "/api/esercizi/redazione";
-      const res = await fetch(url, {
+      const res = await fetch(withBasePath(url), {
         method: esercizioId ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ editor }),
@@ -352,7 +353,7 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
     setVerificaOk(false);
     setRifiutoVerifica(null);
     try {
-      const res = await fetch("/api/esercizi/redazione/verifica", {
+      const res = await fetch(withBasePath("/api/esercizi/redazione/verifica"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ editor }),

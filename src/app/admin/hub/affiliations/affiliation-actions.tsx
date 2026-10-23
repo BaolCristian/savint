@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ConfirmDelete } from "./confirm-delete";
+import { withBasePath } from "@/lib/base-path";
 
 export default function AffiliationActions({ id, schoolName }: { id: string; schoolName?: string }) {
   const t = useTranslations("affiliation");
@@ -12,14 +13,14 @@ export default function AffiliationActions({ id, schoolName }: { id: string; sch
 
   async function handleApprove() {
     setError(null);
-    const res = await fetch(`/api/hub/affiliation/${id}/approve`, { method: "POST" });
+    const res = await fetch(withBasePath(`/api/hub/affiliation/${id}/approve`), { method: "POST" });
     if (!res.ok) { setError(t("approveError")); return; }
     router.refresh();
   }
   async function handleReject() {
     setError(null);
     const reason = window.prompt(t("rejectReasonPrompt")) ?? undefined;
-    const res = await fetch(`/api/hub/affiliation/${id}/reject`, {
+    const res = await fetch(withBasePath(`/api/hub/affiliation/${id}/reject`), {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }),
     });
     if (!res.ok) { setError(t("rejectError")); return; }

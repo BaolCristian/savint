@@ -7,6 +7,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/base-path";
 
 /** Form: promuovi ad admin un utente esistente per email. */
 export function PromoteForm() {
@@ -21,7 +22,7 @@ export function PromoteForm() {
     if (!email.trim()) return;
     setBusy(true);
     setMsg(null);
-    const res = await fetch("/api/hub/admin/accounts/promote", {
+    const res = await fetch(withBasePath("/api/hub/admin/accounts/promote"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -74,7 +75,7 @@ export function TransferForm() {
   async function onConfirm() {
     setBusy(true);
     setMsg(null);
-    const res = await fetch("/api/hub/admin/accounts/transfer-content", {
+    const res = await fetch(withBasePath("/api/hub/admin/accounts/transfer-content"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -140,7 +141,7 @@ export function DemoteButton({ id }: { id: string }) {
 
   async function onClick() {
     setError(null);
-    const res = await fetch(`/api/hub/admin/accounts/${id}/demote`, { method: "POST" });
+    const res = await fetch(withBasePath(`/api/hub/admin/accounts/${id}/demote`), { method: "POST" });
     if (!res.ok) { setError(t("actionError")); return; }
     router.refresh();
   }
