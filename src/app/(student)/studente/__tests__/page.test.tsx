@@ -12,9 +12,11 @@ vi.mock("@/lib/db/client", () => ({
 }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDelloStudente: vi.fn() }));
 vi.mock("@/lib/esercizi/pratica", () => ({ eserciziPraticaLibera: vi.fn() }));
+vi.mock("@/lib/esercizi/prova-verifica", () => ({ verificheDelloStudente: vi.fn() }));
 // Il traduttore restituisce chiave e valori: così le asserzioni parlano di
 // quale messaggio è stato scelto, non del testo italiano di quel messaggio.
 vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn(async () => "it"),
   getTranslations: vi.fn(async () => (chiave: string, valori?: Record<string, unknown>) =>
     valori ? `${chiave}:${JSON.stringify(valori)}` : chiave),
 }));
@@ -29,6 +31,7 @@ vi.mock("next-intl", () => ({
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
 import { eserciziPraticaLibera } from "@/lib/esercizi/pratica";
+import { verificheDelloStudente } from "@/lib/esercizi/prova-verifica";
 import StudentHomePage from "../page";
 
 function esercizioCon(tentativi: unknown[]) {
@@ -44,6 +47,7 @@ beforeEach(() => {
   vi.mocked(prisma.tentativo.findMany).mockReset().mockResolvedValue([]);
   vi.mocked(compitiDelloStudente).mockReset().mockResolvedValue([]);
   vi.mocked(eserciziPraticaLibera).mockReset().mockResolvedValue(new Set(["01-prova"]));
+  vi.mocked(verificheDelloStudente).mockReset().mockResolvedValue([]);
 });
 
 async function rendi() {
@@ -338,5 +342,59 @@ describe("iscrizione a una classe con un codice", () => {
     const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0]![1] as RequestInit).body as string);
     expect(body).toEqual({ codice: "AB3XQ7" });
     expect(await screen.findByText(`successo:${JSON.stringify({ classe: "1A" })}`)).toBeInTheDocument();
+  });
+});
+
+// Modalità verifica (Task 9): le verifiche dello studente in una sezione
+// propria, sopra i compiti, con lo stato per lui. Solo «In corso» e
+// «Risultati pubblicati» portano alla pagina della verifica.
+describe("le verifiche dello studente", () => {
+  const quando = new Date("2026-10-23T08:30:00.000Z");
+
+  beforeEach(() => {
+    vi.mocked(prisma.esercizio.findMany).mockResolvedValue(esercizioCon([]) as never);
+  });
+
+  it("senza verifiche non c'è la sezione", async () => {
+    await rendi();
+    expect(screen.queryByRole("heading", { name: "verificheTitolo" })).toBeNull();
+  });
+
+  it("una verifica non ancora iniziata si vede ma non si apre", async () => {
+    vi.mocked(verificheDelloStudente).mockResolvedValue([{ id: "v1", quando, stato: "non_iniziata" }]);
+    await rendi();
+    expect(screen.getByRole("heading", { name: "verificheTitolo" })).toBeInTheDocument();
+    expect(screen.getByText("statoNonIniziata")).toBeInTheDocument();
+    expect(document.querySelector('a[href="/studente/verifica/v1"]')).toBeNull();
+  });
+
+  it("una verifica in corso porta alla sua pagina", async () => {
+    vi.mocked(verificheDelloStudente).mockResolvedValue([{ id: "v1", quando, stato: "aperta" }]);
+    await rendi();
+    expect(screen.getByText("statoInCorso")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "apri" })).toHaveAttribute("href", "/studente/verifica/v1");
+  });
+
+  it("consegnata: nessun link; risultati pubblicati: «Vedi i risultati»", async () => {
+    vi.mocked(verificheDelloStudente).mockResolvedValue([
+      { id: "v1", quando, stato: "consegnata" },
+      { id: "v2", quando, stato: "risultati" },
+    ]);
+    await rendi();
+    expect(screen.getByText("statoConsegnata")).toBeInTheDocument();
+    expect(document.querySelector('a[href="/studente/verifica/v1"]')).toBeNull();
+    expect(screen.getByRole("link", { name: "vediRisultati" })).toHaveAttribute("href", "/studente/verifica/v2");
+  });
+
+  it("le verifiche stanno sopra i compiti", async () => {
+    vi.mocked(verificheDelloStudente).mockResolvedValue([{ id: "v1", quando, stato: "aperta" }]);
+    vi.mocked(compitiDelloStudente).mockResolvedValue([
+      { id: "c1", batteria: "Batteria 1", dueAt: null, esercizi: [{ esercizioId: "e1", title: "Es 1" }], fatti: 0 },
+    ] as never);
+    vi.mocked(prisma.compito.findMany).mockResolvedValue([{ id: "c1", opensAt: null }] as never);
+    await rendi();
+    const verifiche = screen.getByRole("heading", { name: "verificheTitolo" });
+    const compiti = screen.getByRole("heading", { name: "compitiTitolo" });
+    expect(verifiche.compareDocumentPosition(compiti) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

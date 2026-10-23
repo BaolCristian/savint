@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
-import { BookOpen, CheckCircle2, ClipboardList } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import { BookOpen, CheckCircle2, ClipboardCheck, ClipboardList } from "lucide-react";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
 import { eserciziPraticaLibera } from "@/lib/esercizi/pratica";
+import { verificheDelloStudente, type StatoProvaStudente } from "@/lib/esercizi/prova-verifica";
 import { estrazioniDegliStudenti } from "@/lib/esercizi/versioni-compito";
 import { Card } from "@/components/ui/card";
+import { formattaQuando } from "@/components/esercizi/verifica/data-verifica";
 import { CatalogoEsercizi, type StatoCatalogo } from "./catalogo-esercizi";
 import { IscrizioneClasseForm } from "./iscrizione-classe-form";
 
@@ -22,6 +24,16 @@ function dettaglioTentativo(t: Traduttore, tentativo: StatoTentativo): string | 
   return tentativo.maxScore <= 0 ? t("tentativoAperto") : t("tentativoInCorso", punteggi);
 }
 
+// Lo stato di una verifica come lo legge lo studente, e il link quando c'è
+// qualcosa da aprire: la prova in corso o i risultati pubblicati.
+const STATO_VERIFICA: Record<StatoProvaStudente, { chiave: string; link?: string }> = {
+  non_iniziata: { chiave: "statoNonIniziata" },
+  aperta: { chiave: "statoInCorso", link: "apri" },
+  consegnata: { chiave: "statoConsegnata" },
+  chiusa: { chiave: "statoChiusa" },
+  risultati: { chiave: "statoRisultati", link: "vediRisultati" },
+};
+
 function statoCatalogo(tentativo: Pick<StatoTentativo, "status"> | undefined): StatoCatalogo {
   if (tentativo?.status === "COMPLETED") return "completed";
   if (tentativo?.status === "IN_PROGRESS") return "inProgress";
@@ -34,10 +46,12 @@ export default async function StudentHomePage() {
 
   const t = await getTranslations("esercizi");
   const studentT = await getTranslations("studentExercisesUi");
+  const provaT = await getTranslations("esercizi.provaStudente");
+  const locale = (await getLocale()) === "en" ? "en" : "it";
   // L'elenco libero mostra solo gli esercizi che vede tutta la scuola: uno
   // privato o condiviso con pochi è lavoro in corso, non va agli studenti.
   const praticaLibera = await eserciziPraticaLibera();
-  const [esercizi, compitiGrezzi] = await Promise.all([
+  const [esercizi, compitiGrezzi, verifiche] = await Promise.all([
     prisma.esercizio.findMany({
       where: { id: { in: [...praticaLibera] }, versions: { some: {} } },
       orderBy: [{ yearLevel: "asc" }, { title: "asc" }],
@@ -49,6 +63,7 @@ export default async function StudentHomePage() {
       },
     }),
     compitiDelloStudente(session.user.id),
+    verificheDelloStudente(session.user.id),
   ]);
 
   // `ritiratoAt: null` anche qui, benché `compitiDelloStudente` escluda già
@@ -122,6 +137,18 @@ export default async function StudentHomePage() {
 
   return <section className="space-y-6">
     <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-blue/10 text-brand-blue"><BookOpen className="h-5 w-5" /></div><h1 className="text-2xl font-black text-slate-900">{t("titoloStudente")}</h1></div>
+    {verifiche.length > 0 && <div className="space-y-3">
+      <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange"><ClipboardCheck className="h-4 w-4" /></div><h2 className="text-lg font-bold text-slate-900">{provaT("verificheTitolo")}</h2></div>
+      <ul className="grid gap-3">{verifiche.map((v) => {
+        const stato = STATO_VERIFICA[v.stato];
+        return <li key={v.id}>
+          <Card className={`flex-row flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-5 shadow-none sm:p-6 ${v.stato === "aperta" ? "border-brand-orange/40" : "border-slate-200"}`}>
+            <div><p className="text-lg font-semibold leading-snug text-slate-900">{provaT("rigaTitolo", { quando: formattaQuando(v.quando, locale) })}</p><p className="mt-1 text-sm text-slate-500">{provaT(stato.chiave)}</p></div>
+            {stato.link && <Link href={`/studente/verifica/${v.id}`} prefetch={false} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-blue/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2">{provaT(stato.link)}</Link>}
+          </Card>
+        </li>;
+      })}</ul>
+    </div>}
     {compiti.length > 0 && <div className="space-y-3">
       <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue"><ClipboardList className="h-4 w-4" /></div><h2 className="text-lg font-bold text-slate-900">{t("compitiTitolo")}</h2></div>
       {compitiAttivi.length > 0 && <><h3 className="text-sm font-semibold text-slate-700">{studentT("assignedActiveTitle")}</h3>{elencoCompiti(compitiAttivi)}</>}
