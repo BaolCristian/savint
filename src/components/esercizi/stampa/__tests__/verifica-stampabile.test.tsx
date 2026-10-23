@@ -68,4 +68,24 @@ describe("VerificaStampabile", () => {
     expect(screen.getByText("nonStampabile")).toBeInTheDocument();
     expect(screen.getByText(/Sconti successivi/)).toBeInTheDocument();
   });
+
+  it("modo STUDENTE: ogni foglio stampa i SUOI esercizi, non quelli comuni", () => {
+    const { container } = render(
+      <VerificaStampabile
+        titolo="Verifica"
+        classe="1A"
+        esercizi={[]}
+        fogli={[
+          { etichetta: "Anna", nominativo: true, seme: "c1:s1", esercizi },
+          { etichetta: "Marco", nominativo: true, seme: "c1:s2", esercizi: [{ titolo: "Rotto", content: { parts: "no" } }] },
+        ]}
+        conSoluzioni={false}
+        locale="it"
+      />,
+    );
+    expect(testoDelFoglio(container, 0)).toContain("Sconti successivi");
+    expect(testoDelFoglio(container, 0)).not.toContain("Rotto");
+    expect(testoDelFoglio(container, 1)).toContain("Rotto");
+    expect(testoDelFoglio(container, 1)).not.toContain("Sconti successivi");
+  });
 });

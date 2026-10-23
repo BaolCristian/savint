@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/client";
 import { ruoliEsercizi } from "./accesso";
+import { estrazioniDegliStudenti } from "./versioni-compito";
 
 /**
  * Pratica libera degli studenti (spec "Pratica libera degli studenti").
@@ -19,6 +20,9 @@ export async function eserciziPraticaLibera(): Promise<Set<string>> {
  * rompe anche se nel frattempo l'esercizio è tornato privato. Iscrizione,
  * ritiro e apertura si leggono come in `compitiDelloStudente` e
  * `compitoApribile`: un compito non ancora aperto non svela i suoi esercizi.
+ * "L'ha avuto" vuol dire nelle SUE versioni: `drawnVersionIds` nel modo
+ * CLASSE, la sua estrazione nel modo STUDENTE — l'esercizio pescato a un
+ * compagno non gli apre niente.
  */
 export async function esercizioApribileDaStudente(studentId: string, esercizioId: string): Promise<boolean> {
   if ((await ruoliEsercizi("scuola")).has(esercizioId)) return true;
@@ -29,14 +33,23 @@ export async function esercizioApribileDaStudente(studentId: string, esercizioId
   const iscrizioni = await prisma.classeStudente.findMany({ where: { studentId }, select: { classeId: true } });
   if (iscrizioni.length === 0) return false;
 
-  const compito = await prisma.compito.findFirst({
-    where: {
-      classeId: { in: iscrizioni.map((i) => i.classeId) },
-      ritiratoAt: null,
-      OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }],
-      drawnVersionIds: { hasSome: versioni.map((v) => v.id) },
-    },
+  const dove = {
+    classeId: { in: iscrizioni.map((i) => i.classeId) },
+    ritiratoAt: null,
+    OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }],
+  };
+  const ids = versioni.map((v) => v.id);
+  const diClasse = await prisma.compito.findFirst({
+    where: { ...dove, modo: "CLASSE", drawnVersionIds: { hasSome: ids } },
     select: { id: true },
   });
-  return compito != null;
+  if (diClasse) return true;
+
+  const perStudente = await prisma.compito.findMany({
+    where: { ...dove, modo: "STUDENTE" },
+    select: { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true },
+  });
+  if (perStudente.length === 0) return false;
+  const estrazioni = await estrazioniDegliStudenti(perStudente, [studentId]);
+  return [...estrazioni.values()].some((m) => (m.get(studentId) ?? []).some((v) => ids.includes(v)));
 }

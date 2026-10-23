@@ -12,7 +12,14 @@ import {
   type Blocco,
   type Riepilogo,
 } from "./estrazione";
-import { estrazioneDaBaciniCongelati, type BacinoCongelato } from "./versioni-compito";
+import {
+  estrazioneDaBaciniCongelati,
+  estrazioneDelloStudente,
+  estrazioniDegliStudenti,
+  eserciziPerStudente,
+  versioniDiTuttiGliStudenti,
+  type BacinoCongelato,
+} from "./versioni-compito";
 import { comeDocente, ruoliEsercizi, type Utente } from "./accesso";
 
 type MotivoAssegna =
@@ -739,7 +746,8 @@ export async function assegnaCompito(i: InputAssegna): Promise<EsitoAssegnaCompi
  * ritirato); è già aperto
  * (`opensAt` assente o passato); lo studente è iscritto ORA alla sua classe;
  * l'esercizio che sta aprendo è fra quelli che l'assegnazione ha davvero
- * pescato (`drawnVersionIds`), non uno qualunque. Senza l'ultimo controllo
+ * pescato PER LUI (`estrazioneDelloStudente`: `drawnVersionIds` nel modo
+ * CLASSE, la sua `EstrazioneStudente` nel modo STUDENTE), non uno qualunque. Senza l'ultimo controllo
  * uno studente potrebbe abbinare un `compitoId` vero a un esercizio mai
  * assegnato da quel compito e farlo contare come consegna sua — la stessa
  * famiglia di scorciatoia che le funzioni sotto (Fix round finale) chiudono
@@ -776,21 +784,27 @@ export async function compitoApribile(
   // mano nell'indirizzo non deve poter legargli un tentativo nuovo.
   if (!compito || compito.ritiratoAt != null) return null;
   if (compito.opensAt && compito.opensAt > new Date()) return null;
-  if (compito.drawnVersionIds.length === 0) return null;
 
   const iscritto = await prisma.classeStudente.findUnique({
     where: { classeId_studentId: { classeId: compito.classeId, studentId } },
   });
   if (!iscritto) return null;
 
+  // Solo DOPO l'iscrizione: nel modo STUDENTE la lettura può memorizzare
+  // l'estrazione, e non va memorizzata per chi non è della classe.
+  const versioni = await estrazioneDelloStudente(compito, studentId);
+  if (versioni.length === 0) return null;
+
   const versionePescata = await prisma.esercizioVersione.findFirst({
-    where: { id: { in: compito.drawnVersionIds }, esercizioId },
+    where: { id: { in: versioni }, esercizioId },
     select: { id: true },
   });
   return versionePescata?.id ?? null;
 }
 
-/** I compiti assegnati a una classe, per la vista del docente. */
+/** I compiti assegnati a una classe, per la vista del docente. `esercizi` è
+ * quanti esercizi riceve ogni studente (`eserciziPerStudente`): nel modo
+ * STUDENTE le versioni cambiano da studente a studente, il numero no. */
 export async function compitiDellaClasse(
   classeId: string,
 ): Promise<{ id: string; batteria: string; dueAt: Date | null; esercizi: number }[]> {
@@ -806,7 +820,7 @@ export async function compitiDellaClasse(
     id: c.id,
     batteria: c.batteria.name,
     dueAt: c.dueAt,
-    esercizi: c.drawnVersionIds.length,
+    esercizi: eserciziPerStudente(c),
   }));
 }
 
@@ -828,14 +842,21 @@ export async function compitiDelloStudente(studentId: string): Promise<
     orderBy: { createdAt: "desc" },
   });
 
+  // Le versioni di QUESTO studente per ogni compito, in un colpo solo: nel
+  // modo STUDENTE ognuno ha le sue (`estrazioniDegliStudenti`), nel modo
+  // CLASSE sono `drawnVersionIds`. Lo studente è iscritto alle classi di
+  // questi compiti per costruzione (`iscrizioni` qui sopra).
+  const estrazioni = await estrazioniDegliStudenti(compiti, [studentId]);
+
   const risultati: Awaited<ReturnType<typeof compitiDelloStudente>> = [];
   for (const c of compiti) {
+    const pescate = estrazioni.get(c.id)!.get(studentId) ?? [];
     const versioni = await prisma.esercizioVersione.findMany({
-      where: { id: { in: c.drawnVersionIds } },
+      where: { id: { in: pescate } },
       include: { esercizio: true },
     });
     const perId = new Map(versioni.map((v) => [v.id, v]));
-    const esercizi = c.drawnVersionIds
+    const esercizi = pescate
       .map((vid) => perId.get(vid))
       .filter((v): v is NonNullable<typeof v> => v != null)
       .map((v) => ({ esercizioId: v.esercizioId, title: v.esercizio.title }));
@@ -864,7 +885,7 @@ export async function compitiDelloStudente(studentId: string): Promise<
         studentId,
         compitoId: c.id,
         status: "COMPLETED",
-        esercizioVersioneId: { in: c.drawnVersionIds },
+        esercizioVersioneId: { in: pescate },
       },
       select: { esercizioVersioneId: true },
       distinct: ["esercizioVersioneId"],
@@ -927,13 +948,23 @@ export async function consegneDelCompito(
   // Non raggiungibile oggi (niente cancella un Esercizio), ma corretto fin
   // da ora costa poco ed evita di doverci tornare quando l'editor degli
   // esercizi aprirà quella strada.
-  const totali = await prisma.esercizioVersione.count({
-    where: { id: { in: compito.drawnVersionIds } },
-  });
+  //
+  // Nel modo STUDENTE ognuno ha le sue versioni (`versioniDiTuttiGliStudenti`),
+  // quindi `totali` si conta studente per studente, sulle SUE versioni; le
+  // versioni ancora esistenti si leggono una volta sola per tutti.
+  const perStudente = await versioniDiTuttiGliStudenti(compitoId);
+  const esistenti = new Set(
+    (await prisma.esercizioVersione.findMany({
+      where: { id: { in: [...new Set([...perStudente.values()].flat())] } },
+      select: { id: true },
+    })).map((v) => v.id),
+  );
 
   const righe = [];
   for (const i of iscritti) {
-    // `esercizioVersioneId: { in: compito.drawnVersionIds } }` (Fix round
+    const pescate = perStudente.get(i.studentId) ?? [];
+    const totali = pescate.filter((v) => esistenti.has(v)).length;
+    // `esercizioVersioneId: { in: pescate } }` (Fix round
     // finale, item 1): senza intersecare con ciò che l'assegnazione ha
     // DAVVERO pescato, questa query conta qualunque tentativo che porti
     // questo `compitoId` — compresi quelli scritti prima che
@@ -943,7 +974,7 @@ export async function consegneDelCompito(
     // esercizi assegnati compariva come 5/3, sopra chi ne aveva fatto
     // davvero uno.
     const tentativi = await prisma.tentativo.findMany({
-      where: { studentId: i.studentId, compitoId, esercizioVersioneId: { in: compito.drawnVersionIds } },
+      where: { studentId: i.studentId, compitoId, esercizioVersioneId: { in: pescate } },
     });
 
     // Raggruppa per esercizio (Secondo giro, item 1): `avviaORiprendi` non

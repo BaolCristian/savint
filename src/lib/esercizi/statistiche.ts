@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { haTitoloSulCompito } from "./compiti";
 import { verificaInsegnaClasse } from "./classi";
+import { estrazioniDegliStudenti, type BacinoCongelato } from "./versioni-compito";
 
 /** Statistiche per il docente: quali esercizi di un compito mettono in
  * difficoltà la classe, e come va la classe argomento per argomento.
@@ -13,8 +14,9 @@ import { verificaInsegnaClasse } from "./classi";
  * - contano solo gli studenti iscritti ADESSO alla classe (chi è uscito
  *   sparisce, i suoi tentativi restano nel database ma non pesano);
  * - un tentativo conta per un compito solo se porta il suo `compitoId` E
- *   riguarda una versione che l'assegnazione ha davvero pescato
- *   (`drawnVersionIds`): senza l'intersezione, righe con un `compitoId` vero
+ *   riguarda una versione che l'assegnazione ha davvero pescato PER QUELLO
+ *   STUDENTE (`drawnVersionIds` nel modo CLASSE, la sua `EstrazioneStudente`
+ *   nel modo STUDENTE, via `estrazioniDegliStudenti`): senza l'intersezione, righe con un `compitoId` vero
  *   su un esercizio mai assegnato tornerebbero a contare — il difetto del
  *   "5/3" descritto in `consegneDelCompito`;
  * - uno studente vale UNA volta per esercizio: rifare un esercizio già
@@ -34,39 +36,69 @@ type EsitoCoppia = { completati: number; iniziati: number; percentuali: number[]
 
 const chiave = (compitoId: string, versioneId: string) => `${compitoId}|${versioneId}`;
 
+/** Senza iscritti nessuna coppia ha un esito: la riga c'è lo stesso, a zero. */
+const nessunEsito = (): EsitoCoppia => ({ completati: 0, iniziati: 0, percentuali: [] });
+
 const media = (valori: number[]) =>
   valori.length === 0 ? null : Math.round(valori.reduce((a, b) => a + b, 0) / valori.length);
 
-/** Per ogni coppia (compito, versione pescata) l'esito fra gli iscritti
- * indicati. Una sola query sui tentativi per tutti i compiti (la pagina per
- * argomento ne legge molti), poi l'intersezione con `drawnVersionIds` fatta
- * compito per compito: il filtro `esercizioVersioneId in (unione)` della
- * query restringe soltanto, non basta da solo — una versione pescata da un
- * ALTRO compito della stessa classe passerebbe. */
-async function esitiDeiCompiti(
-  compiti: { id: string; drawnVersionIds: string[] }[],
-  studentIds: string[],
-): Promise<Map<string, EsitoCoppia>> {
-  const esiti = new Map<string, EsitoCoppia>();
-  for (const c of compiti) {
-    for (const v of c.drawnVersionIds) esiti.set(chiave(c.id, v), { completati: 0, iniziati: 0, percentuali: [] });
+/** Le versioni pescate di un compito, studente per studente (solo gli
+ * iscritti attuali, che sono le chiavi). */
+type VersioniDelCompito = { id: string; perStudente: Map<string, string[]> };
+
+/** Le versioni di un compito estratte ad almeno uno studente, ognuna una
+ * volta, e a quanti studenti ciascuna. L'ordine: nel modo CLASSE quello di
+ * `drawnVersionIds`; nel modo STUDENTE quello dei blocchi congelati
+ * (`bacini`), così le righe seguono il compito come il docente l'ha
+ * costruito e non l'ordine casuale di uno studente. */
+function versioniEstratte(
+  compito: { modo: string; bacini: unknown; drawnVersionIds: string[] },
+  perStudente: Map<string, string[]>,
+): { versioneId: string; assegnatoA: number }[] {
+  const quanti = new Map<string, number>();
+  for (const v of perStudente.values()) for (const id of v) quanti.set(id, (quanti.get(id) ?? 0) + 1);
+  if (compito.modo !== "STUDENTE") {
+    return compito.drawnVersionIds.map((versioneId) => ({ versioneId, assegnatoA: perStudente.size }));
   }
+  const bacini = Array.isArray(compito.bacini) ? (compito.bacini as BacinoCongelato[]) : [];
+  const ordine = new Set([...bacini.flatMap((b) => b.versionIds), ...quanti.keys()]);
+  return [...ordine].filter((v) => quanti.has(v)).map((versioneId) => ({ versioneId, assegnatoA: quanti.get(versioneId)! }));
+}
+
+/** Per ogni coppia (compito, versione pescata) l'esito fra gli iscritti
+ * (le chiavi di `perStudente`). Una sola query sui tentativi per tutti i
+ * compiti (la pagina per argomento ne legge molti), poi l'intersezione con
+ * le versioni di QUELLO studente in QUEL compito: il filtro
+ * `esercizioVersioneId in (unione)` della query restringe soltanto, non
+ * basta da solo — una versione pescata da un ALTRO compito della stessa
+ * classe, o a un ALTRO studente dello stesso compito, passerebbe. */
+async function esitiDeiCompiti(compiti: VersioniDelCompito[]): Promise<Map<string, EsitoCoppia>> {
+  const esiti = new Map<string, EsitoCoppia>();
+  const pescate = new Map<string, Set<string>>();
+  for (const c of compiti) {
+    for (const [studentId, versioni] of c.perStudente) {
+      pescate.set(chiave(c.id, studentId), new Set(versioni));
+      for (const v of versioni) {
+        if (!esiti.has(chiave(c.id, v))) esiti.set(chiave(c.id, v), { completati: 0, iniziati: 0, percentuali: [] });
+      }
+    }
+  }
+  const studentIds = [...new Set(compiti.flatMap((c) => [...c.perStudente.keys()]))];
   if (compiti.length === 0 || studentIds.length === 0) return esiti;
 
   const tentativi = await prisma.tentativo.findMany({
     where: {
       compitoId: { in: compiti.map((c) => c.id) },
       studentId: { in: studentIds },
-      esercizioVersioneId: { in: [...new Set(compiti.flatMap((c) => c.drawnVersionIds))] },
+      esercizioVersioneId: { in: [...new Set(compiti.flatMap((c) => [...c.perStudente.values()].flat()))] },
     },
     select: { compitoId: true, studentId: true, esercizioVersioneId: true, status: true, score: true, maxScore: true },
   });
 
-  const pescate = new Map(compiti.map((c) => [c.id, new Set(c.drawnVersionIds)]));
   // compito|versione → studente → esito: un rappresentante per studente.
   const perStudente = new Map<string, Map<string, EsitoStudente & { score: number }>>();
   for (const t of tentativi) {
-    if (!t.compitoId || !pescate.get(t.compitoId)?.has(t.esercizioVersioneId)) continue;
+    if (!t.compitoId || !pescate.get(chiave(t.compitoId, t.studentId))?.has(t.esercizioVersioneId)) continue;
     const k = chiave(t.compitoId, t.esercizioVersioneId);
     let studenti = perStudente.get(k);
     if (!studenti) perStudente.set(k, (studenti = new Map()));
@@ -122,6 +154,10 @@ export type StatisticaEsercizio = {
   esercizioId: string;
   titolo: string;
   argomento: string;
+  /** A quanti iscritti è stato assegnato: tutti nel modo CLASSE, quelli
+   * che l'hanno nella loro estrazione nel modo STUDENTE. È il "su quanti"
+   * di `completati`. */
+  assegnatoA: number;
   /** Iscritti che l'hanno completato almeno una volta. */
   completati: number;
   /** Iscritti che l'hanno aperto ma non ancora completato. */
@@ -135,7 +171,8 @@ export type StatisticaEsercizio = {
 /** Esercizio per esercizio, come è andato un compito fra gli iscritti
  * attuali, nell'ordine in cui l'assegnazione li ha pescati. Chi non compare
  * né fra i completati né fra gli iniziati non l'ha aperto: il conto è
- * `iscritti - completati - iniziati`.
+ * `assegnatoA - completati - iniziati`. Nel modo STUDENTE una riga per ogni
+ * versione estratta ad almeno uno studente (`versioniEstratte`).
  *
  * Autorizzazione: `haTitoloSulCompito`, la stessa regola di
  * `consegneDelCompito` (insegna la classe OPPURE l'ha assegnato). Un solo
@@ -153,20 +190,23 @@ export async function statisticheDelCompito(
   if (!(await haTitoloSulCompito(compito, teacherId))) return { ok: false, motivo: "compito_non_trovato" };
 
   const studenti = await iscrittiAttuali(compito.classeId);
+  const perStudente = (await estrazioniDegliStudenti([compito], studenti)).get(compito.id)!;
+  const estratte = versioniEstratte(compito, perStudente);
   const [esercizi, esiti] = await Promise.all([
-    versioniPescate(compito.drawnVersionIds),
-    esitiDeiCompiti([compito], studenti),
+    versioniPescate(estratte.map((x) => x.versioneId)),
+    esitiDeiCompiti([{ id: compito.id, perStudente }]),
   ]);
 
   const righe: StatisticaEsercizio[] = [];
-  for (const versioneId of compito.drawnVersionIds) {
+  for (const { versioneId, assegnatoA } of estratte) {
     const esercizio = esercizi.get(versioneId);
     if (!esercizio) continue;
-    const esito = esiti.get(chiave(compito.id, versioneId))!;
+    const esito = esiti.get(chiave(compito.id, versioneId)) ?? nessunEsito();
     righe.push({
       esercizioId: esercizio.id,
       titolo: esercizio.title,
       argomento: esercizio.topic,
+      assegnatoA,
       completati: esito.completati,
       iniziati: esito.iniziati,
       mediaPercentuale: media(esito.percentuali),
@@ -181,8 +221,9 @@ export type AndamentoArgomento = {
    * stesso esercizio in due compiti conta due volte, perché sono due
    * consegne distinte che la classe deve fare. */
   esercizi: number;
-  /** Coppie studente×esercizio completate, su quelle attese
-   * (iscritti attuali × esercizi). */
+  /** Coppie studente×esercizio completate, su quelle attese (le coppie
+   * davvero assegnate: iscritti attuali × esercizi nel modo CLASSE, la
+   * somma degli `assegnatoA` nel modo STUDENTE). */
   completate: number;
   attese: number;
   /** `completate / attese` in %; `null` senza iscritti. */
@@ -220,30 +261,39 @@ export async function andamentoDellaClasse(
     // una settimana non l'ha visto nessuno, e contarlo abbasserebbe il
     // completamento di un argomento che la classe sta facendo bene.
     where: { classeId, ritiratoAt: null, OR: [{ opensAt: null }, { opensAt: { lte: new Date() } }] },
-    select: { id: true, drawnVersionIds: true },
+    select: { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true },
   });
   const studenti = await iscrittiAttuali(classeId);
+  // Le estrazioni di tutti i compiti per tutti gli iscritti, a lotti: una
+  // query per quelle memorizzate, il calcolo solo per chi manca.
+  const estrazioni = await estrazioniDegliStudenti(compiti, studenti);
+  const conVersioni = compiti.map((c) => ({ id: c.id, perStudente: estrazioni.get(c.id)! }));
+  const estratte = new Map(compiti.map((c) => [c.id, versioniEstratte(c, estrazioni.get(c.id)!)]));
   const [esercizi, esiti] = await Promise.all([
-    versioniPescate([...new Set(compiti.flatMap((c) => c.drawnVersionIds))]),
-    esitiDeiCompiti(compiti, studenti),
+    versioniPescate([...new Set([...estratte.values()].flat().map((x) => x.versioneId))]),
+    esitiDeiCompiti(conVersioni),
   ]);
 
-  const perArgomento = new Map<string, { esercizi: number; completate: number; percentuali: number[] }>();
+  // `esercizi` conta le versioni assegnate ad almeno uno studente (nel modo
+  // CLASSE: tutte quelle pescate); `attese` le coppie studente×esercizio
+  // davvero assegnate, che nel modo CLASSE sono iscritti × esercizi.
+  const perArgomento = new Map<string, { esercizi: number; attese: number; completate: number; percentuali: number[] }>();
   for (const c of compiti) {
-    for (const versioneId of c.drawnVersionIds) {
+    for (const { versioneId, assegnatoA } of estratte.get(c.id)!) {
       const esercizio = esercizi.get(versioneId);
       if (!esercizio) continue;
-      const esito = esiti.get(chiave(c.id, versioneId))!;
+      const esito = esiti.get(chiave(c.id, versioneId)) ?? nessunEsito();
       let gruppo = perArgomento.get(esercizio.topic);
-      if (!gruppo) perArgomento.set(esercizio.topic, (gruppo = { esercizi: 0, completate: 0, percentuali: [] }));
+      if (!gruppo) perArgomento.set(esercizio.topic, (gruppo = { esercizi: 0, attese: 0, completate: 0, percentuali: [] }));
       gruppo.esercizi++;
+      gruppo.attese += assegnatoA;
       gruppo.completate += esito.completati;
       gruppo.percentuali.push(...esito.percentuali);
     }
   }
 
   const righe: AndamentoArgomento[] = [...perArgomento].map(([argomento, g]) => {
-    const attese = g.esercizi * studenti.length;
+    const attese = g.attese;
     return {
       argomento,
       esercizi: g.esercizi,

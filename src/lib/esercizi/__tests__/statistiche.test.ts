@@ -122,9 +122,9 @@ describe("statisticheDelCompito", () => {
       ok: true,
       iscritti: 3,
       righe: [
-        { esercizioId: `${P}e1`, titolo: "Titolo e1", argomento: "frazioni", completati: 2, iniziati: 0, mediaPercentuale: 70 },
-        { esercizioId: `${P}e2`, titolo: "Titolo e2", argomento: "frazioni", completati: 0, iniziati: 2, mediaPercentuale: null },
-        { esercizioId: `${P}e3`, titolo: "Titolo e3", argomento: "equazioni", completati: 0, iniziati: 0, mediaPercentuale: null },
+        { esercizioId: `${P}e1`, titolo: "Titolo e1", argomento: "frazioni", assegnatoA: 3, completati: 2, iniziati: 0, mediaPercentuale: 70 },
+        { esercizioId: `${P}e2`, titolo: "Titolo e2", argomento: "frazioni", assegnatoA: 3, completati: 0, iniziati: 2, mediaPercentuale: null },
+        { esercizioId: `${P}e3`, titolo: "Titolo e3", argomento: "equazioni", assegnatoA: 3, completati: 0, iniziati: 0, mediaPercentuale: null },
       ],
     });
   });

@@ -174,8 +174,8 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
         ok: true,
         iscritti: 4,
         righe: [
-          { esercizioId: "e1", titolo: "Somma di frazioni", argomento: "frazioni", completati: 3, iniziati: 1, mediaPercentuale: 72 },
-          { esercizioId: "e2", titolo: "Equazione lineare", argomento: "equazioni", completati: 0, iniziati: 0, mediaPercentuale: null },
+          { esercizioId: "e1", titolo: "Somma di frazioni", argomento: "frazioni", assegnatoA: 4, completati: 3, iniziati: 1, mediaPercentuale: 72 },
+          { esercizioId: "e2", titolo: "Equazione lineare", argomento: "equazioni", assegnatoA: 4, completati: 0, iniziati: 0, mediaPercentuale: null },
         ],
       });
       await rendi();
@@ -200,8 +200,8 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
         ok: true,
         iscritti: 4,
         righe: [
-          { esercizioId: "e1", titolo: "Metà esatta", argomento: "a", completati: 2, iniziati: 0, mediaPercentuale: 50 },
-          { esercizioId: "e2", titolo: "Sotto la metà", argomento: "a", completati: 1, iniziati: 2, mediaPercentuale: 40 },
+          { esercizioId: "e1", titolo: "Metà esatta", argomento: "a", assegnatoA: 4, completati: 2, iniziati: 0, mediaPercentuale: 50 },
+          { esercizioId: "e2", titolo: "Sotto la metà", argomento: "a", assegnatoA: 4, completati: 1, iniziati: 2, mediaPercentuale: 40 },
         ],
       });
       await rendi();
@@ -217,7 +217,7 @@ describe("pagina di dettaglio di un compito (consegne)", () => {
       vi.mocked(statisticheDelCompito).mockResolvedValue({
         ok: true,
         iscritti: 0,
-        righe: [{ esercizioId: "e1", titolo: "Uno", argomento: "a", completati: 0, iniziati: 0, mediaPercentuale: null }],
+        righe: [{ esercizioId: "e1", titolo: "Uno", argomento: "a", assegnatoA: 0, completati: 0, iniziati: 0, mediaPercentuale: null }],
       });
       await rendi();
       expect(screen.queryByRole("table", { name: "statistiche.perEsercizioTitolo" })).toBeNull();

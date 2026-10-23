@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/client";
 import { compitiDelloStudente } from "@/lib/esercizi/compiti";
 import { eserciziPraticaLibera } from "@/lib/esercizi/pratica";
+import { estrazioniDegliStudenti } from "@/lib/esercizi/versioni-compito";
 import { Card } from "@/components/ui/card";
 import { CatalogoEsercizi, type StatoCatalogo } from "./catalogo-esercizi";
 import { IscrizioneClasseForm } from "./iscrizione-classe-form";
@@ -55,15 +56,19 @@ export default async function StudentHomePage() {
   // deve fidarsi di chi le ha passato gli id.
   const datiCompiti = await prisma.compito.findMany({
     where: { id: { in: compitiGrezzi.map((c) => c.id) }, ritiratoAt: null },
-    select: { id: true, opensAt: true, drawnVersionIds: true },
+    select: { id: true, opensAt: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true },
   });
   const ora = new Date();
   const compitiVisibili = new Map(datiCompiti.filter((c) => c.opensAt == null || c.opensAt <= ora).map((c) => [c.id, c]));
   const compiti = compitiGrezzi.filter((c) => compitiVisibili.has(c.id));
-  const versioniAssegnate = [...new Set([...compitiVisibili.values()].flatMap((c) => c.drawnVersionIds))];
+  // Le versioni di QUESTO studente: uguali per tutti nel modo CLASSE, le sue
+  // nel modo STUDENTE (già memorizzate da `compitiDelloStudente` qui sopra,
+  // che è passato dalle stesse estrazioni: questa è solo una rilettura).
+  const estrazioni = await estrazioniDegliStudenti([...compitiVisibili.values()], [session.user.id]);
   const versioniPerCompito = new Map(
-    [...compitiVisibili].map(([id, compito]) => [id, new Set(compito.drawnVersionIds)]),
+    [...compitiVisibili.keys()].map((id) => [id, new Set(estrazioni.get(id)!.get(session.user.id!) ?? [])]),
   );
+  const versioniAssegnate = [...new Set([...versioniPerCompito.values()].flatMap((v) => [...v]))];
   const tentativiAssegnati = versioniAssegnate.length === 0 ? [] : await prisma.tentativo.findMany({
     where: {
       studentId: session.user.id,

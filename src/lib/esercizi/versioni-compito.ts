@@ -90,7 +90,10 @@ export async function estrazioneDelloStudente(
   compito: { id: string; modo: ModoEstrazione; drawSeed: string; bacini: unknown; drawnVersionIds: string[] },
   studentId: string,
 ): Promise<string[]> {
-  if (compito.modo === "CLASSE") return compito.drawnVersionIds;
+  // `!== "STUDENTE"` e non `=== "CLASSE"`: nel database `modo` c'è sempre
+  // (default CLASSE), ma una lettura che non l'ha selezionato deve ricadere
+  // sul comportamento di sempre, non su un'estrazione per studente.
+  if (compito.modo !== "STUDENTE") return compito.drawnVersionIds;
 
   const chiave = { compitoId_studentId: { compitoId: compito.id, studentId } };
   const esistente = await prisma.estrazioneStudente.findUnique({ where: chiave, select: { versionIds: true } });
@@ -107,4 +110,102 @@ export async function estrazioneDelloStudente(
     }
     throw e;
   }
+}
+
+/** Ciò che serve di un compito per sapere le versioni dei suoi studenti. */
+export type CompitoConVersioni = {
+  id: string;
+  modo: ModoEstrazione;
+  drawSeed: string;
+  bacini: unknown;
+  drawnVersionIds: string[];
+};
+
+/** Quanti esercizi riceve ogni studente: `drawnVersionIds.length` nel modo
+ * CLASSE, la somma dei `count` dei blocchi congelati nel modo STUDENTE
+ * (ognuno riceve esattamente quel numero: è ciò che il bacino congelato
+ * garantisce). Per gli elenchi del docente, senza leggere le estrazioni. */
+export function eserciziPerStudente(compito: Pick<CompitoConVersioni, "modo" | "bacini" | "drawnVersionIds">): number {
+  if (compito.modo !== "STUDENTE") return compito.drawnVersionIds.length;
+  return baciniCongelati(compito.bacini).reduce((somma, b) => somma + b.count, 0);
+}
+
+/** Le versioni di più compiti per più studenti in un colpo solo: compito →
+ * studente → versioni. È la forma "a lotti" di `estrazioneDelloStudente`,
+ * per le pagine che coprono molti compiti (la home dello studente,
+ * l'andamento della classe) o molti studenti (consegne, statistiche,
+ * stampa): una query per le estrazioni già memorizzate, il calcolo dal
+ * bacino congelato solo per chi manca, una scrittura per tutti i mancanti.
+ *
+ * `createMany` con `skipDuplicates`: se nel frattempo un'altra richiesta ha
+ * memorizzato la stessa coppia, la sua riga resta e qui si rilegge — come
+ * il P2002 di `estrazioneDelloStudente`, il valore restituito è sempre
+ * quello memorizzato.
+ *
+ * Come `estrazioneDelloStudente`, non controlla iscrizione né apertura: chi
+ * chiama passa solo studenti iscritti ORA alla classe del compito, perché
+ * un'estrazione si memorizza per sempre. */
+export async function estrazioniDegliStudenti(
+  compiti: CompitoConVersioni[],
+  studentIds: string[],
+): Promise<Map<string, Map<string, string[]>>> {
+  const risultato = new Map<string, Map<string, string[]>>();
+  for (const c of compiti) {
+    risultato.set(c.id, new Map(c.modo !== "STUDENTE" ? studentIds.map((s) => [s, c.drawnVersionIds]) : []));
+  }
+  const perStudente = compiti.filter((c) => c.modo === "STUDENTE");
+  if (perStudente.length === 0 || studentIds.length === 0) return risultato;
+
+  const esistenti = await prisma.estrazioneStudente.findMany({
+    where: { compitoId: { in: perStudente.map((c) => c.id) }, studentId: { in: studentIds } },
+    select: { compitoId: true, studentId: true, versionIds: true },
+  });
+  for (const r of esistenti) risultato.get(r.compitoId)!.set(r.studentId, r.versionIds);
+
+  const mancanti: { compitoId: string; studentId: string; versionIds: string[] }[] = [];
+  for (const c of perStudente) {
+    const gia = risultato.get(c.id)!;
+    const daCalcolare = studentIds.filter((s) => !gia.has(s));
+    if (daCalcolare.length === 0) continue;
+    const bacini = baciniCongelati(c.bacini);
+    for (const studentId of daCalcolare) {
+      mancanti.push({ compitoId: c.id, studentId, versionIds: estrazioneDaBaciniCongelati(bacini, `${c.drawSeed}:${studentId}`) });
+    }
+  }
+  if (mancanti.length === 0) return risultato;
+
+  const scritte = await prisma.estrazioneStudente.createMany({ data: mancanti, skipDuplicates: true });
+  if (scritte.count < mancanti.length) {
+    const rilette = await prisma.estrazioneStudente.findMany({
+      where: { OR: mancanti.map(({ compitoId, studentId }) => ({ compitoId, studentId })) },
+      select: { compitoId: true, studentId: true, versionIds: true },
+    });
+    for (const r of rilette) risultato.get(r.compitoId)!.set(r.studentId, r.versionIds);
+  } else {
+    for (const m of mancanti) risultato.get(m.compitoId)!.set(m.studentId, m.versionIds);
+  }
+  return risultato;
+}
+
+const selezioneVersioni = { id: true, modo: true, drawSeed: true, bacini: true, drawnVersionIds: true } as const;
+
+/** Le versioni che uno studente riceve da un compito (vedi
+ * `estrazioneDelloStudente`), `null` se il compito non esiste. Nessun
+ * controllo su iscrizione, ritiro o apertura: li fa chi chiama. */
+export async function versioniDelloStudente(compitoId: string, studentId: string): Promise<string[] | null> {
+  const compito = await prisma.compito.findUnique({ where: { id: compitoId }, select: selezioneVersioni });
+  if (!compito) return null;
+  return estrazioneDelloStudente(compito, studentId);
+}
+
+/** Le versioni di ogni iscritto ATTUALE alla classe del compito, studente →
+ * versioni (per consegne, statistiche e stampa). Chi non ha ancora
+ * un'estrazione la riceve ora (`estrazioniDegliStudenti`). Mappa vuota se il
+ * compito non esiste. */
+export async function versioniDiTuttiGliStudenti(compitoId: string): Promise<Map<string, string[]>> {
+  const compito = await prisma.compito.findUnique({ where: { id: compitoId }, select: { ...selezioneVersioni, classeId: true } });
+  if (!compito) return new Map();
+  const iscritti = await prisma.classeStudente.findMany({ where: { classeId: compito.classeId }, select: { studentId: true } });
+  const tutte = await estrazioniDegliStudenti([compito], iscritti.map((i) => i.studentId));
+  return tutte.get(compito.id)!;
 }

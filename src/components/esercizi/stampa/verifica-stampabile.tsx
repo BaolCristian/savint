@@ -38,7 +38,8 @@ function haGiaLettera(html: string): boolean {
 /** Ogni esercizio di un foglio ha il suo seme: lo stesso esercizio in due
  * versioni dà numeri diversi, e lo stesso foglio ristampato dà gli stessi. */
 function caricaFoglio(foglio: FoglioStampa, esercizi: VerificaStampabileProps["esercizi"], locale: "it" | "en"): EsercizioCaricato[] {
-  return esercizi.map((e, i) => {
+  // Nel modo STUDENTE il foglio porta i suoi esercizi (le versioni del suo studente).
+  return (foglio.esercizi ?? esercizi).map((e, i) => {
     try {
       const domanda = loadQuestion(e.content as NumbasQuestionJSON, { seed: `${foglio.seme}:${i}`, ...opzioniMotore(locale) });
       return { titolo: e.titolo, ok: true, domanda, parti: domanda.parts.map(costruisciParte) };

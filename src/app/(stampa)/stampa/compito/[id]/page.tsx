@@ -26,7 +26,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   // modulo è stato inviato, e solo allora l'assenza di `soluzioni` conta.
   const conSoluzioni = query.scelto ? query.soluzioni === "1" : true;
   const fogli = fogliDiStampa(dati, scelta);
-  const valoreVersioni = scelta.tipo === "studenti" ? "studenti" : String(scelta.quante);
+  // Nel modo STUDENTE ogni studente ha esercizi suoi: le versioni "a file"
+  // non esistono, si stampa solo un foglio per studente.
+  const perStudente = dati.modo === "STUDENTE";
+  const valoreVersioni = perStudente || scelta.tipo === "studenti" ? "studenti" : String(scelta.quante);
 
   return (
     <div className="space-y-6">
@@ -40,7 +43,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">{t("versioni")}</span>
             <select name="versioni" defaultValue={valoreVersioni} className="h-9 rounded-lg border bg-white px-2">
-              {Array.from({ length: MAX_VERSIONI }, (_, i) => (
+              {!perStudente && Array.from({ length: MAX_VERSIONI }, (_, i) => (
                 <option key={i} value={i + 1}>{t("versioniN", { n: i + 1 })}</option>
               ))}
               <option value="studenti">{t("unaPerStudente", { n: dati.studenti.length })}</option>
@@ -54,13 +57,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             {t("aggiorna")}
           </button>
         </form>
+        {perStudente && <p className="text-sm text-slate-600">{t("soloPerStudente")}</p>}
         <p className="text-sm text-slate-600">{t("aiuto")}</p>
       </div>
 
-      {dati.esercizi.length === 0 ? (
+      {!perStudente && dati.esercizi.length === 0 ? (
         <p>{t("nessunEsercizio")}</p>
       ) : fogli.length === 0 ? (
-        <p>{t("nessunoStudente")}</p>
+        <p>{t(perStudente ? "nessunoStudentePerStudente" : "nessunoStudente")}</p>
       ) : (
         <VerificaStampabileLazy
           titolo={dati.titolo}

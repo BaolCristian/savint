@@ -1346,6 +1346,7 @@
       "versioni": "Versioni",
       "versioniN": "{n, plural, one {# versione} other {# versioni}}",
       "unaPerStudente": "Una per studente, col nome ({n})",
+      "soloPerStudente": "Questo compito ha esercizi diversi per ogni studente: si stampa un foglio per studente, ciascuno con i suoi esercizi.",
       "conSoluzioni": "Aggiungi le soluzioni per il docente",
       "aggiorna": "Aggiorna",
       "aiuto": "Ogni versione ha numeri diversi; ristampando ottieni gli stessi fogli. Nella finestra di stampa scegli «Salva come PDF» per avere il file.",
@@ -1362,6 +1363,7 @@
       "nonStampabile": "Questo esercizio non si può stampare: aprilo nell'editor e premi Controlla.",
       "nessunEsercizio": "Questo compito non ha esercizi da stampare.",
       "nessunoStudente": "La classe non ha studenti iscritti: scegli un numero di versioni.",
+      "nessunoStudentePerStudente": "La classe non ha studenti iscritti: non c'è nessun foglio da stampare.",
       "link": "Stampa come verifica"
     },
     "compiti": {

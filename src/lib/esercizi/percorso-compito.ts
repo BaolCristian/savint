@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import { estrazioneDelloStudente } from "./versioni-compito";
 
 export type EsercizioPercorsoCompito = {
   esercizioId: string;
@@ -17,7 +18,9 @@ export type PercorsoCompitoStudente = {
 /** Legge il percorso congelato di un compito per uno studente attualmente
  * iscritto. I completamenti sono intenzionalmente legati sia al compito sia
  * alle versioni pescate: una vecchia riga con lo stesso `compitoId` non può
- * far saltare un esercizio che non era stato assegnato. */
+ * far saltare un esercizio che non era stato assegnato. Le versioni sono
+ * quelle dello studente (`estrazioneDelloStudente`): uguali per tutti nel
+ * modo CLASSE, le sue nel modo STUDENTE. */
 export async function percorsoCompitoStudente(
   compitoId: string,
   studentId: string,
@@ -31,8 +34,7 @@ export async function percorsoCompitoStudente(
   if (
     !compito ||
     compito.ritiratoAt != null ||
-    (compito.opensAt && compito.opensAt > new Date()) ||
-    compito.drawnVersionIds.length === 0
+    (compito.opensAt && compito.opensAt > new Date())
   ) return null;
 
   const iscrizione = await prisma.classeStudente.findUnique({
@@ -40,25 +42,29 @@ export async function percorsoCompitoStudente(
   });
   if (!iscrizione) return null;
 
+  // Dopo l'iscrizione: nel modo STUDENTE la lettura può memorizzare l'estrazione.
+  const pescate = await estrazioneDelloStudente(compito, studentId);
+  if (pescate.length === 0) return null;
+
   const versioni = await prisma.esercizioVersione.findMany({
-    where: { id: { in: compito.drawnVersionIds } },
+    where: { id: { in: pescate } },
     include: { esercizio: { select: { title: true } } },
   });
   const versionePerId = new Map(versioni.map((versione) => [versione.id, versione]));
-  if (versionePerId.size !== compito.drawnVersionIds.length) return null;
+  if (versionePerId.size !== pescate.length) return null;
 
   const completati = await prisma.tentativo.findMany({
     where: {
       studentId,
       compitoId,
       status: "COMPLETED",
-      esercizioVersioneId: { in: compito.drawnVersionIds },
+      esercizioVersioneId: { in: pescate },
     },
     select: { esercizioVersioneId: true },
     distinct: ["esercizioVersioneId"],
   });
   const completatiPerVersione = new Set(completati.map((tentativo) => tentativo.esercizioVersioneId));
-  const esercizi = compito.drawnVersionIds.map((versioneId, indice) => {
+  const esercizi = pescate.map((versioneId, indice) => {
     const versione = versionePerId.get(versioneId)!;
     return {
       esercizioId: versione.esercizioId,

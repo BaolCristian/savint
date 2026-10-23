@@ -67,6 +67,23 @@ describe("fogliDiStampa", () => {
   });
 });
 
+describe("fogliDiStampa — modo STUDENTE", () => {
+  it("un foglio per studente con i suoi esercizi, qualunque sia la scelta", () => {
+    const dati = {
+      compitoId: "c1",
+      modo: "STUDENTE" as const,
+      studenti: [{ id: "s1", nome: "Anna" }, { id: "s2", nome: "Marco" }],
+      eserciziPerStudente: { s1: [{ titolo: "Primo", content: 1 }], s2: [{ titolo: "Secondo", content: 2 }] },
+    };
+    for (const scelta of [{ tipo: "file", quante: 3 } as const, { tipo: "studenti" } as const]) {
+      expect(fogliDiStampa(dati, scelta)).toEqual([
+        { etichetta: "Anna", nominativo: true, seme: "c1:s1", esercizi: [{ titolo: "Primo", content: 1 }] },
+        { etichetta: "Marco", nominativo: true, seme: "c1:s2", esercizi: [{ titolo: "Secondo", content: 2 }] },
+      ]);
+    }
+  });
+});
+
 describe("datiStampaCompito", () => {
   it("rende gli esercizi nell'ordine dell'estrazione e gli studenti in ordine alfabetico", async () => {
     const dati = await datiStampaCompito("c1", "d1");
@@ -74,7 +91,9 @@ describe("datiStampaCompito", () => {
       compitoId: "c1",
       titolo: "Verifica",
       classe: "1A",
+      modo: "CLASSE",
       esercizi: [{ titolo: "Secondo", content: { n: 2 } }, { titolo: "Primo", content: { n: 1 } }],
+      eserciziPerStudente: null,
       studenti: [{ id: "s1", nome: "anna@x.it" }, { id: "s2", nome: "Marco Rossi" }],
     });
   });

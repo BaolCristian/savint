@@ -128,13 +128,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 // "Meno della metà" in senso stretto: 2 su 4 non è segnalato.
                 // Il segnale è un testo (non solo il colore della riga): si
                 // legge anche senza distinguere i colori e da uno screen reader.
-                const sottoMeta = r.completati * 2 < statistiche.iscritti;
+                // Su quanti l'hanno ricevuto (`assegnatoA`): nel modo
+                // STUDENTE non tutti gli iscritti hanno ogni esercizio.
+                const sottoMeta = r.completati * 2 < r.assegnatoA;
                 return (
                   <tr key={`${r.esercizioId}-${i}`} className={`border-b ${sottoMeta ? "bg-brand-orange/10" : ""}`}>
                     <td className="p-2">{r.titolo}</td>
                     <td className="p-2">{r.argomento}</td>
                     <td className="p-2">
-                      <span>{tE("statistiche.completatiValore", { completati: r.completati, iscritti: statistiche.iscritti })}</span>
+                      <span>{tE("statistiche.completatiValore", { completati: r.completati, iscritti: r.assegnatoA })}</span>
                       {sottoMeta && (
                         <span className="ml-2 rounded bg-brand-orange/20 px-1.5 py-0.5 text-xs font-medium">
                           {tE("statistiche.sottoMeta")}

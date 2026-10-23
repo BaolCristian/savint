@@ -29,7 +29,9 @@ const dati = {
   compitoId: "c1",
   titolo: "Verifica",
   classe: "1A",
+  modo: "CLASSE" as const,
   esercizi: [{ titolo: "E1", content: {} }],
+  eserciziPerStudente: null,
   studenti: [{ id: "s1", nome: "Anna" }, { id: "s2", nome: "Marco" }],
 };
 
@@ -62,6 +64,26 @@ describe("pagina di stampa del compito", () => {
     vi.mocked(datiStampaCompito).mockResolvedValue({ ...dati, studenti: [] });
     render(await Page({ params: Promise.resolve({ id: "c1" }), searchParams: Promise.resolve({ versioni: "studenti" }) }));
     expect(screen.getByText("nessunoStudente")).toBeInTheDocument();
+  });
+
+  it("modo STUDENTE: solo «una per studente», con la riga che spiega perché, anche se si chiedono versioni a file", async () => {
+    vi.mocked(datiStampaCompito).mockResolvedValue({
+      ...dati,
+      modo: "STUDENTE",
+      esercizi: [],
+      eserciziPerStudente: { s1: [{ titolo: "E1", content: {} }], s2: [{ titolo: "E2", content: {} }] },
+    });
+    const v = await apri({ versioni: "3", scelto: "1" });
+    expect(v).toHaveAttribute("data-fogli", "Anna,Marco");
+    expect(screen.getByRole("combobox")).toHaveValue("studenti");
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.getByText("soloPerStudente")).toBeInTheDocument();
+  });
+
+  it("modo STUDENTE senza iscritti: nessun foglio, senza suggerire le versioni a file", async () => {
+    vi.mocked(datiStampaCompito).mockResolvedValue({ ...dati, modo: "STUDENTE", esercizi: [], eserciziPerStudente: {}, studenti: [] });
+    render(await Page({ params: Promise.resolve({ id: "c1" }), searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("nessunoStudentePerStudente")).toBeInTheDocument();
   });
 
   it("risponde non trovato a un compito che il docente non può stampare", async () => {
