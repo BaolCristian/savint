@@ -3,11 +3,14 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDisponibili, classiDelDocente, iscrittiDellaClasse } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
+import { utenteDaSessione } from "@/lib/esercizi/accesso";
+import { MISURE_VUOTE, haMisure, misureDellaClasse } from "@/lib/esercizi/misure-pdp";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ClassiForm } from "./classi-form";
 import { CreaClasseForm } from "./crea-classe-form";
 import { ClasseCodice } from "./classe-codice";
+import { MisurePdpDialog } from "./misure-pdp-dialog";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
 
 /** Il docente dichiara quali classi insegna, scegliendo fra TUTTE quelle
@@ -19,6 +22,7 @@ export default async function Page() {
   const t = await getTranslations("esercizi.classi");
   const tUi = await getTranslations("teacherExercisesUi");
   const tE = await getTranslations("esercizi");
+  const tPdp = await getTranslations("esercizi.misurePdp");
 
   const [disponibili, insegnate] = await Promise.all([
     classiDisponibili(),
@@ -60,9 +64,17 @@ export default async function Page() {
   // stessa scelta di `classiDisponibili`/`classiDelDocente`) che riverifica
   // da se' che il docente insegni la classe: qui e' sempre vero, essendo
   // `insegnate` la stessa fonte, ma e' il contratto della funzione.
+  //
+  // Le misure PDP (modalità verifica) restano qui, sulla card della classe:
+  // le vede solo il docente, accanto all'iscritto, e non arrivano mai a una
+  // pagina dello studente.
+  const utente = utenteDaSessione(session);
   const dettagli = await Promise.all(
     insegnate.map(async (c) => {
-      const esito = await iscrittiDellaClasse(c.id, session.user.id);
+      const [esito, misure] = await Promise.all([
+        iscrittiDellaClasse(c.id, session.user.id),
+        misureDellaClasse(c.id, utente),
+      ]);
       const righe = esito.ok ? esito.righe : [];
       return {
         id: c.id,
@@ -72,6 +84,7 @@ export default async function Page() {
           studentId: r.studentId,
           nome: r.nome ?? t("iscrittoSenzaNome"),
           origine: r.origine === "GRUPPO" ? t("origineGruppo") : t("origineCodice"),
+          misure: misure?.get(r.studentId) ?? MISURE_VUOTE,
         })),
       };
     }),
@@ -119,8 +132,21 @@ export default async function Page() {
                     <ul className="space-y-1">
                       {c.iscritti.map((i) => (
                         <li key={i.studentId} className="flex items-center justify-between gap-2 text-sm">
-                          <span>{i.nome}</span>
-                          <Badge variant="outline">{i.origine}</Badge>
+                          <span className="flex items-center gap-2">
+                            <span>{i.nome}</span>
+                            {haMisure(i.misure) && (
+                              <Badge variant="secondary" title={tPdp("segnoTitolo")}>{tPdp("segno")}</Badge>
+                            )}
+                          </span>
+                          <span className="flex items-center gap-3">
+                            <MisurePdpDialog
+                              studentId={i.studentId}
+                              nome={i.nome}
+                              iniziali={i.misure}
+                              endpoint={`/api/esercizi/classi/${c.id}/misure-pdp`}
+                            />
+                            <Badge variant="outline">{i.origine}</Badge>
+                          </span>
                         </li>
                       ))}
                     </ul>

@@ -1878,6 +1878,27 @@
       "erroreTroppi": "Troppe azioni di seguito: aspetta un minuto e riprova.",
       "erroreGenerico": "Qualcosa è andato storto. Riprova.",
       "contatore": "{n, plural, one {# commento aperto} other {# commenti aperti}}"
+    },
+    "misurePdp": {
+      "pulsante": "Misure PDP",
+      "pulsanteDi": "Misure PDP di {nome}",
+      "titolo": "Misure PDP di {nome}",
+      "descrizione": "Solo le misure compensative, senza diagnosi né note. Le vedono solo i docenti della classe; allo studente non arrivano.",
+      "tempoExtra": "Tempo supplementare",
+      "nessuno": "Nessuno",
+      "percentuale": "{pct} %",
+      "altro": "Altro",
+      "altroEtichetta": "Tempo supplementare in percentuale (0–100)",
+      "erroreTempo": "Il tempo supplementare deve essere un numero intero da 0 a 100.",
+      "menoEsercizi": "Meno esercizi",
+      "calcolatrice": "Calcolatrice",
+      "formulario": "Formulario",
+      "annulla": "Annulla",
+      "salva": "Salva",
+      "salvataggio": "Salvataggio…",
+      "errore": "Salvataggio non riuscito. Riprova.",
+      "segno": "PDP",
+      "segnoTitolo": "Ha misure PDP"
     }
   },
   "eserciziIngresso": {

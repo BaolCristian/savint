@@ -1878,6 +1878,27 @@
       "erroreTroppi": "Too many actions in a row: wait a minute and try again.",
       "erroreGenerico": "Something went wrong. Please try again.",
       "contatore": "{n, plural, one {# open comment} other {# open comments}}"
+    },
+    "misurePdp": {
+      "pulsante": "PDP measures",
+      "pulsanteDi": "PDP measures for {nome}",
+      "titolo": "PDP measures for {nome}",
+      "descrizione": "Only compensatory measures, no diagnoses or notes. Only the class's teachers can see them; they are never sent to the student.",
+      "tempoExtra": "Extra time",
+      "nessuno": "None",
+      "percentuale": "{pct}%",
+      "altro": "Other",
+      "altroEtichetta": "Extra time as a percentage (0–100)",
+      "erroreTempo": "Extra time must be a whole number from 0 to 100.",
+      "menoEsercizi": "Fewer exercises",
+      "calcolatrice": "Calculator",
+      "formulario": "Formula sheet",
+      "annulla": "Cancel",
+      "salva": "Save",
+      "salvataggio": "Saving…",
+      "errore": "Could not save. Try again.",
+      "segno": "PDP",
+      "segnoTitolo": "Has PDP measures"
     }
   },
   "eserciziIngresso": {

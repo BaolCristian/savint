@@ -8,6 +8,13 @@ vi.mock("@/lib/esercizi/classi", () => ({
   iscrittiDellaClasse: vi.fn(),
 }));
 vi.mock("@/lib/esercizi/compiti", () => ({ compitiDellaClasse: vi.fn() }));
+// Modalità verifica, Task 3: le misure PDP si leggono dal database; qui
+// solo `misureDellaClasse` è finta, il resto del modulo (MISURE_VUOTE,
+// haMisure) è quello vero.
+vi.mock("@/lib/esercizi/misure-pdp", async (originale) => ({
+  ...(await originale<typeof import("@/lib/esercizi/misure-pdp")>()),
+  misureDellaClasse: vi.fn(async () => new Map()),
+}));
 // `page.tsx` prende `codice` da `classiDelDocente`, insieme al resto di
 // "una classe come la vede il suo docente" (rilievo della revisione del
 // Task 4: prima se lo rileggeva con una findMany, e la forma della tabella
@@ -32,6 +39,7 @@ vi.mock("next-intl", () => ({
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDisponibili, classiDelDocente, iscrittiDellaClasse } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
+import { misureDellaClasse } from "@/lib/esercizi/misure-pdp";
 import Page from "../page";
 
 beforeEach(() => {
@@ -372,6 +380,27 @@ describe("pagina delle classi del docente", () => {
       });
       await rendi();
       expect(await screen.findByText("iscrittoSenzaNome")).toBeInTheDocument();
+    });
+
+    // Modalità verifica, Task 3: ogni iscritto ha il suo «Misure PDP», e
+    // solo chi ha misure porta il segno «PDP».
+    it("ogni iscritto ha il pulsante delle misure PDP; il segno solo per chi ne ha", async () => {
+      vi.mocked(iscrittiDellaClasse).mockResolvedValue({
+        ok: true,
+        righe: [
+          { studentId: "s1", nome: "Mario Rossi", origine: "GRUPPO", dal: new Date("2026-09-01") },
+          { studentId: "s2", nome: "Anna Bianchi", origine: "CODICE", dal: new Date("2026-09-02") },
+        ],
+      });
+      vi.mocked(misureDellaClasse).mockResolvedValue(
+        new Map([["s2", { tempoExtraPct: 30, menoEsercizi: false, calcolatrice: true, formulario: false }]]),
+      );
+      await rendi();
+
+      expect(await screen.findAllByRole("button", { name: /^pulsanteDi:/ })).toHaveLength(2);
+      expect(screen.getAllByText("segno")).toHaveLength(1);
+      expect(screen.getByText("segno").closest("li")).toHaveTextContent("Anna Bianchi");
+      expect(misureDellaClasse).toHaveBeenCalledWith("c1", { id: "doc1", admin: false });
     });
 
     it("senza iscritti mostra il messaggio di elenco vuoto", async () => {
