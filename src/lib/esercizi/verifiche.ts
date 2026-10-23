@@ -146,7 +146,7 @@ async function copiaMisureAllAvvio(tx: Prisma.TransactionClient, compitoId: stri
 }
 
 /** Le misure della classe per uno studente (vuote se non ne ha). */
-async function misureDiClasse(classeId: string, studentId: string): Promise<MisurePdpValori> {
+export async function misureDiClasse(classeId: string, studentId: string): Promise<MisurePdpValori> {
   const m = await prisma.misurePdp.findUnique({
     where: { classeId_studentId: { classeId, studentId } },
     select: SELEZIONE_MISURE,
