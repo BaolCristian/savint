@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/db/client";
 
 const P = "schemanc-";
@@ -14,8 +14,18 @@ beforeEach(async () => {
   await prisma.user.deleteMany({ where: { email: { startsWith: P } } });
   docenteId = (await prisma.user.create({ data: { email: `${P}d@test.it`, name: "D", role: "TEACHER" } })).id;
   studenteId = (await prisma.user.create({ data: { email: `${P}s@test.it`, name: "S", role: "STUDENT" } })).id;
-  await prisma.classe.create({ data: { id: `${P}classe`, name: "2A", yearLevel: 2 } });
+  await prisma.classe.create({ data: { id: `${P}classe`, name: `${P}2A`, yearLevel: 2 } });
   await prisma.batteria.create({ data: { id: `${P}bat`, name: "Copia", createdById: docenteId, automatica: true } });
+});
+
+// Pulizia finale come quella di `beforeEach`: una classe manuale lasciata nel
+// database verrebbe adottata da `allineaClassi` (classi.test.ts) se il suo
+// nome coincidesse con quello di un gruppo Google.
+afterAll(async () => {
+  await prisma.compito.deleteMany({ where: { classeId: { startsWith: P } } });
+  await prisma.batteria.deleteMany({ where: { id: { startsWith: P } } });
+  await prisma.classe.deleteMany({ where: { id: { startsWith: P } } });
+  await prisma.user.deleteMany({ where: { email: { startsWith: P } } });
 });
 
 const compitoBase = () => ({
