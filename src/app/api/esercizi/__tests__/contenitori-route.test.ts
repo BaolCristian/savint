@@ -8,20 +8,21 @@ vi.mock("@/lib/esercizi/contenitori", () => ({
   aggiungiEsercizi: vi.fn(),
   togliEsercizio: vi.fn(),
   eliminaContenitore: vi.fn(),
+  modificaContenitore: vi.fn(),
 }));
 vi.mock("@/lib/rate-limit/db-rate-limit", () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true })),
 }));
 
 import { requireTeacher } from "@/lib/auth/require-role";
-import { creaContenitore, aggiungiEsercizi, togliEsercizio, eliminaContenitore } from "@/lib/esercizi/contenitori";
+import { creaContenitore, aggiungiEsercizi, togliEsercizio, eliminaContenitore, modificaContenitore } from "@/lib/esercizi/contenitori";
 import { checkRateLimit } from "@/lib/rate-limit/db-rate-limit";
 import { POST } from "@/app/api/esercizi/contenitori/route";
 import {
   POST as POST_ESERCIZI,
   DELETE as DELETE_ESERCIZI,
 } from "@/app/api/esercizi/contenitori/[id]/esercizi/route";
-import { DELETE as DELETE_CONTENITORE } from "@/app/api/esercizi/contenitori/[id]/route";
+import { DELETE as DELETE_CONTENITORE, PATCH as PATCH_CONTENITORE } from "@/app/api/esercizi/contenitori/[id]/route";
 
 const params = Promise.resolve({ id: "cont1" });
 // Come `utenteDaSessione` traduce la sessione del beforeEach.
@@ -226,5 +227,41 @@ describe("DELETE /api/esercizi/contenitori/[id]", () => {
     const r = await DELETE_CONTENITORE(richiesta(), { params });
     expect(r.status).toBe(403);
     expect(await r.json()).toEqual({ error: "sola_lettura" });
+  });
+});
+
+describe("PATCH /api/esercizi/contenitori/[id]", () => {
+  const richiesta = (body: unknown) =>
+    new Request("http://x/api/esercizi/contenitori/cont1", { method: "PATCH", body: JSON.stringify(body) });
+
+  it("401 se non autenticato", async () => {
+    vi.mocked(requireTeacher).mockResolvedValue({ ok: false, response: new Response(null, { status: 401 }) } as never);
+    expect((await PATCH_CONTENITORE(richiesta({ name: "X" }), { params })).status).toBe(401);
+    expect(modificaContenitore).not.toHaveBeenCalled();
+  });
+
+  it("400 con un nome vuoto", async () => {
+    vi.mocked(modificaContenitore).mockClear();
+    expect((await PATCH_CONTENITORE(richiesta({ name: "  " }), { params })).status).toBe(400);
+    expect(modificaContenitore).not.toHaveBeenCalled();
+  });
+
+  it("429 quando il rate limit scatta", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValue({ allowed: false, retryAfterSeconds: 5 });
+    expect((await PATCH_CONTENITORE(richiesta({ name: "X" }), { params })).status).toBe(429);
+  });
+
+  it("200 e passa nome (ripulito) e descrizione al dominio", async () => {
+    vi.mocked(modificaContenitore).mockResolvedValue({ ok: true });
+    const r = await PATCH_CONTENITORE(richiesta({ name: "  Equazioni  ", description: "per la 2A" }), { params });
+    expect(r.status).toBe(200);
+    expect(modificaContenitore).toHaveBeenCalledWith("cont1", { name: "Equazioni", description: "per la 2A" }, docente);
+  });
+
+  it("404 per una raccolta che il docente non vede, 403 per una in sola lettura", async () => {
+    vi.mocked(modificaContenitore).mockResolvedValueOnce({ ok: false, motivo: "non_trovato" });
+    expect((await PATCH_CONTENITORE(richiesta({ name: "X" }), { params })).status).toBe(404);
+    vi.mocked(modificaContenitore).mockResolvedValueOnce({ ok: false, motivo: "sola_lettura" });
+    expect((await PATCH_CONTENITORE(richiesta({ name: "X" }), { params })).status).toBe(403);
   });
 });

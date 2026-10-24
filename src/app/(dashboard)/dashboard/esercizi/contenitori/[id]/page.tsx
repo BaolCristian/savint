@@ -10,6 +10,7 @@ import { CondividiDialog } from "@/components/esercizi/condivisione/condividi-di
 import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
+import { ModificaRaccolta } from "./modifica-raccolta";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
 import { etichetteNav } from "../../aree";
 
@@ -61,16 +62,24 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div className="space-y-6">
       <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div>
-        <Link href="/dashboard/esercizi/contenitori" className="text-sm text-brand-blue hover:underline">
+        <Link href="/dashboard/esercizi/contenitori" className="mb-2 inline-block text-sm text-brand-blue hover:underline">
           {t("torna")}
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold">{contenitore.name}</h1>
-            {contenitore.description && (
-              <p className="text-sm text-muted-foreground">{contenitore.description}</p>
-            )}
-          </div>
+          <ModificaRaccolta
+            contenitoreId={id}
+            nome={contenitore.name}
+            descrizione={contenitore.description}
+            modificabile={modificabile}
+            testi={{
+              modifica: t("modifica"),
+              nome: t("nome"),
+              descrizioneCampo: t("descrizioneCampo"),
+              salva: t("salva"),
+              annulla: t("annulla"),
+              erroreGenerico: t("erroreGenerico"),
+            }}
+          />
           <div className="flex flex-wrap items-center gap-2">
             {/* Nuovo compito, Task 7: dalla raccolta si assegna direttamente
                 — apre il Nuovo compito con un blocco su questa raccolta. A

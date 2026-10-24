@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/db/client";
 import {
   creaContenitore, elencoContenitori, contenutoContenitore,
-  aggiungiEsercizi, togliEsercizio, eliminaContenitore,
+  aggiungiEsercizi, togliEsercizio, eliminaContenitore, modificaContenitore,
 } from "../contenitori";
 import type { Utente } from "../accesso";
 
@@ -192,5 +192,39 @@ describe("contenitori e ruoli", () => {
     expect((await contenutoContenitore(c.id, rossi))!.esercizi.map((e) => e.id)).toEqual([es1]);
     expect((await elencoContenitori(rossi)).find((x) => x.id === c.id)!.esercizi).toBe(1);
     expect((await elencoContenitori(chi)).find((x) => x.id === c.id)!.esercizi).toBe(2);
+  });
+});
+
+// Nome e descrizione si cambiano anche dopo la creazione: prima non
+// c'era nessun modo, e una raccolta nata col nome sbagliato restava cosi'.
+describe("modificare nome e descrizione di una raccolta", () => {
+  it("il proprietario cambia nome e descrizione", async () => {
+    const c = await creaContenitore(teacherId, `${P}Vecchio`, "prima");
+    expect(await modificaContenitore(c.id, { name: `${P}Nuovo`, description: "dopo" }, chi)).toEqual({ ok: true });
+    const r = await prisma.contenitore.findUnique({ where: { id: c.id } });
+    expect(r!.name).toBe(`${P}Nuovo`);
+    expect(r!.description).toBe("dopo");
+  });
+
+  it("una descrizione vuota la toglie", async () => {
+    const c = await creaContenitore(teacherId, `${P}Vecchio`, "prima");
+    expect(await modificaContenitore(c.id, { name: `${P}Vecchio`, description: "   " }, chi)).toEqual({ ok: true });
+    expect((await prisma.contenitore.findUnique({ where: { id: c.id } }))!.description).toBeNull();
+  });
+
+  it("un EDITOR della raccolta la modifica, un VISUALIZZATORE no", async () => {
+    const c = await creaContenitore(teacherId, `${P}Vecchio`);
+    const editor = await collega("ed", c.id, "EDITOR");
+    const lettore = await collega("vis", c.id, "VISUALIZZATORE");
+    expect(await modificaContenitore(c.id, { name: `${P}DaLettore` }, lettore)).toEqual({ ok: false, motivo: "sola_lettura" });
+    expect((await prisma.contenitore.findUnique({ where: { id: c.id } }))!.name).toBe(`${P}Vecchio`);
+    expect(await modificaContenitore(c.id, { name: `${P}DaEditor` }, editor)).toEqual({ ok: true });
+    expect((await prisma.contenitore.findUnique({ where: { id: c.id } }))!.name).toBe(`${P}DaEditor`);
+  });
+
+  it("per un estraneo la raccolta non esiste", async () => {
+    const c = await creaContenitore(teacherId, `${P}Vecchio`);
+    const estraneo = await collega("x");
+    expect(await modificaContenitore(c.id, { name: `${P}Rubato` }, estraneo)).toEqual({ ok: false, motivo: "non_trovato" });
   });
 });

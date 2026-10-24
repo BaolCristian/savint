@@ -1298,7 +1298,9 @@
       "avvisoPrivato": "This exercise is private: if you add it, people with access to the collection will see it too.",
       "confermaAggiunta": "Add anyway",
       "annulla": "Cancel",
-      "assegna": "Assign this collection"
+      "assegna": "Assign this collection",
+      "modifica": "Edit",
+      "salva": "Save"
     },
     "nuovoCompito": {
       "titolo": "New assignment",

@@ -178,6 +178,22 @@ export async function togliEsercizio(
   return { ok: true };
 }
 
+/** Cambia nome e descrizione di una raccolta. Serve `modificare`, come
+ * per aggiungere o togliere esercizi: un editor nominato la rinomina, un
+ * visualizzatore no. Una descrizione vuota (o di soli spazi) si toglie;
+ * se `description` manca, resta com'era. */
+export async function modificaContenitore(
+  id: string,
+  dati: { name: string; description?: string },
+  chi: Utente,
+): Promise<{ ok: true } | { ok: false; motivo: MotivoContenitore }> {
+  const rifiuto = await rifiutoModifica(id, chi);
+  if (rifiuto) return { ok: false, motivo: rifiuto };
+  const description = dati.description === undefined ? undefined : dati.description.trim() || null;
+  await prisma.contenitore.update({ where: { id }, data: { name: dati.name, description } });
+  return { ok: true };
+}
+
 /** Cancella un contenitore libero: solo il PROPRIETARIO (un editor la
  * modifica, non la elimina). Se una BatteriaRegola lo usa, rifiuta prima di
  * tentare — il vincolo onDelete: Restrict è solo la rete di sicurezza,

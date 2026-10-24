@@ -304,3 +304,48 @@ describe("pagina di dettaglio di un contenitore", () => {
     });
   });
 });
+
+// Nome e descrizione si cambiano dalla pagina della raccolta: prima, una
+// volta creata, la raccolta restava col nome che aveva.
+describe("modificare nome e descrizione dalla pagina della raccolta", () => {
+  it("«Modifica» apre i due campi e «Salva» manda la PATCH con i valori nuovi", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({
+      id: "cont1", name: "Equazioni", description: "vecchia", esercizi: [], ...MIA,
+    });
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })) as typeof fetch;
+
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "modifica" }));
+    expect(screen.getByLabelText("nome")).toHaveValue("Equazioni");
+    expect(screen.getByLabelText("descrizioneCampo")).toHaveValue("vecchia");
+    fireEvent.change(screen.getByLabelText("nome"), { target: { value: "Equazioni 2A" } });
+    fireEvent.change(screen.getByLabelText("descrizioneCampo"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "salva" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/esercizi/contenitori/cont1", expect.objectContaining({ method: "PATCH" }));
+    });
+    const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0]![1] as RequestInit).body as string);
+    expect(body).toEqual({ name: "Equazioni 2A", description: "" });
+  });
+
+  it("se il salvataggio fallisce i campi restano aperti con l'errore", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({ id: "cont1", name: "Equazioni", description: null, esercizi: [], ...MIA });
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ error: "sola_lettura" }), { status: 403 })) as typeof fetch;
+
+    await rendi();
+    fireEvent.click(screen.getByRole("button", { name: "modifica" }));
+    fireEvent.click(screen.getByRole("button", { name: "salva" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("erroreGenerico");
+    expect(screen.getByLabelText("nome")).toBeInTheDocument();
+  });
+
+  it("chi vede la raccolta in sola lettura non ha «Modifica»", async () => {
+    vi.mocked(contenutoContenitore).mockResolvedValue({
+      id: "cont1", name: "Equazioni", description: null, esercizi: [], ruolo: "VISUALIZZATORE", trasmette: true,
+    });
+    await rendi();
+    expect(screen.getByRole("heading", { level: 1, name: "Equazioni" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "modifica" })).toBeNull();
+  });
+});

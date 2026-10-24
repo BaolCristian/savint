@@ -1298,7 +1298,9 @@
       "avvisoPrivato": "Questo esercizio è privato: aggiungendolo, lo vedranno anche le persone che hanno accesso alla raccolta.",
       "confermaAggiunta": "Aggiungi comunque",
       "annulla": "Annulla",
-      "assegna": "Assegna questa raccolta"
+      "assegna": "Assegna questa raccolta",
+      "modifica": "Modifica",
+      "salva": "Salva"
     },
     "nuovoCompito": {
       "titolo": "Nuovo compito",
