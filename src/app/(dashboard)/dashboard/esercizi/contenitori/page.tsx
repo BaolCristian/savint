@@ -4,6 +4,8 @@ import { elencoContenitori } from "@/lib/esercizi/contenitori";
 import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { ContenitoriClient } from "./contenitori-client";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
+import { IntestazioneArea } from "../intestazione-area";
 
 export default async function Page() {
   const session = await redirectUnlessTeacher();
@@ -16,12 +18,11 @@ export default async function Page() {
 
   return (
     <div className="space-y-4">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
-      <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       {/* Nuovo compito, Task 7: le raccolte sono solo cartelle per tenere
           in ordine gli esercizi. Niente piu' "Prepara un compito" qui: si
           assegna dalla pagina di una raccolta ("Assegna questa raccolta"). */}
-      <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
+      <IntestazioneArea area="raccolte" titolo={t("titolo")} descrizione={t("descrizione")} />
 
       <ContenitoriClient
         contenitori={contenitori.map((c) => ({

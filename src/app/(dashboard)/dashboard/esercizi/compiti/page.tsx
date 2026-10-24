@@ -5,6 +5,8 @@ import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
+import { IntestazioneArea } from "../intestazione-area";
 
 export default async function Page() {
   const session = await redirectUnlessTeacher();
@@ -23,23 +25,26 @@ export default async function Page() {
     }),
   );
   const compiti = compitiPerClasse.flat();
+  // Una scadenza gia' passata si legge in rosso.
+  const adesso = new Date();
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       {/* Nuovo compito, Task 7: questa pagina e' lo STORICO, e in alto c'e'
           la sola strada per dare un compito nuovo. Il <details> "Assegna un
           compito preparato" (CompitoForm) non c'e' piu': un modello si usa
           dalla pagina Modelli, che apre lo stesso Nuovo compito. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-          <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
-        </div>
-        <Link href="/dashboard/esercizi/compiti/nuovo" className={buttonVariants()}>
-          {t("nuovo")}
-        </Link>
-      </div>
+      <IntestazioneArea
+        area="compiti"
+        titolo={t("titolo")}
+        descrizione={t("descrizione")}
+        azioni={
+          <Link href="/dashboard/esercizi/compiti/nuovo" className={buttonVariants()}>
+            {t("nuovo")}
+          </Link>
+        }
+      />
 
       {classi.length === 0 && <p className="text-sm text-muted-foreground">{t("nessunaClasseInsegnata")}</p>}
 
@@ -50,7 +55,12 @@ export default async function Page() {
         ) : (
           <ul className="grid gap-2">
             {compiti.map((c) => (
-              <li key={c.id} className="rounded-lg border border-input p-3 text-sm">
+              <li
+                key={c.id}
+                className={`rounded-xl border border-border border-l-4 bg-card p-3 text-sm shadow-sm ${
+                  c.tipo === "VERIFICA" ? "border-l-brand-magenta" : "border-l-brand-orange"
+                }`}
+              >
                 {/* Una verifica ha la sua pagina (monitoraggio e risultati),
                     non quella delle consegne di un compito. */}
                 {c.tipo === "VERIFICA" && (
@@ -60,12 +70,14 @@ export default async function Page() {
                 )}
                 <Link
                   href={c.tipo === "VERIFICA" ? `/dashboard/esercizi/verifiche/${c.id}` : `/dashboard/esercizi/compiti/${c.id}`}
-                  className="font-medium text-brand-blue hover:underline"
+                  className="font-medium hover:underline"
                 >
                   {c.batteria} — {c.classe}
                 </Link>
                 <p className="text-muted-foreground">
-                  {c.dueAt ? t("compitoScadenza", { quando: c.dueAt.toLocaleDateString("it-IT") }) : t("nessunaScadenza")}
+                  <span className={c.dueAt && c.dueAt < adesso ? "font-medium text-destructive" : undefined}>
+                    {c.dueAt ? t("compitoScadenza", { quando: c.dueAt.toLocaleDateString("it-IT") }) : t("nessunaScadenza")}
+                  </span>
                   {" · "}
                   {t("eserciziCount", { n: c.esercizi })}
                 </p>

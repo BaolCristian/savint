@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Users, FolderOpen, Pencil, ChevronRight, ClipboardPlus } from "lucide-react";
+import { ChevronRight, ClipboardPlus, CalendarClock, ArrowRight } from "lucide-react";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { classiDelDocente } from "@/lib/esercizi/classi";
 import { compitiDellaClasse } from "@/lib/esercizi/compiti";
 import { TeacherExercisesNav } from "./teacher-exercises-nav";
+import { AREE, etichetteNav, type Area } from "./aree";
 
 // Quanti compiti gia' dati mostrare qui, per classe. La pagina dei compiti
 // li elenca tutti; qui servono gli ultimi, quelli che il docente ha appena
@@ -20,16 +21,15 @@ const COMPITI_RECENTI_PER_CLASSE = 3;
 // dire che non si poteva ancora usare.
 //
 // Qui la pagina ha tre piani, in ordine di quanto servono:
-//  1. il pannello per ASSEGNARE — l'unica carta sulla pagina. Dal Nuovo
-//     compito (Task 7) non e' piu' un modulo (AssegnaForm, classe +
-//     argomento + quanti) ma un grande link alla pagina Nuovo compito,
-//     l'unico posto dove si da' un compito, con la riga che ne spiega le
-//     tre zone;
-//  2. quello che si e' GIA' assegnato — un elenco, non un riquadro: dopo
-//     aver premuto "Assegna" e' la prima cosa che il docente vuole vedere,
-//     e prima stava dietro un clic su una pagina per due terzi vuota;
-//  3. dove si PREPARA il materiale (i miei esercizi, le mie classi, le
-//     raccolte) — tre link in fondo, non tre riquadri pari al resto.
+//  1. il pannello per ASSEGNARE — l'unica carta piena sulla pagina, nel
+//     colore dei compiti: un grande link alla pagina Nuovo compito, l'unico
+//     posto dove si da' un compito;
+//  2. quello che si e' GIA' assegnato — un elenco, con la scadenza in
+//     evidenza quando e' passata;
+//  3. COME FUNZIONA: le tappe per arrivare a un compito (classi, esercizi,
+//     raccolte, assegnare), ciascuna nel colore della sua zona e col link
+//     alla sua pagina. Dice l'ordine invece di lasciarlo indovinare, e
+//     segnala la prima tappa quando non e' ancora fatta.
 // "Batterie" non compare: resta raggiungibile dal suo indirizzo per chi lo
 // conosce già, ma il docente non deve più saperla nominare per assegnare.
 export default async function Page() {
@@ -56,12 +56,23 @@ export default async function Page() {
     }),
   );
   const compiti = compitiPerClasse.flat();
+  const adesso = new Date();
 
-  const strumenti = [
-    { href: "/dashboard/esercizi/redazione", label: t("navRedazione"), icon: Pencil },
-    { href: "/dashboard/esercizi/classi", label: t("navClassi"), icon: Users },
-    { href: "/dashboard/esercizi/contenitori", label: t("navContenitori"), icon: FolderOpen },
+  // Le tappe, nell'ordine in cui si fanno. La raccolta e' facoltativa: un
+  // compito si puo' comporre anche pescando per argomento.
+  const tappe: { area: Area; href: string; titolo: string; testo: string; facoltativa?: boolean; stato?: string }[] = [
+    {
+      area: "classi",
+      href: AREE.classi.href,
+      titolo: t("navClassi"),
+      testo: tUi("hub.stepClasses"),
+      stato: insegnate.length > 0 ? tUi("hub.classesCount", { n: insegnate.length }) : undefined,
+    },
+    { area: "esercizi", href: AREE.esercizi.href, titolo: t("navRedazione"), testo: tUi("hub.stepExercises") },
+    { area: "raccolte", href: AREE.raccolte.href, titolo: t("navContenitori"), testo: tUi("hub.stepCollections"), facoltativa: true },
+    { area: "compiti", href: "/dashboard/esercizi/compiti/nuovo", titolo: tUi("hub.stepAssignTitle"), testo: tUi("hub.stepAssign") },
   ];
+  const senzaClassi = insegnate.length === 0;
 
   return (
     // `text-foreground` esplicito: la modalita' scura di questa area e' un
@@ -69,7 +80,7 @@ export default async function Page() {
     // ereditato dal body resta quello chiaro; dichiararlo qui lo fa
     // risolvere dentro lo scope scuro, e tutto il resto lo eredita.
     <div className="max-w-4xl space-y-8 text-foreground">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div>
         {/* Il nome della sezione e' contesto, non il titolo: lo dice gia' la
             barra laterale. Resta un h1 per chi naviga per intestazioni, ma
@@ -78,16 +89,19 @@ export default async function Page() {
         <h1 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("titoloDocente")}</h1>
         <Link
           href="/dashboard/esercizi/compiti/nuovo"
-          className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-brand-blue/50 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-6"
+          className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-orange to-[#E8701A] p-5 text-white shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-6"
         >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white" aria-hidden>
-            <ClipboardPlus className="h-6 w-6" />
+          {/* Due cerchi chiari sullo sfondo: solo decorazione. */}
+          <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-16 right-24 h-32 w-32 rounded-full bg-white/10" />
+          <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-orange shadow-sm" aria-hidden>
+            <ClipboardPlus className="h-7 w-7" />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-2xl font-semibold tracking-tight group-hover:text-brand-blue">{tNuovo("titolo")}</span>
-            <span className="mt-1 block text-sm text-muted-foreground">{tNuovo("descrizione")}</span>
+          <span className="relative min-w-0 flex-1">
+            <span className="block text-2xl font-bold tracking-tight">{tNuovo("titolo")}</span>
+            <span className="mt-1 block text-sm text-white/90">{tNuovo("descrizione")}</span>
           </span>
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRight className="relative h-6 w-6 shrink-0 transition-transform group-hover:translate-x-1" aria-hidden />
         </Link>
       </div>
 
@@ -95,58 +109,112 @@ export default async function Page() {
           compiti direbbe solo "dichiara prima le classi": niente elenco e
           niente link verso il vuoto. */}
       {insegnate.length > 0 && (
-        <section aria-labelledby="compiti-titolo" className="space-y-2">
-          <h2 id="compiti-titolo" className="text-base font-semibold">
-            <Link href="/dashboard/esercizi/compiti" className="inline-flex items-center gap-1 hover:text-brand-blue">
+        <section aria-labelledby="compiti-titolo" className="space-y-3">
+          <h2 id="compiti-titolo" className="flex items-center gap-2 text-base font-semibold">
+            <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${AREE.compiti.pieno}`} aria-hidden>
+              <AREE.compiti.icona className="h-4 w-4" />
+            </span>
+            <Link href={AREE.compiti.href} className="inline-flex items-center gap-1 hover:underline">
               {t("navCompiti")}
               <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
             </Link>
           </h2>
           {compiti.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{tCompiti("nessunCompito")}</p>
+            <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">{tCompiti("nessunCompito")}</p>
           ) : (
-            <ul className="divide-y divide-border border-y border-border">
-              {compiti.map((c) => (
-                <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5 text-sm">
-                  {/* Una verifica ha la sua pagina, come nell'elenco dei compiti. */}
-                  <span className="flex min-w-0 items-baseline gap-2">
-                    {c.tipo === "VERIFICA" && (
-                      <span className="rounded bg-brand-magenta/10 px-1.5 py-0.5 text-xs font-medium text-brand-magenta">
-                        {tCompiti("etichettaVerifica")}
+            <ul className="space-y-2">
+              {compiti.map((c) => {
+                const verifica = c.tipo === "VERIFICA";
+                const scaduto = c.dueAt !== null && c.dueAt < adesso;
+                return (
+                  <li
+                    key={c.id}
+                    className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-border border-l-4 bg-card px-4 py-3 text-sm shadow-sm ${
+                      verifica ? "border-l-brand-magenta" : "border-l-brand-orange"
+                    }`}
+                  >
+                    {/* Una verifica ha la sua pagina, come nell'elenco dei compiti. */}
+                    <span className="flex min-w-0 items-center gap-2">
+                      {verifica && (
+                        <span className="rounded-full bg-brand-magenta/10 px-2 py-0.5 text-xs font-semibold text-brand-magenta">
+                          {tCompiti("etichettaVerifica")}
+                        </span>
+                      )}
+                      <Link
+                        href={verifica ? `/dashboard/esercizi/verifiche/${c.id}` : `/dashboard/esercizi/compiti/${c.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {c.batteria} — {c.classe}
+                      </Link>
+                    </span>
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <span className={`inline-flex items-center gap-1 ${scaduto ? "font-medium text-destructive" : ""}`}>
+                        <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+                        {c.dueAt ? tCompiti("compitoScadenza", { quando: c.dueAt.toLocaleDateString(locale) }) : tCompiti("nessunaScadenza")}
                       </span>
-                    )}
-                    <Link
-                      href={c.tipo === "VERIFICA" ? `/dashboard/esercizi/verifiche/${c.id}` : `/dashboard/esercizi/compiti/${c.id}`}
-                      className="font-medium hover:text-brand-blue hover:underline"
-                    >
-                      {c.batteria} — {c.classe}
-                    </Link>
-                  </span>
-                  <span className="text-muted-foreground">
-                    {c.dueAt ? tCompiti("compitoScadenza", { quando: c.dueAt.toLocaleDateString(locale) }) : tCompiti("nessunaScadenza")}
-                    {" · "}
-                    {tCompiti("eserciziCount", { n: c.esercizi })}
-                  </span>
-                </li>
-              ))}
+                      <span aria-hidden>·</span>
+                      <span>{tCompiti("eserciziCount", { n: c.esercizi })}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
       )}
 
-      <ul className="flex flex-wrap gap-2">
-        {strumenti.map((s) => (
-          <li key={s.href}>
-            <Link
-              href={s.href}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium transition hover:bg-muted"
-            >
-              <s.icon className="h-4 w-4 text-muted-foreground" aria-hidden />
-              {s.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <section aria-labelledby="come-funziona" className="space-y-3">
+        <h2 id="come-funziona" className="text-base font-semibold">{tUi("hub.howTitle")}</h2>
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {tappe.map((tappa, i) => {
+            const stile = AREE[tappa.area];
+            const Icona = stile.icona;
+            // Senza classi la prima tappa e' quella da fare: la si dice.
+            const evidenziata = senzaClassi && i === 0;
+            return (
+              <li
+                key={tappa.area}
+                className={`group relative flex flex-col gap-2 rounded-xl border-2 bg-card p-4 transition hover:-translate-y-0.5 hover:shadow-md ${
+                  evidenziata ? `${stile.bordo} ${stile.tenue}` : "border-border hover:border-current"
+                } ${stile.testo}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${stile.pieno}`} aria-hidden>
+                    <Icona className="h-5 w-5" />
+                  </span>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${stile.tenue}`} aria-hidden>
+                    {i + 1}
+                  </span>
+                </div>
+                {/* Il link copre tutta la carta (after:inset-0) ma il suo
+                    nome resta il solo titolo. */}
+                <Link
+                  href={tappa.href}
+                  className="font-semibold text-foreground after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                >
+                  {tappa.titolo}
+                </Link>
+                <p className="text-sm text-muted-foreground">{tappa.testo}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-1 text-xs font-medium">
+                  {evidenziata && <span className={`rounded-full px-2 py-0.5 text-white ${stile.pieno}`}>{tUi("hub.startHere")}</span>}
+                  {tappa.stato && <span className={`rounded-full px-2 py-0.5 ${stile.tenue}`}>✓ {tappa.stato}</span>}
+                  {tappa.facoltativa && <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tUi("hub.optional")}</span>}
+                </div>
+                {i < tappe.length - 1 && (
+                  <ArrowRight aria-hidden className="absolute -right-3 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 text-muted-foreground lg:block" />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <AREE.modelli.icona className={`h-4 w-4 ${AREE.modelli.testo}`} aria-hidden />
+          {tUi("hub.modelsHint")}
+          <Link href={AREE.modelli.href} className={`font-medium underline-offset-2 hover:underline ${AREE.modelli.testo}`}>
+            {tUi("hub.modelsLink")}
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

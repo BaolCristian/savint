@@ -43,6 +43,8 @@
   --color-brand-green: var(--brand-green);
   --color-brand-magenta: var(--brand-magenta);
   --color-brand-ink: var(--brand-ink);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-teal: var(--brand-teal);
   --color-brand-blue-50: var(--brand-blue-50);
   --color-brand-orange-50: var(--brand-orange-50);
   --color-brand-green-50: var(--brand-green-50);
@@ -89,6 +91,9 @@
   --brand-green: #5DB82C;
   --brand-magenta: #E01B6A;
   --brand-ink: #1E293B;
+  /* due colori in piu' per distinguere le zone degli esercizi */
+  --brand-violet: #7C5CE0;
+  --brand-teal: #14A3A3;
   /* tinte tenui per sfondi/badge */
   --brand-blue-50: color-mix(in srgb, var(--brand-blue) 10%, white);
   --brand-orange-50: color-mix(in srgb, var(--brand-orange) 12%, white);

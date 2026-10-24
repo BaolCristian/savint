@@ -3,11 +3,13 @@
     "nav": {
       "label": "Exercise management",
       "overview": "Overview",
-      "catalog": "Catalog",
+      "catalog": "Exercises",
       "collections": "Collections",
       "assignments": "Assignments",
       "classes": "Classes",
-      "models": "Templates"
+      "models": "Templates",
+      "prepare": "Prepare",
+      "assign": "Assign"
     },
     "catalog": {
       "search": "Search the catalog",
@@ -50,6 +52,22 @@
       "createSection": "Create a class",
       "teachingSection": "Classes you teach",
       "managementSection": "Codes and enrolled students"
+    },
+    "hub": {
+      "howTitle": "How to get to an assignment",
+      "stepClasses": "Choose the classes you teach: you can only assign work to them.",
+      "stepExercises": "Write, import or create exercises with AI. Numbers change for every student.",
+      "stepCollections": "Put exercises in folders, by topic or by term, so you find them quickly.",
+      "stepAssignTitle": "Assign",
+      "stepAssign": "Pick the class, the exercises and the due date: check the summary and assign.",
+      "startHere": "Start here",
+      "optional": "optional",
+      "classesCount": "{n, plural, one {# class} other {# classes}}",
+      "modelsHint": "Want to give an assignment again? Save it as a template and reuse it in one click.",
+      "modelsLink": "Go to templates"
+    },
+    "pages": {
+      "exercises": "Exercises you wrote, those shared with you and the school's. Open, try and assign them from here."
     }
   },
   "common": {

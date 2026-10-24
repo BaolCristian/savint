@@ -7,6 +7,7 @@ import { consegneDelCompito, haTitoloSulCompito } from "@/lib/esercizi/compiti";
 import { statisticheDelCompito } from "@/lib/esercizi/statistiche";
 import { prisma } from "@/lib/db/client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { etichetteNav } from "../../aree";
 import { GestioneCompito } from "./gestione-compito";
 
 // La data nel formato del campo `type="date"`, in UTC: il modulo di
@@ -74,7 +75,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div>
         <Link href="/dashboard/esercizi/compiti" className="text-sm text-brand-blue hover:underline">
           {t("torna")}

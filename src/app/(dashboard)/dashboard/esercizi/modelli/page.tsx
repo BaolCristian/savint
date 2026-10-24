@@ -4,6 +4,8 @@ import { elencoModelli } from "@/lib/esercizi/batterie";
 import { utenteDaSessione } from "@/lib/esercizi/accesso";
 import { ModelliClient } from "./modelli-client";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
+import { IntestazioneArea } from "../intestazione-area";
 
 // Nuovo compito, Task 5: i modelli al posto dei "compiti preparati". Sono
 // comuni a tutta la scuola (Decisioni, punto 1): l'elenco li mostra tutti,
@@ -19,9 +21,8 @@ export default async function Page() {
 
   return (
     <div className="space-y-4">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
-      <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-      <p className="max-w-2xl text-sm text-muted-foreground">{t("descrizione")}</p>
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
+      <IntestazioneArea area="modelli" titolo={t("titolo")} descrizione={t("descrizione")} />
 
       {modelli.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("nessunModello")}</p>

@@ -93,10 +93,12 @@ describe("hub della sezione esercizi del docente", () => {
     expect(screen.queryByRole("link", { name: "navBatterie" })).toBeNull();
   });
 
-  it("l'ordine della pagina: prima si assegna, poi si legge cosa si e' gia' assegnato, in fondo dove si prepara il materiale", async () => {
+  // In fondo le tappe per arrivare a un compito, nell'ordine in cui si
+  // fanno: classi, esercizi, raccolte.
+  it("l'ordine della pagina: prima si assegna, poi si legge cosa si e' gia' assegnato, in fondo le tappe per preparare il materiale", async () => {
     const { container } = await rendi();
     const testo = container.textContent ?? "";
-    const ordine = posizioni(testo, ["nuovoCompito.titolo", "navCompiti", "navRedazione", "navClassi", "navContenitori"]);
+    const ordine = posizioni(testo, ["nuovoCompito.titolo", "navCompiti", "navClassi", "navRedazione", "navContenitori"]);
 
     expect(ordine.every((p) => p >= 0)).toBe(true);
     expect(ordine).toEqual([...ordine].sort((a, b) => a - b));
@@ -151,5 +153,37 @@ describe("i compiti gia' assegnati, sulla pagina invece che dietro un clic", () 
     expect(screen.getByRole("link", { name: "navClassi" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "navRedazione" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "navContenitori" })).toBeInTheDocument();
+  });
+});
+
+describe("le tappe per arrivare a un compito", () => {
+  it("senza classi la prima tappa dice «Inizia da qui»", async () => {
+    vi.mocked(classiDelDocente).mockResolvedValue([]);
+    await rendi();
+    expect(screen.getByText("teacherExercisesUi.hub.startHere")).toBeInTheDocument();
+  });
+
+  it("con le classi gia' scelte la prima tappa dice quante sono, e non c'e' «Inizia da qui»", async () => {
+    await rendi();
+    expect(screen.queryByText("teacherExercisesUi.hub.startHere")).toBeNull();
+    expect(screen.getByText(/teacherExercisesUi\.hub\.classesCount:\{"n":1\}/)).toBeInTheDocument();
+  });
+
+  it("la tappa Assegna porta al Nuovo compito", async () => {
+    await rendi();
+    expect(screen.getByRole("link", { name: "teacherExercisesUi.hub.stepAssignTitle" })).toHaveAttribute(
+      "href", "/dashboard/esercizi/compiti/nuovo",
+    );
+  });
+
+  it("una scadenza gia' passata e' in rosso, una futura no", async () => {
+    vi.mocked(compitiDellaClasse).mockResolvedValue([
+      { id: "k1", tipo: "COMPITO", batteria: "Vecchio", dueAt: new Date("2000-01-01T00:00:00Z"), esercizi: 1 },
+      { id: "k2", tipo: "COMPITO", batteria: "Nuovo", dueAt: new Date("2999-01-01T00:00:00Z"), esercizi: 1 },
+    ]);
+    await rendi();
+    const [passata, futura] = screen.getAllByText(/compiti\.compitoScadenza:/);
+    expect(passata.className).toContain("text-destructive");
+    expect(futura.className).not.toContain("text-destructive");
   });
 });

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/client";
 import { AnteprimaCompito } from "@/components/esercizi/compito/anteprima-compito";
 import { Button } from "@/components/ui/button";
 import { TeacherExercisesNav } from "../../../teacher-exercises-nav";
+import { etichetteNav } from "../../../aree";
 
 /** L'anteprima di un compito GIÀ assegnato, "come la vedono i ragazzi"
  * (spec, "Anteprima del compito"): gli esercizi del compito uno dopo
@@ -86,7 +87,7 @@ export default async function Page({
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div className="space-y-1">
         <Link href={`/dashboard/esercizi/compiti/${compito.id}`} className="text-sm text-brand-blue hover:underline">
           {t("tornaCompito")}

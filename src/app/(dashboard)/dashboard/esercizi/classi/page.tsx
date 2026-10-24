@@ -12,6 +12,8 @@ import { CreaClasseForm } from "./crea-classe-form";
 import { ClasseCodice } from "./classe-codice";
 import { MisurePdpDialog } from "./misure-pdp-dialog";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
+import { IntestazioneArea } from "../intestazione-area";
 
 /** Il docente dichiara quali classi insegna, scegliendo fra TUTTE quelle
  * esistenti (`classiDisponibili`, senza rotta HTTP: qui si legge il dominio
@@ -92,12 +94,17 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-        <p className="text-sm text-muted-foreground">{t("descrizione")}</p>
-        <p className="text-sm text-muted-foreground">{t("significato")}</p>
-      </div>
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
+      <IntestazioneArea
+        area="classi"
+        titolo={t("titolo")}
+        descrizione={
+          <>
+            <p>{t("descrizione")}</p>
+            <p>{t("significato")}</p>
+          </>
+        }
+      />
 
       <section className="space-y-3" aria-labelledby="crea-classe">
         <h2 id="crea-classe" className="text-lg font-semibold">{tUi("classes.createSection")}</h2>

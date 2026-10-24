@@ -8,6 +8,7 @@ import { classiDelDocente } from "@/lib/esercizi/classi";
 import { elencoContenitori } from "@/lib/esercizi/contenitori";
 import { eserciziAssegnabili, type Blocco } from "@/lib/esercizi/estrazione";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { etichetteNav } from "../../aree";
 import { NuovoCompitoClient } from "./nuovo-compito-client";
 
 type Parametri = { classe?: string; raccolta?: string; argomento?: string; modello?: string; esercizio?: string; tipo?: string };
@@ -107,7 +108,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Re
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div className="space-y-1">
         <Link href="/dashboard/esercizi/compiti" className="text-sm text-brand-blue hover:underline">
           {tCompiti("torna")}

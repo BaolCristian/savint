@@ -3,11 +3,13 @@
     "nav": {
       "label": "Gestione esercizi",
       "overview": "Panoramica",
-      "catalog": "Catalogo",
+      "catalog": "Esercizi",
       "collections": "Raccolte",
       "assignments": "Compiti",
       "classes": "Classi",
-      "models": "Modelli"
+      "models": "Modelli",
+      "prepare": "Prepara",
+      "assign": "Assegna"
     },
     "catalog": {
       "search": "Cerca nel catalogo",
@@ -50,6 +52,22 @@
       "createSection": "Crea una classe",
       "teachingSection": "Classi che insegni",
       "managementSection": "Codici e iscritti"
+    },
+    "hub": {
+      "howTitle": "Come si arriva a un compito",
+      "stepClasses": "Scegli le classi a cui insegni: solo a loro potrai dare compiti.",
+      "stepExercises": "Scrivi, importa o crea con l'IA gli esercizi. I numeri cambiano per ogni studente.",
+      "stepCollections": "Metti gli esercizi in cartelle, per argomento o per periodo, così li ritrovi subito.",
+      "stepAssignTitle": "Assegna",
+      "stepAssign": "Scegli la classe, gli esercizi e la scadenza: controlli il riepilogo e assegni.",
+      "startHere": "Inizia da qui",
+      "optional": "facoltativo",
+      "classesCount": "{n, plural, one {# classe} other {# classi}}",
+      "modelsHint": "Vuoi ridare un compito già usato? Salvalo come modello e riusalo con un clic.",
+      "modelsLink": "Vai ai modelli"
+    },
+    "pages": {
+      "exercises": "Gli esercizi che hai scritto, quelli condivisi con te e quelli della scuola. Da qui li apri, li provi e li assegni."
     }
   },
   "common": {

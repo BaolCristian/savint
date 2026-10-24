@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { etichetteNav } from "../../aree";
 import { ImportaClient } from "./importa-client";
 
 /** L'import di esercizi generati da un'IA: il docente incolla (o carica) il
@@ -17,10 +18,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-4 p-6">
-      <TeacherExercisesNav labels={{
-        label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
-      }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <Link href="/dashboard/esercizi/redazione" className="text-sm text-brand-blue hover:underline">
         {tElenco("torna")}
       </Link>

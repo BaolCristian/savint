@@ -11,6 +11,7 @@ import { testiCondivisione } from "@/components/esercizi/condivisione/testi-cond
 import { buttonVariants } from "@/components/ui/button-variants";
 import { ContenitoreDetailClient } from "./contenitore-detail-client";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { etichetteNav } from "../../aree";
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const session = await redirectUnlessTeacher();
@@ -58,7 +59,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div>
         <Link href="/dashboard/esercizi/contenitori" className="text-sm text-brand-blue hover:underline">
           {t("torna")}

@@ -6,6 +6,8 @@ import { puo, utenteDaSessione } from "@/lib/esercizi/accesso";
 import { testiCondivisione } from "@/components/esercizi/condivisione/testi-condivisione";
 import { Button } from "@/components/ui/button";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
+import { IntestazioneArea } from "../intestazione-area";
 import { RedazioneElencoClient, type VoceElenco } from "./redazione-elenco-client";
 
 /** Un conteggio da `searchParams`: solo un intero non negativo, altrimenti
@@ -94,23 +96,22 @@ export default async function Page({
 
   return (
     <div className="space-y-4 p-6">
-      <TeacherExercisesNav labels={{
-        label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
-      }} />
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("titolo")}</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/dashboard/esercizi/redazione/importa">
-            <Button type="button" variant="outline">{t("importa")}</Button>
-          </Link>
-          <Link href="/dashboard/esercizi/redazione/nuovo">
-            <Button type="button">{t("nuovo")}</Button>
-          </Link>
-        </div>
-      </div>
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
+      <IntestazioneArea
+        area="esercizi"
+        titolo={t("titolo")}
+        descrizione={tUi("pages.exercises")}
+        azioni={
+          <>
+            <Link href="/dashboard/esercizi/redazione/importa">
+              <Button type="button" variant="outline">{t("importa")}</Button>
+            </Link>
+            <Link href="/dashboard/esercizi/redazione/nuovo">
+              <Button type="button">{t("nuovo")}</Button>
+            </Link>
+          </>
+        }
+      />
 
       {importati !== null && (
         <p role="status" className="rounded-lg border border-brand-green/40 bg-brand-green/10 p-3 text-sm">

@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { PromptEsercizi } from "@/components/esercizi/prompt-esercizi";
 import { TeacherExercisesNav } from "../teacher-exercises-nav";
+import { etichetteNav } from "../aree";
 
 /** Il generatore del prompt per creare esercizi con un'IA esterna: la
  * gemella, per gli esercizi, della pagina "Crea quiz con l'IA". Il JSON che
@@ -13,10 +14,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-4 p-6">
-      <TeacherExercisesNav labels={{
-        label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"),
-        collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models"),
-      }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div className="max-w-3xl space-y-6">
         <h1 className="text-2xl font-semibold">{t("titoloPagina")}</h1>
         <PromptEsercizi />

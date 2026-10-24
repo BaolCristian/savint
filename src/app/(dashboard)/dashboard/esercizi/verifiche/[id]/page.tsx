@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { misureDellaVerifica, monitoraggioVerifica } from "@/lib/esercizi/verifiche";
 import { TeacherExercisesNav } from "../../teacher-exercises-nav";
+import { etichetteNav } from "../../aree";
 import { VerificaDocenteClient, type MonitoraggioJson } from "./verifica-docente-client";
 
 // La pagina di una verifica per il docente: preparazione, monitoraggio e
@@ -27,7 +28,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <VerificaDocenteClient compitoId={id} iniziale={iniziale} misureIniziali={misure} />
     </div>
   );

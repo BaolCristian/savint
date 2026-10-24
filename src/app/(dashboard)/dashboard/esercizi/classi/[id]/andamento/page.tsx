@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { andamentoDellaClasse } from "@/lib/esercizi/statistiche";
 import { TeacherExercisesNav } from "../../../teacher-exercises-nav";
+import { etichetteNav } from "../../../aree";
 
 /** L'andamento di una classe per argomento, su tutti i suoi compiti non
  * ritirati: dove la classe è debole, prima di decidere cosa riassegnare.
@@ -24,7 +25,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-6">
-      <TeacherExercisesNav labels={{ label: tUi("nav.label"), overview: tUi("nav.overview"), catalog: tUi("nav.catalog"), collections: tUi("nav.collections"), assignments: tUi("nav.assignments"), classes: tUi("nav.classes"), models: tUi("nav.models") }} />
+      <TeacherExercisesNav labels={etichetteNav(tUi)} />
       <div className="space-y-1">
         <Link href="/dashboard/esercizi/classi" className="text-sm text-brand-blue hover:underline">
           {t("statistiche.tornaClassi")}
