@@ -113,6 +113,9 @@ export interface ServerToClientEvents {
     distribution: Record<string, number>;
     leaderboard: { playerName: string; score: number; delta: number; playerAvatar?: string }[];
   }) => void;
+  /** Answer stored; the outcome arrives later with answerFeedback */
+  answerReceived: (data: { confidenceEnabled: boolean }) => void;
+  /** Outcome of the player's answer, sent when the host reveals the answer */
   answerFeedback: (data: {
     isCorrect: boolean;
     score: number;

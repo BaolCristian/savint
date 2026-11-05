@@ -183,7 +183,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
-  const [confidenceRevealing, setConfidenceRevealing] = useState(false);
 
   const [renaming, setRenaming] = useState(false);
   const [renameInput, setRenameInput] = useState("");
@@ -320,11 +319,17 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       setPhase("question");
     };
 
-    const onAnswerFeedback = (data: FeedbackData & { confidenceEnabled?: boolean }) => {
+    // Answer stored: stay on the question screen ("answer sent, wait")
+    // and, if enabled, ask how sure the player is. The outcome comes later.
+    const onAnswerReceived = (data: { confidenceEnabled: boolean }) => {
+      setSubmitted(true);
+      setAwaitingConfidence(data.confidenceEnabled);
+    };
+
+    // Outcome revealed by the host
+    const onAnswerFeedback = (data: FeedbackData) => {
       setFeedback(data);
-      if (data.confidenceEnabled) {
-        setAwaitingConfidence(true);
-      }
+      setAwaitingConfidence(false);
       setPhase("feedback");
     };
 
@@ -349,6 +354,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     socket.on("gameState", onGameState);
     socket.on("rejoinSuccess", onRejoinSuccess);
     socket.on("questionStart", onQuestionStart);
+    socket.on("answerReceived", onAnswerReceived);
     socket.on("answerFeedback", onAnswerFeedback);
     socket.on("playerStats", onPlayerStats);
     socket.on("gameOver", onGameOver);
@@ -362,6 +368,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       socket.off("gameState", onGameState);
       socket.off("rejoinSuccess", onRejoinSuccess);
       socket.off("questionStart", onQuestionStart);
+      socket.off("answerReceived", onAnswerReceived);
       socket.off("answerFeedback", onAnswerFeedback);
       socket.off("playerStats", onPlayerStats);
       socket.off("gameOver", onGameOver);
@@ -401,12 +408,11 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     }
   }, [phase, feedback]);
 
-  // Play sound on confidence reveal or direct feedback (no confidence)
+  // Play sound when the outcome is revealed
   useEffect(() => {
     if (!feedback || soundPlayedRef.current) return;
 
-    const shouldPlay = confidenceRevealing || (phase === "feedback" && !awaitingConfidence && !confidenceRevealing);
-    if (shouldPlay) {
+    if (phase === "feedback") {
       soundPlayedRef.current = true;
       if (feedback.isCorrect) {
         playCorrect();
@@ -415,7 +421,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         navigator.vibrate?.(200);
       }
     }
-  }, [phase, feedback, awaitingConfidence, confidenceRevealing]);
+  }, [phase, feedback]);
 
   /* ---------- submit handler ---------- */
 
@@ -821,7 +827,31 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         </h2>
 
         {/* Answer area */}
-        {submitted ? (
+        {submitted && awaitingConfidence ? (
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+              {t("confidenceQuestion")}
+            </h2>
+            <div className="space-y-3 w-full max-w-xs">
+              {[
+                { level: 1, label: t("notSure"), color: "from-slate-500 to-slate-600" },
+                { level: 2, label: t("somewhatSure"), color: "from-amber-500 to-yellow-600" },
+                { level: 3, label: t("verySure"), color: "from-green-500 to-emerald-600" },
+              ].map(({ level, label, color }) => (
+                <button
+                  key={level}
+                  onClick={() => {
+                    socket?.emit("submitConfidence", { confidenceLevel: level });
+                    setAwaitingConfidence(false);
+                  }}
+                  className={`w-full py-4 rounded-2xl bg-gradient-to-r ${color} text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center">
             <div className="mb-3 sm:mb-4">
               <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24" : "text-4xl sm:text-5xl lg:text-6xl"} />
@@ -853,59 +883,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   }
 
   if (phase === "feedback" && feedback) {
-    if (awaitingConfidence) {
-      return (
-        <div className={`relative flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b ${GAME.brandGradient} p-6 text-center`}>
-          {reconnectionBanner}
-          {pinBadge()}
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-            {t("confidenceQuestion")}
-          </h2>
-          <div className="space-y-3 w-full max-w-xs">
-            {[
-              { level: 1, label: t("notSure"), color: "from-slate-500 to-slate-600" },
-              { level: 2, label: t("somewhatSure"), color: "from-amber-500 to-yellow-600" },
-              { level: 3, label: t("verySure"), color: "from-green-500 to-emerald-600" },
-            ].map(({ level, label, color }) => (
-              <button
-                key={level}
-                onClick={() => {
-                  socket?.emit("submitConfidence", { confidenceLevel: level });
-                  setConfidenceRevealing(true);
-                  setTimeout(() => {
-                    setConfidenceRevealing(false);
-                    setAwaitingConfidence(false);
-                  }, 1500);
-                }}
-                className={`w-full py-4 rounded-2xl bg-gradient-to-r ${color} text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (confidenceRevealing) {
-      const isCorrect = feedback.isCorrect;
-      return (
-        <div className={`relative flex min-h-dvh flex-col items-center justify-center p-6 text-center transition-all duration-500 ${
-          isCorrect
-            ? "bg-gradient-to-b from-emerald-400 to-green-600"
-            : "bg-gradient-to-b from-red-400 to-rose-600"
-        }`}>
-          {isCorrect && <Confetti />}
-          <div className={`text-8xl sm:text-9xl lg:text-[12rem] animate-zoom-in-bounce ${isCorrect ? "" : "animate-shake"}`}>
-            {isCorrect ? "🎉" : "😬"}
-          </div>
-          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black text-white animate-slide-up-fade">
-            {isCorrect ? t("correct") : t("wrong")}
-          </h2>
-        </div>
-      );
-    }
-
     const isCorrect = feedback.isCorrect;
 
     return (
@@ -1008,7 +985,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       setPodium(null);
       setSubmitted(false);
       setAwaitingConfidence(false);
-      setConfidenceRevealing(false);
       sessionStorage.removeItem("savint-session");
     };
 

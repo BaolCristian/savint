@@ -572,32 +572,21 @@ export function setupSocketHandlers(io: TypedIO) {
         console.error("submitAnswer DB error:", err);
       }
 
-      // Count how many got it right so far this round
-      const correctCount = [...game.players.values()].filter(
-        (p) => p.lastDelta > 0
-      ).length;
-      const total = realPlayerCount(game);
-      const classCorrectPercent =
-        total > 0
-          ? Math.round((correctCount / total) * 100)
-          : 0;
-
-      // Feedback to the answering player only
-      socket.emit("answerFeedback", {
-        isCorrect,
-        score,
-        totalScore: player?.totalScore ?? 0,
-        classCorrectPercent,
+      // Only confirm receipt: the outcome (right/wrong, points) reaches the
+      // player when the host reveals the answer (runShowResults), so nobody
+      // can tell classmates whether their answer was right mid-question.
+      socket.emit("answerReceived", {
         confidenceEnabled: question.confidenceEnabled,
       });
 
       // Broadcast answer count to room
       io.to(room(game.sessionId)).emit("answerCount", {
         count: game.answerCount,
-        total,
+        total: realPlayerCount(game),
       });
 
-      if (game.isTest) {
+      // Test mode reveals right away — after the confidence answer, if asked
+      if (game.isTest && !question.confidenceEnabled) {
         await runShowResults(io, game);
       }
     });
@@ -613,6 +602,10 @@ export function setupSocketHandlers(io: TypedIO) {
 
       const game = games.get(currentSessionId);
       if (!game || game.currentQuestionIndex < 0) return;
+
+      // Confidence only counts while the question is open: once the answer
+      // is revealed the player would be betting on a known outcome.
+      if (game.phase !== "in-question") return;
 
       const question = game.questions[game.currentQuestionIndex];
       if (!question || !question.confidenceEnabled) return;
@@ -659,13 +652,7 @@ export function setupSocketHandlers(io: TypedIO) {
         console.error("submitConfidence DB error:", err);
       }
 
-      socket.emit("answerFeedback", {
-        isCorrect,
-        score: newDelta,
-        totalScore: player.totalScore,
-        classCorrectPercent: 0,
-        confidenceEnabled: false,
-      });
+      socket.emit("answerReceived", { confidenceEnabled: false });
 
       // Broadcast confidence count to host
       game.confidenceCount += 1;
@@ -674,6 +661,10 @@ export function setupSocketHandlers(io: TypedIO) {
         count: game.confidenceCount,
         total,
       });
+
+      if (game.isTest) {
+        await runShowResults(io, game);
+      }
     });
 
     // ------------------------------------------------------------------
@@ -805,27 +796,22 @@ export function setupSocketHandlers(io: TypedIO) {
       if (game.currentQuestionIndex >= 0) {
         const q = game.questions[game.currentQuestionIndex];
         if (q) {
-          if (existingAnswer) {
-            // Player already answered — show feedback, not the question
-            const correctCount = [...game.players.values()].filter(
-              (p) => p.lastDelta > 0
-            ).length;
-            const total = realPlayerCount(game);
-            const classCorrectPercent =
-              total > 0 ? Math.round((correctCount / total) * 100) : 0;
-
-            // Only prompt for confidence if enabled AND not already submitted
-            const alreadyConfident = existingAnswer.confidenceLevel != null;
-
+          if (existingAnswer && game.phase !== "in-question") {
+            // Answer already revealed — show the player's outcome
+            const answers = await prisma.answer.findMany({
+              where: { sessionId: game.sessionId, questionId: q.id },
+              select: { isCorrect: true },
+            });
             socket.emit("answerFeedback", {
               isCorrect: existingAnswer.isCorrect,
               score: existingAnswer.score,
               totalScore: player.totalScore,
-              classCorrectPercent,
-              confidenceEnabled: q.confidenceEnabled && !alreadyConfident,
+              classCorrectPercent: classCorrectPercent(answers, realPlayerCount(game)),
+              confidenceEnabled: false,
             });
           } else {
-            // Player hasn't answered yet — send the question
+            // Not answered yet, or answered but not revealed: send the
+            // question; if already answered, back to "answer sent, wait"
             socket.emit("questionStart", {
               questionIndex: game.currentQuestionIndex,
               totalQuestions: game.questions.length,
@@ -836,8 +822,15 @@ export function setupSocketHandlers(io: TypedIO) {
                 timeLimit: q.timeLimit,
                 points: q.points,
                 mediaUrl: q.mediaUrl,
+                confidenceEnabled: q.confidenceEnabled,
               },
             });
+            if (existingAnswer) {
+              socket.emit("answerReceived", {
+                confidenceEnabled:
+                  q.confidenceEnabled && existingAnswer.confidenceLevel == null,
+              });
+            }
           }
         }
       }
@@ -1055,6 +1048,12 @@ function findGameForSocket(socket: TypedSocket): GameState | null {
   return null;
 }
 
+/** Percentage of the class (real players) that answered correctly */
+function classCorrectPercent(answers: { isCorrect: boolean }[], total: number) {
+  if (total <= 0) return 0;
+  return Math.round((answers.filter((a) => a.isCorrect).length / total) * 100);
+}
+
 /** Run the showResults logic (extracted so test-mode auto-advance can reuse it) */
 async function runShowResults(io: TypedIO, game: GameState) {
   if (game.currentQuestionIndex < 0) return;
@@ -1064,7 +1063,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
   try {
     const dbAnswers = await prisma.answer.findMany({
       where: { sessionId: game.sessionId, questionId: question.id },
-      select: { value: true, isCorrect: true },
+      select: { value: true, isCorrect: true, playerName: true, score: true },
     });
 
     const distribution = buildDistribution(
@@ -1089,8 +1088,22 @@ async function runShowResults(io: TypedIO, game: GameState) {
 
     const totalPlayers = realPlayerCount(game);
 
+    const classPercent = classCorrectPercent(dbAnswers, totalPlayers);
+
     for (const [playerName, player] of game.players) {
       if (playerName === "__host__") continue;
+      const playerSocket = io.sockets.sockets.get(player.socketId);
+      // The outcome is revealed only now, when the host shows the answer
+      const revealed = dbAnswers.find((a) => a.playerName === playerName);
+      if (playerSocket && revealed) {
+        playerSocket.emit("answerFeedback", {
+          isCorrect: revealed.isCorrect,
+          score: revealed.score,
+          totalScore: player.totalScore,
+          classCorrectPercent: classPercent,
+          confidenceEnabled: false,
+        });
+      }
       const playerAnswers = allSessionAnswers.filter((a) => a.playerName === playerName);
       const currentAnswer = playerAnswers.find((a) => a.questionId === question.id);
       const position = leaderboard.findIndex((l) => l.playerName === playerName) + 1;
@@ -1101,7 +1114,6 @@ async function runShowResults(io: TypedIO, game: GameState) {
         if (playerAnswers[i].isCorrect) streak++;
         else break;
       }
-      const playerSocket = io.sockets.sockets.get(player.socketId);
       if (playerSocket) {
         playerSocket.emit("playerStats", {
           position,
