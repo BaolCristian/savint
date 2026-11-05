@@ -183,6 +183,8 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
+  /** Name actually sent to the server (trimmed) on the last join */
+  const joinedNameRef = useRef("");
 
   const [renaming, setRenaming] = useState(false);
   const [renameInput, setRenameInput] = useState("");
@@ -278,21 +280,22 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       setPhase("kicked");
     };
 
-    const onPlayerJoined = (data: { playerName: string }) => {
-      if (data.playerName === name) {
-        setPhase("waiting");
-        setError(null);
-      }
-    };
-
+    // gameState is sent only to the socket that just joined, and only when
+    // the server accepted it: that is the signal to leave the join form.
+    // (Matching playerJoined by name missed a name with a trailing space —
+    // the server stores it trimmed — and a retry, which the server announces
+    // as playerReconnected.)
     const onGameState = (data: { sessionId: string }) => {
+      const joinedName = joinedNameRef.current || name;
       // Save session info for reconnection
-      if (data.sessionId && name) {
+      if (data.sessionId && joinedName) {
         sessionStorage.setItem("savint-session", JSON.stringify({
           sessionId: data.sessionId,
-          playerName: name,
+          playerName: joinedName,
         }));
       }
+      setError(null);
+      setPhase((p) => (p === "join" ? "waiting" : p));
     };
 
     const onRejoinSuccess = (data: {
@@ -350,7 +353,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     socket.on("sessionError", onSessionError);
     socket.on("renameSuccess", onRenameSuccess);
     socket.on("kicked", onKicked);
-    socket.on("playerJoined", onPlayerJoined);
     socket.on("gameState", onGameState);
     socket.on("rejoinSuccess", onRejoinSuccess);
     socket.on("questionStart", onQuestionStart);
@@ -364,7 +366,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       socket.off("sessionError", onSessionError);
       socket.off("renameSuccess", onRenameSuccess);
       socket.off("kicked", onKicked);
-      socket.off("playerJoined", onPlayerJoined);
       socket.off("gameState", onGameState);
       socket.off("rejoinSuccess", onRejoinSuccess);
       socket.off("questionStart", onQuestionStart);
@@ -448,6 +449,8 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       return;
     }
     setError(null);
+    joinedNameRef.current = trimmedName;
+    setName(trimmedName);
     socket.emit("joinSession", { pin, playerName: trimmedName, playerAvatar: avatar });
   };
 
