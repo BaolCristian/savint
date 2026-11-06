@@ -1206,6 +1206,9 @@ async function runShowResults(io: TypedIO, game: GameState) {
     const totalPlayers = realPlayerCount(game);
 
     const classPercent = classCorrectPercent(dbAnswers, totalPlayers);
+    // Last question: no overall position, the final standings are the
+    // podium's surprise
+    const isLastQuestion = game.currentQuestionIndex === game.questions.length - 1;
 
     for (const [playerName, player] of game.players) {
       if (playerName === "__host__") continue;
@@ -1233,7 +1236,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
       }
       if (playerSocket) {
         playerSocket.emit("playerStats", {
-          position,
+          position: isLastQuestion ? 0 : position,
           totalPlayers,
           responseTimeMs: currentAnswer?.responseTimeMs ?? 0,
           correctCount,

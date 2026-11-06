@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ANSWER_TILES, CONFETTI_COLORS, GAME } from "@/lib/game-theme";
+import { ANSWER_TILES, CONFETTI_COLORS, GAME, PODIUM_TIMELINE } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import { fetchCustomEmoticons, buildCategories, randomEmoji, isCustomAvatar } from "@/lib/emoji-avatars";
 import { useSearchParams } from "next/navigation";
@@ -299,6 +299,8 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
+  /** False while the teacher's screen is still revealing the podium */
+  const [podiumRevealed, setPodiumRevealed] = useState(true);
   /** True once the first question has started: the name is then fixed */
   const [gameStarted, setGameStarted] = useState(false);
   /** Edit panel in the waiting room: draft name and picture */
@@ -459,6 +461,9 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
     const onGameOver = (data: PodiumData) => {
       setPodium(data);
+      // Keep the suspense on the phone until the teacher's screen reveals the winner
+      setPodiumRevealed(false);
+      setTimeout(() => setPodiumRevealed(true), PODIUM_TIMELINE.first);
       setPhase("podium");
       clearSaved();
     };
@@ -1097,10 +1102,17 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           {playerStats && (
             <div className="w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "100ms" }}>
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                  <p className="text-xl sm:text-2xl font-black text-white">{playerStats.position}&deg;</p>
-                  <p className="text-xs text-white/70">{t("positionLabel")}</p>
-                </div>
+                {playerStats.position > 0 ? (
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                    <p className="text-xl sm:text-2xl font-black text-white">{playerStats.position}&deg;</p>
+                    <p className="text-xs text-white/70">{t("positionLabel")}</p>
+                  </div>
+                ) : (
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                    <p className="text-xl sm:text-2xl font-black text-white">🤫</p>
+                    <p className="text-xs text-white/70">{t("positionSecret")}</p>
+                  </div>
+                )}
                 <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                   <p className="text-xl sm:text-2xl font-black text-white">{(playerStats.responseTimeMs / 1000).toFixed(1)}s</p>
                   <p className="text-xs text-white/70">{t("responseTimeLabel")}</p>
@@ -1121,6 +1133,23 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           <div className="animate-slide-up-fade" style={{ animationDelay: playerStats ? "200ms" : "500ms" }}>
             <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-10 h-10 sm:w-12 sm:h-12" : "text-2xl sm:text-3xl"} />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "podium" && podium && !podiumRevealed) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-950 via-brand-blue to-brand-magenta p-6 text-center text-white">
+        <span className="text-8xl sm:text-9xl animate-drum-beat" aria-hidden>🥁</span>
+        <h2 className="text-2xl sm:text-3xl font-black animate-caption-in">{t("podiumSuspenseTitle")}</h2>
+        <p className="text-lg sm:text-xl text-white/80 animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
+          {t("podiumSuspenseSubtitle")}
+        </p>
+        <div className="flex gap-2" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="w-3 h-3 rounded-full bg-white animate-mystery-pulse" style={{ animationDelay: `${i * 200}ms` }} />
+          ))}
         </div>
       </div>
     );

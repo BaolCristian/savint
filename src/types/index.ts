@@ -124,6 +124,7 @@ export interface ServerToClientEvents {
     confidenceEnabled?: boolean;
   }) => void;
   playerStats: (data: {
+    /** Overall position; 0 on the last question (kept for the podium) */
     position: number;
     totalPlayers: number;
     responseTimeMs: number;

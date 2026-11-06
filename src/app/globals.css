@@ -408,3 +408,91 @@
   border-radius: 50%;
   animation: firework-burst 1s ease-out forwards;
 }
+/* ===== FINAL PODIUM REVEAL ===== */
+
+/* Hidden podium slot: a "?" that breathes */
+@keyframes mystery-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.12); opacity: 0.9; }
+}
+.animate-mystery-pulse {
+  animation: mystery-pulse 1.4s ease-in-out infinite;
+}
+
+/* Winner's block shaking during the last drumroll */
+@keyframes drum-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-3px) rotate(-1deg); }
+  40% { transform: translateX(3px) rotate(1deg); }
+  60% { transform: translateX(-2px) rotate(-0.5deg); }
+  80% { transform: translateX(2px) rotate(0.5deg); }
+}
+.animate-drum-shake {
+  animation: drum-shake 0.25s linear infinite;
+}
+
+/* Player dropping onto the podium step */
+@keyframes winner-drop {
+  0% { opacity: 0; transform: translateY(-140%) scale(0.6); }
+  60% { opacity: 1; transform: translateY(8%) scale(1.15); }
+  80% { transform: translateY(-4%) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-winner-drop {
+  animation: winner-drop 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+/* Rotating light rays behind the winner */
+@keyframes spotlight-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.podium-rays {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 46rem;
+  height: 46rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(251, 191, 36, 0.22) 0deg 10deg,
+    transparent 10deg 30deg
+  );
+  mask-image: radial-gradient(circle, black 0%, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, black 0%, black 30%, transparent 70%);
+  animation: spotlight-spin 18s linear infinite;
+}
+
+/* Caption changing at every step of the reveal */
+@keyframes caption-in {
+  from { opacity: 0; transform: translateY(0.75rem) scale(0.96); letter-spacing: 0.2em; }
+  to { opacity: 1; transform: translateY(0) scale(1); letter-spacing: normal; }
+}
+.animate-caption-in {
+  animation: caption-in 0.6s ease-out both;
+}
+
+/* Drum on the students' phones */
+@keyframes drum-beat {
+  0%, 100% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.12) rotate(-6deg); }
+  75% { transform: scale(1.12) rotate(6deg); }
+}
+.animate-drum-beat {
+  animation: drum-beat 0.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mystery-pulse,
+  .animate-drum-shake,
+  .animate-drum-beat,
+  .podium-rays {
+    animation: none;
+  }
+  .animate-winner-drop,
+  .animate-caption-in {
+    animation-duration: 0.01ms;
+  }
+}

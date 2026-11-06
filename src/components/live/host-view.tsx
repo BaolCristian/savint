@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { ANSWER_TILES, CONFETTI_COLORS, GAME } from "@/lib/game-theme";
+import { ANSWER_TILES, CONFETTI_COLORS, GAME, PODIUM_TIMELINE } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
 import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
@@ -214,6 +214,12 @@ export function HostView({ session }: Props) {
   const [kickError, setKickError] = useState<string | null>(null);
   /** Confirmation dialog for ending early or cancelling the game */
   const [stopAction, setStopAction] = useState<"end" | "cancel" | null>(null);
+  /**
+   * Podium reveal step: 0 intro, 1 third, 2 second, 3 drumroll for the
+   * winner, 4 winner, 5 full leaderboard (see PODIUM_TIMELINE)
+   */
+  const [podiumStage, setPodiumStage] = useState(0);
+  const podiumSkippedRef = useRef(false);
 
   const handleToggleMute = () => {
     const newVal = toggleMute();
@@ -302,9 +308,9 @@ export function HostView({ session }: Props) {
 
     const handleGameOver = (data: GameOverData) => {
       setGameOverData(data);
+      setPodiumStage(0);
+      podiumSkippedRef.current = false;
       setPhase("podium");
-      playDrumroll(2000);
-      setTimeout(() => playFanfare(), 2000);
     };
 
     const handleGameCancelled = () => {
@@ -377,6 +383,39 @@ export function HostView({ session }: Props) {
       setPhase("result");
     }
   }, [phase, answerCount]);
+
+  // Final podium: reveal 3rd, 2nd, then — after a long drumroll — the winner
+  useEffect(() => {
+    if (phase !== "podium" || !gameOverData) return;
+    const T = PODIUM_TIMELINE;
+    const step = (n: number) => setPodiumStage((s) => Math.max(s, n));
+    const sound = (play: () => void) => {
+      if (!podiumSkippedRef.current) play();
+    };
+    sound(() => playDrumroll(T.third - 400));
+    const ids = [
+      setTimeout(() => step(1), T.third),
+      setTimeout(() => step(2), T.second),
+      setTimeout(() => {
+        step(3);
+        sound(() => playDrumroll(T.first - T.firstTease));
+      }, T.firstTease),
+      setTimeout(() => {
+        step(4);
+        sound(playFanfare);
+      }, T.first),
+      setTimeout(() => step(5), T.list),
+    ];
+    return () => ids.forEach(clearTimeout);
+  }, [phase, gameOverData]);
+
+  const skipPodiumReveal = useCallback(() => {
+    if (!podiumSkippedRef.current) {
+      podiumSkippedRef.current = true;
+      playFanfare();
+    }
+    setPodiumStage(5);
+  }, []);
 
   // Background music: play during question, stop otherwise
   useEffect(() => {
@@ -1048,8 +1087,48 @@ export function HostView({ session }: Props) {
 
             {/* Leaderboard + actions */}
             <section className="lg:w-2/5 flex flex-col gap-6">
+              {/* Last question: only this question's ranking — the final
+                  standings stay a secret until the podium */}
+              {resultData && isLastQuestion && (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">⚡</span>
+                    <h3 className="text-xl lg:text-2xl font-bold">{t("bestThisQuestion")}</h3>
+                  </div>
+                  <p className="text-sm text-slate-400 mb-5">{t("finalStandingsSecret")}</p>
+                  {(() => {
+                    const best = [...resultData.leaderboard]
+                      .filter((e) => e.delta > 0)
+                      .sort((x, y) => y.delta - x.delta)
+                      .slice(0, 5);
+                    if (best.length === 0) {
+                      return <p className="text-slate-400">{t("nobodyScored")}</p>;
+                    }
+                    return (
+                      <div className="space-y-3">
+                        {best.map((entry, i) => (
+                          <div
+                            key={entry.playerName}
+                            className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 animate-slide-up-dramatic"
+                            style={{ animationDelay: `${i * 150 + 500}ms` }}
+                          >
+                            <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+                              <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
+                              <span className="font-bold text-base lg:text-lg truncate">{entry.playerName}</span>
+                            </div>
+                            <span className="text-green-400 text-lg lg:text-xl font-extrabold bg-green-400/10 px-3 py-1 rounded-lg">
+                              +{entry.delta}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               {/* Leaderboard */}
-              {resultData && resultData.leaderboard.length > 0 && (
+              {resultData && !isLastQuestion && resultData.leaderboard.length > 0 && (
                 <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
                   <div className="flex items-center gap-2 mb-6">
                     <span className="text-2xl">🏆</span>
@@ -1119,41 +1198,89 @@ export function HostView({ session }: Props) {
     ];
     const podiumHeights = ["h-44 lg:h-56", "h-32 lg:h-40", "h-24 lg:h-32"];
     const podiumOrder = [1, 0, 2]; // Display: 2nd, 1st, 3rd
+    // Stage at which each position (index 0 = 1st) is revealed
+    const revealAt = [4, 2, 1];
+    const stage = podiumStage;
+    const caption =
+      stage === 0 ? t("podiumIntro")
+      : stage === 1 ? t("podiumThird")
+      : stage === 2 ? t("podiumSecond")
+      : stage === 3 ? t("podiumFirstTease")
+      : t("podiumFirst");
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col">
-        <HostConfetti />
+      <div className="relative min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex flex-col overflow-hidden">
+        {stage >= 4 && <HostConfetti />}
+        {stage === 4 && <div className="pointer-events-none fixed inset-0 z-40 bg-white animate-screen-flash opacity-0" />}
+
         {/* Header */}
-        <header className="text-center pt-8 lg:pt-12 pb-4 relative">
+        <header className="text-center pt-8 lg:pt-12 pb-4 relative z-10">
           <div className="absolute top-4 right-6 lg:right-10 hidden sm:flex items-center gap-1.5 bg-brand-blue/30 border border-brand-blue/40 rounded-xl px-3 py-2">
             <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold">PIN</span>
             <span className="text-base lg:text-lg font-bold text-white tabular-nums">{formattedPin}</span>
           </div>
+          {stage < 5 && (
+            <button
+              type="button"
+              onClick={skipPodiumReveal}
+              className="absolute top-4 left-6 lg:left-10 px-3 py-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-colors"
+            >
+              {t("skipReveal")} ⏭
+            </button>
+          )}
           <h2 className="text-4xl lg:text-6xl font-black animate-zoom-in-bounce">{t("podiumTitle")}</h2>
           <p className="text-lg lg:text-xl text-slate-400 mt-2">{session.quiz.title}</p>
+          <p
+            key={stage}
+            className={`mt-6 text-2xl lg:text-4xl font-extrabold animate-caption-in ${
+              stage === 3 ? "text-amber-300" : stage >= 4 ? "text-amber-400" : "text-slate-200"
+            }`}
+            aria-live="polite"
+          >
+            {caption}
+          </p>
         </header>
 
-        {/* Top 3 podium visual */}
-        <div className="flex-1 flex items-end justify-center gap-3 lg:gap-6 px-6 lg:px-16 pb-0">
+        {/* Top 3 podium visual: empty steps with a "?" until revealed */}
+        <div className="relative flex-1 flex items-end justify-center gap-3 lg:gap-6 px-6 lg:px-16 pb-0 min-h-[24rem]">
           {podiumOrder.map((position) => {
             const player = gameOverData.podium.find((p) => p.position === position + 1);
-            if (!player) return <div key={position} className="flex-1 max-w-[200px]" />;
+            const revealed = stage >= revealAt[position];
+            const isWinner = position === 0;
+            const teasing = isWinner && stage === 3;
+            if (!player) return <div key={position} className="flex-1 max-w-[220px]" />;
             return (
-              <div
-                key={player.playerName}
-                className="flex-1 max-w-[200px] flex flex-col items-center animate-podium-rise"
-                style={{ animationDelay: `${position * 400}ms` }}
-              >
-                <HostAvatar avatar={player.playerAvatar} className={isCustomAvatar(player.playerAvatar || "") ? "w-20 h-20 lg:w-28 lg:h-28 mb-2" : "text-5xl lg:text-7xl mb-2"} />
-                <span className="text-3xl lg:text-4xl mb-1">{medals[position]}</span>
-                <span className="font-extrabold text-lg lg:text-2xl mb-1 text-center truncate max-w-full">
-                  {player.playerName}
-                </span>
-                <span className="text-sm lg:text-lg text-slate-300 mb-3 font-semibold">
-                  {player.score} punti
-                </span>
+              <div key={position} className="relative flex-1 max-w-[220px] flex flex-col items-center">
+                {isWinner && revealed && <div className="podium-rays" aria-hidden />}
+                <div className="relative z-10 flex flex-col items-center min-h-[11rem] lg:min-h-[13rem] justify-end w-full">
+                  {revealed ? (
+                    <div className="flex flex-col items-center animate-winner-drop w-full">
+                      {isWinner && <span className="text-4xl lg:text-5xl mb-1 animate-float-bounce">👑</span>}
+                      <HostAvatar
+                        avatar={player.playerAvatar}
+                        className={isCustomAvatar(player.playerAvatar || "")
+                          ? `${isWinner ? "w-28 h-28 lg:w-36 lg:h-36" : "w-20 h-20 lg:w-28 lg:h-28"} mb-2`
+                          : `${isWinner ? "text-7xl lg:text-8xl" : "text-5xl lg:text-7xl"} mb-2`}
+                      />
+                      <span className="text-3xl lg:text-4xl mb-1">{medals[position]}</span>
+                      <span className={`font-extrabold mb-1 text-center truncate max-w-full ${isWinner ? "text-2xl lg:text-4xl text-amber-300" : "text-lg lg:text-2xl"}`}>
+                        {player.playerName}
+                      </span>
+                      <span className="text-sm lg:text-lg text-slate-300 mb-3 font-semibold animate-count-up-pop" style={{ animationDelay: "500ms" }}>
+                        {t("pointsCount", { score: player.score })}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className={`text-6xl lg:text-7xl font-black text-slate-500 mb-4 ${teasing ? "animate-drum-shake text-amber-300" : "animate-mystery-pulse"}`}>
+                      ?
+                    </span>
+                  )}
+                </div>
                 <div
-                  className={`${podiumHeights[position]} w-full bg-gradient-to-t ${podiumBg[position]} rounded-t-2xl flex items-start justify-center pt-4`}
+                  className={`${podiumHeights[position]} w-full bg-gradient-to-t ${podiumBg[position]} rounded-t-2xl flex items-start justify-center pt-4 animate-podium-rise transition-all duration-700 ${
+                    revealed ? "" : "opacity-40 saturate-0"
+                  } ${teasing ? "animate-drum-shake" : ""} ${isWinner && revealed ? "shadow-[0_0_60px_rgba(251,191,36,0.6)]" : ""}`}
+                  style={{ animationDelay: `${(2 - position) * 200}ms` }}
                 >
                   <span className="text-4xl lg:text-5xl font-black text-white/80">{position + 1}</span>
                 </div>
@@ -1162,31 +1289,35 @@ export function HostView({ session }: Props) {
           })}
         </div>
 
-        {/* Full results */}
-        <section className="bg-slate-800 border-t border-slate-700 px-6 lg:px-16 py-6 lg:py-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">📋</span>
-              <h3 className="text-lg lg:text-xl font-bold">{t("fullLeaderboard")}</h3>
-            </div>
-            <div className="space-y-2">
-              {gameOverData.fullResults.map((entry, i) => (
-                <div
-                  key={entry.playerName}
-                  className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-2.5 lg:py-3 animate-slide-up-fade"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-black text-slate-500 w-8 text-lg">{i + 1}.</span>
-                    <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-xl lg:text-2xl"} />
-                    <span className="font-semibold text-base lg:text-lg">{entry.playerName}</span>
+        {/* Full results, after the winner */}
+        {stage >= 5 && (
+          <section className="relative z-10 bg-slate-800 border-t border-slate-700 px-6 lg:px-16 py-6 lg:py-8 animate-slide-up-fade">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">📋</span>
+                <h3 className="text-lg lg:text-xl font-bold">{t("fullLeaderboard")}</h3>
+              </div>
+              <div className="space-y-2">
+                {gameOverData.fullResults.map((entry, i) => (
+                  <div
+                    key={entry.playerName}
+                    className={`flex items-center justify-between border rounded-xl px-4 lg:px-5 py-2.5 lg:py-3 animate-slide-up-fade ${
+                      i < 3 ? "bg-amber-500/10 border-amber-500/30" : "bg-slate-700/50 border-slate-600/50"
+                    }`}
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-slate-500 w-8 text-lg">{i < 3 ? medals[i] : `${i + 1}.`}</span>
+                      <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-xl lg:text-2xl"} />
+                      <span className="font-semibold text-base lg:text-lg">{entry.playerName}</span>
+                    </div>
+                    <span className="font-extrabold text-lg lg:text-xl">{entry.score} pt</span>
                   </div>
-                  <span className="font-extrabold text-lg lg:text-xl">{entry.score} pt</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Footer action */}
         <footer className="bg-slate-900 border-t border-slate-700 px-6 lg:px-16 py-5 flex flex-col items-center gap-3">

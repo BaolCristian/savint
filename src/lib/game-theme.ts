@@ -24,3 +24,17 @@ export const GAME = {
   wrongGradient: "from-red-400 to-rose-600",            // "sbagliato" resta rosso
   brandGradient: "from-brand-blue to-brand-magenta",    // gradiente brand per header/CTA
 } as const;
+
+/**
+ * Timeline of the final podium reveal (ms after gameOver). The teacher's
+ * screen reveals 3rd, 2nd and — after a long drumroll — 1st; the students'
+ * phones keep a suspense screen until the winner is revealed, so nobody
+ * spoils it by looking at their phone.
+ */
+export const PODIUM_TIMELINE = {
+  third: 3000,
+  second: 5500,
+  firstTease: 8000,
+  first: 11000,
+  list: 13000,
+} as const;

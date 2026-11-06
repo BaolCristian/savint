@@ -321,4 +321,43 @@ describe("live quiz anti-cheat", () => {
       expect(io.getRoomEmits().some((e) => e.event === "gameCancelled")).toBe(false);
     });
   });
+
+  describe("final suspense", () => {
+    it("on the last question players get no overall position", async () => {
+      await start();
+      alice.emit("submitAnswer", { value: { selected: [0, 1] } });
+      await tick();
+      (prisma.answer.findMany as any).mockResolvedValue([
+        { value: { selected: [0, 1] }, isCorrect: true, playerName: "Alice", score: 900, questionId: "q1", responseTimeMs: 100 },
+      ]);
+      host.emit("showResults");
+      await tick();
+      const stats = alice.emitted.find((e) => e.event === "playerStats");
+      expect(stats?.payload.position).toBe(0);
+    });
+
+    it("before the last question the position is still sent", async () => {
+      sessionCounter += 1;
+      currentTestSessionId = `anti-two-${sessionCounter}`;
+      currentTestPin = `pin-two-${sessionCounter}`;
+      (prisma.session.findUnique as any).mockResolvedValue(
+        makeSession({ status: "IN_PROGRESS", quiz: { questions: [QUESTION, { ...QUESTION, id: "q2", order: 1 }] } }),
+      );
+      const h = newSocket("host2");
+      const p = newSocket("p2");
+      await join(h, "__host__", { hostToken: createHostToken(currentTestSessionId) });
+      await join(p, "Paola");
+      h.emit("startGame");
+      await tick();
+      p.emit("submitAnswer", { value: { selected: [0, 1] } });
+      await tick();
+      (prisma.answer.findMany as any).mockResolvedValue([
+        { value: { selected: [0, 1] }, isCorrect: true, playerName: "Paola", score: 900, questionId: "q1", responseTimeMs: 100 },
+      ]);
+      h.emit("showResults");
+      await tick();
+      expect(p.emitted.find((e) => e.event === "playerStats")?.payload.position).toBe(1);
+    });
+  });
 });
+

@@ -163,3 +163,32 @@ describe("PlayerView: game cancelled by the teacher", () => {
     expect(localStorage.getItem("savint-session")).toBeNull();
   });
 });
+
+describe("PlayerView: podium suspense", () => {
+  beforeEach(() => {
+    fake.removeAllListeners();
+    fake.sent = [];
+    localStorage.clear();
+  });
+
+  it("keeps a suspense screen until the teacher's screen reveals the winner", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      joinAs("Mario");
+      fake.fire("gameState", { sessionId: "s1", status: "IN_PROGRESS", playerToken: "tok-1" });
+      fake.fire("gameOver", {
+        podium: [{ playerName: "Mario", score: 900, position: 1 }],
+        fullResults: [{ playerName: "Mario", score: 900 }],
+      });
+      expect(screen.getByText("podiumSuspenseTitle")).toBeTruthy();
+      expect(screen.queryByText("youFinished")).toBeNull();
+
+      act(() => { vi.advanceTimersByTime(11000); });
+      expect(screen.queryByText("podiumSuspenseTitle")).toBeNull();
+      expect(screen.getByText("youFinished")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
