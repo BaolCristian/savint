@@ -10,7 +10,7 @@ import type { QuestionType } from "@prisma/client";
 import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
 import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute, startBgm, stopBgm } from "@/lib/sounds";
-import { Volume2, VolumeX, X, AlertCircle } from "lucide-react";
+import { Volume2, VolumeX, X, AlertCircle, Flag, Ban } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog,
@@ -212,6 +212,8 @@ export function HostView({ session }: Props) {
   const [muted, setMutedState] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
   const [kickError, setKickError] = useState<string | null>(null);
+  /** Confirmation dialog for ending early or cancelling the game */
+  const [stopAction, setStopAction] = useState<"end" | "cancel" | null>(null);
 
   const handleToggleMute = () => {
     const newVal = toggleMute();
@@ -305,6 +307,10 @@ export function HostView({ session }: Props) {
       setTimeout(() => playFanfare(), 2000);
     };
 
+    const handleGameCancelled = () => {
+      window.location.href = withBasePath("/dashboard");
+    };
+
     const handleSessionError = (data: { message: string }) => {
       if (data.message === "kickDuringQuestion") {
         setKickError("kickDuringQuestion");
@@ -323,6 +329,7 @@ export function HostView({ session }: Props) {
     socket.on("questionResult", handleQuestionResult);
     socket.on("gameOver", handleGameOver);
     socket.on("sessionError", handleSessionError);
+    socket.on("gameCancelled", handleGameCancelled);
 
     return () => {
       socket.off("playerJoined", handlePlayerJoined);
@@ -336,6 +343,7 @@ export function HostView({ session }: Props) {
       socket.off("questionResult", handleQuestionResult);
       socket.off("gameOver", handleGameOver);
       socket.off("sessionError", handleSessionError);
+      socket.off("gameCancelled", handleGameCancelled);
     };
   }, [socket]);
 
@@ -396,6 +404,59 @@ export function HostView({ session }: Props) {
   const handleEndGame = useCallback(() => {
     socket?.emit("endGame");
   }, [socket]);
+
+  const handleConfirmStop = useCallback(() => {
+    if (stopAction === "end") socket?.emit("endGame");
+    if (stopAction === "cancel") socket?.emit("cancelGame");
+    setStopAction(null);
+  }, [socket, stopAction]);
+
+  /** "End now" / "Cancel game" buttons for the question and result screens */
+  const stopButtons = (
+    <>
+      <button
+        type="button"
+        onClick={() => setStopAction("end")}
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors"
+        title={t("endNowHint")}
+      >
+        <Flag className="size-4" />
+        <span className="hidden md:inline">{t("endNow")}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setStopAction("cancel")}
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-700 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+        title={t("cancelGameHint")}
+      >
+        <Ban className="size-4" />
+        <span className="hidden md:inline">{t("cancelGame")}</span>
+      </button>
+    </>
+  );
+
+  const stopDialog = (
+    <Dialog open={stopAction !== null} onOpenChange={(open) => !open && setStopAction(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {stopAction === "cancel" ? t("cancelGameConfirmTitle") : t("endNowConfirmTitle")}
+          </DialogTitle>
+          <DialogDescription>
+            {stopAction === "cancel" ? t("cancelGameConfirmDescription") : t("endNowConfirmDescription")}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setStopAction(null)}>
+            {tc("cancel")}
+          </Button>
+          <Button variant={stopAction === "cancel" ? "destructive" : "default"} onClick={handleConfirmStop}>
+            {stopAction === "cancel" ? t("cancelGameConfirmAction") : t("endNowConfirmAction")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   const handleConfirmKick = useCallback(() => {
     if (!kickTarget) return;
@@ -711,8 +772,11 @@ export function HostView({ session }: Props) {
             >
               {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
             </button>
+
+            {stopButtons}
           </div>
         </header>
+        {stopDialog}
 
         {/* Question body */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 lg:px-16 py-8">
@@ -866,8 +930,11 @@ export function HostView({ session }: Props) {
             >
               {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
             </button>
+
+            {stopButtons}
           </div>
         </header>
+        {stopDialog}
 
         {/* Question text reminder */}
         {q && (

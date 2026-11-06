@@ -792,6 +792,36 @@ export function setupSocketHandlers(io: TypedIO) {
     });
 
     // ------------------------------------------------------------------
+    // cancelGame (host only) — stop now and delete the game: the session
+    // and its answers disappear from the statistics
+    // ------------------------------------------------------------------
+    socket.on("cancelGame", async () => {
+      const game = hostGame();
+      if (!game) return;
+      const sessionId = game.sessionId;
+
+      try {
+        await prisma.answer.deleteMany({ where: { sessionId } });
+        await prisma.session.delete({ where: { id: sessionId } });
+      } catch (err) {
+        console.error("cancelGame error:", err);
+        socket.emit("sessionError", { message: "Failed to cancel game" });
+        return;
+      }
+
+      game.phase = "ended";
+      io.to(room(sessionId)).emit("gameCancelled");
+
+      for (const [key, entry] of disconnectedPlayers) {
+        if (entry.sessionId === sessionId) {
+          clearTimeout(entry.timeout);
+          disconnectedPlayers.delete(key);
+        }
+      }
+      games.delete(sessionId);
+    });
+
+    // ------------------------------------------------------------------
     // rejoinSession
     // ------------------------------------------------------------------
     socket.on("rejoinSession", async ({ sessionId, playerName, playerToken }) => {

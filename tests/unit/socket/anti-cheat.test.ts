@@ -6,8 +6,10 @@ vi.mock("@/lib/db/client", () => ({
     session: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn().mockResolvedValue({}),
     },
     answer: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({}),
@@ -286,6 +288,37 @@ describe("live quiz anti-cheat", () => {
       await tick();
       const evs = io.getRoomEmits().filter((e) => e.event === "playerRenamed");
       expect(evs.map((e) => e.payload.playerAvatar)).toEqual(["/emoticons/emo3.png"]);
+    });
+  });
+
+  describe("ending early and cancelling", () => {
+    it("the host can end the game in the middle of a question", async () => {
+      await start();
+      host.emit("endGame");
+      await tick();
+      expect(io.getRoomEmits().some((e) => e.event === "gameOver")).toBe(true);
+    });
+
+    it("cancelGame deletes the session and its answers and tells the room", async () => {
+      await start();
+      host.emit("cancelGame");
+      await tick();
+      expect(prisma.answer.deleteMany).toHaveBeenCalledWith({ where: { sessionId: currentTestSessionId } });
+      expect(prisma.session.delete).toHaveBeenCalledWith({ where: { id: currentTestSessionId } });
+      expect(io.getRoomEmits().some((e) => e.event === "gameCancelled")).toBe(true);
+
+      // The game is gone: later commands do nothing
+      alice.emit("submitAnswer", { value: { selected: [0] } });
+      await tick();
+      expect(prisma.answer.create).not.toHaveBeenCalled();
+    });
+
+    it("a student cannot cancel the game", async () => {
+      await start();
+      alice.emit("cancelGame");
+      await tick();
+      expect(prisma.session.delete).not.toHaveBeenCalled();
+      expect(io.getRoomEmits().some((e) => e.event === "gameCancelled")).toBe(false);
     });
   });
 });

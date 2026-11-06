@@ -144,6 +144,8 @@ export interface ServerToClientEvents {
     playerToken?: string;
   }) => void;
   muteChanged: (data: { muted: boolean }) => void;
+  /** The host cancelled the game: nothing is kept */
+  gameCancelled: () => void;
   kicked: (data: { reason: "host" }) => void;
   playerRenamed: (data: { oldName: string; newName: string; playerAvatar?: string }) => void;
   renameSuccess: (data: { newName: string }) => void;
@@ -172,4 +174,6 @@ export interface ClientToServerEvents {
   kickPlayer: (data: { playerName: string }) => void;
   renamePlayer: (data: { newName: string }) => void;
   changeAvatar: (data: { avatar: string }) => void;
+  /** Host only: stop the game and delete it with all its answers */
+  cancelGame: () => void;
 }

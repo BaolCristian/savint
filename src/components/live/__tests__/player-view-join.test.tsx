@@ -148,3 +148,18 @@ describe("PlayerView: identity, one player per browser, waiting-room profile", (
   });
 });
 
+describe("PlayerView: game cancelled by the teacher", () => {
+  beforeEach(() => {
+    fake.removeAllListeners();
+    fake.sent = [];
+    localStorage.clear();
+  });
+
+  it("shows the cancelled screen and forgets the game", () => {
+    joinAs("Mario");
+    fake.fire("gameState", { sessionId: "s1", status: "IN_PROGRESS", playerToken: "tok-1" });
+    fake.fire("gameCancelled", undefined);
+    expect(screen.getByText("gameCancelledTitle")).toBeTruthy();
+    expect(localStorage.getItem("savint-session")).toBeNull();
+  });
+});

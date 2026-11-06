@@ -28,7 +28,7 @@ import type { QuestionType } from "@prisma/client";
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Phase = "join" | "waiting" | "countdown" | "question" | "feedback" | "podium" | "kicked";
+type Phase = "join" | "waiting" | "countdown" | "question" | "feedback" | "podium" | "kicked" | "cancelled";
 
 interface QuestionData {
   questionIndex: number;
@@ -463,6 +463,11 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       clearSaved();
     };
 
+    const onGameCancelled = () => {
+      clearSaved();
+      setPhase("cancelled");
+    };
+
     const onPlayerStats = (data: PlayerStatsData) => {
       setPlayerStats(data);
     };
@@ -480,6 +485,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     socket.on("answerReceived", onAnswerReceived);
     socket.on("answerFeedback", onAnswerFeedback);
     socket.on("playerStats", onPlayerStats);
+    socket.on("gameCancelled", onGameCancelled);
     socket.on("gameOver", onGameOver);
     socket.on("muteChanged", onMuteChanged);
 
@@ -493,6 +499,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       socket.off("answerReceived", onAnswerReceived);
       socket.off("answerFeedback", onAnswerFeedback);
       socket.off("playerStats", onPlayerStats);
+      socket.off("gameCancelled", onGameCancelled);
       socket.off("gameOver", onGameOver);
       socket.off("muteChanged", onMuteChanged);
     };
@@ -746,6 +753,25 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           <div className="pb-3">
             <SiteFooter />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "cancelled") {
+    return (
+      <div className="min-h-dvh bg-slate-900 flex items-center justify-center p-6">
+        <div className="max-w-sm w-full bg-slate-800 rounded-2xl p-8 text-center text-white shadow-2xl">
+          <div className="text-5xl mb-4" aria-hidden>🛑</div>
+          <h1 className="text-2xl font-bold mb-2">{t("gameCancelledTitle")}</h1>
+          <p className="text-slate-300 mb-6">{t("gameCancelledSubtitle")}</p>
+          <button
+            type="button"
+            onClick={() => { window.location.href = withBasePath("/"); }}
+            className="w-full bg-brand-blue hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            {t("kickedBackHome")}
+          </button>
         </div>
       </div>
     );
