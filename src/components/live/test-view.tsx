@@ -7,6 +7,7 @@ interface Props {
   session: {
     id: string;
     pin: string;
+    hostToken: string;
     quiz: { title: string; questions: any[] };
   };
 }

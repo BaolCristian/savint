@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db/client";
 import { checkAnswer, calculateScore, calculatePartialScore, applyConfidence } from "@/lib/scoring";
@@ -14,6 +15,7 @@ import type {
   CodeCompletionOptions,
 } from "@/types";
 import type { QuestionType } from "@prisma/client";
+import { verifyHostToken } from "@/lib/socket/host-token";
 
 // ---------------------------------------------------------------------------
 // In-memory game state
@@ -27,6 +29,25 @@ interface PlayerInfo {
   totalScore: number;
   /** Score delta earned on the current question (reset each round) */
   lastDelta: number;
+}
+
+/** Secret handed to a player on join; needed to rejoin or reclaim the name */
+function newPlayerToken() {
+  return randomBytes(16).toString("hex");
+}
+
+/**
+ * Avatar accepted from a client: an emoji (short text) or one of the
+ * custom images in /emoticons/. Anything else is dropped.
+ */
+function sanitizeAvatar(avatar: unknown): string | undefined {
+  if (typeof avatar !== "string") return undefined;
+  if (avatar.startsWith("/emoticons/")) {
+    return /^\/emoticons\/[\w\-. ]{1,100}$/.test(avatar) && !avatar.includes("..")
+      ? avatar
+      : undefined;
+  }
+  return avatar.length > 0 && avatar.length <= 32 && !/[<>/\\]/.test(avatar) ? avatar : undefined;
 }
 
 interface GameState {
@@ -51,6 +72,8 @@ interface GameState {
   hostSocketId?: string;
   isTest: boolean;
   kickedNames: Set<string>;
+  /** playerName → secret token, kept even after the player leaves */
+  playerTokens: Map<string, string>;
   phase: "lobby" | "in-question" | "between-questions" | "ended";
 }
 
@@ -285,12 +308,32 @@ export function setupSocketHandlers(io: TypedIO) {
     /** Track which session + playerName this socket belongs to */
     let currentSessionId: string | null = null;
     let currentPlayerName: string | null = null;
+    /** True only after joining as __host__ with a valid host token */
+    let isHost = false;
+
+    /** Game for a host-only command, or null (with an error) if not the host */
+    const hostGame = (): GameState | null => {
+      const game = isHost && currentSessionId ? games.get(currentSessionId) : undefined;
+      if (!game) {
+        socket.emit("sessionError", { message: "Not in a session" });
+        return null;
+      }
+      return game;
+    };
 
     // ------------------------------------------------------------------
     // joinSession
     // ------------------------------------------------------------------
-    socket.on("joinSession", async ({ pin, playerName, playerEmail, playerAvatar }) => {
+    socket.on("joinSession", async ({ pin, playerName: rawName, playerEmail, playerAvatar: rawAvatar, playerToken, hostToken }) => {
       try {
+        const asHost = rawName === "__host__";
+        const playerName = asHost ? rawName : String(rawName ?? "").trim();
+        const playerAvatar = sanitizeAvatar(rawAvatar);
+        if (!asHost && (playerName.length < 2 || playerName.length > 24)) {
+          socket.emit("sessionError", { message: "invalidName" });
+          return;
+        }
+
         const session = await prisma.session.findUnique({
           where: { pin },
           include: { quiz: { include: { questions: { orderBy: { order: "asc" } } } } },
@@ -307,8 +350,12 @@ export function setupSocketHandlers(io: TypedIO) {
         }
 
         const sessionId = session.id;
-        currentSessionId = sessionId;
-        currentPlayerName = playerName;
+
+        // Only the teacher's page holds a valid host token
+        if (asHost && !verifyHostToken(sessionId, hostToken)) {
+          socket.emit("sessionError", { message: "hostAuthFailed" });
+          return;
+        }
 
         // Initialise game state if first join
         if (!games.has(sessionId)) {
@@ -331,6 +378,7 @@ export function setupSocketHandlers(io: TypedIO) {
             })),
             isTest: session.isTest,
             kickedNames: new Set<string>(),
+            playerTokens: new Map(),
             phase: "lobby",
           });
         }
@@ -342,17 +390,32 @@ export function setupSocketHandlers(io: TypedIO) {
           return;
         }
 
-        // Check if this player name is already actively connected
+        // A name already used in this game belongs to whoever holds its
+        // token. Without it the name can be reclaimed only in the lobby and
+        // only if its socket is gone (nothing to steal there yet).
         const existingPlayer = game.players.get(playerName);
-        if (existingPlayer && existingPlayer.socketId && existingPlayer.socketId !== socket.id && playerName !== "__host__") {
-          // Check if the existing socket is actually still connected
-          const existingSocket = io.sockets.sockets.get(existingPlayer.socketId);
-          if (existingSocket?.connected) {
-            socket.emit("sessionError", { message: "Name already taken" });
-            return;
+        let token: string | undefined;
+        if (!asHost) {
+          const knownToken = game.playerTokens.get(playerName);
+          const sameOwner = !!knownToken && playerToken === knownToken;
+          if (knownToken && !sameOwner) {
+            const existingSocket = existingPlayer?.socketId
+              ? io.sockets.sockets.get(existingPlayer.socketId)
+              : undefined;
+            const connectedElsewhere =
+              !!existingSocket?.connected && existingSocket.id !== socket.id;
+            if (connectedElsewhere || game.phase !== "lobby") {
+              socket.emit("sessionError", { message: "Name already taken" });
+              return;
+            }
           }
-          // Old socket is dead — allow this player to reclaim the name
+          token = sameOwner ? knownToken : newPlayerToken();
+          game.playerTokens.set(playerName, token);
         }
+
+        currentSessionId = sessionId;
+        currentPlayerName = playerName;
+        isHost = asHost;
 
         // Cancel any pending disconnect timeout for this player
         const disconnKey = disconnectKey(sessionId, playerName);
@@ -416,6 +479,7 @@ export function setupSocketHandlers(io: TypedIO) {
         // Send current game state to the newly joined player
         socket.emit("gameState", {
           sessionId,
+          ...(token ? { playerToken: token } : {}),
           status: session.status,
           currentQuestion:
             game.currentQuestionIndex >= 0
@@ -456,7 +520,7 @@ export function setupSocketHandlers(io: TypedIO) {
     // startGame (host only)
     // ------------------------------------------------------------------
     socket.on("startGame", async () => {
-      const game = findGameForSocket(socket);
+      const game = hostGame();
       if (!game) return;
 
       try {
@@ -479,7 +543,7 @@ export function setupSocketHandlers(io: TypedIO) {
     // nextQuestion (host only)
     // ------------------------------------------------------------------
     socket.on("nextQuestion", () => {
-      const game = findGameForSocket(socket);
+      const game = hostGame();
       if (!game) return;
 
       const nextIdx = game.currentQuestionIndex + 1;
@@ -499,6 +563,10 @@ export function setupSocketHandlers(io: TypedIO) {
 
       const game = games.get(currentSessionId);
       if (!game || game.currentQuestionIndex < 0) return;
+
+      // No answers once the host has revealed the results: the correct
+      // answer is on the projector by then.
+      if (game.phase !== "in-question") return;
 
       const question = game.questions[game.currentQuestionIndex];
       if (!question) return;
@@ -525,25 +593,34 @@ export function setupSocketHandlers(io: TypedIO) {
       });
       if (existingAnswer) return;
 
-      const isCorrect = checkAnswer(question.type, question.options, value);
-
-      // Calculate score: use partial scoring for types that support it
+      // A malformed answer (hand-crafted from the console) is ignored
+      let isCorrect: boolean;
       let score: number;
-      const partialTypes = ["MULTIPLE_CHOICE", "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
-      if (partialTypes.includes(question.type)) {
-        const rawPartial = calculatePartialScore(question.type, question.options, value, question.points);
-        const timeLimitMs = question.timeLimit * 1000;
-        const timeRatio = Math.min(responseTimeMs / timeLimitMs, 1);
-        const timeMultiplier = 1.0 - timeRatio * 0.5;
-        score = Math.round(rawPartial * timeMultiplier);
-      } else {
-        score = calculateScore({
-          isCorrect,
-          responseTimeMs,
-          timeLimit: question.timeLimit,
-          maxPoints: question.points,
-        });
+      try {
+        isCorrect = checkAnswer(question.type, question.options, value);
+
+        // Calculate score: use partial scoring for types that support it
+        const partialTypes = ["MULTIPLE_CHOICE", "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
+        if (partialTypes.includes(question.type)) {
+          const rawPartial = calculatePartialScore(question.type, question.options, value, question.points);
+          const timeLimitMs = question.timeLimit * 1000;
+          const timeRatio = Math.min(responseTimeMs / timeLimitMs, 1);
+          const timeMultiplier = 1.0 - timeRatio * 0.5;
+          score = Math.round(rawPartial * timeMultiplier);
+        } else {
+          score = calculateScore({
+            isCorrect,
+            responseTimeMs,
+            timeLimit: question.timeLimit,
+            maxPoints: question.points,
+          });
+        }
+      } catch {
+        return;
       }
+      if (!Number.isFinite(score)) return;
+      // Never more than the question is worth
+      score = Math.max(0, Math.min(score, question.points));
 
       // Update in-memory state
       const player = game.players.get(currentPlayerName);
@@ -671,7 +748,7 @@ export function setupSocketHandlers(io: TypedIO) {
     // showResults (host only)
     // ------------------------------------------------------------------
     socket.on("showResults", async () => {
-      const game = findGameForSocket(socket);
+      const game = hostGame();
       if (!game) return;
       await runShowResults(io, game);
     });
@@ -680,7 +757,7 @@ export function setupSocketHandlers(io: TypedIO) {
     // endGame (host only)
     // ------------------------------------------------------------------
     socket.on("endGame", async () => {
-      const game = findGameForSocket(socket);
+      const game = hostGame();
       if (!game) return;
 
       try {
@@ -717,12 +794,14 @@ export function setupSocketHandlers(io: TypedIO) {
     // ------------------------------------------------------------------
     // rejoinSession
     // ------------------------------------------------------------------
-    socket.on("rejoinSession", async ({ sessionId, playerName }) => {
+    socket.on("rejoinSession", async ({ sessionId, playerName, playerToken }) => {
       const key = disconnectKey(sessionId, playerName);
       const entry = disconnectedPlayers.get(key);
       const game = games.get(sessionId);
 
-      if (!game) {
+      // Only whoever received this player's token on join can rejoin as them
+      const knownToken = game?.playerTokens.get(playerName);
+      if (!game || !knownToken || playerToken !== knownToken) {
         socket.emit("sessionError", { message: "Session not found or expired" });
         return;
       }
@@ -763,6 +842,7 @@ export function setupSocketHandlers(io: TypedIO) {
 
       currentSessionId = sessionId;
       currentPlayerName = playerName;
+      isHost = false;
       socket.join(room(sessionId));
 
       // Determine current phase — check if player already answered
@@ -919,13 +999,11 @@ export function setupSocketHandlers(io: TypedIO) {
         return;
       }
 
-      const existing = game.players.get(trimmed);
-      if (existing && existing.socketId) {
-        const existingSocket = io.sockets.sockets.get(existing.socketId);
-        if (existingSocket?.connected) {
-          socket.emit("sessionError", { message: "nameAlreadyTaken" });
-          return;
-        }
+      // Any name already used in this game is taken, even if its owner
+      // is momentarily disconnected
+      if (game.players.has(trimmed) || game.playerTokens.has(trimmed)) {
+        socket.emit("sessionError", { message: "nameAlreadyTaken" });
+        return;
       }
 
       const player = game.players.get(currentPlayerName);
@@ -935,6 +1013,9 @@ export function setupSocketHandlers(io: TypedIO) {
       game.players.delete(oldName);
       player.name = trimmed;
       game.players.set(trimmed, player);
+      const ownToken = game.playerTokens.get(oldName);
+      game.playerTokens.delete(oldName);
+      if (ownToken) game.playerTokens.set(trimmed, ownToken);
 
       const dKey = disconnectKey(currentSessionId, oldName);
       const dEntry = disconnectedPlayers.get(dKey);
@@ -950,6 +1031,24 @@ export function setupSocketHandlers(io: TypedIO) {
         oldName,
         newName: trimmed,
         playerAvatar: player.avatar,
+      });
+    });
+
+    // ------------------------------------------------------------------
+    // changeAvatar — player picks a new picture (any time, it's harmless)
+    // ------------------------------------------------------------------
+    socket.on("changeAvatar", ({ avatar }) => {
+      if (!currentSessionId || !currentPlayerName || isHost) return;
+      const game = games.get(currentSessionId);
+      const player = game?.players.get(currentPlayerName);
+      const clean = sanitizeAvatar(avatar);
+      if (!game || !player || !clean || clean === player.avatar) return;
+
+      player.avatar = clean;
+      io.to(room(currentSessionId)).emit("playerRenamed", {
+        oldName: currentPlayerName,
+        newName: currentPlayerName,
+        playerAvatar: clean,
       });
     });
 
@@ -1035,18 +1134,6 @@ export function setupSocketHandlers(io: TypedIO) {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-/** Find the game state for a socket based on its tracked session */
-function findGameForSocket(socket: TypedSocket): GameState | null {
-  // Look through all rooms this socket is in
-  for (const [sessionId, game] of games) {
-    if (socket.rooms.has(room(sessionId))) {
-      return game;
-    }
-  }
-  socket.emit("sessionError", { message: "Not in a session" });
-  return null;
-}
 
 /** Percentage of the class (real players) that answered correctly */
 function classCorrectPercent(answers: { isCorrect: boolean }[], total: number) {

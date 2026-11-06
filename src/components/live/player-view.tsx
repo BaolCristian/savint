@@ -146,6 +146,122 @@ function PlayerCountdownScreen({ onComplete }: { onComplete: () => void }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Saved identity (one player per browser)                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The player's identity for the current game, kept in localStorage so every
+ * tab of the browser is the same player: a reload or a second tab rejoins
+ * instead of entering with another name. The token proves the identity to
+ * the server (rejoin / reclaim the name).
+ */
+const SAVED_KEY = "savint-session";
+interface SavedSession {
+  sessionId: string;
+  playerName: string;
+  playerToken?: string;
+  pin?: string;
+}
+function readSaved(): SavedSession | null {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY);
+    return raw ? (JSON.parse(raw) as SavedSession) : null;
+  } catch {
+    return null;
+  }
+}
+function writeSaved(saved: SavedSession) {
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+  } catch {
+    // storage blocked: the game still works, only rejoin won't
+  }
+}
+function clearSaved() {
+  try {
+    localStorage.removeItem(SAVED_KEY);
+    sessionStorage.removeItem(SAVED_KEY); // left by older versions
+  } catch {
+    // ignore
+  }
+}
+
+/** Server errors meaning the saved identity is no longer usable */
+const STALE_SESSION_ERRORS = new Set([
+  "Session not found or expired",
+  "This session has already ended",
+  "Invalid PIN",
+  "nicknameKicked",
+]);
+
+/* ------------------------------------------------------------------ */
+/*  Avatar picker                                                      */
+/* ------------------------------------------------------------------ */
+
+function AvatarPicker({
+  categories,
+  category,
+  onCategory,
+  selected,
+  onSelect,
+}: {
+  categories: { name: string; emojis: string[] }[];
+  category: number;
+  onCategory: (i: number) => void;
+  selected: string;
+  onSelect: (avatar: string) => void;
+}) {
+  const emojis = categories[category]?.emojis ?? [];
+  return (
+    <>
+      {/* Category tabs */}
+      <div className="flex gap-1.5 mb-2.5">
+        {categories.map((cat, i) => (
+          <button
+            key={cat.name}
+            type="button"
+            onClick={() => onCategory(i)}
+            className={`flex-1 px-1 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              category === i
+                ? "bg-brand-blue text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Emoji grid */}
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 max-h-28 sm:max-h-48 overflow-y-auto p-1.5 sm:p-2 bg-white rounded-xl border border-slate-200">
+        {emojis.map((emoji) => (
+          <button
+            key={emoji}
+            type="button"
+            onClick={() => onSelect(emoji)}
+            aria-label={`Avatar ${emoji}`}
+            aria-pressed={selected === emoji}
+            className={`p-2 rounded-xl cursor-pointer transition-all flex items-center justify-center ${
+              isCustomAvatar(emoji) ? "w-full aspect-square" : "text-2xl sm:text-3xl"
+            } ${
+              selected === emoji
+                ? "bg-brand-blue-50 ring-2 ring-brand-blue scale-110 shadow-sm"
+                : "hover:bg-slate-50 hover:shadow-sm"
+            }`}
+          >
+            {isCustomAvatar(emoji) ? (
+              <img src={withBasePath(emoji)} alt="avatar" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+            ) : (
+              emoji
+            )}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Avatar renderer                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -183,10 +299,14 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [awaitingConfidence, setAwaitingConfidence] = useState(false);
+  /** True once the first question has started: the name is then fixed */
+  const [gameStarted, setGameStarted] = useState(false);
+  /** Edit panel in the waiting room: draft name and picture */
+  const [editing, setEditing] = useState(false);
+  const [draftAvatar, setDraftAvatar] = useState("");
   /** Name actually sent to the server (trimmed) on the last join */
   const joinedNameRef = useRef("");
 
-  const [renaming, setRenaming] = useState(false);
   const [renameInput, setRenameInput] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
 
@@ -212,17 +332,20 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     if (!socket || !connected) return;
     if (testMode) return; // skip auto-rejoin in test mode
     // On (re)connect, try to rejoin if we have saved session info
-    const saved = sessionStorage.getItem("savint-session");
+    const saved = readSaved();
     if (!saved) return;
 
-    try {
-      const { sessionId, playerName } = JSON.parse(saved);
-      if (sessionId && playerName) {
-        setName(playerName);
-        socket.emit("rejoinSession", { sessionId, playerName });
-      }
-    } catch {
-      sessionStorage.removeItem("savint-session");
+    if (saved.sessionId && saved.playerName) {
+      setName(saved.playerName);
+      if (saved.pin) setPin(saved.pin);
+      joinedNameRef.current = saved.playerName;
+      socket.emit("rejoinSession", {
+        sessionId: saved.sessionId,
+        playerName: saved.playerName,
+        playerToken: saved.playerToken,
+      });
+    } else {
+      clearSaved();
     }
   }, [socket, connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -248,8 +371,8 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         setRenameError(t(data.message));
         return;
       }
-      // If rejoin failed, clear saved session and stay on join screen
-      sessionStorage.removeItem("savint-session");
+      // If rejoin failed, forget the saved identity and stay on join screen
+      if (STALE_SESSION_ERRORS.has(data.message)) clearSaved();
       if (data.message === "nicknameKicked") {
         setError(t("nicknameKicked"));
       } else {
@@ -259,24 +382,17 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
     const onRenameSuccess = (data: { newName: string }) => {
       setName(data.newName);
-      setRenaming(false);
+      setEditing(false);
       setRenameInput("");
       setRenameError(null);
-      // Update saved session to use the new name for reconnection
-      try {
-        const saved = sessionStorage.getItem("savint-session");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          parsed.playerName = data.newName;
-          sessionStorage.setItem("savint-session", JSON.stringify(parsed));
-        }
-      } catch {
-        // ignore
-      }
+      joinedNameRef.current = data.newName;
+      // Update saved identity to use the new name for reconnection
+      const saved = readSaved();
+      if (saved) writeSaved({ ...saved, playerName: data.newName });
     };
 
     const onKicked = () => {
-      sessionStorage.removeItem("savint-session");
+      clearSaved();
       setPhase("kicked");
     };
 
@@ -285,15 +401,18 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     // (Matching playerJoined by name missed a name with a trailing space —
     // the server stores it trimmed — and a retry, which the server announces
     // as playerReconnected.)
-    const onGameState = (data: { sessionId: string }) => {
+    const onGameState = (data: { sessionId: string; status?: string; playerToken?: string }) => {
       const joinedName = joinedNameRef.current || name;
-      // Save session info for reconnection
-      if (data.sessionId && joinedName) {
-        sessionStorage.setItem("savint-session", JSON.stringify({
+      // Save identity for reconnection (not in the teacher's test panel)
+      if (!testMode && data.sessionId && joinedName) {
+        writeSaved({
           sessionId: data.sessionId,
           playerName: joinedName,
-        }));
+          playerToken: data.playerToken,
+          pin,
+        });
       }
+      if (data.status === "IN_PROGRESS") setGameStarted(true);
       setError(null);
       setPhase((p) => (p === "join" ? "waiting" : p));
     };
@@ -305,6 +424,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       phase: "waiting" | "question" | "feedback";
     }) => {
       setError(null);
+      if (data.currentQuestion !== undefined) setGameStarted(true);
       if (data.phase === "question" || data.phase === "feedback") {
         // Player is back mid-game — show waiting for next question
         setPhase("waiting");
@@ -314,6 +434,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     };
 
     const onQuestionStart = (data: QuestionData) => {
+      setGameStarted(true);
       setQuestionData(data);
       setTimeLeft(data.question.timeLimit);
       setSubmitted(false);
@@ -339,7 +460,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     const onGameOver = (data: PodiumData) => {
       setPodium(data);
       setPhase("podium");
-      sessionStorage.removeItem("savint-session");
+      clearSaved();
     };
 
     const onPlayerStats = (data: PlayerStatsData) => {
@@ -375,7 +496,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       socket.off("gameOver", onGameOver);
       socket.off("muteChanged", onMuteChanged);
     };
-  }, [socket, name]);
+  }, [socket, name, pin, testMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------- countdown timer ---------- */
 
@@ -448,17 +569,28 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       setError(t("invalidName"));
       return;
     }
+    // One player per browser: already in this game under another name
+    const saved = testMode ? null : readSaved();
+    if (saved && saved.pin === pin && saved.playerName !== trimmedName) {
+      setError(t("alreadyJoinedAs", { name: saved.playerName }));
+      return;
+    }
     setError(null);
     joinedNameRef.current = trimmedName;
     setName(trimmedName);
-    socket.emit("joinSession", { pin, playerName: trimmedName, playerAvatar: avatar });
+    socket.emit("joinSession", {
+      pin,
+      playerName: trimmedName,
+      playerAvatar: avatar,
+      playerToken: saved?.playerName === trimmedName ? saved.playerToken : undefined,
+    });
   };
 
   /* ---------- leave handler ---------- */
   const handleLeave = useCallback(() => {
     if (!confirm(t("leaveConfirm"))) return;
     socket?.emit("leaveSession");
-    sessionStorage.removeItem("savint-session");
+    clearSaved();
     setPhase("join");
     setPin("");
     setName("");
@@ -471,7 +603,6 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   /* ---------- render phases ---------- */
 
   if (phase === "join") {
-    const currentEmojis = emojiCategories[avatarCategory]?.emojis ?? [];
     const isFormValid = pin.length >= 5 && name.trim().length >= 2;
 
     return (
@@ -543,46 +674,13 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
               </div>
             </div>
 
-            {/* Category tabs */}
-            <div className="flex gap-1.5 mb-2.5">
-              {emojiCategories.map((cat, i) => (
-                <button
-                  key={cat.name}
-                  onClick={() => setAvatarCategory(i)}
-                  className={`flex-1 px-1 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-                    avatarCategory === i
-                      ? "bg-brand-blue text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Emoji grid */}
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 max-h-28 sm:max-h-48 overflow-y-auto p-1.5 sm:p-2 bg-white rounded-xl border border-slate-200">
-              {currentEmojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => setAvatar(emoji)}
-                  aria-label={`Avatar ${emoji}`}
-                  className={`p-2 rounded-xl cursor-pointer transition-all flex items-center justify-center ${
-                    isCustomAvatar(emoji) ? "w-full aspect-square" : "text-2xl sm:text-3xl"
-                  } ${
-                    avatar === emoji
-                      ? "bg-brand-blue-50 ring-2 ring-brand-blue scale-110 shadow-sm"
-                      : "hover:bg-slate-50 hover:shadow-sm"
-                  }`}
-                >
-                  {isCustomAvatar(emoji) ? (
-                    <img src={withBasePath(emoji)} alt="avatar" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-                  ) : (
-                    emoji
-                  )}
-                </button>
-              ))}
-            </div>
+            <AvatarPicker
+              categories={emojiCategories}
+              category={avatarCategory}
+              onCategory={setAvatarCategory}
+              selected={avatar}
+              onSelect={setAvatar}
+            />
           </div>
 
           {/* Spacer to push button down */}
@@ -667,7 +765,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           <button
             type="button"
             onClick={() => {
-              sessionStorage.removeItem("savint-session");
+              clearSaved();
               window.location.href = withBasePath("/");
             }}
             className="w-full bg-brand-blue hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors"
@@ -714,20 +812,31 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
   }
 
   if (phase === "waiting") {
-    const submitRename = () => {
+    const openEditor = () => {
+      setRenameInput(name);
+      setDraftAvatar(avatar);
+      setRenameError(null);
+      setEditing(true);
+    };
+
+    const saveProfile = () => {
       const trimmed = renameInput.trim();
-      if (trimmed.length < 2 || trimmed.length > 24) {
+      const nameChanged = !gameStarted && trimmed !== name;
+      if (nameChanged && (trimmed.length < 2 || trimmed.length > 24)) {
         setRenameError(t("invalidName"));
         return;
       }
-      if (trimmed === name) {
-        setRenaming(false);
-        setRenameInput("");
+      if (draftAvatar && draftAvatar !== avatar) {
+        socket?.emit("changeAvatar", { avatar: draftAvatar });
+        setAvatar(draftAvatar);
+      }
+      if (nameChanged) {
+        // The panel closes on renameSuccess; errors show inside it
         setRenameError(null);
+        socket?.emit("renamePlayer", { newName: trimmed });
         return;
       }
-      setRenameError(null);
-      socket?.emit("renamePlayer", { newName: trimmed });
+      setEditing(false);
     };
 
     return (
@@ -738,30 +847,50 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         <div className="mb-4 sm:mb-6 animate-float-bounce">
           <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40" : "text-6xl sm:text-8xl lg:text-9xl"} />
         </div>
-        {renaming ? (
-          <div className="w-full max-w-xs flex flex-col items-center gap-2 mb-2">
-            <input
-              type="text"
-              autoFocus
-              maxLength={24}
-              value={renameInput}
-              onChange={(e) => { setRenameInput(e.target.value); setRenameError(null); }}
-              onKeyDown={(e) => { if (e.key === "Enter") submitRename(); }}
-              className="h-11 w-full bg-white border-2 border-brand-blue/30 text-slate-900 rounded-xl text-center text-lg font-semibold px-3 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20 transition-all"
-            />
+        <h2 className="mb-2 text-xl sm:text-2xl lg:text-3xl font-bold text-brand-ink">{name}</h2>
+        {editing ? (
+          <div className="w-full max-w-sm flex flex-col gap-3 mb-4 rounded-2xl bg-white/90 p-4 shadow-lg text-left">
+            {!gameStarted && (
+              <div>
+                <label htmlFor="edit-name-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {t("yourName")}
+                </label>
+                <input
+                  id="edit-name-input"
+                  type="text"
+                  maxLength={24}
+                  value={renameInput}
+                  onChange={(e) => { setRenameInput(e.target.value); setRenameError(null); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveProfile(); }}
+                  className="h-11 w-full bg-white border-2 border-brand-blue/30 text-slate-900 rounded-xl text-center text-lg font-semibold px-3 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/20 transition-all"
+                />
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-1.5">{t("chooseAvatar")}</p>
+              <AvatarPicker
+                categories={emojiCategories}
+                category={avatarCategory}
+                onCategory={setAvatarCategory}
+                selected={draftAvatar}
+                onSelect={setDraftAvatar}
+              />
+            </div>
             {renameError && (
-              <p className="text-xs font-medium text-red-600">{renameError}</p>
+              <p className="text-xs font-medium text-red-600 text-center">{renameError}</p>
             )}
             <div className="flex gap-2 w-full">
               <button
-                onClick={() => { setRenaming(false); setRenameInput(""); setRenameError(null); }}
+                type="button"
+                onClick={() => { setEditing(false); setRenameError(null); }}
                 className="flex-1 h-10 rounded-xl bg-white text-brand-blue border border-brand-blue/30 font-semibold hover:bg-brand-blue-50 transition-colors"
               >
                 {tc("cancel")}
               </button>
               <button
-                onClick={submitRename}
-                disabled={renameInput.trim().length < 2}
+                type="button"
+                onClick={saveProfile}
+                disabled={!gameStarted && renameInput.trim().length < 2}
                 className="flex-1 h-10 rounded-xl bg-brand-blue text-white font-semibold shadow-sm hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500 transition-colors"
               >
                 {tc("save")}
@@ -770,13 +899,12 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           </div>
         ) : (
           <button
-            onClick={() => { setRenameInput(name); setRenaming(true); setRenameError(null); }}
-            className="group inline-flex items-center gap-2 mb-2 px-3 py-1 rounded-lg hover:bg-brand-blue/10 transition-colors"
-            title={t("changeName")}
-            aria-label={t("changeName")}
+            type="button"
+            onClick={openEditor}
+            className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-xl border-2 border-brand-blue/40 bg-white/80 text-brand-blue font-semibold hover:bg-white hover:border-brand-blue transition-colors"
           >
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-brand-ink">{name}</h2>
-            <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-brand-blue opacity-60 group-hover:opacity-100 transition-opacity" />
+            <Pencil className="w-4 h-4" />
+            {gameStarted ? t("changeAvatar") : t("editProfile")}
           </button>
         )}
         <p className="text-base sm:text-lg lg:text-xl text-brand-blue">
@@ -988,7 +1116,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       setPodium(null);
       setSubmitted(false);
       setAwaitingConfidence(false);
-      sessionStorage.removeItem("savint-session");
+      clearSaved();
     };
 
     return (

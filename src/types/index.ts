@@ -136,7 +136,13 @@ export interface ServerToClientEvents {
     fullResults: { playerName: string; score: number; playerAvatar?: string }[];
   }) => void;
   sessionError: (data: { message: string }) => void;
-  gameState: (data: { status: string; currentQuestion?: number; sessionId: string }) => void;
+  gameState: (data: {
+    status: string;
+    currentQuestion?: number;
+    sessionId: string;
+    /** Secret for this player: needed to rejoin or reclaim the name */
+    playerToken?: string;
+  }) => void;
   muteChanged: (data: { muted: boolean }) => void;
   kicked: (data: { reason: "host" }) => void;
   playerRenamed: (data: { oldName: string; newName: string; playerAvatar?: string }) => void;
@@ -144,8 +150,17 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  joinSession: (data: { pin: string; playerName: string; playerEmail?: string; playerAvatar?: string }) => void;
-  rejoinSession: (data: { sessionId: string; playerName: string }) => void;
+  joinSession: (data: {
+    pin: string;
+    playerName: string;
+    playerEmail?: string;
+    playerAvatar?: string;
+    /** Token received on a previous join of this name (to reclaim it) */
+    playerToken?: string;
+    /** Required to join as __host__; issued by the teacher's page */
+    hostToken?: string;
+  }) => void;
+  rejoinSession: (data: { sessionId: string; playerName: string; playerToken?: string }) => void;
   startGame: () => void;
   nextQuestion: () => void;
   submitAnswer: (data: { value: AnswerValue }) => void;
@@ -156,4 +171,5 @@ export interface ClientToServerEvents {
   toggleMute: (data: { muted: boolean }) => void;
   kickPlayer: (data: { playerName: string }) => void;
   renamePlayer: (data: { newName: string }) => void;
+  changeAvatar: (data: { avatar: string }) => void;
 }

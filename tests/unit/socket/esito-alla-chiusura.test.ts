@@ -17,6 +17,9 @@ vi.mock("@/lib/db/client", () => ({
 }));
 
 import { setupSocketHandlers } from "@/lib/socket/server";
+import { createHostToken } from "@/lib/socket/host-token";
+
+process.env.AUTH_SECRET = "test-secret-live-host";
 import { prisma } from "@/lib/db/client";
 
 class FakeSocket extends EventEmitter {
@@ -126,7 +129,11 @@ describe("live quiz: outcome revealed only when the host shows the answer", () =
       makeSession({ status: "IN_PROGRESS", quiz: { questions: [QUESTION] } }),
     );
     for (const [s, name] of [[hostSocket, "__host__"], [playerSocket, "Alice"]] as const) {
-      s.emit("joinSession", { pin: currentTestPin, playerName: name });
+      s.emit("joinSession", {
+        pin: currentTestPin,
+        playerName: name,
+        hostToken: createHostToken(currentTestSessionId),
+      });
       await tick();
       await tick();
     }

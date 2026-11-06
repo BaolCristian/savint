@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { redirectUnlessTeacher } from "@/lib/auth/require-role";
 import { prisma } from "@/lib/db/client";
+import { createHostToken } from "@/lib/socket/host-token";
 import { TestView } from "@/components/live/test-view";
 
 export default async function TestSessionPage({
@@ -34,6 +35,7 @@ export default async function TestSessionPage({
       session={{
         id: gameSession.id,
         pin: gameSession.pin,
+        hostToken: createHostToken(gameSession.id),
         quiz: {
           title: gameSession.quiz.title,
           questions: gameSession.quiz.questions,

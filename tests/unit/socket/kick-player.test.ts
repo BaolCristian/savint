@@ -17,6 +17,9 @@ vi.mock("@/lib/db/client", () => ({
 }));
 
 import { setupSocketHandlers } from "@/lib/socket/server";
+import { createHostToken } from "@/lib/socket/host-token";
+
+process.env.AUTH_SECRET = "test-secret-live-host";
 import { prisma } from "@/lib/db/client";
 
 class FakeSocket extends EventEmitter {
@@ -84,7 +87,11 @@ function makeSession(overrides: Partial<any> = {}) {
 
 async function joinAs(socket: FakeSocket, playerName: string) {
   (prisma.session.findUnique as any).mockResolvedValue(makeSession());
-  socket.emit("joinSession", { pin: currentTestPin, playerName });
+  socket.emit("joinSession", {
+    pin: currentTestPin,
+    playerName,
+    ...(playerName === "__host__" ? { hostToken: createHostToken(currentTestSessionId) } : {}),
+  });
   await new Promise<void>((resolve) => setImmediate(resolve));
   await new Promise<void>((resolve) => setImmediate(resolve));
 }

@@ -13,6 +13,12 @@ export function calculateScore({ isCorrect, responseTimeMs, timeLimit, maxPoints
   return Math.round(maxPoints * multiplier);
 }
 
+/** Distinct integer indices from a client-sent selection (anything else dropped) */
+function uniqueIndices(selected: unknown): number[] {
+  if (!Array.isArray(selected)) return [];
+  return [...new Set(selected.filter((i): i is number => Number.isInteger(i)))];
+}
+
 export function checkAnswer(type: string, options: any, value: any): boolean {
   switch (type) {
     case "MULTIPLE_CHOICE": {
@@ -21,7 +27,7 @@ export function checkAnswer(type: string, options: any, value: any): boolean {
           .map((c: any, i: number) => (c.isCorrect ? i : -1))
           .filter((i: number) => i >= 0)
       );
-      const selected: number[] = value.selected ?? [];
+      const selected = uniqueIndices(value.selected);
       // Correct if at least one correct selected and no wrong ones
       const hasWrong = selected.some((i: number) => !correctSet.has(i));
       const hasCorrect = selected.some((i: number) => correctSet.has(i));
@@ -62,6 +68,7 @@ export function checkAnswer(type: string, options: any, value: any): boolean {
       return true;
     }
     case "NUMERIC_ESTIMATION": {
+      if (!Number.isFinite(value.value)) return false;
       const scarto = Math.abs(value.value - options.correctValue);
       return scarto <= options.tolerance;
     }
@@ -95,7 +102,8 @@ export function calculatePartialScore(type: string, options: any, value: any, ma
       );
       const totalCorrect = correctIndices.size;
       const totalWrong = choices.length - totalCorrect;
-      const selected: number[] = value.selected ?? [];
+      // Each index counts once: repeating a correct choice must not multiply points
+      const selected = uniqueIndices(value.selected);
       // Each correct answer gives points proportional to total correct
       // Each wrong answer penalizes proportional to total wrong options
       // This way: all correct + all wrong = maxPoints - maxPoints = 0
@@ -128,6 +136,7 @@ export function calculatePartialScore(type: string, options: any, value: any, ma
     }
     case "NUMERIC_ESTIMATION": {
       const { correctValue, tolerance, maxRange } = options;
+      if (!Number.isFinite(value.value)) return 0;
       const scarto = Math.abs(value.value - correctValue);
       if (scarto <= tolerance) return maxPoints;
       if (scarto >= maxRange) return 0;

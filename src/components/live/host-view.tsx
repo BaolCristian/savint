@@ -126,6 +126,8 @@ type Phase = "lobby" | "countdown" | "question" | "result" | "podium";
 
 interface Props {
   session: {
+    /** Proves to the socket server that this page is the session's teacher */
+    hostToken: string;
     id: string;
     pin: string;
     quiz: { title: string; questions: any[] };
@@ -223,8 +225,9 @@ export function HostView({ session }: Props) {
     socket.emit("joinSession", {
       pin: session.pin,
       playerName: "__host__",
+      hostToken: session.hostToken,
     });
-  }, [socket, connected, session.pin]);
+  }, [socket, connected, session.pin, session.hostToken]);
 
   // Socket event listeners
   useEffect(() => {
