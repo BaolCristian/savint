@@ -404,6 +404,7 @@
     "namePlaceholder": "E.g: Alex",
     "questionCounter": "Question {index}/{total}",
     "waitingForStart": "Waiting for the teacher to start the quiz...",
+    "waitingNextQuestion": "Waiting for the next question...",
     "answerSubmitted": "Answer submitted!",
     "timeUp": "Time's up!",
     "waitingResults": "Waiting for results...",

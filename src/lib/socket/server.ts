@@ -936,6 +936,7 @@ export function setupSocketHandlers(io: TypedIO) {
         currentQuestion: game.currentQuestionIndex >= 0 ? game.currentQuestionIndex : undefined,
         totalQuestions: game.questions.length,
         phase,
+        playerAvatar: player.avatar,
       });
 
       // Send the current question OR feedback if the player already answered

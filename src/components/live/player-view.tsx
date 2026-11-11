@@ -427,8 +427,11 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
       currentQuestion?: number;
       totalQuestions: number;
       phase: "waiting" | "question" | "feedback";
+      playerAvatar?: string;
     }) => {
       setError(null);
+      // A reloaded page picked a new random picture: put back the real one
+      if (data.playerAvatar) setAvatar(data.playerAvatar);
       if (data.currentQuestion !== undefined) setGameStarted(true);
       if (data.phase === "question" || data.phase === "feedback") {
         // Player is back mid-game — show waiting for next question
@@ -942,7 +945,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           </button>
         )}
         <p className="text-base sm:text-lg lg:text-xl text-brand-blue">
-          {t("waitingForStart")}
+          {gameStarted ? t("waitingNextQuestion") : t("waitingForStart")}
         </p>
       </div>
     );

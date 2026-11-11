@@ -92,6 +92,8 @@ export interface ServerToClientEvents {
     currentQuestion?: number;
     totalQuestions: number;
     phase: "waiting" | "question" | "feedback";
+    /** The picture the player had: a reloaded page has forgotten it */
+    playerAvatar?: string;
   }) => void;
   questionStart: (data: {
     questionIndex: number;

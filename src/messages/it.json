@@ -404,6 +404,7 @@
     "namePlaceholder": "Es: Alex",
     "questionCounter": "Domanda {index}/{total}",
     "waitingForStart": "In attesa che il prof avvii il quiz...",
+    "waitingNextQuestion": "In attesa della prossima domanda...",
     "answerSubmitted": "Risposta inviata!",
     "timeUp": "Tempo scaduto!",
     "waitingResults": "In attesa dei risultati...",

@@ -305,6 +305,17 @@ describe("live quiz: scores and reconnections", () => {
       expect(alice2.emitted.some((e) => e.event === "playerStats")).toBe(true);
     });
 
+    it("a reloaded page gets back the picture the player had", async () => {
+      const carla = newSocket("carla");
+      await join(carla, "Carla", { playerAvatar: "🦊" });
+      await start();
+      const carla2 = newSocket("carla-new");
+      carla2.emit("rejoinSession", { sessionId: currentTestSessionId, playerName: "Carla", playerToken: tokenOf(carla) });
+      await tick(6);
+      const ok = carla2.emitted.find((e) => e.event === "rejoinSuccess")!;
+      expect(ok.payload.playerAvatar).toBe("🦊");
+    });
+
     it("coming back mid-question, the timer resumes from the time really left", async () => {
       await start();
       const now = Date.now();
