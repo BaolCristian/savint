@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { playCorrect, playWrong, playTick, playTimeUp, setMuted } from "@/lib/sounds";
 import { UserX, Pencil } from "lucide-react";
+import { TimerRing } from "@/components/live/timer-ring";
 import { SiteFooter } from "@/components/site-footer";
 import type {
   AnswerValue,
@@ -41,6 +42,8 @@ interface QuestionData {
     points: number;
     mediaUrl: string | null;
   };
+  /** Seconds really left when coming back mid-question */
+  remainingSeconds?: number;
 }
 
 interface FeedbackData {
@@ -438,7 +441,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     const onQuestionStart = (data: QuestionData) => {
       setGameStarted(true);
       setQuestionData(data);
-      setTimeLeft(data.question.timeLimit);
+      setTimeLeft(data.remainingSeconds ?? data.question.timeLimit);
       setSubmitted(false);
       setPlayerStats(null);
       questionStartTime.current = Date.now();
@@ -947,7 +950,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
   if (phase === "question" && questionData) {
     return (
-      <div className="relative flex min-h-dvh flex-col bg-gray-950 p-3 sm:p-4 lg:p-6 text-white">
+      <div className="relative flex min-h-dvh flex-col live-stage p-3 sm:p-4 lg:p-6 text-white">
         {reconnectionBanner}
         {pinBadge()}
         {leaveButton()}
@@ -956,27 +959,24 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-400">
             {t("questionCounter", { index: questionData.questionIndex + 1, total: questionData.totalQuestions })}
           </span>
-          <span
-            className={`rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-base sm:text-lg lg:text-xl font-bold tabular-nums ${
-              timeLeft <= 5 && timeLeft > 0
-                ? "bg-red-500 text-white animate-countdown-pulse"
-                : "bg-gray-800 text-white"
-            }`}
-          >
-            {timeLeft}s
-          </span>
+          <TimerRing
+            timeLeft={timeLeft}
+            total={questionData.question.timeLimit}
+            label={t("timeLeftLabel")}
+            className="size-12 sm:size-14 lg:size-16"
+          />
         </div>
 
         {/* Progress bar timer */}
         {questionData.question.timeLimit > 0 && (
-          <div className="mb-3 sm:mb-4 h-2 sm:h-2.5 rounded-full bg-gray-800 overflow-hidden">
+          <div className="mb-3 sm:mb-4 h-2 sm:h-2.5 rounded-full bg-white/10 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-1000 ease-linear ${
                 timeLeft <= 5 && timeLeft > 0
-                  ? "bg-red-500"
+                  ? "bg-brand-magenta"
                   : timeLeft <= 10 && timeLeft > 0
-                    ? "bg-amber-500"
-                    : "bg-emerald-500"
+                    ? "bg-brand-orange"
+                    : "bg-brand-green"
               }`}
               style={{ width: `${(timeLeft / questionData.question.timeLimit) * 100}%` }}
             />
@@ -996,32 +996,37 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             </h2>
             <div className="space-y-3 w-full max-w-xs">
               {[
-                { level: 1, label: t("notSure"), color: "from-slate-500 to-slate-600" },
-                { level: 2, label: t("somewhatSure"), color: "from-amber-500 to-yellow-600" },
-                { level: 3, label: t("verySure"), color: "from-green-500 to-emerald-600" },
-              ].map(({ level, label, color }) => (
+                { level: 1, label: t("notSure"), stake: t("confidenceStakeLow"), color: "from-slate-500 to-slate-600" },
+                { level: 2, label: t("somewhatSure"), stake: t("confidenceStakeMid"), color: "from-brand-blue to-blue-700" },
+                { level: 3, label: t("verySure"), stake: t("confidenceStakeHigh"), color: "from-brand-orange to-brand-magenta" },
+              ].map(({ level, label, stake, color }) => (
                 <button
                   key={level}
                   onClick={() => {
                     socket?.emit("submitConfidence", { confidenceLevel: level });
                     setAwaitingConfidence(false);
                   }}
-                  className={`w-full py-4 rounded-2xl bg-gradient-to-r ${color} text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all`}
+                  className={`w-full py-3 rounded-2xl bg-gradient-to-r ${color} text-white shadow-lg hover:scale-105 active:scale-95 transition-all`}
                 >
-                  {label}
+                  <span className="block font-bold text-lg">{label}</span>
+                  {/* What is at stake, so the choice is a real bet */}
+                  <span className="block text-sm text-white/85">{stake}</span>
                 </button>
               ))}
             </div>
           </div>
         ) : submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="mb-3 sm:mb-4">
-              <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24" : "text-4xl sm:text-5xl lg:text-6xl"} />
+            <div className="relative mb-4 sm:mb-5">
+              <AvatarDisplay avatar={avatar} className={isCustomAvatar(avatar) ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "text-6xl sm:text-7xl lg:text-8xl"} />
+              <span className="absolute -bottom-1 -right-3 grid size-9 sm:size-10 place-items-center rounded-full bg-brand-green text-white text-xl font-black ring-4 ring-[#0f1b33] animate-zoom-in-bounce" aria-hidden>
+                ✓
+              </span>
             </div>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
               {t("answerSubmitted")}
             </p>
-            <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-400">{t("waitingResults")}</p>
+            <p className="mt-2 text-sm sm:text-base lg:text-lg text-white/60">{t("waitingResults")}</p>
           </div>
         ) : timeLeft <= 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center">
@@ -1029,7 +1034,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
               {t("timeUp")}
             </p>
-            <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-400">{t("waitingResults")}</p>
+            <p className="mt-2 text-sm sm:text-base lg:text-lg text-white/60">{t("waitingResults")}</p>
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
@@ -1080,7 +1085,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
                 {isCorrect ? t("correct") : t("wrong")}
               </h2>
               <p className="text-lg sm:text-xl lg:text-2xl font-semibold text-white/90 animate-count-up-pop" style={{ animationDelay: "200ms" }}>
-                +{feedback.score} {t("pointsLabel")}
+                {feedback.score < 0 ? "−" : "+"}{Math.abs(feedback.score)} {t("pointsLabel")}
               </p>
             </div>
           </div>
@@ -1349,7 +1354,7 @@ function MultipleChoiceInput({
               onClick={() => isMulti ? toggle(i) : onSubmit({ selected: [i] })}
               className={`flex items-center justify-center gap-2 rounded-2xl min-h-16 sm:min-h-20 lg:min-h-24 p-2 sm:p-3 lg:p-4 text-white font-bold text-base sm:text-lg lg:text-xl shadow-lg transition-all bg-gradient-to-br ${ANSWER_TILES[i % 4].gradient} ${isMulti && isSelected ? "ring-4 ring-white scale-105" : ""} ${isMulti && !isSelected ? "opacity-80 hover:opacity-100" : "hover:scale-105 active:scale-95"}`}
             >
-              <span className="text-xl sm:text-2xl opacity-70 shrink-0">{ANSWER_TILES[i % 4].shape}</span>
+              <span className="grid size-8 sm:size-9 shrink-0 place-items-center rounded-lg bg-black/15 text-lg sm:text-xl" aria-hidden>{ANSWER_TILES[i % 4].shape}</span>
               {isMulti && isSelected && <span>✓</span>}
               <span>{c.text}</span>
             </button>
@@ -1842,7 +1847,7 @@ function CodeCompletionInput({
           {options.choices.map((choice, i) => (
             <button
               key={i}
-              onClick={() => onSubmit({ selected: i })}
+              onClick={() => onSubmit({ text: choice })}
               className="w-full text-left bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl px-4 py-3 text-base font-mono text-white transition-all active:scale-95"
             >
               {choice}

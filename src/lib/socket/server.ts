@@ -75,6 +75,13 @@ interface GameState {
   /** playerName → secret token, kept even after the player leaves */
   playerTokens: Map<string, string>;
   phase: "lobby" | "in-question" | "between-questions" | "ended";
+  /**
+   * Who already answered / chose a confidence for the current question.
+   * Checked and filled with no await in between: the database check alone
+   * lets two messages sent together both through.
+   */
+  answeredBy: Set<string>;
+  confidenceBy: Set<string>;
 }
 
 const games = new Map<string, GameState>(); // keyed by sessionId
@@ -152,10 +159,12 @@ function sanitizeOptions(
     }
     case "CODE_COMPLETION": {
       const cc = options as CodeCompletionOptions;
+      // The line to complete is the answer: it never leaves the server
+      const codeLines = cc.codeLines.map((l, i) => (i === cc.blankLineIndex ? "" : l));
       if (cc.mode === "choice" && cc.choices) {
         const shuffled = [...cc.choices].sort(() => Math.random() - 0.5);
         return {
-          codeLines: cc.codeLines,
+          codeLines,
           blankLineIndex: cc.blankLineIndex,
           correctAnswer: "",
           mode: cc.mode,
@@ -163,7 +172,7 @@ function sanitizeOptions(
         } as any;
       }
       return {
-        codeLines: cc.codeLines,
+        codeLines,
         blankLineIndex: cc.blankLineIndex,
         correctAnswer: "",
         mode: cc.mode,
@@ -380,6 +389,8 @@ export function setupSocketHandlers(io: TypedIO) {
             kickedNames: new Set<string>(),
             playerTokens: new Map(),
             phase: "lobby",
+            answeredBy: new Set(),
+            confidenceBy: new Set(),
           });
         }
 
@@ -442,7 +453,7 @@ export function setupSocketHandlers(io: TypedIO) {
           email: playerEmail,
           avatar: playerAvatar,
           totalScore: recoveredScore,
-          lastDelta: 0,
+          lastDelta: existingPlayer?.lastDelta ?? 0,
         });
 
         socket.join(room(sessionId));
@@ -471,7 +482,9 @@ export function setupSocketHandlers(io: TypedIO) {
                 timeLimit: q.timeLimit,
                 points: q.points,
                 mediaUrl: q.mediaUrl,
+                confidenceEnabled: q.confidenceEnabled,
               },
+              remainingSeconds: remainingSeconds(game),
             });
           }
         }
@@ -492,7 +505,8 @@ export function setupSocketHandlers(io: TypedIO) {
         if (
           session.status === "IN_PROGRESS" &&
           playerName !== "__host__" &&
-          game.currentQuestionIndex >= 0
+          game.currentQuestionIndex >= 0 &&
+          game.phase === "in-question"
         ) {
           const q = game.questions[game.currentQuestionIndex];
           if (q) {
@@ -506,8 +520,15 @@ export function setupSocketHandlers(io: TypedIO) {
                 timeLimit: q.timeLimit,
                 points: q.points,
                 mediaUrl: q.mediaUrl,
+                confidenceEnabled: q.confidenceEnabled,
               },
+              remainingSeconds: remainingSeconds(game),
             });
+            if (game.answeredBy.has(playerName)) {
+              socket.emit("answerReceived", {
+                confidenceEnabled: q.confidenceEnabled && !game.confidenceBy.has(playerName),
+              });
+            }
           }
         }
       } catch (err) {
@@ -580,19 +601,6 @@ export function setupSocketHandlers(io: TypedIO) {
       const deadlineMs = (question.timeLimit + 2) * 1000;
       if (responseTimeMs > deadlineMs) return;
 
-      // Reject duplicate answers
-      const existingAnswer = await prisma.answer.findUnique({
-        where: {
-          sessionId_questionId_playerName: {
-            sessionId: game.sessionId,
-            questionId: question.id,
-            playerName: currentPlayerName,
-          },
-        },
-        select: { id: true },
-      });
-      if (existingAnswer) return;
-
       // A malformed answer (hand-crafted from the console) is ignored
       let isCorrect: boolean;
       let score: number;
@@ -621,6 +629,25 @@ export function setupSocketHandlers(io: TypedIO) {
       if (!Number.isFinite(score)) return;
       // Never more than the question is worth
       score = Math.max(0, Math.min(score, question.points));
+
+      // One answer per player per question. The mark is set before any
+      // await, so a second message sent together with the first stops here.
+      if (game.answeredBy.has(currentPlayerName)) return;
+      game.answeredBy.add(currentPlayerName);
+
+      // Already in the database (e.g. answered before a server restart)
+      const existingAnswer = await prisma.answer.findUnique({
+        where: {
+          sessionId_questionId_playerName: {
+            sessionId: game.sessionId,
+            questionId: question.id,
+            playerName: currentPlayerName,
+          },
+        },
+        select: { id: true },
+      });
+      if (existingAnswer) return;
+
 
       // Update in-memory state
       const player = game.players.get(currentPlayerName);
@@ -690,36 +717,45 @@ export function setupSocketHandlers(io: TypedIO) {
       const player = game.players.get(currentPlayerName);
       if (!player) return;
 
-      // Reject if confidence was already submitted
-      const existing = await prisma.answer.findUnique({
-        where: {
-          sessionId_questionId_playerName: {
-            sessionId: game.sessionId,
-            questionId: question.id,
-            playerName: currentPlayerName,
-          },
+      // Once per question; marked before any await (see submitAnswer)
+      if (game.confidenceBy.has(currentPlayerName)) return;
+      game.confidenceBy.add(currentPlayerName);
+
+      const answerKey = {
+        sessionId_questionId_playerName: {
+          sessionId: game.sessionId,
+          questionId: question.id,
+          playerName: currentPlayerName,
         },
-        select: { confidenceLevel: true },
+      };
+      // The stored answer is the source of truth for points and outcome:
+      // the in-memory delta is lost when the player reconnects.
+      const existing = await prisma.answer.findUnique({
+        where: answerKey,
+        select: { score: true, isCorrect: true, confidenceLevel: true },
       });
-      if (existing?.confidenceLevel != null) return;
+      if (!existing) {
+        // No answer yet: nothing to bet on, the player may retry later
+        game.confidenceBy.delete(currentPlayerName);
+        return;
+      }
+      if (existing.confidenceLevel != null) return;
 
-      const oldDelta = player.lastDelta;
-      const isCorrect = oldDelta > 0;
-      const newDelta = applyConfidence(oldDelta, isCorrect, confidenceLevel);
-      const diff = newDelta - oldDelta;
+      const oldDelta = existing.score;
+      // A wrong "very sure" answer takes points away from the total, but
+      // never below zero: the loss stops at what the player had before.
+      const totalBefore = player.totalScore - oldDelta;
+      const newDelta = Math.max(
+        applyConfidence(oldDelta, existing.isCorrect, confidenceLevel),
+        0 - Math.max(0, totalBefore),
+      );
 
-      player.totalScore += diff;
+      player.totalScore += newDelta - oldDelta;
       player.lastDelta = newDelta;
 
       try {
         await prisma.answer.update({
-          where: {
-            sessionId_questionId_playerName: {
-              sessionId: game.sessionId,
-              questionId: question.id,
-              playerName: currentPlayerName,
-            },
-          },
+          where: answerKey,
           data: {
             confidenceLevel,
             score: newDelta,
@@ -766,7 +802,7 @@ export function setupSocketHandlers(io: TypedIO) {
           data: { status: "FINISHED", endedAt: new Date() },
         });
 
-        const leaderboard = buildLeaderboard(game);
+        const leaderboard = await buildFinalLeaderboard(game);
         const podium = leaderboard.slice(0, 3).map((l, i) => ({
           playerName: l.playerName,
           score: l.score,
@@ -919,9 +955,10 @@ export function setupSocketHandlers(io: TypedIO) {
               classCorrectPercent: classCorrectPercent(answers, realPlayerCount(game)),
               confidenceEnabled: false,
             });
-          } else {
-            // Not answered yet, or answered but not revealed: send the
-            // question; if already answered, back to "answer sent, wait"
+          } else if (game.phase === "in-question") {
+            // Question still open: send it with the time really left; if
+            // already answered, back to "answer sent, wait". A question
+            // already closed is not reopened: the player waits for the next.
             socket.emit("questionStart", {
               questionIndex: game.currentQuestionIndex,
               totalQuestions: game.questions.length,
@@ -934,6 +971,7 @@ export function setupSocketHandlers(io: TypedIO) {
                 mediaUrl: q.mediaUrl,
                 confidenceEnabled: q.confidenceEnabled,
               },
+              remainingSeconds: remainingSeconds(game),
             });
             if (existingAnswer) {
               socket.emit("answerReceived", {
@@ -981,6 +1019,8 @@ export function setupSocketHandlers(io: TypedIO) {
 
       game.kickedNames.add(playerName);
       game.players.delete(playerName);
+      // The token dies with the kick: no way back through rejoinSession
+      game.playerTokens.delete(playerName);
 
       const dKey = disconnectKey(currentSessionId, playerName);
       const dEntry = disconnectedPlayers.get(dKey);
@@ -1127,6 +1167,11 @@ export function setupSocketHandlers(io: TypedIO) {
       const player = game.players.get(currentPlayerName);
       if (!player) return;
 
+      // The player already came back on a newer socket (the server notices
+      // a dead connection well after the phone has reconnected): this late
+      // close must not detach them.
+      if (player.socketId !== socket.id) return;
+
       // Mark player as disconnected (clear socketId so name check works)
       player.socketId = "";
 
@@ -1171,11 +1216,49 @@ function classCorrectPercent(answers: { isCorrect: boolean }[], total: number) {
   return Math.round((answers.filter((a) => a.isCorrect).length / total) * 100);
 }
 
+/** Whole seconds left to answer the current question (0 once closed) */
+function remainingSeconds(game: GameState) {
+  const q = game.questions[game.currentQuestionIndex];
+  if (!q || game.phase !== "in-question" || !game.questionStartTime) return 0;
+  const left = q.timeLimit - (Date.now() - game.questionStartTime) / 1000;
+  return Math.max(0, Math.min(q.timeLimit, Math.ceil(left)));
+}
+
+/**
+ * Final standings: who is in the game, plus who answered and then stayed
+ * away past the reconnection grace period (their points are in the database).
+ */
+async function buildFinalLeaderboard(game: GameState) {
+  const leaderboard = buildLeaderboard(game);
+  try {
+    const dbAnswers = await prisma.answer.findMany({
+      where: { sessionId: game.sessionId },
+      select: { playerName: true, score: true },
+    });
+    const absent = new Map<string, number>();
+    for (const a of dbAnswers) {
+      if (game.players.has(a.playerName) || game.kickedNames.has(a.playerName)) continue;
+      absent.set(a.playerName, (absent.get(a.playerName) ?? 0) + a.score);
+    }
+    for (const [playerName, score] of absent) {
+      leaderboard.push({ playerName, score, delta: 0, playerAvatar: undefined });
+    }
+    leaderboard.sort((a, b) => b.score - a.score);
+  } catch (err) {
+    console.error("buildFinalLeaderboard error:", err);
+  }
+  return leaderboard;
+}
+
 /** Run the showResults logic (extracted so test-mode auto-advance can reuse it) */
 async function runShowResults(io: TypedIO, game: GameState) {
   if (game.currentQuestionIndex < 0) return;
   const question = game.questions[game.currentQuestionIndex];
   if (!question) return;
+
+  // Closed before anything is sent or awaited: the reveal carries the
+  // correct answer, nobody may answer once it is on its way.
+  game.phase = "between-questions";
 
   try {
     const dbAnswers = await prisma.answer.findMany({
@@ -1245,7 +1328,6 @@ async function runShowResults(io: TypedIO, game: GameState) {
         });
       }
     }
-    game.phase = "between-questions";
   } catch (err) {
     console.error("runShowResults error:", err);
   }
@@ -1258,6 +1340,8 @@ function emitQuestion(io: TypedIO, game: GameState, index: number) {
   game.confidenceCount = 0;
   game.questionStartTime = Date.now();
   game.phase = "in-question";
+  game.answeredBy.clear();
+  game.confidenceBy.clear();
 
   // Reset per-round deltas
   for (const player of game.players.values()) {

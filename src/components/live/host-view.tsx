@@ -11,6 +11,7 @@ import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
 import { playTick, playTimeUp, playDrumroll, playFanfare, isMuted, toggleMute, startBgm, stopBgm } from "@/lib/sounds";
 import { Volume2, VolumeX, X, AlertCircle, Flag, Ban } from "lucide-react";
+import { TimerRing } from "@/components/live/timer-ring";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog,
@@ -146,6 +147,8 @@ interface QuestionData {
     mediaUrl: string | null;
     confidenceEnabled?: boolean;
   };
+  /** Seconds really left when the teacher reloads mid-question */
+  remainingSeconds?: number;
 }
 
 interface ResultData {
@@ -284,7 +287,7 @@ export function HostView({ session }: Props) {
 
     const handleQuestionStart = (data: QuestionData) => {
       setCurrentQuestion(data);
-      setTimeLeft(data.question.timeLimit);
+      setTimeLeft(data.remainingSeconds ?? data.question.timeLimit);
       setAnswerCount({ count: 0, total: 0 });
       setConfidenceCount({ count: 0, total: 0 });
       setResultData(null);
@@ -522,7 +525,7 @@ export function HostView({ session }: Props) {
   if (phase === "lobby") {
 
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="min-h-screen live-stage text-white flex flex-col">
         {/* Top bar */}
         <header className="bg-slate-800/80 backdrop-blur border-b border-slate-700 px-6 lg:px-10 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -734,9 +737,9 @@ export function HostView({ session }: Props) {
         : 0;
 
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="min-h-screen live-stage text-white flex flex-col">
         {/* Top bar */}
-        <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-3 flex items-center justify-between">
+        <header className="bg-black/25 border-b border-white/10 backdrop-blur-sm px-6 lg:px-10 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-sm lg:text-base font-semibold text-slate-400">
               {t("questionHeader", { index: q.questionIndex + 1, total: q.totalQuestions })}
@@ -782,19 +785,6 @@ export function HostView({ session }: Props) {
               </div>
             )}
 
-            {/* Timer */}
-            <div
-              className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center text-2xl lg:text-3xl font-black transition-colors ${
-                timeLeft <= 5 && timeLeft > 0
-                  ? "bg-red-500 text-white animate-countdown-pulse ring-4 ring-red-400/50 animate-timer-shake"
-                  : timeLeft <= 10 && timeLeft > 0
-                    ? "bg-amber-500 text-white"
-                    : "bg-slate-700 text-white"
-              }`}
-            >
-              {timeLeft}
-            </div>
-
             {/* Skip to results */}
             <button
               onClick={handleShowResults}
@@ -819,6 +809,13 @@ export function HostView({ session }: Props) {
 
         {/* Question body */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 lg:px-16 py-8">
+          {/* The timer is what the class watches: big, above the question */}
+          <TimerRing
+            timeLeft={timeLeft}
+            total={q.question.timeLimit}
+            label={t("timeLeftLabel")}
+            className="size-28 lg:size-40 xl:size-44 mb-6 lg:mb-8"
+          />
           <h2 className="text-3xl lg:text-5xl xl:text-6xl font-bold text-center mb-8 max-w-5xl animate-slide-up-fade leading-tight">
             {q.question.text}
           </h2>
@@ -841,10 +838,10 @@ export function HostView({ session }: Props) {
                   key={i}
                   className={`bg-gradient-to-br ${ANSWER_TILES[i % ANSWER_TILES.length].gradient} rounded-2xl p-4 lg:p-6 flex items-center gap-3 lg:gap-4 shadow-lg`}
                 >
-                  <span className="text-2xl lg:text-3xl font-bold opacity-50">
+                  <span className="grid size-10 lg:size-14 shrink-0 place-items-center rounded-xl bg-black/15 text-xl lg:text-3xl" aria-hidden>
                     {ANSWER_TILES[i % ANSWER_TILES.length].shape}
                   </span>
-                  <span className="text-lg lg:text-2xl font-bold">{choice.text}</span>
+                  <span className="text-lg lg:text-3xl font-bold leading-tight">{choice.text}</span>
                 </div>
               )
             )}
@@ -948,9 +945,9 @@ export function HostView({ session }: Props) {
     const isLastQuestion = q && q.questionIndex + 1 >= q.totalQuestions;
 
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="min-h-screen live-stage text-white flex flex-col">
         {/* Top bar */}
-        <header className="bg-slate-800 border-b border-slate-700 px-6 lg:px-10 py-4 flex items-center justify-between">
+        <header className="bg-black/25 border-b border-white/10 backdrop-blur-sm px-6 lg:px-10 py-4 flex items-center justify-between">
           <h2 className="text-xl lg:text-2xl font-bold">
             {t("resultsHeader", { index: q ? q.questionIndex + 1 : "" })}
           </h2>
@@ -1050,13 +1047,18 @@ export function HostView({ session }: Props) {
                       return (
                         <div
                           key={key}
-                          className={`flex items-center gap-3 rounded-xl px-3 py-2 animate-slot-reveal ${isCorrect ? "bg-emerald-500/20 border border-emerald-500/40" : ""}`}
+                          className={`flex items-center gap-3 rounded-xl px-3 py-2 animate-slot-reveal ${isCorrect ? "bg-emerald-500/20 ring-2 ring-emerald-400/70" : correctTexts.size > 0 ? "opacity-55" : ""}`}
                           style={{ animationDelay: `${i * 150}ms` }}
                         >
                           {/* Answer label */}
-                          <div className="w-[35%] lg:w-[30%] shrink-0 flex items-center gap-1.5 min-w-0">
-                            {isCorrect && <span className="text-emerald-400 text-base lg:text-lg shrink-0">✓</span>}
-                            <span className={`text-sm lg:text-base leading-tight truncate ${isCorrect ? "text-emerald-300 font-bold" : "text-slate-300"}`} title={label}>
+                          <div className="w-[40%] shrink-0 flex items-center gap-2 min-w-0">
+                            {q?.question.type === "MULTIPLE_CHOICE" && (
+                              <span className={`grid size-7 lg:size-9 shrink-0 place-items-center rounded-lg text-sm lg:text-lg ${ANSWER_TILES[i % ANSWER_TILES.length].solid}`} aria-hidden>
+                                {ANSWER_TILES[i % ANSWER_TILES.length].shape}
+                              </span>
+                            )}
+                            {isCorrect && <span className="text-emerald-400 text-lg lg:text-2xl font-black shrink-0">✓</span>}
+                            <span className={`text-base lg:text-xl leading-tight line-clamp-2 ${isCorrect ? "text-white font-bold" : "text-slate-200"}`} title={label}>
                               {label}
                             </span>
                           </div>
@@ -1149,8 +1151,8 @@ export function HostView({ session }: Props) {
                           <span className="font-bold text-base lg:text-lg">{entry.playerName}</span>
                         </div>
                         <div className="flex items-center gap-3 lg:gap-4">
-                          <span className="text-green-400 text-sm lg:text-base font-bold bg-green-400/10 px-2 py-1 rounded-lg">
-                            +{entry.delta}
+                          <span className={`text-sm lg:text-base font-bold px-2 py-1 rounded-lg ${entry.delta < 0 ? "text-rose-300 bg-rose-400/10" : "text-green-400 bg-green-400/10"}`}>
+                            {entry.delta < 0 ? "−" : "+"}{Math.abs(entry.delta)}
                           </span>
                           <span className="font-extrabold text-lg lg:text-xl">{entry.score}</span>
                         </div>

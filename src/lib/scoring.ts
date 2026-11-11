@@ -81,6 +81,9 @@ export function checkAnswer(type: string, options: any, value: any): boolean {
     }
     case "CODE_COMPLETION": {
       if (options.mode === "choice") {
+        // The player sees the choices shuffled: the chosen text is what
+        // identifies the answer, an index only fits the original order.
+        if (typeof value.text === "string") return value.text === options.correctAnswer;
         const correctIdx = options.choices?.indexOf(options.correctAnswer) ?? -1;
         return value.selected === correctIdx;
       }
@@ -156,12 +159,20 @@ export function calculatePartialScore(type: string, options: any, value: any, ma
   }
 }
 
+/** Points lost by a wrong answer given as "very sure" */
+export const CONFIDENCE_PENALTY = 200;
+
+/**
+ * Points of an answer once the player has said how sure they are.
+ * A wrong answer given as "very sure" costs CONFIDENCE_PENALTY, so the
+ * result can be negative: the caller decides how far the total may drop.
+ */
 export function applyConfidence(score: number, isCorrect: boolean, confidenceLevel: number): number {
   if (isCorrect) {
     const multipliers: Record<number, number> = { 1: 0.8, 2: 1.0, 3: 1.2 };
     return Math.round(score * (multipliers[confidenceLevel] ?? 1.0));
   } else {
-    if (confidenceLevel === 3) return Math.max(0, score - 200);
+    if (confidenceLevel === 3) return score - CONFIDENCE_PENALTY;
     return score;
   }
 }

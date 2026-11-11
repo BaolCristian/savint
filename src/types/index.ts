@@ -105,6 +105,8 @@ export interface ServerToClientEvents {
       mediaUrl: string | null;
       confidenceEnabled?: boolean;
     };
+    /** Seconds really left, when the question is not starting right now (reconnection, late join) */
+    remainingSeconds?: number;
   }) => void;
   answerCount: (data: { count: number; total: number }) => void;
   confidenceCount: (data: { count: number; total: number }) => void;

@@ -54,10 +54,12 @@ export function sanitizeOptionsClient(
     }
     case "CODE_COMPLETION": {
       const cc = options as CodeCompletionOptions;
+      // The line to complete is the answer: never shown to the player
+      const codeLines = cc.codeLines.map((l, i) => (i === cc.blankLineIndex ? "" : l));
       if (cc.mode === "choice" && cc.choices) {
         const shuffled = [...cc.choices].sort(() => Math.random() - 0.5);
         return {
-          codeLines: cc.codeLines,
+          codeLines,
           blankLineIndex: cc.blankLineIndex,
           correctAnswer: "",
           mode: cc.mode,
@@ -65,7 +67,7 @@ export function sanitizeOptionsClient(
         } as any;
       }
       return {
-        codeLines: cc.codeLines,
+        codeLines,
         blankLineIndex: cc.blankLineIndex,
         correctAnswer: "",
         mode: cc.mode,

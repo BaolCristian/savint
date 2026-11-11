@@ -484,7 +484,23 @@
   animation: drum-beat 0.5s ease-in-out infinite;
 }
 
+/* Palco delle partite live (domanda e risultati, proiettore e telefoni):
+   blu notte del brand con due aloni, al posto del grigio neutro. */
+.live-stage {
+  background-color: #0f1b33;
+  background-image:
+    radial-gradient(60rem 40rem at 8% -10%, color-mix(in srgb, var(--brand-blue) 40%, transparent), transparent 70%),
+    radial-gradient(50rem 36rem at 100% 110%, color-mix(in srgb, var(--brand-magenta) 24%, transparent), transparent 70%);
+}
+
+.timer-ring-arc {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .timer-ring-arc {
+    transition: none;
+  }
   .animate-mystery-pulse,
   .animate-drum-shake,
   .animate-drum-beat,

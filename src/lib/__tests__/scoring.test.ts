@@ -166,6 +166,15 @@ describe("checkAnswer – CODE_COMPLETION", () => {
     it("wrong choice index → false", () => {
       expect(checkAnswer("CODE_COMPLETION", opts, { selected: 0 })).toBe(false);
     });
+
+    // The player sees the choices shuffled, so the answer travels as text
+    it("correct choice text → true", () => {
+      expect(checkAnswer("CODE_COMPLETION", opts, { text: "const" })).toBe(true);
+    });
+
+    it("wrong choice text → false", () => {
+      expect(checkAnswer("CODE_COMPLETION", opts, { text: "let" })).toBe(false);
+    });
   });
 
   describe("text mode", () => {
@@ -310,8 +319,9 @@ describe("applyConfidence", () => {
     expect(applyConfidence(500, false, 3)).toBe(300);
   });
 
-  it("wrong + high confidence, score too low → clamped to 0", () => {
-    expect(applyConfidence(100, false, 3)).toBe(0);
+  it("wrong + high confidence with no points → the malus goes below zero", () => {
+    expect(applyConfidence(0, false, 3)).toBe(-200);
+    expect(applyConfidence(100, false, 3)).toBe(-100);
   });
 
   it("wrong + medium confidence (2) → no change", () => {
