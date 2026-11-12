@@ -115,7 +115,12 @@ export interface ServerToClientEvents {
   questionResult: (data: {
     correctAnswer: QuestionOptions;
     distribution: Record<string, number>;
-    leaderboard: { playerName: string; score: number; delta: number; playerAvatar?: string }[];
+    /**
+     * Best of this question only (points earned now, highest first). The
+     * overall standings are never sent during the game: they are the
+     * podium's surprise.
+     */
+    questionRanking: { playerName: string; points: number; playerAvatar?: string }[];
   }) => void;
   /** Answer stored; the outcome arrives later with answerFeedback */
   answerReceived: (data: { confidenceEnabled: boolean }) => void;

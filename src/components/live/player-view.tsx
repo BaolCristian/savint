@@ -1110,17 +1110,11 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           {playerStats && (
             <div className="w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "100ms" }}>
               <div className="grid grid-cols-2 gap-2">
-                {playerStats.position > 0 ? (
-                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                    <p className="text-xl sm:text-2xl font-black text-white">{playerStats.position}&deg;</p>
-                    <p className="text-xs text-white/70">{t("positionLabel")}</p>
-                  </div>
-                ) : (
-                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                    <p className="text-xl sm:text-2xl font-black text-white">🤫</p>
-                    <p className="text-xs text-white/70">{t("positionSecret")}</p>
-                  </div>
-                )}
+                {/* Position in this question; the overall one waits for the podium */}
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{playerStats.position}&deg;</p>
+                  <p className="text-xs text-white/70">{t("positionQuestionLabel")}</p>
+                </div>
                 <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                   <p className="text-xl sm:text-2xl font-black text-white">{(playerStats.responseTimeMs / 1000).toFixed(1)}s</p>
                   <p className="text-xs text-white/70">{t("responseTimeLabel")}</p>

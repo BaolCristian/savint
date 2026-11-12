@@ -1264,7 +1264,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
   try {
     const dbAnswers = await prisma.answer.findMany({
       where: { sessionId: game.sessionId, questionId: question.id },
-      select: { value: true, isCorrect: true, playerName: true, score: true },
+      select: { value: true, isCorrect: true, playerName: true, score: true, responseTimeMs: true },
     });
 
     const distribution = buildDistribution(
@@ -1273,12 +1273,22 @@ async function runShowResults(io: TypedIO, game: GameState) {
       question.options
     );
 
-    const leaderboard = buildLeaderboard(game);
+    // Ranking of this question alone: who earned most now, the faster
+    // first on equal points. The overall standings stay on the server.
+    const questionRanking = dbAnswers
+      .filter((a) => a.score > 0 && !game.kickedNames.has(a.playerName))
+      .sort((a, b) => b.score - a.score || (a.responseTimeMs ?? 0) - (b.responseTimeMs ?? 0))
+      .slice(0, 5)
+      .map((a) => ({
+        playerName: a.playerName,
+        points: a.score,
+        playerAvatar: game.players.get(a.playerName)?.avatar,
+      }));
 
     io.to(room(game.sessionId)).emit("questionResult", {
       correctAnswer: question.options,
       distribution,
-      leaderboard: leaderboard.slice(0, 10),
+      questionRanking,
     });
 
     const allSessionAnswers = await prisma.answer.findMany({
@@ -1290,9 +1300,6 @@ async function runShowResults(io: TypedIO, game: GameState) {
     const totalPlayers = realPlayerCount(game);
 
     const classPercent = classCorrectPercent(dbAnswers, totalPlayers);
-    // Last question: no overall position, the final standings are the
-    // podium's surprise
-    const isLastQuestion = game.currentQuestionIndex === game.questions.length - 1;
 
     for (const [playerName, player] of game.players) {
       if (playerName === "__host__") continue;
@@ -1310,7 +1317,9 @@ async function runShowResults(io: TypedIO, game: GameState) {
       }
       const playerAnswers = allSessionAnswers.filter((a) => a.playerName === playerName);
       const currentAnswer = playerAnswers.find((a) => a.questionId === question.id);
-      const position = leaderboard.findIndex((l) => l.playerName === playerName) + 1;
+      // Position in this question: one more than those who earned more now
+      const earned = revealed?.score ?? 0;
+      const position = 1 + dbAnswers.filter((a) => a.score > earned).length;
       const correctCount = playerAnswers.filter((a) => a.isCorrect).length;
       const totalAnswered = playerAnswers.length;
       let streak = 0;
@@ -1320,7 +1329,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
       }
       if (playerSocket) {
         playerSocket.emit("playerStats", {
-          position: isLastQuestion ? 0 : position,
+          position,
           totalPlayers,
           responseTimeMs: currentAnswer?.responseTimeMs ?? 0,
           correctCount,

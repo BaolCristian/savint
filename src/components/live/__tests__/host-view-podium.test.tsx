@@ -101,7 +101,7 @@ describe("HostView: final podium reveal", () => {
   });
 });
 
-describe("HostView: last question keeps the standings secret", () => {
+describe("HostView: after every question, only that question's ranking", () => {
   beforeEach(() => {
     fake.removeAllListeners();
     fake.sent = [];
@@ -111,10 +111,9 @@ describe("HostView: last question keeps the standings secret", () => {
   const result = {
     correctAnswer: { choices: [{ text: "4", isCorrect: true }] },
     distribution: { "4": 2 },
-    leaderboard: [
-      { playerName: "Anna", score: 5000, delta: 200 },
-      { playerName: "Bruno", score: 900, delta: 800 },
-      { playerName: "Carla", score: 4000, delta: 0 },
+    questionRanking: [
+      { playerName: "Bruno", points: 800 },
+      { playerName: "Anna", points: 200 },
     ],
   };
 
@@ -134,14 +133,26 @@ describe("HostView: last question keeps the standings secret", () => {
     expect(screen.getByText("bestThisQuestion")).toBeTruthy();
     expect(screen.queryByText("top5")).toBeNull();
     const names = screen.getAllByText(/^(Anna|Bruno|Carla)$/).map((el) => el.textContent);
-    expect(names).toEqual(["Bruno", "Anna"]); // Carla made 0 on this question
-    expect(screen.queryByText("5000")).toBeNull();
+    expect(names).toEqual(["Bruno", "Anna"]);
+    expect(screen.getByText("+800")).toBeTruthy();
   });
 
-  it("other questions keep the overall top 5", () => {
+  it("the other questions show this question's best too, not the overall top 5", () => {
     toResults(0, 2);
-    expect(screen.getByText("top5")).toBeTruthy();
-    expect(screen.queryByText("bestThisQuestion")).toBeNull();
+    expect(screen.getByText("bestThisQuestion")).toBeTruthy();
+    expect(screen.queryByText("top5")).toBeNull();
+  });
+
+  it("says so when nobody scored", () => {
+    render(<HostView session={SESSION} />);
+    fake.fire("questionStart", {
+      questionIndex: 0,
+      totalQuestions: 2,
+      question: { text: "2+2?", type: "MULTIPLE_CHOICE", options: result.correctAnswer, timeLimit: 30, points: 1000, mediaUrl: null },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /skipToResults/ }));
+    fake.fire("questionResult", { ...result, questionRanking: [] });
+    expect(screen.getByText("nobodyScored")).toBeTruthy();
   });
 });
 

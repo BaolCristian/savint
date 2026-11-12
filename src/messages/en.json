@@ -425,6 +425,7 @@
     "questionWas": "The question was:",
     "pointsLabel": "points",
     "positionLabel": "Position",
+    "positionQuestionLabel": "On this question",
     "responseTimeLabel": "Response time",
     "correctCountLabel": "Correct",
     "streakLabel": "Streak",

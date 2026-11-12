@@ -322,42 +322,37 @@ describe("live quiz anti-cheat", () => {
     });
   });
 
-  describe("final suspense", () => {
-    it("on the last question players get no overall position", async () => {
+  describe("ranking of the single question", () => {
+    const ANSWERS = [
+      { value: { selected: [0] }, isCorrect: true, playerName: "Bruno", score: 400, questionId: "q1", responseTimeMs: 900 },
+      { value: { selected: [0, 1] }, isCorrect: true, playerName: "Alice", score: 900, questionId: "q1", responseTimeMs: 100 },
+      { value: { selected: [0, 1] }, isCorrect: true, playerName: "Carla", score: 900, questionId: "q1", responseTimeMs: 50 },
+      { value: { selected: [2] }, isCorrect: false, playerName: "Dario", score: 0, questionId: "q1", responseTimeMs: 10 },
+    ];
+
+    it("the reveal carries this question's best — never the overall standings", async () => {
       await start();
-      alice.emit("submitAnswer", { value: { selected: [0, 1] } });
-      await tick();
-      (prisma.answer.findMany as any).mockResolvedValue([
-        { value: { selected: [0, 1] }, isCorrect: true, playerName: "Alice", score: 900, questionId: "q1", responseTimeMs: 100 },
-      ]);
+      (prisma.answer.findMany as any).mockResolvedValue(ANSWERS);
       host.emit("showResults");
-      await tick();
-      const stats = alice.emitted.find((e) => e.event === "playerStats");
-      expect(stats?.payload.position).toBe(0);
+      await tick(6);
+      const result = io.getRoomEmits().find((e) => e.event === "questionResult")!.payload;
+      // Most points first, the faster first on equal points, nobody at zero
+      expect(result.questionRanking.map((r: any) => [r.playerName, r.points])).toEqual([
+        ["Carla", 900], ["Alice", 900], ["Bruno", 400],
+      ]);
+      expect(result.leaderboard).toBeUndefined();
     });
 
-    it("before the last question the position is still sent", async () => {
-      sessionCounter += 1;
-      currentTestSessionId = `anti-two-${sessionCounter}`;
-      currentTestPin = `pin-two-${sessionCounter}`;
-      (prisma.session.findUnique as any).mockResolvedValue(
-        makeSession({ status: "IN_PROGRESS", quiz: { questions: [QUESTION, { ...QUESTION, id: "q2", order: 1 }] } }),
-      );
-      const h = newSocket("host2");
-      const p = newSocket("p2");
-      await join(h, "__host__", { hostToken: createHostToken(currentTestSessionId) });
-      await join(p, "Paola");
-      h.emit("startGame");
-      await tick();
-      p.emit("submitAnswer", { value: { selected: [0, 1] } });
-      await tick();
-      (prisma.answer.findMany as any).mockResolvedValue([
-        { value: { selected: [0, 1] }, isCorrect: true, playerName: "Paola", score: 900, questionId: "q1", responseTimeMs: 100 },
-      ]);
-      h.emit("showResults");
-      await tick();
-      expect(p.emitted.find((e) => e.event === "playerStats")?.payload.position).toBe(1);
+    it("each player gets their position in this question, on the last one too", async () => {
+      const bruno = newSocket("bruno");
+      await join(bruno, "Bruno");
+      await start();
+      (prisma.answer.findMany as any).mockResolvedValue(ANSWERS);
+      host.emit("showResults");
+      await tick(6);
+      const pos = (s: FakeSocket) => s.emitted.find((e) => e.event === "playerStats")?.payload.position;
+      expect(pos(alice)).toBe(1); // level with Carla on points
+      expect(pos(bruno)).toBe(3);
     });
   });
 });
-

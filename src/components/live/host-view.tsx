@@ -154,7 +154,8 @@ interface QuestionData {
 interface ResultData {
   correctAnswer: QuestionOptions;
   distribution: Record<string, number>;
-  leaderboard: { playerName: string; playerAvatar?: string; score: number; delta: number }[];
+  /** Best of this question only; the overall standings wait for the podium */
+  questionRanking: { playerName: string; playerAvatar?: string; points: number }[];
 }
 
 interface GameOverData {
@@ -1089,76 +1090,37 @@ export function HostView({ session }: Props) {
 
             {/* Leaderboard + actions */}
             <section className="lg:w-2/5 flex flex-col gap-6">
-              {/* Last question: only this question's ranking — the final
-                  standings stay a secret until the podium */}
-              {resultData && isLastQuestion && (
+              {/* Only this question's ranking, after every question: the
+                  overall standings stay a secret until the podium */}
+              {resultData && (
                 <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">⚡</span>
                     <h3 className="text-xl lg:text-2xl font-bold">{t("bestThisQuestion")}</h3>
                   </div>
                   <p className="text-sm text-slate-400 mb-5">{t("finalStandingsSecret")}</p>
-                  {(() => {
-                    const best = [...resultData.leaderboard]
-                      .filter((e) => e.delta > 0)
-                      .sort((x, y) => y.delta - x.delta)
-                      .slice(0, 5);
-                    if (best.length === 0) {
-                      return <p className="text-slate-400">{t("nobodyScored")}</p>;
-                    }
-                    return (
-                      <div className="space-y-3">
-                        {best.map((entry, i) => (
-                          <div
-                            key={entry.playerName}
-                            className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 animate-slide-up-dramatic"
-                            style={{ animationDelay: `${i * 150 + 500}ms` }}
-                          >
-                            <div className="flex items-center gap-3 lg:gap-4 min-w-0">
-                              <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
-                              <span className="font-bold text-base lg:text-lg truncate">{entry.playerName}</span>
-                            </div>
-                            <span className="text-green-400 text-lg lg:text-xl font-extrabold bg-green-400/10 px-3 py-1 rounded-lg">
-                              +{entry.delta}
-                            </span>
+                  {resultData.questionRanking.length === 0 ? (
+                    <p className="text-slate-400">{t("nobodyScored")}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {resultData.questionRanking.map((entry, i) => (
+                        <div
+                          key={entry.playerName}
+                          className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 animate-slide-up-dramatic"
+                          style={{ animationDelay: `${i * 150 + 500}ms` }}
+                        >
+                          <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+                            <span className="text-xl lg:text-2xl font-black text-slate-400 w-7 shrink-0 tabular-nums">{i + 1}</span>
+                            <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
+                            <span className="font-bold text-base lg:text-xl truncate">{entry.playerName}</span>
                           </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* Leaderboard */}
-              {resultData && !isLastQuestion && resultData.leaderboard.length > 0 && (
-                <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 lg:p-8 flex-1">
-                  <div className="flex items-center gap-2 mb-6">
-                    <span className="text-2xl">🏆</span>
-                    <h3 className="text-xl lg:text-2xl font-bold">{t("top5")}</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {resultData.leaderboard.slice(0, 5).map((entry, i) => (
-                      <div
-                        key={entry.playerName}
-                        className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 transition-colors animate-slide-up-dramatic"
-                        style={{ animationDelay: `${i * 150 + 500}ms` }}
-                      >
-                        <div className="flex items-center gap-3 lg:gap-4">
-                          <span className="text-xl lg:text-2xl font-black text-slate-500 w-8">
-                            {i + 1}
+                          <span className="text-green-400 text-lg lg:text-xl font-extrabold bg-green-400/10 px-3 py-1 rounded-lg tabular-nums">
+                            +{entry.points}
                           </span>
-                          <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
-                          <span className="font-bold text-base lg:text-lg">{entry.playerName}</span>
                         </div>
-                        <div className="flex items-center gap-3 lg:gap-4">
-                          <span className={`text-sm lg:text-base font-bold px-2 py-1 rounded-lg ${entry.delta < 0 ? "text-rose-300 bg-rose-400/10" : "text-green-400 bg-green-400/10"}`}>
-                            {entry.delta < 0 ? "−" : "+"}{Math.abs(entry.delta)}
-                          </span>
-                          <span className="font-extrabold text-lg lg:text-xl">{entry.score}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
