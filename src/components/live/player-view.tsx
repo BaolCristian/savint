@@ -376,6 +376,12 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
         setRenameError(t(data.message));
         return;
       }
+      // Rename onto a name the teacher removed: the player is still in the
+      // game, so the reason goes in the rename panel and the identity stays
+      if (data.message === "nameRemoved") {
+        setRenameError(t("nicknameKicked"));
+        return;
+      }
       // If rejoin failed, forget the saved identity and stay on join screen
       if (STALE_SESSION_ERRORS.has(data.message)) clearSaved();
       if (data.message === "nicknameKicked") {
@@ -417,7 +423,9 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           pin,
         });
       }
-      if (data.status === "IN_PROGRESS") setGameStarted(true);
+      // Set both ways: a new game entered from the same page (after
+      // "play again") starts in its waiting room, where the name is free.
+      setGameStarted(data.status === "IN_PROGRESS");
       setError(null);
       setPhase((p) => (p === "join" ? "waiting" : p));
     };
@@ -610,6 +618,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
     socket?.emit("leaveSession");
     clearSaved();
     setPhase("join");
+    setGameStarted(false);
     setPin("");
     setName("");
     setQuestionData(null);
@@ -1167,6 +1176,7 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
 
     const handlePlayAgain = () => {
       setPhase("join");
+      setGameStarted(false);
       setPin("");
       setQuestionData(null);
       setFeedback(null);

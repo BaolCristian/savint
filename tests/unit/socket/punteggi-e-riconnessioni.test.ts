@@ -293,6 +293,29 @@ describe("live quiz: scores and reconnections", () => {
     });
   });
 
+  describe("names in the waiting room", () => {
+    it("a name left free in the waiting room can be taken by renaming", async () => {
+      const bob = newSocket("bob");
+      await join(bob, "Bob");
+      bob.emit("leaveSession");
+      await tick();
+      alice.emit("renamePlayer", { newName: "Bob" });
+      await tick();
+      expect(errorsOf(alice)).toEqual([]);
+      expect(alice.emitted.some((e) => e.event === "renameSuccess")).toBe(true);
+    });
+
+    it("renaming onto a name the teacher removed is refused with its own reason", async () => {
+      const bob = newSocket("bob");
+      await join(bob, "Bob");
+      host.emit("kickPlayer", { playerName: "Bob" });
+      await tick();
+      alice.emit("renamePlayer", { newName: "Bob" });
+      await tick();
+      expect(errorsOf(alice)).toEqual(["nameRemoved"]);
+    });
+  });
+
   describe("reconnections", () => {
     it("the old socket closing late does not detach the reconnected player", async () => {
       await start();

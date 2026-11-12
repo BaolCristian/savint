@@ -164,6 +164,48 @@ describe("PlayerView: game cancelled by the teacher", () => {
   });
 });
 
+describe("PlayerView: a second game on the same page", () => {
+  beforeEach(() => {
+    fake.removeAllListeners();
+    fake.sent = [];
+    localStorage.clear();
+  });
+
+  it("after a finished game, the name can be changed again in the next waiting room", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      joinAs("Mario");
+      fake.fire("gameState", { sessionId: "s1", status: "IN_PROGRESS", playerToken: "tok-1" });
+      fake.fire("gameOver", { podium: [], fullResults: [{ playerName: "Mario", score: 900 }] });
+      act(() => { vi.advanceTimersByTime(11000); });
+      fireEvent.click(screen.getByRole("button", { name: "playAgain" }));
+
+      // New game, still in its waiting room
+      fireEvent.change(screen.getByLabelText("pinLabel"), { target: { value: "654321" } });
+      fireEvent.click(screen.getByRole("button", { name: /Entra nel quiz/ }));
+      fake.fire("gameState", { sessionId: "s2", status: "WAITING", playerToken: "tok-2" });
+
+      fireEvent.click(screen.getByRole("button", { name: /editProfile/ }));
+      expect(screen.getByLabelText("yourName")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a rename refused because the name was removed by the teacher shows why, in the panel", () => {
+    joinAs("Mario");
+    fake.fire("gameState", { sessionId: "s1", status: "WAITING", playerToken: "tok-1" });
+    fireEvent.click(screen.getByRole("button", { name: /editProfile/ }));
+    fireEvent.change(screen.getByLabelText("yourName"), { target: { value: "Luigi" } });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    fake.fire("sessionError", { message: "nameRemoved" });
+
+    expect(screen.getByText("nicknameKicked")).toBeTruthy();
+    // Still in the game: the saved identity is kept
+    expect(localStorage.getItem("savint-session")).not.toBeNull();
+  });
+});
+
 describe("PlayerView: podium suspense", () => {
   beforeEach(() => {
     fake.removeAllListeners();

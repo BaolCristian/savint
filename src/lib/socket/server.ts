@@ -1065,8 +1065,9 @@ export function setupSocketHandlers(io: TypedIO) {
 
       if (trimmed === currentPlayerName) return;
 
+      // Own reason, not the join one: the player is still in the game
       if (trimmed === "__host__" || game.kickedNames.has(trimmed)) {
-        socket.emit("sessionError", { message: "nicknameKicked" });
+        socket.emit("sessionError", { message: "nameRemoved" });
         return;
       }
 
@@ -1135,6 +1136,9 @@ export function setupSocketHandlers(io: TypedIO) {
 
       game.players.delete(currentPlayerName);
       socket.leave(room(currentSessionId));
+      // In the waiting room nothing is tied to the name yet: leaving frees
+      // it. Once the game has started the token stays, guarding the score.
+      if (game.phase === "lobby") game.playerTokens.delete(currentPlayerName);
 
       io.to(room(currentSessionId)).emit("playerLeft", {
         playerName: currentPlayerName,
