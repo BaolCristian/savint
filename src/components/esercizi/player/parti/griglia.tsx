@@ -24,9 +24,20 @@ export function InputGriglia({ parte, valore, onChange, disabilitato }: InputPar
     ? (valore as boolean[][])
     : colonne.map(() => righe.map(() => false));
 
+  // Le righe nell'ordine mescolato per questo studente; gli indici restano
+  // quelli originali, gli stessi della matrice.
+  const ordine = parte.ordine && parte.ordine.length === righe.length ? parte.ordine : righe.map((_, i) => i);
+
   function commuta(risposta: number, scelta: number) {
     const copia = ticks.map((r) => [...r]);
-    copia[risposta]![scelta] = !copia[risposta]![scelta];
+    if (parte.unaPerRiga) {
+      // Pulsanti di opzione: scegliere una colonna toglie le altre della riga.
+      copia.forEach((colonna, j) => {
+        colonna[scelta] = j === risposta;
+      });
+    } else {
+      copia[risposta]![scelta] = !copia[risposta]![scelta];
+    }
     onChange(copia);
   }
 
@@ -43,16 +54,17 @@ export function InputGriglia({ parte, valore, onChange, disabilitato }: InputPar
         </tr>
       </thead>
       <tbody>
-        {righe.map((r, i) => (
+        {ordine.map((i, posizione) => (
           <tr key={i}>
             <th scope="row" className="text-left font-normal">
-              <ContenutoHtml html={r} />
+              <ContenutoHtml html={righe[i] ?? ""} />
             </th>
             {colonne.map((_, j) => (
               <td key={j} className="text-center">
                 <input
-                  type="checkbox"
-                  aria-label={t("cellaGriglia", { riga: i + 1, colonna: j + 1 })}
+                  type={parte.unaPerRiga ? "radio" : "checkbox"}
+                  name={parte.unaPerRiga ? `${parte.path}-riga-${i}` : undefined}
+                  aria-label={t("cellaGriglia", { riga: posizione + 1, colonna: j + 1 })}
                   checked={ticks[j]?.[i] ?? false}
                   disabled={disabilitato}
                   onChange={() => commuta(j, i)}

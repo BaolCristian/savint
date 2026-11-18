@@ -43,6 +43,12 @@ export function costruisciParte(p: PartBase): PartePubblica {
   } else if (p.type === "m_n_x") {
     parte.righe = ((impostazioni.choices as string[] | undefined) ?? []).map(sostituisci);
     parte.colonne = ((impostazioni.answers as string[] | undefined) ?? []).map(sostituisci);
+    // Pulsanti di opzione: una sola risposta per riga (la tabella Vero/Falso).
+    if (impostazioni.displayType === "radiogroup") parte.unaPerRiga = true;
+    // L'ordine mescolato delle righe per questo studente: per m_n_x il motore
+    // lo tiene in `shuffleChoices` (gli indici restano quelli originali).
+    const ordineRighe = (p as unknown as { shuffleChoices?: number[] }).shuffleChoices;
+    if (Array.isArray(ordineRighe) && ordineRighe.length === parte.righe.length) parte.ordine = [...ordineRighe];
   } else if (p.type === "gapfill") {
     parte.gaps = p.gaps.map(costruisciParte);
   }

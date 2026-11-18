@@ -519,7 +519,7 @@ describe("PlayerEsercizio", () => {
     const { container } = montaggio({ content: grigliaConVariabiliFixture, seed: "seme-griglia" });
     await waitFor(() => expect(container.querySelectorAll(".katex").length).toBeGreaterThan(1));
     expect(container.textContent).not.toMatch(/\\var\{/);
-    expect(screen.getAllByRole("checkbox").length).toBe(4);
+    expect(screen.getAllByRole("radio").length).toBe(4);
   });
 });
 
@@ -711,8 +711,8 @@ describe("PlayerEsercizio — ripasso dopo un errore", () => {
   it("su una griglia la risposta attesa sono le coppie riga-colonna, non la matrice grezza", async () => {
     global.fetch = vi.fn(async () => rispostaIncorretta()) as never;
     montaggio({ content: goniometriaValori, seed: "seme-05" });
-    await waitFor(() => screen.getAllByRole("checkbox"));
-    await userEvent.click(screen.getAllByRole("checkbox")[0]!);
+    await waitFor(() => screen.getAllByRole("radio"));
+    await userEvent.click(screen.getAllByRole("radio")[0]!);
     await userEvent.click(screen.getByRole("button", { name: messaggiIt.esercizi.invia }));
     await waitFor(() =>
       screen.getByRole("button", { name: messaggiIt.esercizi.comeSiRisolve }),

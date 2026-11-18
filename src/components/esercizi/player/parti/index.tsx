@@ -20,13 +20,17 @@ export interface PartePubblica {
   /** 1_n_2, m_n_2: gli HTML delle scelte, nell'ordine del docente. */
   scelte?: string[];
   /** 1_n_2, m_n_2: l'ordine in cui MOSTRARLE a questo studente (indici
-   * originali, dal mescolamento del motore, `shuffleAnswers`). Le risposte
-   * restano sempre nell'ordine originale. Assente: l'ordine del docente. */
+   * originali, dal mescolamento del motore, `shuffleAnswers`); m_n_x: lo
+   * stesso per le righe (`shuffleChoices`). Le risposte restano sempre
+   * nell'ordine originale. Assente: l'ordine del docente. */
   ordine?: number[];
   /** m_n_x: le scelte (righe). */
   righe?: string[];
   /** m_n_x: le risposte (colonne). */
   colonne?: string[];
+  /** m_n_x: una sola risposta per riga (pulsanti di opzione), come nella
+   * tabella Vero/Falso. Assente: caselle libere. */
+  unaPerRiga?: boolean;
   /** gapfill: una parte per spazio da riempire. */
   gaps?: PartePubblica[];
 }

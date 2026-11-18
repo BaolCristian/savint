@@ -65,6 +65,30 @@ describe("InputParte", () => {
     expect(onChange).toHaveBeenLastCalledWith([true, false]);
   });
 
+  it("m_n_x a una scelta per riga (Vero/Falso): pulsanti di opzione, e scegliere una colonna toglie l'altra", async () => {
+    const onChange = vi.fn();
+    const parte = { ...base, type: "m_n_x", unaPerRiga: true, righe: ["<p>r1</p>", "<p>r2</p>"], colonne: ["<p>Vero</p>", "<p>Falso</p>"] } as PartePubblica;
+    // Riga 1 già su «Vero»: [colonna][riga].
+    renderIntl(<InputParte parte={parte} valore={[[true, false], [false, false]]} onChange={onChange} disabilitato={false} />);
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+    const radio = screen.getAllByRole("radio");
+    expect(radio).toHaveLength(4);
+    // Riga 1, colonna «Falso»: il secondo pulsante.
+    await userEvent.click(radio[1]!);
+    expect(onChange).toHaveBeenLastCalledWith([[false, false], [true, false]]);
+  });
+
+  it("m_n_x: le righe compaiono nell'ordine mescolato, gli indici della matrice restano quelli originali", async () => {
+    const onChange = vi.fn();
+    const parte = { ...base, type: "m_n_x", unaPerRiga: true, ordine: [1, 0], righe: ["<p>prima</p>", "<p>seconda</p>"], colonne: ["<p>Vero</p>", "<p>Falso</p>"] } as PartePubblica;
+    renderIntl(<InputParte parte={parte} valore={[[false, false], [false, false]]} onChange={onChange} disabilitato={false} />);
+    const righe = screen.getAllByRole("row").slice(1).map((r) => r.textContent);
+    expect(righe).toEqual(["seconda", "prima"]);
+    // «Vero» sulla prima riga MOSTRATA, che è la riga originale 1.
+    await userEvent.click(screen.getAllByRole("radio")[0]!);
+    expect(onChange).toHaveBeenLastCalledWith([[false, true], [false, false]]);
+  });
+
   it("m_n_x: manda sempre la matrice ticks [risposta][scelta]", async () => {
     const onChange = vi.fn();
     const parte = { ...base, type: "m_n_x", righe: ["<p>r1</p>", "<p>r2</p>"], colonne: ["<p>c1</p>", "<p>c2</p>"] } as PartePubblica;
