@@ -1,4 +1,5 @@
 import type { QuestionType } from "@prisma/client";
+import { shuffle, shuffleAwayFromOriginal } from "@/lib/shuffle";
 import type {
   QuestionOptions,
   MultipleChoiceOptions,
@@ -31,13 +32,17 @@ export function sanitizeOptionsClient(
       return { acceptedAnswers: [] } as any;
     case "ORDERING": {
       const ord = options as OrderingOptions;
-      const shuffled = [...ord.items].sort(() => Math.random() - 0.5);
+      // Never hand out the solution: shuffle away from the CORRECT order
+      const correct = ord.correctOrder?.length === ord.items.length
+        ? ord.correctOrder.map((i) => ord.items[i])
+        : ord.items;
+      const shuffled = shuffleAwayFromOriginal(correct);
       return { items: shuffled, correctOrder: [] } as any;
     }
     case "MATCHING": {
       const mat = options as MatchingOptions;
       const lefts = mat.pairs.map((p) => p.left);
-      const rights = mat.pairs.map((p) => p.right).sort(() => Math.random() - 0.5);
+      const rights = shuffleAwayFromOriginal(mat.pairs.map((p) => p.right));
       return { pairs: lefts.map((l, i) => ({ left: l, right: rights[i] })) } as MatchingOptions;
     }
     case "SPOT_ERROR": {
@@ -57,7 +62,7 @@ export function sanitizeOptionsClient(
       // The line to complete is the answer: never shown to the player
       const codeLines = cc.codeLines.map((l, i) => (i === cc.blankLineIndex ? "" : l));
       if (cc.mode === "choice" && cc.choices) {
-        const shuffled = [...cc.choices].sort(() => Math.random() - 0.5);
+        const shuffled = shuffle(cc.choices);
         return {
           codeLines,
           blankLineIndex: cc.blankLineIndex,
