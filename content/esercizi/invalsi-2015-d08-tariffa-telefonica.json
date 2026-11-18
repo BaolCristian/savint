@@ -1,0 +1,68 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D8 · La tariffa del cellulare",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D8.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "modellizzazione",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D8 · La tariffa del cellulare",
+    "statement": "<p>Il piano tariffario di un cellulare prevede un costo di 0,15 euro per lo «scatto alla risposta» più 0,12 euro per minuto o frazione di minuto di conversazione. Per esempio, se parlo 1 minuto e 1 secondo pago (0,15 + 0,24) euro, come se parlassi esattamente 2 minuti.</p>",
+    "advice": "<p>a) 7 minuti e 10 secondi si pagano come 8 minuti: \\(0{,}15 + 8 \\cdot 0{,}12 = 0{,}15 + 0{,}96 = 1{,}11\\) euro. b) Tolto lo scatto restano \\(4 - 0{,}15 = 3{,}85\\) euro, e \\(3{,}85 : 0{,}12 \\approx 32{,}08\\): si possono pagare 32 minuti. Il 33° porterebbe la spesa a \\(0{,}15 + 33 \\cdot 0{,}12 = 4{,}11\\) euro.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti euro si spendono per una telefonata che dura 7 minuti e 10 secondi?</p>",
+        "minValue": "1.11",
+        "maxValue": "1.11",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Se nel cellulare mi è rimasto un credito di 4 euro e voglio fare una telefonata, quanti minuti al massimo posso farla durare?</p>",
+        "minValue": "32",
+        "maxValue": "32",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

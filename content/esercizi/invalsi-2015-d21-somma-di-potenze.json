@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D21 · Somma di potenze",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D21.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "potenze",
+      "raccoglimento"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D21 · Somma di potenze",
+    "statement": "<p>L'espressione \\(a^{43} + a^{44}\\) è uguale a</p>",
+    "advice": "<p>Si raccoglie \\(a^{43}\\): \\(a^{43} + a^{44} = a^{43} + a^{43} \\cdot a = a^{43}(1 + a)\\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(a^{44 \\cdot 43}\\)</p>",
+          "<p>\\(a^{43} \\cdot (a + 1)\\)</p>",
+          "<p>\\(a^{87}\\)</p>",
+          "<p>\\(2a^{87}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

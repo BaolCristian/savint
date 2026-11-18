@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D29 · Simmetrie dei triangoli",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D29.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "simmetrie",
+      "triangoli"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D29 · Simmetrie dei triangoli",
+    "statement": "<p>Solo una delle seguenti affermazioni è vera. Quale?</p>",
+    "advice": "<p>Nessun triangolo ha un centro di simmetria (ruotato di mezzo giro, un vertice finirebbe su un lato). I triangoli isosceli hanno un asse di simmetria (gli equilateri tre), gli scaleni nessuno: quindi solo «alcuni» triangoli ne hanno uno.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Ogni triangolo ha un centro di simmetria</p>",
+          "<p>Tutti i triangoli equilateri hanno un centro di simmetria</p>",
+          "<p>Ogni triangolo ha almeno un asse di simmetria</p>",
+          "<p>Alcuni triangoli hanno un asse di simmetria</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

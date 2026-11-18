@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D15 · Rette parallele",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D15.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "retta",
+      "piano cartesiano",
+      "coefficiente angolare"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D15 · Rette parallele",
+    "statement": "<p>Nel piano cartesiano \\(Oxy\\) la retta di equazione \\(y = 3x - 5\\) e la retta di equazione \\(y = \\frac{k}{2}x - 1\\) sono tra loro parallele; il valore di \\(k\\) è</p>",
+    "advice": "<p>Due rette sono parallele quando hanno lo stesso coefficiente angolare: \\(\\frac{k}{2} = 3\\), quindi \\(k = 6\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(-3\\)</p>",
+          "<p>\\(-6\\)</p>",
+          "<p>\\(3\\)</p>",
+          "<p>\\(6\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

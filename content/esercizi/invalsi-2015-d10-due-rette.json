@@ -1,0 +1,93 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D10 · Le funzioni f e g",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D10.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "funzioni lineari",
+      "equazioni",
+      "disequazioni",
+      "grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D10 · Le funzioni f e g",
+    "statement": "<p>Su un piano cartesiano sono rappresentati i grafici delle funzioni \\(f\\) e \\(g\\) definite nell'insieme dei numeri reali e rappresentate dalle formule \\(f(x) = 2x - 5\\) e \\(g(x) = -3x + 1\\). <img data-savint-immagine=\"f92ed9e2-4daa-41c3-9596-6895e0736671.png\" alt=\"Le rette grafico di f(x) = 2x − 5 e di g(x) = −3x + 1 nel piano cartesiano\"></p>",
+    "advice": "<p>a) \\(f(x) = g(x)\\): \\(2x - 5 = -3x + 1\\), cioè \\(5x = 6\\), \\(x = 1{,}2\\). Vera. b) \\(f(x) &gt; 0\\) quando \\(2x &gt; 5\\), cioè per \\(x &gt; 2{,}5\\), non per \\(x &gt; 0\\) (per esempio \\(f(1) = -3\\)). Falsa. c) \\(f(x) = 0\\) per \\(x = 2{,}5\\). Vera. d) \\(g(x) &gt; f(x)\\): \\(-3x + 1 &gt; 2x - 5\\), cioè \\(x &lt; 1{,}2\\): a sinistra del punto d'incontro la retta di \\(g\\) sta sopra. Vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Aiutandoti anche con i grafici di \\(f\\) e di \\(g\\), indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>\\(f(x) = g(x)\\) se e solo se \\(x = 1{,}2\\)</p>",
+          "<p>\\(f(x) &gt; 0\\) se e solo se \\(x &gt; 0\\)</p>",
+          "<p>\\(f(x) = 0\\) se e solo se \\(x = 2{,}5\\)</p>",
+          "<p>\\(g(x) &gt; f(x)\\) se e solo se \\(x &lt; 1{,}2\\)</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "4/4",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

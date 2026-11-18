@@ -1,0 +1,84 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D3 · Diagonali dei quadrilateri",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D3.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "quadrilateri",
+      "condizioni necessarie e sufficienti"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2015 · D3 · Diagonali dei quadrilateri",
+    "statement": "<p>Leggi con attenzione le affermazioni sui quadrilateri e sulle loro diagonali.</p>",
+    "advice": "<p>a) Essere un rettangolo non è necessario: anche il trapezio isoscele ha le diagonali uguali. Falsa. b) Ogni rettangolo ha le diagonali uguali, quindi essere un rettangolo basta: la condizione è sufficiente. Vera. c) Un rombo con le diagonali uguali è un quadrato, e un quadrato (che è anche un rombo) ha le diagonali uguali: la condizione è necessaria e sufficiente. Vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Condizione necessaria affinché un quadrilatero abbia le diagonali uguali è che sia un rettangolo</p>",
+          "<p>Condizione sufficiente affinché un quadrilatero abbia le diagonali uguali è che sia un rettangolo</p>",
+          "<p>Condizione necessaria e sufficiente affinché un rombo sia un quadrato è che abbia le diagonali uguali</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

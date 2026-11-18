@@ -1,0 +1,90 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D11 · Il numero π",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D11.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "numeri irrazionali",
+      "circonferenza"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D11 · Il numero π",
+    "statement": "<p>Considera il numero \\(\\pi\\).</p>",
+    "advice": "<p>a) \\(\\pi\\) è il rapporto fra la lunghezza di una circonferenza e il suo diametro: \\(C = \\pi d = 2\\pi r\\). b) Irrazionale vuol dire che non si può scrivere come frazione: il suo sviluppo decimale è illimitato e non periodico (\\(3{,}14159\\ldots\\)).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) \\(\\pi\\) può essere definito come</p>",
+        "choices": [
+          "<p>il rapporto tra l'area di un cerchio e il suo raggio</p>",
+          "<p>il rapporto tra la lunghezza di una circonferenza e il suo diametro</p>",
+          "<p>il rapporto tra l'area di un cerchio e il suo diametro</p>",
+          "<p>il rapporto tra la lunghezza di una circonferenza e il suo raggio</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) \\(\\pi\\) è un numero irrazionale. Questo significa che</p>",
+        "choices": [
+          "<p>è un numero decimale periodico semplice</p>",
+          "<p>è un numero decimale limitato</p>",
+          "<p>è un numero decimale periodico misto</p>",
+          "<p>è un numero decimale illimitato non periodico</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D28 · Il vasetto di yogurt",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "percentuali",
+      "proporzioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D28 · Il vasetto di yogurt",
+    "statement": "<p>Su un vasetto di yogurt alla vaniglia da 125 g sono indicati gli ingredienti. In particolare, si legge: «preparazione dolciaria alla vaniglia: 11%».</p>",
+    "advice": "<p>a) L'11% di 125 g: \\(125 \\cdot 0{,}11 = 13{,}75 \\approx 13{,}8\\) g. b) I valori sono per 100 g: per 125 g si moltiplica per \\(1{,}25\\): \\(16{,}3 \\cdot 1{,}25 \\approx 20{,}4\\) g.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quanti grammi di preparazione dolciaria alla vaniglia sono presenti, all'incirca, nel vasetto?</p>",
+        "choices": [
+          "<p>13,8</p>",
+          "<p>1,3</p>",
+          "<p>11,0</p>",
+          "<p>11,4</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Sulla confezione è riportata anche la tabella dei valori medi nutrizionali per 100 g di yogurt alla vaniglia: \\[\\begin{array}{|l|r|} \\hline \\text{Proteine} &amp; 2{,}8\\text{ g} \\\\ \\hline \\text{Carboidrati} &amp; 16{,}3\\text{ g} \\\\ \\hline \\text{Grassi} &amp; 3{,}2\\text{ g} \\\\ \\hline \\end{array}\\] Quanti grammi di carboidrati, all'incirca, sono presenti in un vasetto da 125 g?</p>",
+        "choices": [
+          "<p>20,4</p>",
+          "<p>13,0</p>",
+          "<p>16,3</p>",
+          "<p>7,7</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

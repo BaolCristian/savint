@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { mkdtempSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { prisma } from "@/lib/db/client";
@@ -104,6 +104,50 @@ describe("seed degli esercizi", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "es-"));
     scriviEsercizio(dir, "01-rotta.json", "Rotta", { name: "x", partsMode: "explore", parts: [] });
     await expect(seedEsercizi(dir)).rejects.toThrow(/01-rotta\.json/);
+  });
+
+  describe("con le immagini", () => {
+    const FILE = "0f0e0d0c-0b0a-4908-8706-050403020100.png";
+    const conImmagine = { ...domanda, statement: `<p>Guarda <img data-savint-immagine="${FILE}" alt="figura"></p>` };
+
+    it("copia nella cartella dei caricamenti l'immagine che sta accanto agli esercizi", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "es-"));
+      const caricamenti = mkdtempSync(path.join(tmpdir(), "up-"));
+      mkdirSync(path.join(dir, "immagini"));
+      writeFileSync(path.join(dir, "immagini", FILE), "png-finto");
+      scriviEsercizio(dir, "01-img.json", "Con immagine", conImmagine);
+      await seedEsercizi(dir, { cartellaImmagini: caricamenti });
+      expect(readFileSync(path.join(caricamenti, FILE), "utf8")).toBe("png-finto");
+    });
+
+    it("non sovrascrive un'immagine già presente nei caricamenti", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "es-"));
+      const caricamenti = mkdtempSync(path.join(tmpdir(), "up-"));
+      mkdirSync(path.join(dir, "immagini"));
+      writeFileSync(path.join(dir, "immagini", FILE), "nuova");
+      writeFileSync(path.join(caricamenti, FILE), "esistente");
+      scriviEsercizio(dir, "01-img.json", "Con immagine", conImmagine);
+      await seedEsercizi(dir, { cartellaImmagini: caricamenti });
+      expect(readFileSync(path.join(caricamenti, FILE), "utf8")).toBe("esistente");
+    });
+
+    it("rifiuta un esercizio che nomina un'immagine che non c'è da nessuna parte, senza scrivere nulla", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "es-"));
+      const caricamenti = path.join(mkdtempSync(path.join(tmpdir(), "up-")), "esercizi");
+      scriviEsercizio(dir, "01-img.json", "Con immagine", conImmagine);
+      await expect(seedEsercizi(dir, { cartellaImmagini: caricamenti })).rejects.toThrow(new RegExp(FILE));
+      expect(await prisma.esercizio.count({ where: { id: { startsWith: PREFIX } } })).toBe(0);
+      expect(existsSync(caricamenti)).toBe(false);
+    });
+
+    it("accetta un'immagine già presente solo nei caricamenti", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "es-"));
+      const caricamenti = mkdtempSync(path.join(tmpdir(), "up-"));
+      writeFileSync(path.join(caricamenti, FILE), "esistente");
+      scriviEsercizio(dir, "01-img.json", "Con immagine", conImmagine);
+      const r = await seedEsercizi(dir, { cartellaImmagini: caricamenti });
+      expect(r.creati).toBe(1);
+    });
   });
 
   it("un file rotto non lascia scritti nel database i file gia' validati nello stesso giro", async () => {

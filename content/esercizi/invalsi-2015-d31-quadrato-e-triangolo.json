@@ -1,0 +1,76 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D31 · Quadrato e triangolo equilatero",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D31. Nel fascicolo i segmenti andavano scritti: qui si spuntano fra quelli proposti.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "quadrato",
+      "triangolo equilatero"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D31 · Quadrato e triangolo equilatero",
+    "statement": "<p>Osserva la seguente figura piana: ABCD è un quadrato e ABE è un triangolo equilatero. <img data-savint-immagine=\"1e96233e-3bf9-4fe1-bfd7-5dd14b1ba091.png\" alt=\"Il quadrato ABCD con dentro il triangolo equilatero ABE e i segmenti DE e CE\"></p>",
+    "advice": "<p>I lati del quadrato sono tutti uguali ad AB: AD, BC, CD. I lati del triangolo equilatero sono tutti uguali ad AB: AE e BE. DE e CE sono più corti, la diagonale AC è più lunga.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_2",
+        "marks": 1,
+        "prompt": "<p>Quali segmenti hanno la stessa lunghezza del segmento AB? Spunta tutti quelli giusti.</p>",
+        "choices": [
+          "<p>AD</p>",
+          "<p>BC</p>",
+          "<p>CD</p>",
+          "<p>AE</p>",
+          "<p>BE</p>",
+          "<p>DE</p>",
+          "<p>CE</p>",
+          "<p>AC</p>"
+        ],
+        "matrix": [
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "markingMethod": "all-or-nothing",
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "displayType": "checkbox",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

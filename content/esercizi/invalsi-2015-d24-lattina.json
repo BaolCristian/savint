@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D24 · La lattina",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D24.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "volume",
+      "cilindro",
+      "misure"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D24 · La lattina",
+    "statement": "<p>Una bibita è venduta in lattine di forma cilindrica con il diametro di base di 6 cm e l'altezza di 9 cm. Qual è la capacità della lattina?</p>",
+    "advice": "<p>Il raggio è 3 cm: \\(V = \\pi r^2 h = \\pi \\cdot 9 \\cdot 9 = 81\\pi \\approx 254\\text{ cm}^3\\). Un litro è \\(1000\\text{ cm}^3\\), quindi \\(\\frac{1}{4}\\) di litro è \\(250\\text{ cm}^3\\): la lattina contiene poco più di un quarto di litro.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>esattamente \\(\\frac{1}{4}\\) di litro</p>",
+          "<p>poco più di \\(\\frac{1}{4}\\) di litro</p>",
+          "<p>poco più di \\(\\frac{1}{2}\\) di litro</p>",
+          "<p>esattamente \\(\\frac{1}{2}\\) di litro</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

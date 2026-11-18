@@ -1,0 +1,67 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D6 · Il mazzo di carte",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D6.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "probabilità"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2015 · D6 · Il mazzo di carte",
+    "statement": "<p>Da un mazzo di 52 carte da gioco (composto da 13 carte per ognuno dei semi: cuori, quadri, fiori, picche) sono stati tolti i 4 assi.</p>",
+    "advice": "<p>a) Restano 48 carte, di cui 12 di cuori: \\(\\frac{12}{48} = \\frac{1}{4}\\). b) Se si tolgono \\(k\\) carte di fiori restano \\(52 - k\\) carte, di cui \\(13 - k\\) di fiori: \\(\\frac{13 - k}{52 - k} = \\frac{6}{45}\\). Moltiplicando in croce \\(45(13 - k) = 6(52 - k)\\), cioè \\(585 - 45k = 312 - 6k\\), da cui \\(k = 7\\). Infatti \\(52 - 7 = 45\\) e \\(13 - 7 = 6\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>a) Si estrae una carta a caso. Qual è la probabilità che sia di cuori? Scrivi il risultato come frazione (per esempio 3/5).</p>",
+        "answer": "1/4",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Da un altro mazzo di 52 carte, completo, sono state tolte alcune carte di fiori. Dopo questa operazione la probabilità di estrarre, a caso, una carta di fiori è \\(\\frac{6}{45}\\). Quante carte di fiori sono state tolte?</p>",
+        "minValue": "7",
+        "maxValue": "7",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

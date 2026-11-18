@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D7 · L'obelisco",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D7.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "similitudine",
+      "proporzioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D7 · L'obelisco",
+    "statement": "<p>Arturo vuole misurare l'altezza di un obelisco che si trova al centro della piazza principale della sua città. A una certa ora di un giorno di sole, l'obelisco proietta un'ombra di circa 6,4 metri, e un palo alto 2,5 metri, che si trova nella stessa piazza, proietta un'ombra di circa 0,8 metri. Supponi che la piazza sia orizzontale e che l'obelisco e il palo siano verticali.</p>",
+    "advice": "<p>Alla stessa ora i raggi del sole sono paralleli: obelisco e palo formano con le loro ombre due triangoli rettangoli simili. Quindi \\(\\frac{h}{6{,}4} = \\frac{2{,}5}{0{,}8}\\), da cui \\(h = \\frac{6{,}4 \\cdot 2{,}5}{0{,}8} = 20\\) m.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Qual è l'altezza dell'obelisco, in metri?</p>",
+        "minValue": "(20) - (0.1)",
+        "maxValue": "(20) + (0.1)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

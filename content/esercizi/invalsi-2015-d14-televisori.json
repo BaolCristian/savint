@@ -1,0 +1,123 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D14 · Televisori in casa",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D14. Nella parte b i settori sono indicati dal colore e dalla posizione.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "percentuali",
+      "diagramma a torta",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D14 · Televisori in casa",
+    "statement": "<p>Un sondaggio condotto su un gruppo di 51 studenti sul numero di televisori presenti in casa ha dato i seguenti risultati. \\[\\begin{array}{|c|c|} \\hline \\text{Numero di televisori in casa} &amp; \\text{Numero di studenti} \\\\ \\hline 1 &amp; 10 \\\\ \\hline 2 &amp; 15 \\\\ \\hline 3 &amp; 18 \\\\ \\hline 4 &amp; 8 \\\\ \\hline \\text{Totale} &amp; 51 \\\\ \\hline \\end{array}\\] Dalla tabella è stato ricavato il seguente grafico a settori circolari. <img data-savint-immagine=\"c1ec29b4-0f7d-4049-b6c7-8d66089ce3fd.png\" alt=\"Diagramma a torta con quattro settori: grigio scuro in alto a destra, nero in basso a destra, grigio chiaro a sinistra, grigio medio in alto a sinistra\"></p>",
+    "advice": "<p>a) Meno di 3 televisori: \\(10 + 15 = 25\\) studenti su 51, cioè \\(\\frac{25}{51} \\approx 0{,}49\\), il 49% circa. b) Ogni settore è proporzionale al numero di studenti: il più grande (grigio chiaro, 18 studenti) è quello di 3 televisori, il più piccolo (grigio medio, 8) di 4, poi il nero (15) di 2 e il grigio scuro (10) di 1.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quale percentuale di studenti ha in casa meno di 3 televisori? Arrotonda all'unità.</p>",
+        "minValue": "(2500/51) - (0.5)",
+        "maxValue": "(2500/51) + (0.5)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Associa a ciascun settore il numero di televisori presenti in casa. Settore grigio scuro, in alto a destra: n. televisori =</p>",
+        "minValue": "1",
+        "maxValue": "1",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Settore nero, in basso a destra: n. televisori =</p>",
+        "minValue": "2",
+        "maxValue": "2",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Settore grigio chiaro, a sinistra: n. televisori =</p>",
+        "minValue": "3",
+        "maxValue": "3",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Settore grigio medio, in alto a sinistra: n. televisori =</p>",
+        "minValue": "4",
+        "maxValue": "4",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

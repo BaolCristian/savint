@@ -1,0 +1,92 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D27 · Il grafico spazio-tempo",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "grafici",
+      "velocità",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D27 · Il grafico spazio-tempo",
+    "statement": "<p>Il seguente grafico rappresenta la posizione \\(s\\) (in km) in funzione del tempo \\(t\\) (in h) di un oggetto che si muove su una traiettoria rettilinea. <img data-savint-immagine=\"9838eeaf-f835-4c11-9554-f1db3cb96c13.png\" alt=\"Grafico della posizione s in km in funzione del tempo t in ore: sale da 0 a 2,5 km fino a t = 1,5 h, resta a 2,5 km fino a t = 2,5 h, poi torna a 0 a t = 3,5 h\"></p>",
+    "advice": "<p>a) Il moto parte a t = 0 e finisce a t = 3,5 h: vera. b) L'oggetto va a 2,5 km e poi torna indietro fino a 0: in totale percorre 5 km. Falsa. c) Da t = 1,5 h a t = 2,5 h la posizione resta 2,5 km: è fermo per 1 h. Vera. d) Nella prima ora e mezza percorre 2,5 km: \\(2{,}5 : 1{,}5 \\approx 1{,}7\\) km/h, non 2,5 km/h. Falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>L'oggetto ha impiegato 3,5 h per compiere l'intero percorso</p>",
+          "<p>L'oggetto ha percorso in totale 2,5 km</p>",
+          "<p>L'oggetto è rimasto nella stessa posizione per 1 h</p>",
+          "<p>Nella prima ora e mezza, l'oggetto si è mosso alla velocità media di circa 2,5 km/h</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

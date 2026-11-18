@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D26 · Il trapezio che ruota",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D26.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "solidi di rotazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D26 · Il trapezio che ruota",
+    "statement": "<p>Ruotando di un giro completo un trapezio rettangolo attorno al lato perpendicolare alle basi si ottiene:</p>",
+    "advice": "<p>Le due basi, perpendicolari all'asse di rotazione, descrivono due cerchi di raggio diverso; il lato obliquo descrive una superficie che li unisce. Il solido è un tronco di cono.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>un cono</p>",
+          "<p>un cilindro con una cavità conica</p>",
+          "<p>un cilindro con un cono sovrapposto</p>",
+          "<p>un tronco di cono</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

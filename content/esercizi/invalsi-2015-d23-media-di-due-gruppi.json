@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D23 · La media di due gruppi",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D23.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "media",
+      "media ponderata"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D23 · La media di due gruppi",
+    "statement": "<p>Lo stesso test di matematica è stato proposto a due diversi gruppi di studenti. Il primo gruppo, composto da 20 studenti, ha ottenuto un punteggio medio di 85 e il secondo, composto da 80 studenti, ha ottenuto un punteggio medio di 65.</p>",
+    "advice": "<p>Non è la media fra 85 e 65: i gruppi hanno numeri diversi. Il punteggio totale è \\(20 \\cdot 85 + 80 \\cdot 65 = 1700 + 5200 = 6900\\), e \\(6900 : 100 = 69\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Qual è il punteggio medio ottenuto dai 100 studenti dei due gruppi?</p>",
+        "minValue": "69",
+        "maxValue": "69",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

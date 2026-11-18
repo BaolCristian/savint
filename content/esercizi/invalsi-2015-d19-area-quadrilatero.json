@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D19 · Area di un quadrilatero",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D19.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "area",
+      "piano cartesiano"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D19 · Area di un quadrilatero",
+    "statement": "<p>Qual è l'area del quadrilatero ABCD rappresentato in figura? <img data-savint-immagine=\"0bc0837a-7f10-4abc-abaa-57495e4f0981.png\" alt=\"Il quadrilatero ABCD nel piano cartesiano con A(−1; 3), B(3; 0), C(5; 5), D(3; 3); ogni quadretto ha il lato di 1 cm\"></p>",
+    "advice": "<p>Si legge \\(A(-1; 3)\\), \\(B(3; 0)\\), \\(C(5; 5)\\), \\(D(3; 3)\\). Il segmento \\(DB\\) divide il quadrilatero in due triangoli. \\(ABD\\): base \\(AD = 4\\), altezza 3 (la distanza di \\(B\\) dalla retta \\(y = 3\\)), area \\(\\frac{4 \\cdot 3}{2} = 6\\). \\(DBC\\): base \\(DB = 3\\), altezza 2 (la distanza di \\(C\\) dalla retta \\(x = 3\\)), area \\(\\frac{3 \\cdot 2}{2} = 3\\). In tutto \\(9\\text{ cm}^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Area, in \\(\\text{cm}^2\\):</p>",
+        "minValue": "9",
+        "maxValue": "9",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

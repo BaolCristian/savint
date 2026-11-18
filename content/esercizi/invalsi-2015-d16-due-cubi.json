@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D16 · Due cubi",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D16.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "volume",
+      "similitudine"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D16 · Due cubi",
+    "statement": "<p>Il rapporto tra gli spigoli di due cubi è 5. Qual è il rapporto tra i loro volumi?</p>",
+    "advice": "<p>Il volume di un cubo è lo spigolo al cubo: se uno spigolo è 5 volte l'altro, il volume è \\(5^3 = 125\\) volte l'altro.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>5</p>",
+          "<p>15</p>",
+          "<p>25</p>",
+          "<p>125</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

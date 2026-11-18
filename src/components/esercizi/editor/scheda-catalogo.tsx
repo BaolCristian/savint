@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { EsercizioEditor } from "@/lib/esercizi/editor/modello";
+import { AMBITI_INVALSI } from "@/lib/esercizi/ambiti-invalsi";
 
 const ANNI = [1, 2, 3, 4, 5];
 const DIFFICOLTA = [1, 2, 3] as const;
@@ -123,9 +124,18 @@ export function SchedaCatalogo({ meta, onChange, apertaIniziale, richiamoArgomen
           <Input
             ref={argomentoRef}
             id="redazione-argomento"
+            list="redazione-argomento-ambiti"
             value={meta.argomento}
             onChange={(e) => onChange("argomento", e.target.value)}
           />
+          {/* Suggerimenti, non un elenco chiuso: per gli esercizi INVALSI
+              l'argomento è l'ambito (vedi ambiti-invalsi.ts). */}
+          <datalist id="redazione-argomento-ambiti">
+            {AMBITI_INVALSI.map((ambito) => (
+              <option key={ambito} value={ambito} />
+            ))}
+          </datalist>
+          <p className="text-xs text-muted-foreground">{t("meta.argomentoAmbiti")}</p>
         </div>
 
         <div className="flex flex-col gap-1">

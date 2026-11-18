@@ -1,0 +1,69 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D12 · Le temperature in montagna",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D12.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "media",
+      "numeri relativi",
+      "tabelle"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D12 · Le temperature in montagna",
+    "statement": "<p>Una stazione meteorologica nelle Alpi ha misurato le temperature, in gradi centigradi (°C), durante un giorno di dicembre. I dati raccolti sono riportati nella seguente tabella. \\[\\begin{array}{|c|c|} \\hline \\text{Ora} &amp; \\text{Temperatura (°C)} \\\\ \\hline 1 &amp; -8 \\\\ \\hline 4 &amp; -10 \\\\ \\hline 7 &amp; -10 \\\\ \\hline 10 &amp; -3 \\\\ \\hline 13 &amp; +1 \\\\ \\hline 16 &amp; -1 \\\\ \\hline 19 &amp; -3 \\\\ \\hline 22 &amp; -6 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) La massima è \\(+1\\) °C, la minima \\(-10\\) °C: \\(1 - (-10) = 11\\) °C. b) La somma delle otto misure è \\(-8 - 10 - 10 - 3 + 1 - 1 - 3 - 6 = -40\\), e \\(-40 : 8 = -5\\) °C.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Qual è l'escursione termica, cioè la differenza tra la temperatura massima e la temperatura minima, nel giorno considerato, in °C?</p>",
+        "minValue": "11",
+        "maxValue": "11",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è la temperatura media \\(T_M\\) relativa alle misure riportate in tabella, in °C?</p>",
+        "minValue": "-5",
+        "maxValue": "-5",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

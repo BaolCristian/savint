@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D30 · Il campione più rappresentativo",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D30.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "indagine statistica",
+      "campionamento"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D30 · Il campione più rappresentativo",
+    "statement": "<p>Andrea, Beatrice, Carlotta e Dario vogliono effettuare un'indagine statistica sui gusti musicali degli studenti delle scuole superiori della loro città. Andrea propone di intervistare tutti i 245 alunni delle classi quinte di due scuole superiori della città. Beatrice propone di intervistare un numeroso gruppo, scelto a caso, di ragazzi all'uscita da una discoteca della città. Carlotta propone di intervistare 200 studenti, scelti a caso tra tutti gli studenti delle scuole superiori della città. Dario propone di pubblicare le domande dell'intervista sul giornalino della sua scuola e di raccogliere le risposte pervenute. In assenza di altre informazioni, il campione più rappresentativo per l'indagine è quello proposto da</p>",
+    "advice": "<p>Un campione è rappresentativo quando è scelto a caso fra TUTTA la popolazione studiata. Andrea esclude le altre classi e scuole, Beatrice intervista anche chi non va alle superiori e solo chi frequenta una discoteca, Dario raccoglie solo chi risponde spontaneamente in una scuola. Carlotta sceglie a caso fra tutti gli studenti delle superiori della città.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Andrea</p>",
+          "<p>Beatrice</p>",
+          "<p>Carlotta</p>",
+          "<p>Dario</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

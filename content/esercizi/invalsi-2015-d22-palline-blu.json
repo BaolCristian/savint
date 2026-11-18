@@ -1,0 +1,49 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D22 · Le palline blu",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D22.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "probabilità"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D22 · Le palline blu",
+    "statement": "<p>Un'urna contiene 40 palline identiche tranne che per il colore: 23 sono rosse e 17 blu. Si estraggono contemporaneamente due palline dall'urna. Entrambe sono blu. Senza reintrodurre le due palline estratte, si estrae dall'urna una terza pallina.</p>",
+    "advice": "<p>Dopo le due estrazioni restano 38 palline, di cui \\(17 - 2 = 15\\) blu: la probabilità è \\(\\frac{15}{38}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Qual è la probabilità che anche la terza pallina sia blu? Scrivi il risultato come frazione.</p>",
+        "answer": "15/38",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}

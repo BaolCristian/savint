@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { mkdtempSync, writeFileSync, readdirSync, readFileSync } from "fs";
+import { cpSync, mkdtempSync, writeFileSync, readdirSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { prisma } from "@/lib/db/client";
@@ -8,6 +8,7 @@ import {
   creaEsercizio, salvaNuovaVersione, duplicaEsercizio, elencoRedazione, caricaPerEditor, caricaPerAnteprima,
 } from "../redazione";
 import { seedEsercizi } from "../seed";
+import { PACCHETTO_INVALSI_2015 } from "../../../../scripts/genera-invalsi-2015";
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { creaContenitore, aggiungiEsercizi, contenutoContenitore } from "../contenitori";
 import { consegneDelCompito } from "../compiti";
@@ -453,18 +454,22 @@ describe("elencoRedazione", () => {
   // `elencoRedazione` usa davvero.
   // Dal pacchetto «Percentuali» (09-17), scritti con l'editor stesso: tutti
   // modificabili, come i due originali scritti nella forma dell'editor.
-  it("degli esercizi seminati sono modificabili 01, 02 e tutto il pacchetto delle percentuali", async () => {
+  it("degli esercizi seminati sono modificabili 01, 02, il pacchetto delle percentuali e la prova INVALSI 2015", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "redazionetest-corpus-"));
     const corpusDir = path.resolve(process.cwd(), "content/esercizi");
     const nomi = readdirSync(corpusDir).filter((f) => f.endsWith(".json"));
     for (const nome of nomi) {
       writeFileSync(path.join(dir, `${PREFIX}${nome}`), readFileSync(path.join(corpusDir, nome)));
     }
-    await seedEsercizi(dir);
+    // Le immagini degli esercizi pronti (INVALSI) stanno accanto ai file: il
+    // seed le copia in una cartella dei caricamenti di prova, non in quella
+    // di sviluppo.
+    cpSync(path.join(corpusDir, "immagini"), path.join(dir, "immagini"), { recursive: true });
+    await seedEsercizi(dir, { cartellaImmagini: mkdtempSync(path.join(tmpdir(), "redazionetest-immagini-")) });
 
     const elenco = await elencoRedazione(docente);
     const miei = elenco.filter((v) => v.id.startsWith(PREFIX));
-    expect(miei).toHaveLength(17);
+    expect(miei).toHaveLength(17 + PACCHETTO_INVALSI_2015.length);
 
     const modificabili = miei.filter((v) => v.modificabile).map((v) => v.id).sort();
     expect(modificabili).toEqual([
@@ -479,7 +484,9 @@ describe("elencoRedazione", () => {
       `${PREFIX}15-variazione-percentuale`,
       `${PREFIX}16-sconti-successivi`,
       `${PREFIX}17-interesse-semplice`,
-    ]);
+      // La prova INVALSI 2015, scritta anch'essa con i modelli dell'editor.
+      ...PACCHETTO_INVALSI_2015.map((e) => `${PREFIX}${e.nome}`),
+    ].sort());
   });
 });
 

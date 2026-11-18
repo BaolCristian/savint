@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D18 · Effetti collaterali",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "probabilità",
+      "eventi indipendenti",
+      "percentuali"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D18 · Effetti collaterali",
+    "statement": "<p>Nel foglietto illustrativo contenuto nella confezione di un farmaco, alla voce «Effetti collaterali» si legge che: il 2% dei pazienti trattati con il farmaco ha accusato vertigini; il 7% dei pazienti trattati con il farmaco ha avuto bruciori di stomaco. I due tipi di effetti collaterali sono indipendenti l'uno dall'altro.</p>",
+    "advice": "<p>a) L'evento contrario di «avere bruciori» ha probabilità \\(100\\% - 7\\% = 93\\%\\). b) Per eventi indipendenti la probabilità che accadano entrambi è il prodotto: \\(0{,}02 \\cdot 0{,}07 = 0{,}0014\\), cioè lo \\(0{,}14\\%\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Qual è la probabilità che un paziente che ha assunto il farmaco NON abbia bruciori di stomaco? Esprimi il risultato in forma percentuale (scrivi solo il numero).</p>",
+        "minValue": "93",
+        "maxValue": "93",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Qual è la probabilità che un paziente che ha assunto il farmaco manifesti ENTRAMBI gli effetti collaterali?</p>",
+        "choices": [
+          "<p>9%</p>",
+          "<p>0,14%</p>",
+          "<p>14%</p>",
+          "<p>0,9%</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D1 · Popolazione straniera",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D1.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "grafici",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D1 · Popolazione straniera",
+    "statement": "<p>Il seguente grafico rappresenta la popolazione straniera residente in Italia, suddivisa per sesso, negli anni dal 2002 al 2009 (fonte ISTAT). <img data-savint-immagine=\"717f3ec3-93e6-499c-99ac-8add63eaf54e.png\" alt=\"Grafico a linee della popolazione straniera residente in Italia, maschi e femmine, dal 2002 al 2009\"></p>",
+    "advice": "<p>a) Dal 2002 al 2005 la linea dei maschi sta sempre sopra quella delle femmine: vera. b) Nel 2009 le due linee sono più distanti che in qualunque altro anno (circa 100 000): vera. c) Le femmine superano i maschi già nel 2007: nel 2008 non è la prima volta, falsa. d) I maschi passano da circa 790 000 (2002) a circa 1 700 000 (2007), più di \\(2 \\cdot 790\\,000 = 1\\,580\\,000\\): vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Fra il 2002 e il 2005 i maschi erano più numerosi delle femmine</p>",
+          "<p>Nel 2009 la differenza tra numero di femmine e numero di maschi era massima</p>",
+          "<p>Nel 2008 il numero delle femmine ha superato per la prima volta il numero dei maschi</p>",
+          "<p>Dal 2002 al 2007 i maschi sono più che raddoppiati</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

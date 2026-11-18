@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D9 · Distanza da scuola",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D9.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "tabelle",
+      "percentuali",
+      "frequenze"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D9 · Distanza da scuola",
+    "statement": "<p>Nella seguente tabella, \\(d\\) rappresenta la distanza in metri fra l'abitazione e la scuola di ciascuno degli alunni di una classe. \\[\\begin{array}{|c|c|} \\hline \\text{Distanza dalla scuola (m)} &amp; \\text{Numero di alunni} \\\\ \\hline 100 \\le d &lt; 500 &amp; 2 \\\\ \\hline 500 \\le d &lt; 1000 &amp; 8 \\\\ \\hline 1000 \\le d &lt; 1500 &amp; 5 \\\\ \\hline 1500 \\le d &lt; 2000 &amp; 7 \\\\ \\hline 2000 \\le d &lt; 2500 &amp; 3 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>Gli alunni sono in tutto 2 + 8 + 5 + 7 + 3 = 25. a) Meno di 1 km vuol dire meno di 1000 m: 2 + 8 = 10 alunni. b) Meno di 1,5 km: 2 + 8 + 5 = 15 alunni, e \\(\\frac{15}{25} = \\frac{60}{100}\\), cioè il 60%.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti sono gli alunni che abitano a meno di 1 km dalla scuola?</p>",
+        "minValue": "10",
+        "maxValue": "10",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Qual è la percentuale di alunni che abitano a meno di 1,5 km dalla scuola?</p>",
+        "choices": [
+          "<p>15%</p>",
+          "<p>20%</p>",
+          "<p>40%</p>",
+          "<p>60%</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

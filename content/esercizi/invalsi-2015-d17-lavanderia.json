@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D17 · La lavanderia a gettoni",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D17.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "problemi",
+      "divisione"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D17 · La lavanderia a gettoni",
+    "statement": "<p>Una lavanderia a gettoni lavora con orario continuato dalle 9 alle 18. Ogni lavatrice effettua cicli di lavaggio della durata di 33 minuti, ai quali si devono aggiungere 10 minuti per l'operazione di carico e 5 per lo svuotamento.</p>",
+    "advice": "<p>Dalle 9 alle 18 ci sono 9 ore, cioè 540 minuti. Un lavaggio completo dura \\(33 + 10 + 5 = 48\\) minuti. \\(540 : 48 = 11{,}25\\): i lavaggi completi sono 11.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Quanti lavaggi completi, comprensivi di carico e svuotamento, può effettuare al massimo una lavatrice nell'arco della giornata?</p>",
+        "minValue": "11",
+        "maxValue": "11",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

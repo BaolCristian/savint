@@ -1578,6 +1578,7 @@
         "descrizione": "Description",
         "anno": "Year",
         "argomento": "Topic",
+        "argomentoAmbiti": "For INVALSI exercises pick one of the four areas: Numeri, Spazio e figure, Relazioni e funzioni, Dati e previsioni.",
         "tag": "Tags",
         "tagAiuto": "Separate them with a comma.",
         "difficolta": "Difficulty",

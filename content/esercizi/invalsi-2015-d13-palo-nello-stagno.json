@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D13 · Il palo nello stagno",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D13.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "equazioni",
+      "frazioni",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D13 · Il palo nello stagno",
+    "statement": "<p>Un palo verticale è piantato in uno stagno. Un quinto del palo è interrato nel fondale, un sesto è immerso in acqua e la parte del palo che esce dall'acqua è lunga 8,9 metri.</p>",
+    "advice": "<p>a) Le tre parti insieme fanno tutto il palo: \\(\\frac{1}{5}x + \\frac{1}{6}x + 8{,}9 = x\\). b) \\(\\frac{1}{5} + \\frac{1}{6} = \\frac{11}{30}\\), quindi la parte fuori dall'acqua è \\(\\frac{19}{30}\\) del palo: \\(\\frac{19}{30}x = 8{,}9\\), \\(x = \\frac{8{,}9 \\cdot 30}{19} = \\frac{267}{19} \\approx 14{,}05\\) m.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale delle seguenti equazioni consente di determinare la lunghezza totale \\(x\\) del palo?</p>",
+        "choices": [
+          "<p>\\(\\frac{1}{5} + \\frac{1}{6} + 8{,}9 = x\\)</p>",
+          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x = x + 8{,}9\\)</p>",
+          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x + x = 8{,}9\\)</p>",
+          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x + 8{,}9 = x\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è la lunghezza totale \\(x\\) del palo, in metri? Arrotonda ai centesimi.</p>",
+        "minValue": "(267/19) - (0.01)",
+        "maxValue": "(267/19) + (0.01)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D4 · Il serbatoio",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D4.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "funzioni lineari",
+      "modellizzazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2015 · D4 · Il serbatoio",
+    "statement": "<p>Una sorgente di montagna alimenta continuativamente un serbatoio con \\(5\\text{ m}^3\\) di acqua ogni settimana. Oggi il serbatoio contiene \\(100\\text{ m}^3\\) di acqua e un villaggio inizia a prelevare \\(7\\text{ m}^3\\) di acqua alla settimana. Indichiamo con \\(n\\) i \\(\\text{m}^3\\) di acqua contenuti nel serbatoio e con \\(t\\) il numero di settimane a partire da oggi: per \\(t = 0\\) è \\(n = 100\\).</p>",
+    "advice": "<p>Ogni settimana entrano \\(5\\text{ m}^3\\) ed escono \\(7\\text{ m}^3\\): il serbatoio perde \\(2\\text{ m}^3\\) a settimana. a) Dopo 1, 2, 3, 4 settimane contiene 98, 96, 94, 92 \\(\\text{m}^3\\). b) \\(n = 100 - 2t\\). c) È vuoto quando \\(100 - 2t = 0\\), cioè dopo \\(t = 50\\) settimane.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Completa la tabella. Per \\(t = 1\\): \\(n =\\)</p>",
+        "minValue": "98",
+        "maxValue": "98",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(t = 2\\): \\(n =\\)</p>",
+        "minValue": "96",
+        "maxValue": "96",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(t = 3\\): \\(n =\\)</p>",
+        "minValue": "94",
+        "maxValue": "94",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(t = 4\\): \\(n =\\)</p>",
+        "minValue": "92",
+        "maxValue": "92",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>b) Scrivi un'espressione che rappresenti \\(n\\) in funzione di \\(t\\). \\(n =\\)</p>",
+        "answer": "100 - 2*t",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) Dopo quante settimane il serbatoio sarà vuoto?</p>",
+        "choices": [
+          "<p>20 settimane</p>",
+          "<p>50 settimane</p>",
+          "<p>98 settimane</p>",
+          "<p>102 settimane</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2015 · D5 · Il grafico giusto",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D5. I quattro grafici sono ridisegnati dalla piattaforma.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2015",
+      "funzioni lineari",
+      "retta",
+      "grafici"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2015 · D5 · Il grafico giusto",
+    "statement": "<p>Uno dei seguenti grafici rappresenta la funzione definita da \\(y = 1 - 4x\\) nell'insieme dei numeri reali. Quale? Grafico A: <span data-savint-grafico=\"1 - 4*x\" data-x=\"-3..5\" data-y=\"-4..5\"></span> Grafico B: <span data-savint-grafico=\"4*x - 1\" data-x=\"-3..5\" data-y=\"-4..5\"></span> Grafico C: <span data-savint-grafico=\"1 - x/4\" data-x=\"-3..9\" data-y=\"-2..5\"></span> Grafico D: <span data-savint-grafico=\"x/4 + 1\" data-x=\"-5..5\" data-y=\"-3..5\"></span></p>",
+    "advice": "<p>Per \\(x = 0\\) si ha \\(y = 1\\): il grafico passa per \\((0; 1)\\), e questo esclude B. Il coefficiente di \\(x\\) è \\(-4\\): la retta scende, e ripida (per \\(x = 1\\) vale già \\(y = -3\\)). D sale, C scende di una sola unità ogni 4: è il grafico A.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Grafico A</p>",
+          "<p>Grafico B</p>",
+          "<p>Grafico C</p>",
+          "<p>Grafico D</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

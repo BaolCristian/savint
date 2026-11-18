@@ -1578,6 +1578,7 @@
         "descrizione": "Descrizione",
         "anno": "Anno",
         "argomento": "Argomento",
+        "argomentoAmbiti": "Per gli esercizi INVALSI scegli uno dei quattro ambiti: Numeri, Spazio e figure, Relazioni e funzioni, Dati e previsioni.",
         "tag": "Etichette",
         "tagAiuto": "Separale con una virgola.",
         "difficolta": "Difficoltà",

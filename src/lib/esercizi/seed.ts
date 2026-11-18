@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "fs";
 import path from "path";
 import { loadQuestion, type NumbasQuestionJSON } from "@savint/engine";
 import { prisma } from "@/lib/db/client";
 import { esercizioFileSchema, hashContenuto, type EsercizioFile } from "./format/schema";
+import { CARTELLA_IMMAGINI, NOME_FILE_IMMAGINE } from "./immagini";
 
 export interface RisultatoSeed { creati: number; aggiornati: number; invariati: number; lasciati: number }
 
@@ -12,7 +13,33 @@ export interface RisultatoSeed { creati: number; aggiornati: number; invariati: 
  * file cambiato sopra un esercizio corretto da un docente cancellerebbe la sua
  * correzione con una versione nuova. Senza l'opzione, il comportamento di
  * sempre (utile in sviluppo): un file cambiato aggiorna l'esercizio. */
-export interface OpzioniSeed { soloNuovi?: boolean }
+export interface OpzioniSeed {
+  soloNuovi?: boolean;
+  /** Dove l'installazione tiene le immagini degli esercizi: la stessa
+   * cartella in cui scrive la rotta di caricamento. Facoltativa, per i test. */
+  cartellaImmagini?: string;
+}
+
+/** Le immagini che accompagnano gli esercizi pronti stanno accanto ai file,
+ * in `<cartella>/immagini/`, col nome che avrebbero se le avesse caricate un
+ * docente (un UUID). Il seed le copia nella cartella dei caricamenti
+ * dell'installazione quando mancano: senza, un esercizio seminato su
+ * un'installazione nuova mostrerebbe un'immagine rotta. */
+const SOTTOCARTELLA_IMMAGINI = "immagini";
+
+function cartellaImmaginiPredefinita(): string {
+  return path.join(process.env.APP_ROOT || process.cwd(), "public", "uploads", CARTELLA_IMMAGINI);
+}
+
+/** I nomi delle immagini che il contenuto di un esercizio nomina (vedi
+ * `testoVersoHtml`, immagini-testo.ts). */
+function immaginiNominate(question: unknown): string[] {
+  const nomi = new Set<string>();
+  for (const m of JSON.stringify(question).matchAll(/data-savint-immagine=\\"([^"\\]+)\\"/g)) {
+    nomi.add(m[1]!);
+  }
+  return [...nomi];
+}
 
 /** Un file dell'esercizio, già validato: involucro conforme allo schema e
  * contenuto caricabile dal motore. */
@@ -22,12 +49,13 @@ interface EsercizioValidato {
   savint: EsercizioFile["savint"];
   question: unknown;
   hash: string;
+  immagini: string[];
 }
 
 /** Legge e valida un file: l'involucro contro lo schema, il contenuto contro
  * il motore (l'unico giudice: se non lo carica, la domanda è rotta). Non
  * scrive nulla nel database. */
-function valida(dir: string, nome: string): EsercizioValidato {
+function valida(dir: string, nome: string, cartellaImmagini: string): EsercizioValidato {
   const grezzo: unknown = JSON.parse(readFileSync(path.join(dir, nome), "utf8"));
   const parsed = esercizioFileSchema.safeParse(grezzo);
   if (!parsed.success) {
@@ -41,7 +69,19 @@ function valida(dir: string, nome: string): EsercizioValidato {
     throw new Error(`${nome}: il motore non carica la domanda — ${e instanceof Error ? e.message : String(e)}`);
   }
 
-  return { nome, chiave: nome.replace(/\.json$/, ""), savint, question, hash: hashContenuto(question) };
+  // Ogni immagine nominata deve arrivare da qualche parte: dalla cartella
+  // degli esercizi pronti o, già presente, dai caricamenti.
+  const immagini = immaginiNominate(question);
+  for (const file of immagini) {
+    if (!NOME_FILE_IMMAGINE.test(file)) {
+      throw new Error(`${nome}: nome di immagine non valido — ${file}`);
+    }
+    if (!existsSync(path.join(dir, SOTTOCARTELLA_IMMAGINI, file)) && !existsSync(path.join(cartellaImmagini, file))) {
+      throw new Error(`${nome}: manca l'immagine ${file} (attesa in ${SOTTOCARTELLA_IMMAGINI}/)`);
+    }
+  }
+
+  return { nome, chiave: nome.replace(/\.json$/, ""), savint, question, hash: hashContenuto(question), immagini };
 }
 
 /** Carica gli esercizi da una cartella. Il nome del file, senza estensione, è
@@ -56,11 +96,12 @@ function valida(dir: string, nome: string): EsercizioValidato {
 export async function seedEsercizi(dir: string, opzioni: OpzioniSeed = {}): Promise<RisultatoSeed> {
   const nomi = readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
 
+  const cartellaImmagini = opzioni.cartellaImmagini ?? cartellaImmaginiPredefinita();
   const validati: EsercizioValidato[] = [];
   const errori: string[] = [];
   for (const nome of nomi) {
     try {
-      validati.push(valida(dir, nome));
+      validati.push(valida(dir, nome, cartellaImmagini));
     } catch (e) {
       errori.push(e instanceof Error ? e.message : String(e));
     }
@@ -70,6 +111,17 @@ export async function seedEsercizi(dir: string, opzioni: OpzioniSeed = {}): Prom
   }
 
   const out: RisultatoSeed = { creati: 0, aggiornati: 0, invariati: 0, lasciati: 0 };
+
+  // Le immagini prima delle righe: un esercizio scritto nel database deve
+  // trovare le sue immagini già al loro posto. Anche per gli esercizi già
+  // presenti — un volume dei caricamenti ricreato le avrebbe perse. Un file
+  // già presente non si tocca.
+  for (const file of new Set(validati.flatMap((v) => v.immagini))) {
+    const destinazione = path.join(cartellaImmagini, file);
+    if (existsSync(destinazione)) continue;
+    mkdirSync(cartellaImmagini, { recursive: true });
+    copyFileSync(path.join(dir, SOTTOCARTELLA_IMMAGINI, file), destinazione);
+  }
 
   if (opzioni.soloNuovi) {
     const esistenti = new Set(
