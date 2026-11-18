@@ -478,7 +478,9 @@ export function setupSocketHandlers(io: TypedIO) {
               question: {
                 text: q.text,
                 type: q.type,
-                options: q.options, // host sees full options (not sanitized)
+                // Same options as the players: the board is projected to the class,
+                // so it must never show the solution (aligned pairs, correct order)
+                options: sanitizeOptions(q.type, q.options),
                 timeLimit: q.timeLimit,
                 points: q.points,
                 mediaUrl: q.mediaUrl,

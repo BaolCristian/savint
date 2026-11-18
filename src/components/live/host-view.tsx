@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ANSWER_TILES, CONFETTI_COLORS, GAME, PODIUM_TIMELINE } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
-import type { QuestionOptions, MultipleChoiceOptions } from "@/types";
+import type { QuestionOptions, MultipleChoiceOptions, MatchingOptions, OrderingOptions } from "@/types";
 import type { QuestionType } from "@prisma/client";
 import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
@@ -857,6 +857,56 @@ export function HostView({ session }: Props) {
             </div>
             <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 lg:p-8 flex items-center justify-center shadow-lg">
               <span className="text-2xl lg:text-3xl font-extrabold">{tc("false")}</span>
+            </div>
+          </div>
+        )}
+
+        {/* MATCHING display: left column and (shuffled) right column, as players see them */}
+        {q.question.type === "MATCHING" && (
+          <div className="px-6 lg:px-10 pb-6 max-w-5xl mx-auto w-full">
+            <div className="grid grid-cols-2 gap-4 lg:gap-8">
+              <div className="flex flex-col gap-2 lg:gap-3">
+                {(q.question.options as MatchingOptions).pairs.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-brand-blue/80 rounded-2xl px-4 py-3 lg:px-6 lg:py-4 shadow-lg">
+                    <span className="grid size-8 lg:size-10 shrink-0 place-items-center rounded-lg bg-black/20 text-base lg:text-xl font-bold">{i + 1}</span>
+                    <span className="text-lg lg:text-2xl font-bold leading-tight">{p.left}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2 lg:gap-3">
+                {(q.question.options as MatchingOptions).pairs.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-slate-700 border border-slate-600 rounded-2xl px-4 py-3 lg:px-6 lg:py-4 shadow-lg">
+                    <span className="grid size-8 lg:size-10 shrink-0 place-items-center rounded-lg bg-black/20 text-base lg:text-xl font-bold">{String.fromCharCode(65 + i)}</span>
+                    <span className="text-lg lg:text-2xl font-bold leading-tight">{p.right}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-center text-sm lg:text-base text-slate-400 mt-3">{t("matchThePairs")}</p>
+          </div>
+        )}
+
+        {/* ORDERING display: items in the (shuffled) order players see */}
+        {q.question.type === "ORDERING" && (
+          <div className="px-6 lg:px-10 pb-6 max-w-3xl mx-auto w-full">
+            <div className="flex flex-col gap-2 lg:gap-3">
+              {(q.question.options as OrderingOptions).items.map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-slate-700 border border-slate-600 rounded-2xl px-4 py-3 lg:px-6 lg:py-4 shadow-lg">
+                  <span className="grid size-8 lg:size-10 shrink-0 place-items-center rounded-lg bg-black/20 text-base lg:text-xl font-bold">{String.fromCharCode(65 + i)}</span>
+                  <span className="text-lg lg:text-2xl font-bold leading-tight">{item}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-sm lg:text-base text-slate-400 mt-3">{t("putInOrder")}</p>
+          </div>
+        )}
+
+        {/* OPEN_ANSWER display */}
+        {q.question.type === "OPEN_ANSWER" && (
+          <div className="px-6 lg:px-10 pb-6 flex justify-center">
+            <div className="bg-slate-800 rounded-2xl px-8 py-6 flex items-center gap-3 border border-slate-700">
+              <span className="text-4xl lg:text-5xl">✍️</span>
+              <span className="text-xl lg:text-2xl font-semibold text-slate-300">{t("typeYourAnswer")}</span>
             </div>
           </div>
         )}
