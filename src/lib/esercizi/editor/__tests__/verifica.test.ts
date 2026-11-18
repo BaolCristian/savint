@@ -665,6 +665,53 @@ describe("verificaSuSemi", () => {
     });
   });
 
+  // La tabella Vero/Falso (m_n_x): affermazioni e spiegazioni passano per
+  // gli stessi controlli delle scelte, anche se le spiegazioni stanno in una
+  // matrice e non in una lista.
+  describe("la tabella Vero/Falso", () => {
+    it("un esercizio sano, con variabili nelle affermazioni e nelle spiegazioni, passa venti semi", () => {
+      const e: EsercizioEditor = { ...base,
+        parti: [{ tipo: "veroFalso", consegna: "Vero o falso?", punti: 2,
+          affermazioni: ["\\(\\var{a} > 0\\)", "\\(-\\var{a} > 0\\)"],
+          vere: [true, false],
+          spiegazioni: ["", "\\(-\\var{a}\\) è negativo"] }] };
+      expect(verificaSuSemi(versoNumbas(e))).toEqual({ ok: true });
+    });
+
+    it("\\simplify{sqrt()} in un'affermazione viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "veroFalso", consegna: "V/F", punti: 2,
+          affermazioni: ["\\(\\simplify{sqrt()}\\)", "altra"], vere: [false, true] }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("affermazione 1 della parte 1");
+      }
+    });
+
+    it("\\simplify{sqrt()} nella spiegazione di un'affermazione viene intercettato", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "veroFalso", consegna: "V/F", punti: 2,
+          affermazioni: ["vera", "falsa"], vere: [true, false],
+          spiegazioni: ["", "\\(\\simplify{sqrt()}\\)"] }] };
+      const esito = verificaSuSemi(versoNumbas(e));
+      expect(esito.ok).toBe(false);
+      if (!esito.ok) {
+        expect(esito.fase).toBe("testo");
+        expect(esito.messaggio).toContain("spiegazione");
+      }
+    });
+
+    it("una variabile non dichiarata in una spiegazione viene intercettata", () => {
+      const e: EsercizioEditor = { ...base, testo: "x",
+        parti: [{ tipo: "veroFalso", consegna: "V/F", punti: 2,
+          affermazioni: ["vera", "falsa"], vere: [true, false],
+          spiegazioni: ["", "\\(\\var{zzz}\\)"] }] };
+      expect(verificaSuSemi(versoNumbas(e)).ok).toBe(false);
+    });
+  });
+
   // I2 (Onda di correzioni finale): il revisore ha dimostrato con sedici
   // mutazioni usa-e-getta, mai committate, che diversi controlli non
   // facevano fallire NESSUN test esistente se rimossi — fra queste, rendere

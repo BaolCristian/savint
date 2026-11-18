@@ -117,6 +117,8 @@ TIPI DI PARTE (scegli tu il tipo più adatto a ogni domanda). Ogni parte ha "tip
   Facoltativo "spiegazioni": array lungo quanto "risposte", con il commento per chi sceglie quella risposta ("" per la risposta giusta).
 - "sceltaMultipla": più risposte giuste, corretta tutto o niente.
   "risposte": da 2 a 8 stringhe; "corrette": array di true/false lungo esattamente quanto "risposte", con almeno un true. Facoltativo "spiegazioni": array lungo quanto "risposte", con il commento mostrato a chi sbaglia QUELLA risposta (la spunta se è falsa o non la spunta se è giusta), quindi anche una risposta giusta può averne uno; "" dove non serve.
+- "veroFalso": tabella Vero/Falso (come nelle prove INVALSI): per ogni affermazione lo studente sceglie Vero o Falso; i punti sono divisi fra le righe.
+  "affermazioni": da 1 a 8 stringhe; "vere": array di true/false lungo esattamente quanto "affermazioni" (true = l'affermazione è vera). Facoltativo "spiegazioni": array lungo quanto "affermazioni", con il commento mostrato a chi sbaglia QUELLA affermazione; "" dove non serve.
 - "espressione": la risposta è un'espressione o un polinomio.
   "risposta": l'espressione corretta in sintassi JME (es. "2*x^2 - 3*x"); viene confrontata numericamente, quindi le forme equivalenti sono accettate.
   In "risposta" ogni variabile casuale va SEMPRE tra graffe, così viene sostituita dal suo valore: "{a}*x + {b}", non "a*x + b" (senza graffe la risposta attesa resterebbe con le lettere e lo studente che scrive i numeri giusti verrebbe corretto come sbagliato). Le lettere senza graffe (qui x) sono le incognite che lo studente scrive.
@@ -183,6 +185,8 @@ PART TYPES (choose the most suitable type for each question). Every part has "ti
   Optional "spiegazioni": array as long as "risposte", with the comment for whoever picks that answer ("" for the correct one).
 - "sceltaMultipla": several correct answers, marked all or nothing.
   "risposte": 2 to 8 strings; "corrette": array of true/false exactly as long as "risposte", with at least one true. Optional "spiegazioni": array as long as "risposte", with the comment shown to whoever gets THAT answer wrong (ticks it when false, or leaves it unticked when true), so even a correct answer may have one; "" where not needed.
+- "veroFalso": True/False table (as in INVALSI tests): for each statement the student picks True or False; the marks are split across the rows.
+  "affermazioni": 1 to 8 strings; "vere": array of true/false exactly as long as "affermazioni" (true = the statement is true). Optional "spiegazioni": array as long as "affermazioni", with the comment shown to whoever gets THAT statement wrong; "" where not needed.
 - "espressione": the answer is an expression or polynomial.
   "risposta": the correct expression in JME syntax (e.g. "2*x^2 - 3*x"); it is compared numerically, so equivalent forms are accepted.
   In "risposta" ALWAYS put every random variable in braces, so it is replaced by its value: "{a}*x + {b}", not "a*x + b" (without braces the expected answer would keep the letters and a student typing the right numbers would be marked wrong). Letters without braces (here x) are the unknowns the student types.

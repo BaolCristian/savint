@@ -1656,6 +1656,7 @@
         "tipoNumerica": "Numeric",
         "tipoScelta": "Multiple choice",
         "tipoSceltaMultipla": "Multiple choice with several correct answers",
+        "tipoVeroFalso": "True or false (table)",
         "tipoEspressione": "Formula",
         "numerica": {
           "valore": "Correct value",
@@ -1680,6 +1681,17 @@
           "spiegazione": "Explanation if wrong (optional)",
           "nessunaCorretta": "Mark at least one answer as correct before saving.",
           "tuttoONiente": "The student gets the marks only by ticking all and only the correct answers: no partial marks."
+        },
+        "veroFalso": {
+          "affermazioni": "Statements",
+          "affermazioneN": "Statement {numero}",
+          "valoreDi": "Statement {numero} is",
+          "vero": "True",
+          "falso": "False",
+          "rimuovi": "Remove",
+          "aggiungi": "Add statement",
+          "spiegazione": "Explanation if wrong (optional)",
+          "punteggio": "For each statement the student picks True or False: the marks are split across the rows, each correct row earns its share."
         },
         "espressione": {
           "risposta": "Correct answer",

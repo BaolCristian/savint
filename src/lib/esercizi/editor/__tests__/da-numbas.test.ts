@@ -46,7 +46,7 @@ describe("il corpus reale", () => {
     ["02-scomposizione-polinomi.json", true],  // distractors ora modellati
     ["03-sistemi-lineari.json", false],   // gapfill
     ["04-disequazioni-secondo-grado.json", false], // m_n_2 a punteggio parziale, non tutto o niente
-    ["05-goniometria-valori.json", false],  // m_n_x
+    ["05-goniometria-valori.json", false],  // m_n_x di abbinamento, non una tabella Vero/Falso
     ["06-derivate-elementari.json", false], // checkVariableNames/expectedVariableNames
     ["07-limiti-notevoli.json", false],     // margine E precisione insieme
     ["08-terminologia-funzioni.json", false], // patternmatch
@@ -547,5 +547,76 @@ describe("I2 — mutazioni che prima di questo giro non facevano fallire nessun 
       expect(esito.motivo).toBe("costrutti_non_supportati");
       expect(esito.dettaglio).toContain("usa funzioni scritte apposta per lui, in codice Numbas");
     }
+  });
+});
+
+describe("tabella Vero/Falso (m_n_x)", () => {
+  const conParte = (parte: EsercizioEditor["parti"][number]): EsercizioEditor => ({ ...base, parti: [parte] });
+  const PARTE = { tipo: "veroFalso" as const, consegna: "Indica se è vera o falsa.", punti: 3,
+    affermazioni: ["\\(2 < 3\\)", "Un rombo è un quadrato", "x > 1 & y < 2"], vere: [true, false, true] };
+
+  it("si riapre identica, e riconvertita dà gli stessi byte", () => {
+    const originale = conParte(PARTE);
+    const file = versoFile(originale);
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.editor).toEqual(originale);
+    expect(JSON.stringify(versoFile(esito.editor))).toBe(JSON.stringify(file));
+  });
+
+  it("con le spiegazioni torna identica, ognuna sulla sua affermazione", () => {
+    const originale = conParte({ ...PARTE, spiegazioni: ["", "Non ha per forza gli angoli retti", "vale se x > 1"] });
+    const file = versoFile(originale);
+    const esito = daNumbas(file);
+    expect(esito.ok).toBe(true);
+    if (!esito.ok) return;
+    expect(esito.editor).toEqual(originale);
+    expect(JSON.stringify(versoFile(esito.editor))).toBe(JSON.stringify(file));
+  });
+
+  it("anche con tutte vere o tutte false, e con una sola affermazione", () => {
+    for (const parte of [
+      { ...PARTE, vere: [true, true, true] },
+      { ...PARTE, vere: [false, false, false] },
+      { ...PARTE, affermazioni: ["sola"], vere: [false] },
+    ]) {
+      const esito = daNumbas(versoFile(conParte(parte)));
+      expect(esito.ok).toBe(true);
+      if (esito.ok) expect(esito.editor).toEqual(conParte(parte));
+    }
+  });
+
+  function mutata(muta: (p: Record<string, unknown>) => void) {
+    const file = versoFile(conParte(PARTE));
+    const q = structuredClone(file.question) as { parts: Record<string, unknown>[] };
+    muta(q.parts[0]!);
+    return { ...file, question: q };
+  }
+
+  it("una griglia di abbinamento (colonne diverse da Vero/Falso) resta in sola lettura, e il messaggio lo dice", () => {
+    const esito = daNumbas(mutata((p) => { p.answers = ["1/2", "1"]; }));
+    expect(esito.ok).toBe(false);
+    if (!esito.ok) expect(esito.dettaglio).toContain("Vero/Falso");
+  });
+
+  it("colonne invertite (Falso, Vero) non sono rappresentabili", () => {
+    expect(daNumbas(mutata((p) => { p.answers = ["Falso", "Vero"]; })).ok).toBe(false);
+  });
+
+  it("una matrice con punti diversi da punti/n non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.matrix = [["1", "0"], ["0", "1"], ["1", "0"]]; })).ok).toBe(false);
+  });
+
+  it("una risposta sbagliata che toglie punti (-1) non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.matrix = [["3/3", "-1"], ["-1", "3/3"], ["3/3", "-1"]]; })).ok).toBe(false);
+  });
+
+  it("le colonne Vero/Falso mescolate non sono rappresentabili", () => {
+    expect(daNumbas(mutata((p) => { p.shuffleAnswers = true; })).ok).toBe(false);
+  });
+
+  it("una spiegazione nella colonna giusta (che lo studente non vedrebbe mai) non è rappresentabile", () => {
+    expect(daNumbas(mutata((p) => { p.distractors = [["spiegazione", "", ""], ["", "", ""]]; })).ok).toBe(false);
   });
 });

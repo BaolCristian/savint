@@ -99,3 +99,43 @@ describe("esercizioEditorSchema - scelta multipla con più risposte giuste", () 
     expect(esercizioEditorSchema.safeParse(con({ ...parte, punti: 0 })).success).toBe(false);
   });
 });
+
+/** La tabella Vero/Falso (Numbas `m_n_x`): un valore per affermazione,
+ * allineato ad `affermazioni`. */
+describe("esercizioEditorSchema - tabella Vero/Falso", () => {
+  const parte = {
+    tipo: "veroFalso" as const,
+    consegna: "Vero o falso?",
+    punti: 2,
+    affermazioni: ["a", "b", "c"],
+    vere: [true, false, true],
+  };
+  const con = (p: object) => ({ ...base, parti: [p] });
+
+  it("accetta una tabella, anche tutta vera o tutta falsa", () => {
+    expect(esercizioEditorSchema.safeParse(con(parte)).success).toBe(true);
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, vere: [false, false, false] })).success).toBe(true);
+  });
+
+  it("accetta spiegazioni, una per affermazione", () => {
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, spiegazioni: ["", "perché", ""] })).success).toBe(true);
+  });
+
+  it("rifiuta vere non allineate alle affermazioni", () => {
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, vere: [true, false] })).success).toBe(false);
+  });
+
+  it("rifiuta spiegazioni non allineate", () => {
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, spiegazioni: ["x"] })).success).toBe(false);
+  });
+
+  it("rifiuta una tabella senza affermazioni o con più di otto", () => {
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, affermazioni: [], vere: [] })).success).toBe(false);
+    const nove = Array.from({ length: 9 }, (_, i) => `a${i}`);
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, affermazioni: nove, vere: nove.map(() => true) })).success).toBe(false);
+  });
+
+  it("rifiuta una parte da zero punti", () => {
+    expect(esercizioEditorSchema.safeParse(con({ ...parte, punti: 0 })).success).toBe(false);
+  });
+});

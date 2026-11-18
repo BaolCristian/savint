@@ -12,6 +12,7 @@ import { PannelloVariabili } from "./pannello-variabili";
 import { ParteNumerica } from "./parte-numerica";
 import { ParteScelta, NESSUNA_RISPOSTA_CORRETTA } from "./parte-scelta";
 import { ParteSceltaMultipla, senzaRisposteCorrette } from "./parte-scelta-multipla";
+import { ParteVeroFalso } from "./parte-vero-falso";
 import { ParteEspressione } from "./parte-espressione";
 import { Anteprima } from "./anteprima";
 import { ImpaginazioneEditor } from "./impaginazione";
@@ -31,13 +32,14 @@ export const ESERCIZIO_VUOTO: EsercizioEditor = {
 };
 
 type TipoParte = ParteEditor["tipo"];
-const TIPI_PARTE: TipoParte[] = ["numerica", "scelta", "sceltaMultipla", "espressione"];
+const TIPI_PARTE: TipoParte[] = ["numerica", "scelta", "sceltaMultipla", "veroFalso", "espressione"];
 
 /** La voce del menu «Tipo» per ogni tipo di parte. */
 const ETICHETTA_TIPO: Record<TipoParte, string> = {
   numerica: "parti.tipoNumerica",
   scelta: "parti.tipoScelta",
   sceltaMultipla: "parti.tipoSceltaMultipla",
+  veroFalso: "parti.tipoVeroFalso",
   espressione: "parti.tipoEspressione",
 };
 
@@ -52,6 +54,8 @@ function parteVuota(tipo: TipoParte): ParteEditor {
       // docente, e finché non ne spunta una il salvataggio resta bloccato
       // (vedi `sceltaMancante` più sotto).
       return { tipo: "sceltaMultipla", consegna: "", punti: 1, risposte: ["", ""], corrette: [false, false] };
+    case "veroFalso":
+      return { tipo: "veroFalso", consegna: "", punti: 1, affermazioni: ["", ""], vere: [true, true] };
     case "espressione":
       return { tipo: "espressione", consegna: "", punti: 1, risposta: "" };
   }
@@ -486,6 +490,8 @@ export function EditorEsercizio({ valoreIniziale, esercizioId, onSalvato }: Edit
                     />
                   ) : parte.tipo === "scelta" ? (
                     <ParteScelta parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
+                  ) : parte.tipo === "veroFalso" ? (
+                    <ParteVeroFalso parte={parte} onChange={(p) => aggiornaParte(i, p)} onRimuovi={() => rimuoviParte(i)} />
                   ) : parte.tipo === "sceltaMultipla" ? (
                     <ParteSceltaMultipla
                       parte={parte}

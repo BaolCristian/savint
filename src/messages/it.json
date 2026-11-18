@@ -1656,6 +1656,7 @@
         "tipoNumerica": "Numerica",
         "tipoScelta": "Scelta multipla",
         "tipoSceltaMultipla": "Scelta multipla con più risposte giuste",
+        "tipoVeroFalso": "Vero o falso (tabella)",
         "tipoEspressione": "Formula",
         "numerica": {
           "valore": "Valore corretto",
@@ -1680,6 +1681,17 @@
           "spiegazione": "Spiegazione se sbagliata (facoltativa)",
           "nessunaCorretta": "Segna almeno una risposta come corretta prima di salvare.",
           "tuttoONiente": "Lo studente prende i punti solo se spunta tutte e sole le risposte corrette: nessun punto parziale."
+        },
+        "veroFalso": {
+          "affermazioni": "Affermazioni",
+          "affermazioneN": "Affermazione {numero}",
+          "valoreDi": "L'affermazione {numero} è",
+          "vero": "Vero",
+          "falso": "Falso",
+          "rimuovi": "Rimuovi",
+          "aggiungi": "Aggiungi affermazione",
+          "spiegazione": "Spiegazione se sbagliata (facoltativa)",
+          "punteggio": "Per ogni affermazione lo studente sceglie Vero o Falso: i punti sono divisi fra le righe, ogni riga giusta vale la sua parte."
         },
         "espressione": {
           "risposta": "Risposta corretta",

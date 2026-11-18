@@ -2,7 +2,7 @@ import { htmlVersoTesto, testoVersoHtml } from "./immagini-testo";
 import { esercizioEditorSchema } from "./modello";
 import type { EsercizioEditor, ParteEditor, Tolleranza, VariabileEditor } from "./modello";
 import { hashContenuto, stabile, type EsercizioFile } from "../format/schema";
-import { versoNumbas, escapaTesto } from "./verso-numbas";
+import { versoNumbas, escapaTesto, ETICHETTE_VERO_FALSO } from "./verso-numbas";
 
 /** L'esito della lettura: o un editor ricostruito fedelmente, o un rifiuto
  * motivato. Non esiste una terza via "ricostruito parzialmente": è proprio
@@ -258,7 +258,7 @@ const DESCRIZIONE_TIPO_PARTE: Record<string, string> = {
   patternmatch: "controlla la risposta confrontandola con un modello di testo (un'espressione regolare)",
 };
 
-const TIPI_SUPPORTATI = new Set(["numberentry", "1_n_2", "m_n_2", "jme"]);
+const TIPI_SUPPORTATI = new Set(["numberentry", "1_n_2", "m_n_2", "m_n_x", "jme"]);
 
 type EsitoParte = { ok: true; parte: ParteEditor } | { ok: false; lettura: Lettura };
 
@@ -277,7 +277,8 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
       ok: false,
       lettura: rifiutaTipo(
         `${posizione} ${descrizione} (tipo "${nomeTipo}"): l'editor gestisce solo domande numeriche, a ` +
-          `scelta multipla (con una o più risposte giuste), o con risposta in formula matematica. ` +
+          `scelta multipla (con una o più risposte giuste), a tabella Vero/Falso, o con risposta in formula ` +
+          `matematica. ` +
           SUGGERIMENTO_REPOSITORIO,
       ),
     };
@@ -358,6 +359,8 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
     }
     return { ok: true, parte: { tipo: "espressione", consegna, punti, risposta } };
   }
+
+  if (tipo === "m_n_x") return leggiVeroFalso(p, consegna, posizione);
 
   // L'editor scrive solo la correzione tutto o niente (vedi
   // verso-numbas.ts): un m_n_2 che somma i punti delle caselle spuntate —
@@ -452,6 +455,88 @@ function leggiParte(raw: unknown, indice: number): EsitoParte {
 }
 
 type EsitoCampo<T> = { ok: true; valori: T } | { ok: false; lettura: Lettura };
+
+/** Una griglia m_n_x è leggibile solo se è una tabella Vero/Falso scritta
+ * dall'editor (vedi verso-numbas.ts): colonne «Vero» e «Falso». Qualunque
+ * altra griglia (l'abbinamento dell'esercizio 05, per esempio) resta in sola
+ * lettura con il motivo detto in chiaro. Qui si legge solo ciò che serve a
+ * ricostruire il modello; che il resto (matrice `punti/n`, impostazioni,
+ * spiegazioni nella colonna giusta) sia ESATTAMENTE quello che l'editor
+ * scrive lo garantisce il confronto strutturale, come per le altre parti. */
+function leggiVeroFalso(p: Record<string, unknown>, consegna: string, posizione: string): EsitoParte {
+  const colonne = lista(p.answers);
+  const eVeroFalso =
+    colonne !== null &&
+    colonne.length === ETICHETTE_VERO_FALSO.length &&
+    colonne.every((c, i) => c === ETICHETTE_VERO_FALSO[i]);
+  if (!eVeroFalso) {
+    return {
+      ok: false,
+      lettura: rifiutaTipo(
+        `${posizione} ${DESCRIZIONE_TIPO_PARTE.m_n_x} (tipo "m_n_x"): l'editor gestisce solo le griglie a ` +
+          `tabella Vero/Falso. ${SUGGERIMENTO_REPOSITORIO}`,
+      ),
+    };
+  }
+  const punti = numero(p.marks);
+  if (punti === null) {
+    return { ok: false, lettura: rifiutaCostrutto(`${posizione} non ha un punteggio valido (marks).`) };
+  }
+  const righeGrezze = lista(p.choices);
+  const matriceGrezza = lista(p.matrix);
+  if (righeGrezze === null || matriceGrezza === null || righeGrezze.length !== matriceGrezza.length) {
+    return {
+      ok: false,
+      lettura: rifiutaCostrutto(
+        `${posizione}: le affermazioni e la tabella delle risposte giuste non corrispondono in numero (choices/matrix).`,
+      ),
+    };
+  }
+  const affermazioni = leggiRisposte(righeGrezze, posizione);
+  if (!affermazioni.ok) return affermazioni;
+  // La cella «Vero» di un'affermazione vera vale `punti/n`, quella di una
+  // falsa "0": basta sapere quale delle due non è zero.
+  const vere = matriceGrezza.map((riga) => (lista(riga) ?? [])[0] !== "0");
+
+  let spiegazioni: string[] | undefined;
+  if (p.distractors !== undefined) {
+    const colonneSpiegazioni = lista(p.distractors);
+    const perColonna = colonneSpiegazioni?.map((c) => lista(c));
+    if (
+      perColonna === undefined ||
+      perColonna.length !== 2 ||
+      perColonna.some((c) => c === null || c.length !== affermazioni.valori.length)
+    ) {
+      return {
+        ok: false,
+        lettura: rifiutaCostrutto(
+          `${posizione}: le spiegazioni non corrispondono in numero alle affermazioni (distractors).`,
+        ),
+      };
+    }
+    const estratte: string[] = [];
+    for (let i = 0; i < vere.length; i++) {
+      // La spiegazione sta nella colonna SBAGLIATA: Falso per una vera.
+      const s = estraiTesto(perColonna[vere[i] ? 1 : 0]![i]);
+      if (s === null) {
+        return {
+          ok: false,
+          lettura: rifiutaCostrutto(
+            messaggioTestoAmbiguo(`la spiegazione di un'affermazione nella ${posizione}`, "distractors"),
+          ),
+        };
+      }
+      estratte.push(s);
+    }
+    // Come per le scelte: nessuna spiegazione scritta = campo mai toccato.
+    spiegazioni = estratte.some((s) => s !== "") ? estratte : undefined;
+  }
+
+  return {
+    ok: true,
+    parte: { tipo: "veroFalso", consegna, punti, affermazioni: affermazioni.valori, vere, spiegazioni },
+  };
+}
 
 /** Le risposte proposte (`choices`) di una scelta multipla, come testo del
  * docente: rifiutate in blocco se anche una sola non è nella forma

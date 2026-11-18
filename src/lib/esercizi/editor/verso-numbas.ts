@@ -44,6 +44,10 @@ function intervalloNumerico(valore: string, t: Tolleranza) {
   }
 }
 
+/** Le due colonne di una tabella Vero/Falso, in quest'ordine. Esportate
+ * perché `da-numbas.ts` riconosca la stessa forma, non una seconda copia. */
+export const ETICHETTE_VERO_FALSO = ["Vero", "Falso"] as const;
+
 function versoParte(parte: ParteEditor): unknown {
   switch (parte.tipo) {
     case "numerica":
@@ -114,6 +118,51 @@ function versoParte(parte: ParteEditor): unknown {
         minMarks: 0,
         distractors: (parte.spiegazioni ?? parte.risposte.map(() => "")).map(escapaTesto),
       };
+    case "veroFalso": {
+      // Tabella Vero/Falso come griglia m_n_x (verificata sul motore in
+      // vero-falso-correzione.test.ts):
+      // - righe (`choices`) = le affermazioni, colonne (`answers`) = «Vero»
+      //   e «Falso», in quest'ordine e mai mescolate (`shuffleAnswers`
+      //   false); le righe sì, come le risposte di "scelta".
+      // - `displayType: "radiogroup"`: una sola scelta per riga. Il motore
+      //   impone allora `markingMethod: "sum ticked cells"` (finaliseLoad):
+      //   ogni riga giusta vale la sua cella della matrice.
+      // - `matrix` indicizzata `[affermazione][colonna]`: la cella giusta
+      //   vale `punti/n` (un'espressione JME, che il motore valuta: niente
+      //   decimali periodici scritti a mano), quella sbagliata "0". Credito
+      //   parziale riga per riga: 3 affermazioni giuste su 4 = 3/4 dei punti.
+      // - `marks` porta i punti, `maxMarks` NON va scritto (vedi m_n_2 sotto).
+      // - `distractors` indicizzata `[colonna][affermazione]`, come la
+      //   matrice INTERNA del motore (lo script di correzione legge
+      //   `distractors[x][y]` con x = colonna, y = riga): la spiegazione
+      //   dell'affermazione sta nella colonna SBAGLIATA, l'unica che lo
+      //   studente può spuntare sbagliando.
+      const n = parte.affermazioni.length;
+      const spiegazioni = parte.spiegazioni ?? parte.affermazioni.map(() => "");
+      return {
+        type: "m_n_x",
+        marks: parte.punti,
+        prompt: `<p>${testoVersoHtml(parte.consegna)}</p>`,
+        choices: parte.affermazioni.map((a) => `<p>${escapaTesto(a)}</p>`),
+        answers: [...ETICHETTE_VERO_FALSO],
+        matrix: parte.vere.map((vera) =>
+          vera ? [`${parte.punti}/${n}`, "0"] : ["0", `${parte.punti}/${n}`],
+        ),
+        displayType: "radiogroup",
+        shuffleChoices: true,
+        shuffleAnswers: false,
+        minAnswers: 0,
+        maxAnswers: 0,
+        warningType: "none",
+        showCellAnswerState: true,
+        minMarks: 0,
+        layout: { type: "all", expression: "" },
+        distractors: [
+          parte.vere.map((vera, i) => (vera ? "" : escapaTesto(spiegazioni[i]!))),
+          parte.vere.map((vera, i) => (vera ? escapaTesto(spiegazioni[i]!) : "")),
+        ],
+      };
+    }
     case "espressione":
       return {
         type: "jme",

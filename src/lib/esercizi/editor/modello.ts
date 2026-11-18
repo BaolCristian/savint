@@ -57,6 +57,22 @@ export type ParteEditor =
       // pur essendolo). Assente = nessuna spiegazione.
       spiegazioni?: string[];
     }
+  | {
+      // Tabella Vero/Falso (Numbas `m_n_x` a pulsanti di opzione, due
+      // colonne «Vero» e «Falso»): il formato più frequente delle prove
+      // INVALSI. Ogni affermazione giusta vale `punti / numero di
+      // affermazioni`: credito parziale riga per riga (vedi verso-numbas.ts).
+      tipo: "veroFalso";
+      consegna: string;
+      punti: number;
+      affermazioni: string[];
+      // Una voce per affermazione, allineata ad `affermazioni`: `true` se
+      // l'affermazione è vera.
+      vere: boolean[];
+      // Il commento che lo studente legge quando sbaglia QUELLA
+      // affermazione. Assente = nessuna spiegazione.
+      spiegazioni?: string[];
+    }
   | { tipo: "espressione"; consegna: string; punti: number; risposta: string };
 
 /** Una parte da zero punti non ha senso in un esercizio: per una parte a
@@ -116,6 +132,24 @@ const parteSceltaMultiplaSchema = z
     path: ["spiegazioni"],
   });
 
+const parteVeroFalsoSchema = z
+  .object({
+    tipo: z.literal("veroFalso"),
+    consegna: testoLibero,
+    punti: puntiSchema,
+    affermazioni: z.array(testoLibero).min(1).max(8),
+    vere: z.array(z.boolean()),
+    spiegazioni: z.array(testoLibero).optional(),
+  })
+  .refine((v) => v.vere.length === v.affermazioni.length, {
+    message: "vere deve avere una voce per ogni affermazione",
+    path: ["vere"],
+  })
+  .refine((v) => v.spiegazioni === undefined || v.spiegazioni.length === v.affermazioni.length, {
+    message: "spiegazioni, se presente, deve avere una voce per ogni affermazione",
+    path: ["spiegazioni"],
+  });
+
 const parteEspressioneSchema = z.object({
   tipo: z.literal("espressione"),
   consegna: testoLibero,
@@ -127,6 +161,7 @@ const parteEditorSchema: z.ZodType<ParteEditor> = z.union([
   parteNumericaSchema,
   parteSceltaSchema,
   parteSceltaMultiplaSchema,
+  parteVeroFalsoSchema,
   parteEspressioneSchema,
 ]);
 

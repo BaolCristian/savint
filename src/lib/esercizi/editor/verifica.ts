@@ -113,6 +113,17 @@ function campiTesto(question: NumbasQuestionJSON): CampoTesto[] {
         testo: spiegazione,
       });
     });
+    // Tabella Vero/Falso (m_n_x): spiegazioni a matrice `[colonna][affermazione]`.
+    if (parte.type === "m_n_x" && Array.isArray(parte["distractors"])) {
+      (parte["distractors"] as unknown[]).forEach((colonna) => {
+        soloStringhe(colonna).forEach((spiegazione, i) => {
+          campi.push({
+            descrizione: `nella spiegazione dell'affermazione ${i + 1} della parte ${numero}`,
+            testo: spiegazione,
+          });
+        });
+      });
+    }
   });
   return campi;
 }
@@ -259,10 +270,30 @@ function distrattoriDichiarati(v: unknown): string[] {
 function campiSceltaGrezzi(caricata: Question): CampoScelta[] {
   const campi: CampoScelta[] = [];
   caricata.allParts().forEach((parte) => {
-    if (parte.type !== "1_n_2" && parte.type !== "m_n_2") return;
+    if (parte.type !== "1_n_2" && parte.type !== "m_n_2" && parte.type !== "m_n_x") return;
     const scope = parte.getScope();
     const impostazioni = parte.settings as Record<string, unknown>;
     const numero = parte.index + 1;
+    if (parte.type === "m_n_x") {
+      // Tabella Vero/Falso: le righe sono le affermazioni; le spiegazioni
+      // stanno in una matrice `[colonna][affermazione]` (verso-numbas.ts),
+      // che il motore conserva così com'è — nessuna riga da spacchettare.
+      soloStringhe(impostazioni.choices).forEach((affermazione, i) => {
+        campi.push({ descrizione: `nell'affermazione ${i + 1} della parte ${numero}`, testoGrezzo: affermazione, scope });
+      });
+      const colonne = Array.isArray(impostazioni.distractors) ? (impostazioni.distractors as unknown[]) : [];
+      colonne.forEach((colonna) => {
+        soloStringhe(colonna).forEach((spiegazione, i) => {
+          if (spiegazione === "") return;
+          campi.push({
+            descrizione: `nella spiegazione dell'affermazione ${i + 1} della parte ${numero}`,
+            testoGrezzo: spiegazione,
+            scope,
+          });
+        });
+      });
+      return;
+    }
     soloStringhe(impostazioni.choices).forEach((scelta, i) => {
       campi.push({ descrizione: `nella risposta ${i + 1} della parte ${numero}`, testoGrezzo: scelta, scope });
     });
