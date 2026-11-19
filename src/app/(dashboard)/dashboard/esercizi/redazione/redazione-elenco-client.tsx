@@ -62,6 +62,8 @@ interface Testi extends DuplicaButtonTesti {
    * il Nuovo compito con l'esercizio o l'argomento (Task 7). */
   assegna: string;
   assegnaArgomento: string;
+  /** "Stampa (PDF)" sul gruppo: l'esercitazione con tutti gli esercizi dell'argomento. */
+  stampaArgomento: string;
   cerca: string;
   anno: string;
   argomento: string;
@@ -193,6 +195,16 @@ export function RedazioneElencoClient({ voci, testi, admin = false }: { voci: Vo
                       className="text-sm font-medium text-brand-blue hover:underline"
                     >
                       {testi.assegnaArgomento}
+                    </Link>
+                  )}
+                  {/* La stampa prende tutti gli esercizi dell'argomento che il
+                      docente vede, della classe scelta nel filtro se c'è. */}
+                  {g.voci.some((v) => v.assegnabile) && (
+                    <Link
+                      href={`/stampa/esercizi?argomento=${encodeURIComponent(g.argomento)}${anno === "all" ? "" : `&anno=${anno}`}`}
+                      className="text-sm font-medium text-brand-blue hover:underline"
+                    >
+                      {testi.stampaArgomento}
                     </Link>
                   )}
                   {g.voci.some((v) => v.diChi === "miei") && (

@@ -88,4 +88,35 @@ describe("VerificaStampabile", () => {
     expect(testoDelFoglio(container, 1)).toContain("Rotto");
     expect(testoDelFoglio(container, 1)).not.toContain("Sconti successivi");
   });
+
+  it("esercitazione: un foglio senza versione, con la classe da scrivere a mano", () => {
+    const { container } = render(
+      <VerificaStampabile
+        titolo="Numeri"
+        classe=""
+        esercizi={esercizi}
+        fogli={[{ etichetta: "", nominativo: false, seme: "esercitazione:argomento:numeri:" }]}
+        conSoluzioni
+        locale="it"
+      />,
+    );
+    expect(container.querySelectorAll("section.foglio")).toHaveLength(1);
+    const foglio = testoDelFoglio(container, 0);
+    expect(foglio).not.toContain("versione");
+    expect(foglio).toContain('classe:{"classe":"________"}');
+    const soluzioni = screen.getByText("soluzioniTitolo").closest("section")!;
+    expect(within(soluzioni).queryByText(/versione/)).not.toBeInTheDocument();
+  });
+
+  it("solo le soluzioni: niente fogli per gli studenti, gli stessi numeri del foglio", () => {
+    const foglio = { etichetta: "", nominativo: false, seme: "esercitazione:raccolta:r1" };
+    const conFogli = render(<VerificaStampabile titolo="R" classe="" esercizi={esercizi} fogli={[foglio]} conSoluzioni locale="it" />);
+    const attese = conFogli.getByText("soluzioniTitolo").closest("section")!.innerHTML;
+    conFogli.unmount();
+    const { container } = render(
+      <VerificaStampabile titolo="R" classe="" esercizi={esercizi} fogli={[foglio]} conSoluzioni={false} soloSoluzioni locale="it" />,
+    );
+    expect(container.querySelectorAll("section.foglio")).toHaveLength(0);
+    expect(screen.getByText("soluzioniTitolo").closest("section")!.innerHTML).toBe(attese);
+  });
 });

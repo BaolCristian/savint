@@ -90,6 +90,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 {t("assegna")}
               </Link>
             )}
+            {/* L'esercitazione da stampare: tutti gli esercizi della raccolta. */}
+            {contenitore.esercizi.length > 0 && (
+              <Link href={`/stampa/esercizi?raccolta=${encodeURIComponent(id)}`} className={buttonVariants({ variant: "outline" })}>
+                {t("stampa")}
+              </Link>
+            )}
             {/* "Condividi" solo al proprietario della raccolta (o all'ADMIN). */}
             {puo(contenitore.ruolo, "condividere") && (
               <CondividiDialog risorsa={{ tipo: "contenitore", id }} titolo={contenitore.name} testi={await testiCondivisione()} admin={chi.admin} />

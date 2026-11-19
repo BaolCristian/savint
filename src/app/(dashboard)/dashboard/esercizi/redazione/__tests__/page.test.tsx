@@ -259,6 +259,25 @@ describe("elenco della redazione", () => {
     );
   });
 
+  // L'esercitazione da stampare: tutto l'argomento, della classe scelta nel filtro.
+  it("offre \"Stampa (PDF)\" sul gruppo, con la classe del filtro se c'è", async () => {
+    const voce = (id: string, argomento: string, anno: number, ultimaVersione = 1) => ({
+      id, titolo: id, argomento, anno, ultimaVersione,
+      modificabile: true, motivo: null, autoreNome: "Anna", aggiornatoIl: new Date("2026-01-15T10:30:00Z"), ...ACCESSO,
+    });
+    vi.mocked(elencoRedazione).mockResolvedValue([voce("e1", "Spazio e figure", 2), voce("e2", "Spazio e figure", 1), voce("e3", "geometria", 2, 0)]);
+    await rendi();
+    const [geometria, spazio] = screen.getAllByRole("region");
+    expect(within(geometria!).queryByRole("link", { name: "stampaArgomento" })).toBeNull();
+    expect(within(spazio!).getByRole("link", { name: "stampaArgomento" })).toHaveAttribute(
+      "href", `/stampa/esercizi?argomento=${encodeURIComponent("Spazio e figure")}`,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "catalog.year" }), { target: { value: "2" } });
+    expect(screen.getByRole("link", { name: "stampaArgomento" })).toHaveAttribute(
+      "href", `/stampa/esercizi?argomento=${encodeURIComponent("Spazio e figure")}&anno=2`,
+    );
+  });
+
   it("la barra della sezione ha la scheda Modelli", async () => {
     vi.mocked(elencoRedazione).mockResolvedValue([]);
     await rendi();

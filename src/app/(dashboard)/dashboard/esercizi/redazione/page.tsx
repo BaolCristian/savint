@@ -137,6 +137,7 @@ export default async function Page({
             anteprima: t("anteprima"),
             assegna: t("assegna"),
             assegnaArgomento: t("assegnaArgomento"),
+            stampaArgomento: t("stampaArgomento"),
             duplica: t("duplica"),
             duplicaInCorso: t("duplicaInCorso"),
             duplicaErrore: t("duplicaErrore"),

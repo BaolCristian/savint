@@ -1346,7 +1346,8 @@
       "annulla": "Cancel",
       "assegna": "Assign this collection",
       "modifica": "Edit",
-      "salva": "Save"
+      "salva": "Save",
+      "stampa": "Print (PDF)"
     },
     "nuovoCompito": {
       "titolo": "New assignment",
@@ -1491,6 +1492,19 @@
       "nessunoStudente": "The class has no enrolled students: choose a number of versions.",
       "nessunoStudentePerStudente": "The class has no enrolled students: there is no sheet to print.",
       "link": "Print as a test"
+    },
+    "stampaEsercitazione": {
+      "titoloPagina": "Print the worksheet",
+      "torna": "← Back to exercises",
+      "quanti": "{n, plural, one {# exercise} other {# exercises}} from “{titolo}”.",
+      "titoloConClasse": "{titolo} · year {anno}",
+      "soluzioni": "Solutions",
+      "soluzioniNo": "Exercises only",
+      "soluzioniFondo": "Exercises, with solutions at the end",
+      "soluzioniSole": "Solutions only (teacher's PDF)",
+      "aggiorna": "Update",
+      "aiuto": "In the print dialog choose “Save as PDF” to get the file. For two separate PDFs, save “Exercises only” first and then “Solutions only”: the numbers are the same.",
+      "nessunEsercizio": "There are no exercises to print."
     },
     "compiti": {
       "titolo": "Assigned work",
@@ -1835,7 +1849,8 @@
         "importa": "Import from file",
         "importati": "{importati, plural, =0 {No exercises imported} one {# exercise imported} other {# exercises imported}}{saltati, plural, =0 {.} other {, # skipped (invalid, already present or not saved).}}",
         "assegna": "Assign",
-        "assegnaArgomento": "Assign this topic"
+        "assegnaArgomento": "Assign this topic",
+        "stampaArgomento": "Print (PDF)"
       },
       "importa": {
         "titolo": "Import exercises from JSON",

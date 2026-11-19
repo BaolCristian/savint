@@ -1346,7 +1346,8 @@
       "annulla": "Annulla",
       "assegna": "Assegna questa raccolta",
       "modifica": "Modifica",
-      "salva": "Salva"
+      "salva": "Salva",
+      "stampa": "Stampa (PDF)"
     },
     "nuovoCompito": {
       "titolo": "Nuovo compito",
@@ -1491,6 +1492,19 @@
       "nessunoStudente": "La classe non ha studenti iscritti: scegli un numero di versioni.",
       "nessunoStudentePerStudente": "La classe non ha studenti iscritti: non c'è nessun foglio da stampare.",
       "link": "Stampa come verifica"
+    },
+    "stampaEsercitazione": {
+      "titoloPagina": "Stampa l'esercitazione",
+      "torna": "← Torna agli esercizi",
+      "quanti": "{n, plural, one {# esercizio} other {# esercizi}} di «{titolo}».",
+      "titoloConClasse": "{titolo} · classe {anno}",
+      "soluzioni": "Soluzioni",
+      "soluzioniNo": "Solo gli esercizi",
+      "soluzioniFondo": "Esercizi e, in fondo, le soluzioni",
+      "soluzioniSole": "Solo le soluzioni (PDF per il docente)",
+      "aggiorna": "Aggiorna",
+      "aiuto": "Nella finestra di stampa scegli «Salva come PDF» per avere il file. Per avere due PDF separati, salva prima «Solo gli esercizi» e poi «Solo le soluzioni»: i numeri sono gli stessi.",
+      "nessunEsercizio": "Non ci sono esercizi da stampare."
     },
     "compiti": {
       "titolo": "Compiti assegnati",
@@ -1835,7 +1849,8 @@
         "importa": "Importa da file",
         "importati": "{importati, plural, =0 {Nessun esercizio importato} one {# esercizio importato} other {# esercizi importati}}{saltati, plural, =0 {.} one {, # saltato (non valido, già presente o non salvato).} other {, # saltati (non validi, già presenti o non salvati).}}",
         "assegna": "Assegna",
-        "assegnaArgomento": "Assegna questo argomento"
+        "assegnaArgomento": "Assegna questo argomento",
+        "stampaArgomento": "Stampa (PDF)"
       },
       "importa": {
         "titolo": "Importa esercizi da JSON",

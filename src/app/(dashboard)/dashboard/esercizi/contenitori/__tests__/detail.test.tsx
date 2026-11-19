@@ -70,6 +70,7 @@ describe("pagina di dettaglio di un contenitore", () => {
     expect(screen.getByRole("link", { name: "assegna" })).toHaveAttribute(
       "href", "/dashboard/esercizi/compiti/nuovo?raccolta=cont1",
     );
+    expect(screen.getByRole("link", { name: "stampa" })).toHaveAttribute("href", "/stampa/esercizi?raccolta=cont1");
   });
 
   it("una raccolta vuota non offre di essere assegnata", async () => {
@@ -78,6 +79,7 @@ describe("pagina di dettaglio di un contenitore", () => {
     });
     await rendi();
     expect(screen.queryByRole("link", { name: "assegna" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "stampa" })).toBeNull();
   });
 
   it("404 se il contenitore non esiste", async () => {

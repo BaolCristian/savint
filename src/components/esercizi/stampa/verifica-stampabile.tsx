@@ -17,6 +17,8 @@ export interface VerificaStampabileProps {
   esercizi: { titolo: string; content: unknown }[];
   fogli: FoglioStampa[];
   conSoluzioni: boolean;
+  /** Solo le soluzioni, senza i fogli per gli studenti: il PDF del docente. */
+  soloSoluzioni?: boolean;
   locale: "it" | "en";
 }
 
@@ -123,13 +125,17 @@ function Foglio({ foglio, caricati, props }: { foglio: FoglioStampa; caricati: E
       <header className="space-y-3 border-b-2 border-slate-800 pb-3">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="text-xl font-bold">{props.titolo}</h2>
-          <span className="text-sm font-semibold">
-            {foglio.nominativo ? t("classe", { classe: props.classe }) : t("versione", { lettera: foglio.etichetta })}
-          </span>
+          {/* Un'esercitazione ha un foglio solo, senza etichetta: niente "Versione". */}
+          {(foglio.nominativo || foglio.etichetta) && (
+            <span className="text-sm font-semibold">
+              {foglio.nominativo ? t("classe", { classe: props.classe }) : t("versione", { lettera: foglio.etichetta })}
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
           <span>{t("nome")}: {foglio.nominativo ? <strong>{foglio.etichetta}</strong> : RIGA + RIGA}</span>
-          {!foglio.nominativo && <span>{t("classe", { classe: props.classe })}</span>}
+          {/* Senza classe (un'esercitazione non è legata a una classe) la si scrive a mano. */}
+          {!foglio.nominativo && <span>{t("classe", { classe: props.classe || "________" })}</span>}
           <span>{t("data")}: ____________</span>
         </div>
       </header>
@@ -186,9 +192,11 @@ function Soluzioni({ fogli, caricati }: { fogli: FoglioStampa[]; caricati: Eserc
       <h2 className="border-b-2 border-slate-800 pb-2 text-xl font-bold">{t("soluzioniTitolo")}</h2>
       {fogli.map((foglio, f) => (
         <div key={foglio.seme} className="break-inside-avoid space-y-3">
-          <h3 className="font-semibold">
-            {foglio.nominativo ? foglio.etichetta : t("versione", { lettera: foglio.etichetta })}
-          </h3>
+          {(foglio.nominativo || foglio.etichetta) && (
+            <h3 className="font-semibold">
+              {foglio.nominativo ? foglio.etichetta : t("versione", { lettera: foglio.etichetta })}
+            </h3>
+          )}
           <ol className="space-y-3 text-sm">
             {caricati[f].map((e, i) => (
               <li key={i} className="space-y-1">
@@ -243,10 +251,10 @@ export function VerificaStampabile(props: VerificaStampabileProps) {
           {t("stampa")}
         </button>
       </div>
-      {props.fogli.map((foglio, i) => (
+      {!props.soloSoluzioni && props.fogli.map((foglio, i) => (
         <Foglio key={foglio.seme} foglio={foglio} caricati={caricati[i]} props={props} />
       ))}
-      {props.conSoluzioni && <Soluzioni fogli={props.fogli} caricati={caricati} />}
+      {(props.conSoluzioni || props.soloSoluzioni) && <Soluzioni fogli={props.fogli} caricati={caricati} />}
     </div>
   );
 }
