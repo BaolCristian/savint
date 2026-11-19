@@ -18,7 +18,14 @@
  *   (`content/esercizi/immagini/`, copiate dal seed);
  * - le domande da argomentare (D8, D11 b e c, D16, D23 b) sono diventate a
  *   scelta fra motivazioni proposte; la descrizione lo dice;
- * - i «calcoli da scrivere» (D20, D24) non si correggono: resta il risultato.
+ * - i «calcoli da scrivere» (D20, D24) non si correggono: resta il risultato;
+ * - le domande di solo testo e calcolo hanno i NUMERI VARIABILI (regole in
+ *   `scripts/invalsi/comune.ts`): D12, D20, D21, D23 (parte a), D25, D28. Le
+ *   altre restano con i numeri del fascicolo: legate a un'immagine o a un
+ *   grafico (D2, D3, D4, D6, D8, D9, D10, D13, D17, D22, D24, D26, D27),
+ *   concettuali o Vero/Falso su affermazioni fisse (D1, D11, D16, D18, D19,
+ *   D29, D30), con dati reali (D14, gli occupati in Italia), o con
+ *   distrattori di cui non si ricostruisce l'errore (D5, D7, D15).
  */
 import {
   creaPacchetto,
@@ -29,6 +36,7 @@ import {
   r,
   scelta,
   scriviPacchetto,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -369,11 +377,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["equazioni", "parametri"],
     difficolta: 2,
-    testo: r`È data l'equazione \((3k - 6)x - 5k + 2 = 0\), in cui \(x\) è l'incognita e \(k\) è un numero reale.`,
+    // d < c: la risposta d/c è una frazione fra 0 e 1, mai uguale al valore
+    // intero q/p che annulla il coefficiente di x (l'errore tipico), né al
+    // suo opposto.
+    variabili: [
+      v("p", "random(2..5)", "il coefficiente di k nel coefficiente di x (fascicolo: 3)"),
+      v("q", "p*random(2..4)", "il termine noto nel coefficiente di x, multiplo di p (fascicolo: 6)"),
+      v("c", "random(3, 5, 7)", "il coefficiente di k nel termine noto (fascicolo: 5)"),
+      v("d", "random(1..c-1)", "il termine noto, minore di c (fascicolo: 2)"),
+    ],
+    testo: r`È data l'equazione \((\var{p}k - \var{q})x - \var{c}k + \var{d} = 0\), in cui \(x\) è l'incognita e \(k\) è un numero reale.`,
     suggerimento:
-      r`Se la soluzione è \(x = 0\), sostituendo si ottiene \((3k - 6) \cdot 0 - 5k + 2 = 0\), cioè \(-5k + 2 = 0\), \(k = \frac{2}{5}\). ` +
-      r`Per questo valore il coefficiente \(3k - 6\) non è zero, quindi \(x = 0\) è proprio l'unica soluzione.`,
-    parti: [espressione(r`Per quale valore di \(k\) la soluzione dell'equazione è 0? Scrivi il valore come frazione. \(k =\)`, "2/5")],
+      r`Se la soluzione è \(x = 0\), sostituendo si ottiene \((\var{p}k - \var{q}) \cdot 0 - \var{c}k + \var{d} = 0\), cioè \(-\var{c}k + \var{d} = 0\), \(k = \frac{\var{d}}{\var{c}}\). ` +
+      r`Per questo valore il coefficiente \(\var{p}k - \var{q}\) non è zero (si annulla solo per \(k = \var{q/p}\)), quindi \(x = 0\) è proprio l'unica soluzione.`,
+    parti: [espressione(r`Per quale valore di \(k\) la soluzione dell'equazione è 0? Scrivi il valore come frazione. \(k =\)`, "{d}/{c}")],
   },
   {
     numero: 13,
@@ -532,14 +549,25 @@ const DOMANDE: Domanda[] = [
     temi: ["percentuali", "aumenti e sconti successivi"],
     difficolta: 2,
     adattamento: "Nel fascicolo andavano scritti anche i calcoli: qui si riportano solo i risultati.",
+    // L'aumento è un multiplo di 10 e la somma un multiplo di 1 000: il
+    // risultato è sempre un numero intero di euro. Niente 8 nella perdita,
+    // che vorrebbe «dell'8%».
+    variabili: [
+      v("su", "10*random(1..3)", "la percentuale di guadagno (fascicolo: 10)"),
+      v("giu", "random(2, 3, 4, 5, 6, 7, 9)", "la percentuale di perdita; niente 8, che vorrebbe «dell'8%» (fascicolo: 5)"),
+      v("somma", "1000*random(1..3)", "la somma investita da ciascuno, in euro (fascicolo: 1 000)"),
+      v("finale", "somma*(100 + su)*(100 - giu)/10000", "la somma alla fine del secondo anno, la stessa per tutti e due"),
+    ],
     testo:
-      "Luigi e Paolo investono la stessa somma di denaro. Dopo il primo anno, la somma investita da Luigi è aumentata del 10% e quella investita da Paolo è diminuita del 5%. " +
-      "Luigi e Paolo decidono di reinvestire per un altro anno ancora le somme ottenute dopo il primo anno. Nel secondo anno Luigi perde il 5%, mentre Paolo guadagna il 10%. " +
-      "Se Luigi e Paolo hanno investito inizialmente una somma di 1 000 euro ciascuno, quanto avrà ciascuno dei due alla fine del secondo anno?",
+      r`Luigi e Paolo investono la stessa somma di denaro. Dopo il primo anno, la somma investita da Luigi è aumentata del \(\var{su}\%\) e quella investita da Paolo è diminuita del \(\var{giu}\%\). ` +
+      r`Luigi e Paolo decidono di reinvestire per un altro anno ancora le somme ottenute dopo il primo anno. Nel secondo anno Luigi perde il \(\var{giu}\%\), mentre Paolo guadagna il \(\var{su}\%\). ` +
+      r`Se Luigi e Paolo hanno investito inizialmente una somma di \(\var{somma}\) euro ciascuno, quanto avrà ciascuno dei due alla fine del secondo anno?`,
     suggerimento:
-      r`Luigi: \(1000 \cdot 1{,}10 = 1100\), poi \(1100 \cdot 0{,}95 = 1045\) euro. Paolo: \(1000 \cdot 0{,}95 = 950\), poi \(950 \cdot 1{,}10 = 1045\) euro. ` +
-      r`Hanno la stessa somma, perché la moltiplicazione è commutativa: \(1{,}10 \cdot 0{,}95 = 0{,}95 \cdot 1{,}10 = 1{,}045\). Non è \(+10\% - 5\% = +5\%\): la seconda percentuale si calcola sulla somma già cambiata.`,
-    parti: [numerica("Luigi, in euro:", "1045"), numerica("Paolo, in euro:", "1045")],
+      r`Luigi: \(\var{somma} \cdot \var{(100+su)/100} = \var{somma*(100+su)/100}\), poi \(\var{somma*(100+su)/100} \cdot \var{(100-giu)/100} = \var{finale}\) euro. ` +
+      r`Paolo: \(\var{somma} \cdot \var{(100-giu)/100} = \var{somma*(100-giu)/100}\), poi \(\var{somma*(100-giu)/100} \cdot \var{(100+su)/100} = \var{finale}\) euro. ` +
+      r`Hanno la stessa somma, perché la moltiplicazione è commutativa: \(\var{(100+su)/100} \cdot \var{(100-giu)/100} = \var{(100-giu)/100} \cdot \var{(100+su)/100} = \var{(100+su)*(100-giu)/10000}\). ` +
+      r`Non è \(+\var{su}\% - \var{giu}\% = +\var{su-giu}\%\): la seconda percentuale si calcola sulla somma già cambiata.`,
+    parti: [numerica("Luigi, in euro:", "finale"), numerica("Paolo, in euro:", "finale")],
   },
   {
     numero: 21,
@@ -548,10 +576,19 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["potenze", "raccoglimento"],
     difficolta: 2,
-    testo: r`L'espressione \(a^{37} + a^{38}\) è uguale a`,
+    variabili: [v("n", "random(20..60)", "l'esponente minore (fascicolo: 37)")],
+    testo: r`L'espressione \(a^{\var{n}} + a^{\var{n+1}}\) è uguale a`,
     suggerimento:
-      r`Si raccoglie \(a^{37}\): \(a^{37} + a^{38} = a^{37} + a^{37} \cdot a = a^{37}(a + 1)\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.`,
-    parti: [scelta("", [r`\(2a^{75}\)`, r`\(a^{75}\)`, r`\(a^{37}(a + 1)\)`, r`\(a^{37 \cdot 38}\)`], 2)],
+      r`Si raccoglie \(a^{\var{n}}\): \(a^{\var{n}} + a^{\var{n+1}} = a^{\var{n}} + a^{\var{n}} \cdot a = a^{\var{n}}(a + 1)\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.`,
+    // Gli errori del fascicolo: esponenti sommati e coefficienti sommati,
+    // esponenti sommati, esponenti moltiplicati.
+    parti: [
+      scelta(
+        "",
+        [r`\(2a^{\var{2*n+1}}\)`, r`\(a^{\var{2*n+1}}\)`, r`\(a^{\var{n}}(a + 1)\)`, r`\(a^{\var{n} \cdot \var{n+1}}\)`],
+        2,
+      ),
+    ],
   },
   {
     numero: 22,
@@ -581,11 +618,15 @@ const DOMANDE: Domanda[] = [
     testo:
       "Un turista italiano in viaggio in Svizzera, prima di cambiare i suoi euro in franchi, esamina le seguenti proposte fatte da due banche. " +
       "Banca A: 1 euro viene scambiato con 1,412 franchi senza spese. Banca B: 1 euro viene scambiato con 1,416 franchi con una commissione fissa di 2 franchi.",
+    // Variabile solo la parte a: la b ragiona sulla soglia dei 500 euro, che
+    // dipende dai due cambi. La somma resta sotto i 500 euro: lì le due banche
+    // danno lo stesso, e l'errore tipico (usare la banca B) sarebbe giusto.
+    variabili: [v("somma", "50*random(2..9)", "gli euro cambiati nella parte a, da 100 a 450 (fascicolo: 300)")],
     suggerimento:
-      r`a) \(300 \cdot 1{,}412 = 423{,}6\) franchi. ` +
+      r`a) \(\var{somma} \cdot 1{,}412 = \var{somma*1412/1000}\) franchi. ` +
       r`b) Cambiando \(x\) euro, A dà \(1{,}412x\) franchi e B dà \(1{,}416x - 2\). B dà di più quando \(0{,}004x > 2\), cioè per \(x > 500\) euro: per esempio con 1 000 euro A dà 1 412 franchi e B 1 414. Carlo non ha ragione.`,
     parti: [
-      numerica("a) Se il turista cambia 300 euro, quanti franchi ottiene presso la banca A?", "423.6"),
+      numerica(r`a) Se il turista cambia \(\var{somma}\) euro, quanti franchi ottiene presso la banca A?`, "somma*1412/1000"),
       scelta(
         "b) Carlo afferma che, qualunque sia la somma che si vuole cambiare, è sempre più conveniente la banca A. Carlo ha ragione?",
         [
@@ -621,11 +662,26 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["percentuali", "sconti successivi"],
     difficolta: 2,
-    testo:
-      "In un negozio un abito è messo in vendita con uno sconto del 30% sul prezzo originario. Durante la stagione dei saldi il prezzo già scontato viene ancora abbassato del 10%. Qual è la percentuale complessiva di sconto sul prezzo originario dell'abito?",
+    // Sconti multipli di 10: il prodotto primo·secondo/100 è intero. Il primo
+    // non è mai 50: il distrattore primo + primo·secondo/100 coinciderebbe con
+    // la risposta giusta.
+    variabili: [
+      v("primo", "10*random(3, 4, 6)", "il primo sconto in percentuale (fascicolo: 30)"),
+      v("secondo", "10*random(1..2)", "il secondo sconto in percentuale (fascicolo: 10)"),
+    ],
+    testo: r`In un negozio un abito è messo in vendita con uno sconto del \(\var{primo}\%\) sul prezzo originario. Durante la stagione dei saldi il prezzo già scontato viene ancora abbassato del \(\var{secondo}\%\). Qual è la percentuale complessiva di sconto sul prezzo originario dell'abito?`,
     suggerimento:
-      r`Dopo il primo sconto si paga il 70% del prezzo, dopo il secondo il 90% di quello: \(0{,}70 \cdot 0{,}90 = 0{,}63\), cioè il 63% del prezzo originario. Lo sconto complessivo è \(100\% - 63\% = 37\%\), non 40%: il 10% si calcola sul prezzo già scontato.`,
-    parti: [scelta("", ["20%", "33%", "37%", "40%"], 2)],
+      r`Dopo il primo sconto si paga il \(\var{100-primo}\%\) del prezzo, dopo il secondo il \(\var{100-secondo}\%\) di quello: \(\var{(100-primo)/100} \cdot \var{(100-secondo)/100} = \var{(100-primo)*(100-secondo)/10000}\), cioè il \(\var{(100-primo)*(100-secondo)/100}\%\) del prezzo originario. ` +
+      r`Lo sconto complessivo è \(100\% - \var{(100-primo)*(100-secondo)/100}\% = \var{primo+secondo-primo*secondo/100}\%\), non \(\var{primo+secondo}\%\): il \(\var{secondo}\%\) si calcola sul prezzo già scontato.`,
+    // Gli errori del fascicolo (20%, 33%, 40%): la differenza degli sconti, il
+    // secondo sconto calcolato sul primo (30% + 10% di 30%), la somma.
+    parti: [
+      scelta(
+        "",
+        [r`\(\var{primo-secondo}\%\)`, r`\(\var{primo+primo*secondo/100}\%\)`, r`\(\var{primo+secondo-primo*secondo/100}\%\)`, r`\(\var{primo+secondo}\%\)`],
+        2,
+      ),
+    ],
   },
   {
     numero: 26,
@@ -678,10 +734,18 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["equazioni"],
     difficolta: 1,
-    testo: r`L'equazione \(x(x - 1) = 6\) ha fra le sue soluzioni`,
+    // Da 3 in su: per n = 2 la soluzione n coinciderebbe con il prodotto.
+    variabili: [
+      v("n", "random(3..9)", "la soluzione positiva (fascicolo: 3)"),
+      v("prodotto", "n*(n - 1)", "il secondo membro (fascicolo: 6)"),
+    ],
+    testo: r`L'equazione \(x(x - 1) = \var{prodotto}\) ha fra le sue soluzioni`,
     suggerimento:
-      r`Basta provare: per \(x = 3\) si ha \(3 \cdot 2 = 6\). (Svolgendo: \(x^2 - x - 6 = 0\), cioè \((x - 3)(x + 2) = 0\), con soluzioni 3 e \(-2\).) Per 6 si ottiene \(6 \cdot 5 = 30\), per 7 si ottiene 42.`,
-    parti: [scelta("", [r`\(\frac{1}{6}\)`, "3", "6", "7"], 1)],
+      r`Basta provare: per \(x = \var{n}\) si ha \(\var{n} \cdot \var{n-1} = \var{prodotto}\). (Svolgendo: \(x^2 - x - \var{prodotto} = 0\), cioè \((x - \var{n})(x + \var{n-1}) = 0\), con soluzioni \(\var{n}\) e \(-\var{n-1}\).) ` +
+      r`Per \(\var{prodotto}\) si ottiene \(\var{prodotto} \cdot \var{prodotto-1} = \var{prodotto*(prodotto-1)}\), per \(\var{prodotto+1}\) si ottiene \(\var{(prodotto+1)*prodotto}\).`,
+    // Gli errori del fascicolo (1/6, 6, 7): il secondo membro, il suo
+    // reciproco, il secondo membro più 1 (da x - 1 = 6).
+    parti: [scelta("", [r`\(\frac{1}{\var{prodotto}}\)`, r`\(\var{n}\)`, r`\(\var{prodotto}\)`, r`\(\var{prodotto+1}\)`], 1)],
   },
   {
     numero: 29,

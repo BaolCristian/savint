@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D25 · L'IVA del computer",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D25.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D25. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -14,14 +14,40 @@
   },
   "question": {
     "name": "INVALSI 2011 · D25 · L'IVA del computer",
-    "statement": "<p>Per l'acquisto di un computer sono stati spesi 300 euro. Il prezzo è composto dal costo base più l'IVA, pari al 20% del costo base. Quanto è stato pagato di IVA?</p>",
-    "advice": "<p>Il prezzo pagato è il 120% del costo base: costo base \\(= 300 : 1{,}2 = 250\\) euro, e l'IVA è \\(300 - 250 = 50\\) euro (il 20% di 250). Attenzione: il 20% di 300 (60 euro) è sbagliato, perché l'IVA si calcola sul costo base, non sul prezzo finale.</p>",
-    "variables": {},
+    "statement": "<p>Per l'acquisto di un computer sono stati spesi \\(\\var{prezzo}\\) euro. Il prezzo è composto dal costo base più l'IVA, pari al \\(\\var{aliquota}\\%\\) del costo base. Quanto è stato pagato di IVA?</p>",
+    "advice": "<p>Il prezzo pagato è il \\(\\var{100+aliquota}\\%\\) del costo base: costo base \\(= \\var{prezzo} : \\var{1+aliquota/100} = \\var{base}\\) euro, e l'IVA è \\(\\var{prezzo} - \\var{base} = \\var{iva}\\) euro (il \\(\\var{aliquota}\\%\\) di \\(\\var{base}\\)). Attenzione: il \\(\\var{aliquota}\\%\\) di \\(\\var{prezzo}\\) è sbagliato, perché l'IVA si calcola sul costo base, non sul prezzo finale.</p>",
+    "variables": {
+      "base": {
+        "name": "base",
+        "definition": "50*random(4..16)",
+        "description": "il costo base in euro, da 200 a 800 (fascicolo: 250)"
+      },
+      "aliquota": {
+        "name": "aliquota",
+        "definition": "random(10, 20, 22)",
+        "description": "l'IVA in percentuale (fascicolo: 20)"
+      },
+      "iva": {
+        "name": "iva",
+        "definition": "base*aliquota/100",
+        "description": "l'IVA pagata, in euro (fascicolo: 50)"
+      },
+      "prezzo": {
+        "name": "prezzo",
+        "definition": "base + iva",
+        "description": "il prezzo pagato, in euro (fascicolo: 300)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "base",
+      "aliquota",
+      "iva",
+      "prezzo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -30,8 +56,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>IVA, in euro:</p>",
-        "minValue": "50",
-        "maxValue": "50",
+        "minValue": "iva",
+        "maxValue": "iva",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D29 · Frazioni decimali",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D29.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D29. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2011 · D29 · Frazioni decimali",
-    "statement": "<p>L'espressione \\(\\frac{9}{10} + \\frac{8}{10^2} + \\frac{7}{10^4} + \\frac{2}{10^5}\\) si può rappresentare mediante il numero decimale</p>",
-    "advice": "<p>Ogni frazione è una cifra in una posizione: 9 decimi, 8 centesimi, 0 millesimi (manca \\(\\frac{\\ldots}{10^3}\\)), 7 decimillesimi, 2 centomillesimi: \\(0{,}9 + 0{,}08 + 0{,}0007 + 0{,}00002 = 0{,}98072\\).</p>",
-    "variables": {},
+    "statement": "<p>L'espressione \\(\\frac{\\var{c1}}{10} + \\frac{\\var{c2}}{10^2} + \\frac{\\var{c3}}{10^4} + \\frac{\\var{c4}}{10^5}\\) si può rappresentare mediante il numero decimale</p>",
+    "advice": "<p>Ogni frazione è una cifra in una posizione: \\(\\var{c1}\\) decimi, \\(\\var{c2}\\) centesimi, 0 millesimi (manca \\(\\frac{\\ldots}{10^3}\\)), \\(\\var{c3}\\) decimillesimi, \\(\\var{c4}\\) centomillesimi: \\(\\var{c1/10} + \\var{c2/100} + \\var{c3/10000} + \\var{c4/100000} = \\var{(10000*c1 + 1000*c2 + 10*c3 + c4)/100000}\\).</p>",
+    "variables": {
+      "c1": {
+        "name": "c1",
+        "definition": "random(1..9)",
+        "description": "i decimi (fascicolo: 9)"
+      },
+      "c2": {
+        "name": "c2",
+        "definition": "random(1..9)",
+        "description": "i centesimi (fascicolo: 8)"
+      },
+      "c3": {
+        "name": "c3",
+        "definition": "random(1..9)",
+        "description": "i decimillesimi (fascicolo: 7)"
+      },
+      "c4": {
+        "name": "c4",
+        "definition": "random(1..9)",
+        "description": "i centomillesimi (fascicolo: 2)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "c1",
+      "c2",
+      "c3",
+      "c4"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +58,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>98,72</p>",
-          "<p>9,8072</p>",
-          "<p>0,9872</p>",
-          "<p>0,98072</p>"
+          "<p>\\(\\var{(1000*c1 + 100*c2 + 10*c3 + c4)/100}\\)</p>",
+          "<p>\\(\\var{(10000*c1 + 1000*c2 + 10*c3 + c4)/10000}\\)</p>",
+          "<p>\\(\\var{(1000*c1 + 100*c2 + 10*c3 + c4)/10000}\\)</p>",
+          "<p>\\(\\var{(10000*c1 + 1000*c2 + 10*c3 + c4)/100000}\\)</p>"
         ],
         "matrix": [
           "0",

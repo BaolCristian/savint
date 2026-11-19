@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D10 · La metà di una potenza",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D10.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D10. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -14,14 +14,22 @@
   },
   "question": {
     "name": "INVALSI 2011 · D10 · La metà di una potenza",
-    "statement": "<p>Qual è la metà del numero \\(\\left(\\frac{1}{2}\\right)^{50}\\)?</p>",
-    "advice": "<p>La metà si ottiene moltiplicando per \\(\\frac{1}{2}\\): \\(\\left(\\frac{1}{2}\\right)^{50} \\cdot \\frac{1}{2} = \\left(\\frac{1}{2}\\right)^{51}\\).</p>",
-    "variables": {},
+    "statement": "<p>Qual è la metà del numero \\(\\left(\\frac{1}{2}\\right)^{\\var{esp}}\\)?</p>",
+    "advice": "<p>La metà si ottiene moltiplicando per \\(\\frac{1}{2}\\): \\(\\left(\\frac{1}{2}\\right)^{\\var{esp}} \\cdot \\frac{1}{2} = \\left(\\frac{1}{2}\\right)^{\\var{esp+1}}\\).</p>",
+    "variables": {
+      "esp": {
+        "name": "esp",
+        "definition": "2*random(10..40)",
+        "description": "l'esponente, pari (fascicolo: 50)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "esp"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,10 +39,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(\\left(\\frac{1}{4}\\right)^{50}\\)</p>",
-          "<p>\\(\\left(\\frac{1}{2}\\right)^{25}\\)</p>",
-          "<p>\\(\\left(\\frac{1}{2}\\right)^{51}\\)</p>",
-          "<p>\\(\\left(\\frac{1}{2}\\right)^{49}\\)</p>"
+          "<p>\\(\\left(\\frac{1}{4}\\right)^{\\var{esp}}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{\\var{esp/2}}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{\\var{esp+1}}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{\\var{esp-1}}\\)</p>"
         ],
         "matrix": [
           "0",

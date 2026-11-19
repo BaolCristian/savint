@@ -20,7 +20,9 @@
  * - le risposte da scrivere o da argomentare (D4, D6, D20b, D23b) diventano
  *   a scelta o numeriche, e la descrizione lo dice;
  * - nella D7 la scala non si può misurare sullo schermo: si dà la lunghezza
- *   misurata sul fascicolo stampato.
+ *   misurata sul fascicolo stampato;
+ * - a numeri variabili (regole in `comune.ts`) le domande di testo e calcolo
+ *   D2, D3, D10, D11b, D13, D19, D25, D27, D28, D29; le altre restano fisse.
  */
 import {
   creaPacchetto,
@@ -32,6 +34,7 @@ import {
   scelta,
   scriviPacchetto,
   testoFile,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -100,12 +103,21 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità", "percentuali"],
     difficolta: 1,
+    // resto < orario < ritardo < 100 - orario: le quattro risposte sono sempre
+    // diverse, e le percentuali nel testo vanno da 20 a 75 («nel 20%», mai «nel 80%»).
+    variabili: [
+      v("orario", "5*random(4..8)", "la percentuale di corse in orario, da 20 a 40 (fascicolo: 40)"),
+      v("resto", "5*random(1..3)", "la percentuale di corse in ritardo di 10 minuti, da 5 a 15 (fascicolo: 10)"),
+      v("ritardo", "100 - orario - resto", "la percentuale di corse in ritardo di 5 minuti, da 45 a 75 (fascicolo: 50)"),
+    ],
     testo:
-      "La corriera passa alle 6:30 alla fermata dove sale Giorgio. Nel 40% dei casi è in orario, nel 50% dei casi ha un ritardo di 5 minuti e nei rimanenti casi ha un ritardo di 10 minuti. " +
+      r`La corriera passa alle 6:30 alla fermata dove sale Giorgio. Nel \(\var{orario}\%\) dei casi è in orario, nel \(\var{ritardo}\%\) dei casi ha un ritardo di 5 minuti e nei rimanenti casi ha un ritardo di 10 minuti. ` +
       "Se Giorgio arriva alla fermata alle 6:34, che probabilità ha di prendere la corriera?",
     suggerimento:
-      "Alle 6:34 la corriera in orario è già passata. Giorgio la prende se è in ritardo di 5 minuti (50% dei casi) o di 10 minuti (il restante 100% − 40% − 50% = 10%): 50% + 10% = 60%.",
-    parti: [scelta("", ["10%", "40%", "50%", "60%"], 3)],
+      r`Alle 6:34 la corriera in orario è già passata. Giorgio la prende se è in ritardo di 5 minuti (\(\var{ritardo}\%\) dei casi) o di 10 minuti (il restante \(100\% - \var{orario}\% - \var{ritardo}\% = \var{resto}\%\)): \(\var{ritardo}\% + \var{resto}\% = \var{100-orario}\%\).`,
+    // Gli errori del fascicolo (10%, 40%, 50%): il solo ritardo di 10 minuti,
+    // la probabilità che sia in orario, il solo ritardo di 5 minuti.
+    parti: [scelta("", [r`\(\var{resto}\%\)`, r`\(\var{orario}\%\)`, r`\(\var{ritardo}\%\)`, r`\(\var{100-orario}\%\)`], 3)],
   },
   {
     numero: 3,
@@ -114,10 +126,23 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["triangoli", "disuguaglianza triangolare"],
     difficolta: 1,
-    testo: "Un triangolo ha un lato di 6 cm e uno di 10 cm. Quale tra le seguenti NON può essere la misura della lunghezza del terzo lato?",
+    variabili: [
+      v("corto", "random(4..8)", "il lato più corto, in cm (fascicolo: 6)"),
+      v("scarto", "random(3..6)", "di quanto l'altro lato è più lungo (fascicolo: 4)"),
+      v("lungo", "corto + scarto", "il lato più lungo, in cm (fascicolo: 10)"),
+    ],
+    testo: r`Un triangolo ha un lato di \(\var{corto}\) cm e uno di \(\var{lungo}\) cm. Quale tra le seguenti NON può essere la misura della lunghezza del terzo lato?`,
     suggerimento:
-      "In un triangolo ogni lato è minore della somma degli altri due e maggiore della loro differenza: il terzo lato deve stare fra 10 − 6 = 4 cm e 10 + 6 = 16 cm. 17 cm è troppo lungo.",
-    parti: [scelta("", ["6,5 cm", "10 cm", "15,5 cm", "17 cm"], 3)],
+      r`In un triangolo ogni lato è minore della somma degli altri due e maggiore della loro differenza: il terzo lato deve stare fra \(\var{lungo} - \var{corto} = \var{scarto}\) cm e \(\var{lungo} + \var{corto} = \var{lungo+corto}\) cm. \(\var{lungo+corto+1}\) cm è troppo lungo.`,
+    // Come nel fascicolo: tre lunghezze possibili (poco più della differenza,
+    // il lato più lungo, poco meno della somma) e una appena oltre la somma.
+    parti: [
+      scelta(
+        "",
+        [r`\(\var{scarto + 5/2}\) cm`, r`\(\var{lungo}\) cm`, r`\(\var{lungo + corto - 1/2}\) cm`, r`\(\var{lungo + corto + 1}\) cm`],
+        3,
+      ),
+    ],
   },
   {
     numero: 4,
@@ -266,16 +291,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["potenze"],
     difficolta: 1,
-    testo: r`Qual è la metà del numero \(\left(\frac{1}{2}\right)^{50}\)?`,
-    suggerimento: r`La metà si ottiene moltiplicando per \(\frac{1}{2}\): \(\left(\frac{1}{2}\right)^{50} \cdot \frac{1}{2} = \left(\frac{1}{2}\right)^{51}\).`,
+    // Pari, perché il distrattore «esponente dimezzato» resti intero.
+    variabili: [v("esp", "2*random(10..40)", "l'esponente, pari (fascicolo: 50)")],
+    testo: r`Qual è la metà del numero \(\left(\frac{1}{2}\right)^{\var{esp}}\)?`,
+    suggerimento: r`La metà si ottiene moltiplicando per \(\frac{1}{2}\): \(\left(\frac{1}{2}\right)^{\var{esp}} \cdot \frac{1}{2} = \left(\frac{1}{2}\right)^{\var{esp+1}}\).`,
+    // Gli errori del fascicolo: dimezza la base (o la eleva al quadrato),
+    // dimezza l'esponente, toglie 1 all'esponente.
     parti: [
       scelta(
         "",
         [
-          r`\(\left(\frac{1}{4}\right)^{50}\)`,
-          r`\(\left(\frac{1}{2}\right)^{25}\)`,
-          r`\(\left(\frac{1}{2}\right)^{51}\)`,
-          r`\(\left(\frac{1}{2}\right)^{49}\)`,
+          r`\(\left(\frac{1}{4}\right)^{\var{esp}}\)`,
+          r`\(\left(\frac{1}{2}\right)^{\var{esp/2}}\)`,
+          r`\(\left(\frac{1}{2}\right)^{\var{esp+1}}\)`,
+          r`\(\left(\frac{1}{2}\right)^{\var{esp-1}}\)`,
         ],
         2,
       ),
@@ -289,6 +318,8 @@ const DOMANDE: Domanda[] = [
     temi: ["funzioni lineari", "modellizzazione", "confronto di tariffe"],
     difficolta: 2,
     adattamento: "La tabella è trasposta: le auto sono in colonna.",
+    // Variabile solo la parte b: la a e la c dipendono dalla tabella, che resta quella.
+    variabili: [v("speso", "100*random(15..40)", "la spesa annuale dell'auto A, in euro (fascicolo: 3 000)")],
     testo:
       r`La relazione seguente esprime la spesa annuale per l'automobile, composta da una parte fissa e da una parte proporzionale al numero di km percorsi: \[S = F + c \cdot k\] ` +
       r`dove \(F\) sono le spese fisse, \(c\) è il costo al km e \(k\) è il numero di km percorsi. Nella tabella sono riportate le spese fisse e il costo al km per alcuni tipi di automobile. ` +
@@ -299,11 +330,11 @@ const DOMANDE: Domanda[] = [
       r`\text{Auto D} & 1\,200 \text{ euro} & 0{,}31 \text{ euro/km} \\ \hline \end{array}\]`,
     suggerimento:
       r`a) Con \(k = 10\,000\): A \(900 + 2\,500 = 3\,400\), B \(580 + 3\,300 = 3\,880\), C \(650 + 2\,700 = 3\,350\), D \(1\,200 + 3\,100 = 4\,300\) euro: la più conveniente è C. ` +
-      r`b) \(900 + 0{,}25k = 3\,000\), cioè \(0{,}25k = 2\,100\), \(k = 8\,400\) km. ` +
+      r`b) \(900 + 0{,}25k = \var{speso}\), cioè \(0{,}25k = \var{speso-900}\), \(k = \var{speso-900} : 0{,}25 = \var{4*(speso-900)}\) km. ` +
       r`c) B ha spese fisse più basse ma costa di più al km: \(580 + 0{,}33k = 1\,200 + 0{,}31k\) per \(k = 31\,000\). Fino a 31 000 km conviene B, oltre conviene D.`,
     parti: [
       scelta("a) Se percorro 10 000 km all'anno, quale auto è più conveniente?", ["L'auto A", "L'auto B", "L'auto C", "L'auto D"], 2),
-      numerica("b) Il proprietario di un'auto di tipo A ha speso 3 000 euro in un anno. Quanti km ha percorso?", "8400"),
+      numerica(r`b) Il proprietario di un'auto di tipo A ha speso \(\var{speso}\) euro in un anno. Quanti km ha percorso?`, "4*(speso - 900)"),
       scelta(
         "c) Se confrontiamo un'auto di tipo B con una di tipo D, possiamo dire che",
         [
@@ -354,18 +385,31 @@ const DOMANDE: Domanda[] = [
     ambito: "Relazioni e funzioni",
     temi: ["formule", "modellizzazione", "disequazioni"],
     difficolta: 2,
+    // Niente variabile «n» né «N» (in JME sono la stessa): \(n\) è l'incognita
+    // della parte b. Almeno 2 punti tolti, mai «1 punti».
+    variabili: [
+      v("domande", "random(20..30)", "le domande del test (fascicolo: 25)"),
+      v("tolti", "random(2..3)", "i punti tolti per ogni risposta sbagliata o mancante (fascicolo: 2)"),
+      v("dati", "tolti + random(1..2)", "i punti per ogni risposta esatta, più di quelli tolti (fascicolo: 4)"),
+      v("soglia", "10*floor(6*dati*domande/100)", "la sufficienza, il 60% del massimo arrotondato per difetto alle decine (fascicolo: 60)"),
+      v("minimo", "floor((soglia + tolti*domande)/(dati + tolti)) + 1", "le risposte esatte che servono per la sufficienza"),
+    ],
     testo:
-      r`L'insegnante di inglese dà ai suoi studenti un test formato da 25 domande e spiega che il punteggio totale \(p\) è calcolato assegnando 4 punti per ogni risposta esatta e togliendo 2 punti per ogni risposta sbagliata o mancante.`,
+      r`L'insegnante di inglese dà ai suoi studenti un test formato da \(\var{domande}\) domande e spiega che il punteggio totale \(p\) è calcolato assegnando \(\var{dati}\) punti per ogni risposta esatta e togliendo \(\var{tolti}\) punti per ogni risposta sbagliata o mancante.`,
     suggerimento:
-      r`a) Con 25 risposte esatte: \(25 \cdot 4 = 100\). ` +
-      r`b) Con \(n\) risposte esatte le altre sono \(25 - n\): \(p = 4n - 2(25 - n) = 6n - 50\). ` +
-      r`c) \(6n - 50 > 60\) dà \(n > \frac{110}{6} \approx 18{,}3\): servono almeno 19 risposte esatte (\(6 \cdot 19 - 50 = 64\), mentre con 18 si hanno 58 punti).`,
+      r`a) Con \(\var{domande}\) risposte esatte: \(\var{domande} \cdot \var{dati} = \var{domande*dati}\). ` +
+      r`b) Con \(n\) risposte esatte le altre sono \(\var{domande} - n\): \(p = \var{dati}n - \var{tolti}(\var{domande} - n) = \var{dati+tolti}n - \var{tolti*domande}\). ` +
+      r`c) \(\var{dati+tolti}n - \var{tolti*domande} > \var{soglia}\) dà \(n > \frac{\var{soglia + tolti*domande}}{\var{dati+tolti}}\): servono almeno \(\var{minimo}\) risposte esatte ` +
+      r`(con \(\var{minimo}\) si hanno \(\var{(dati+tolti)*minimo - tolti*domande}\) punti, con \(\var{minimo-1}\) solo \(\var{(dati+tolti)*(minimo-1) - tolti*domande}\)).`,
     parti: [
-      numerica("a) Il punteggio massimo possibile è", "100"),
-      espressione(r`b) Scrivi la formula che fornisce il punteggio \(p\) complessivo, indicando con \(n\) il numero di risposte esatte. \(p =\)`, "6*n - 50"),
+      numerica("a) Il punteggio massimo possibile è", "domande*dati"),
+      espressione(
+        r`b) Scrivi la formula che fornisce il punteggio \(p\) complessivo, indicando con \(n\) il numero di risposte esatte. \(p =\)`,
+        "{dati+tolti}*n - {tolti*domande}",
+      ),
       numerica(
-        "c) Se la sufficienza si ottiene con più di 60 punti, qual è il numero minimo di domande al quale occorre rispondere correttamente per avere la sufficienza?",
-        "19",
+        r`c) Se la sufficienza si ottiene con più di \(\var{soglia}\) punti, qual è il numero minimo di domande al quale occorre rispondere correttamente per avere la sufficienza?`,
+        "minimo",
       ),
     ],
   },
@@ -445,23 +489,32 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["media", "media ponderata", "classi di frequenza"],
     difficolta: 2,
+    variabili: [
+      v("n1", "random(5..9)", "i neonati da 1 a 2 kg (fascicolo: 7)"),
+      v("n2", "random(6..10)", "i neonati da 2 a 3 kg (fascicolo: 8)"),
+      v("n3", "random(10..14)", "i neonati da 3 a 4 kg (fascicolo: 12)"),
+      v("n4", "random(2..5)", "i neonati da 4 a 5 kg (fascicolo: 3)"),
+      v("neonati", "n1 + n2 + n3 + n4", "i neonati in tutto, da 23 a 38 (fascicolo: 30)"),
+    ],
     testo:
-      "La seguente tabella riporta il peso alla nascita, suddiviso in 4 classi, di 30 neonati. " +
+      r`La seguente tabella riporta il peso alla nascita, suddiviso in 4 classi, di \(\var{neonati}\) neonati. ` +
       r`\[\begin{array}{|c|c|} \hline \text{Classi di peso (in kg)} & \text{Numero neonati} \\ \hline ` +
-      r`\text{Da 1 kg e fino a 2 kg} & 7 \\ \hline \text{Più di 2 kg e fino a 3 kg} & 8 \\ \hline ` +
-      r`\text{Più di 3 kg e fino a 4 kg} & 12 \\ \hline \text{Più di 4 kg e fino a 5 kg} & 3 \\ \hline \end{array}\]` +
-      " Quale delle seguenti espressioni devi usare per trovare il peso medio dei 30 neonati?",
+      r`\text{Da 1 kg e fino a 2 kg} & \var{n1} \\ \hline \text{Più di 2 kg e fino a 3 kg} & \var{n2} \\ \hline ` +
+      r`\text{Più di 3 kg e fino a 4 kg} & \var{n3} \\ \hline \text{Più di 4 kg e fino a 5 kg} & \var{n4} \\ \hline \end{array}\]` +
+      r` Quale delle seguenti espressioni devi usare per trovare il peso medio dei \(\var{neonati}\) neonati?`,
     suggerimento:
       "Ogni classe si rappresenta con il suo valore centrale (1,5; 2,5; 3,5; 4,5 kg), moltiplicato per il numero di neonati della classe; " +
-      "la somma è il peso totale (stimato) dei neonati, e va divisa per il numero dei neonati, 30, non per il numero delle classi.",
+      r`la somma è il peso totale (stimato) dei neonati, e va divisa per il numero dei neonati, \(\var{neonati}\), non per il numero delle classi.`,
+    // Gli errori del fascicolo: la media dei valori centrali divisa per i
+    // neonati, la media delle frequenze, la somma pesata divisa per le classi.
     parti: [
       scelta(
         "",
         [
-          r`\(\frac{1{,}5 + 2{,}5 + 3{,}5 + 4{,}5}{30}\)`,
-          r`\(\frac{7 + 8 + 12 + 3}{4}\)`,
-          r`\(\frac{1{,}5 \cdot 7 + 2{,}5 \cdot 8 + 3{,}5 \cdot 12 + 4{,}5 \cdot 3}{30}\)`,
-          r`\(\frac{1{,}5 \cdot 7 + 2{,}5 \cdot 8 + 3{,}5 \cdot 12 + 4{,}5 \cdot 3}{4}\)`,
+          r`\(\frac{1{,}5 + 2{,}5 + 3{,}5 + 4{,}5}{\var{neonati}}\)`,
+          r`\(\frac{\var{n1} + \var{n2} + \var{n3} + \var{n4}}{4}\)`,
+          r`\(\frac{1{,}5 \cdot \var{n1} + 2{,}5 \cdot \var{n2} + 3{,}5 \cdot \var{n3} + 4{,}5 \cdot \var{n4}}{\var{neonati}}\)`,
+          r`\(\frac{1{,}5 \cdot \var{n1} + 2{,}5 \cdot \var{n2} + 3{,}5 \cdot \var{n3} + 4{,}5 \cdot \var{n4}}{4}\)`,
         ],
         2,
       ),
@@ -590,12 +643,19 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["percentuali"],
     difficolta: 2,
+    // Il costo base è un multiplo di 50: con il 10, il 20 o il 22% l'IVA è intera.
+    variabili: [
+      v("base", "50*random(4..16)", "il costo base in euro, da 200 a 800 (fascicolo: 250)"),
+      v("aliquota", "random(10, 20, 22)", "l'IVA in percentuale (fascicolo: 20)"),
+      v("iva", "base*aliquota/100", "l'IVA pagata, in euro (fascicolo: 50)"),
+      v("prezzo", "base + iva", "il prezzo pagato, in euro (fascicolo: 300)"),
+    ],
     testo:
-      "Per l'acquisto di un computer sono stati spesi 300 euro. Il prezzo è composto dal costo base più l'IVA, pari al 20% del costo base. Quanto è stato pagato di IVA?",
+      r`Per l'acquisto di un computer sono stati spesi \(\var{prezzo}\) euro. Il prezzo è composto dal costo base più l'IVA, pari al \(\var{aliquota}\%\) del costo base. Quanto è stato pagato di IVA?`,
     suggerimento:
-      r`Il prezzo pagato è il 120% del costo base: costo base \(= 300 : 1{,}2 = 250\) euro, e l'IVA è \(300 - 250 = 50\) euro (il 20% di 250). ` +
-      "Attenzione: il 20% di 300 (60 euro) è sbagliato, perché l'IVA si calcola sul costo base, non sul prezzo finale.",
-    parti: [numerica("IVA, in euro:", "50")],
+      r`Il prezzo pagato è il \(\var{100+aliquota}\%\) del costo base: costo base \(= \var{prezzo} : \var{1+aliquota/100} = \var{base}\) euro, e l'IVA è \(\var{prezzo} - \var{base} = \var{iva}\) euro (il \(\var{aliquota}\%\) di \(\var{base}\)). ` +
+      r`Attenzione: il \(\var{aliquota}\%\) di \(\var{prezzo}\) è sbagliato, perché l'IVA si calcola sul costo base, non sul prezzo finale.`,
+    parti: [numerica("IVA, in euro:", "iva")],
   },
   {
     numero: 26,
@@ -621,11 +681,30 @@ const DOMANDE: Domanda[] = [
     ambito: "Relazioni e funzioni",
     temi: ["formule", "percentuali", "modellizzazione"],
     difficolta: 1,
+    // La paga (7-12) e la commissione (2-6) sono sempre diverse: lo scambio
+    // dei due numeri dà sempre un distrattore nuovo.
+    variabili: [
+      v("paga", "random(7..12)", "la paga oraria in euro (fascicolo: 8)"),
+      v("perc", "random(2..6)", "la commissione in percentuale (fascicolo: 5)"),
+    ],
     testo:
-      r`Carlotta, nel periodo di Natale, lavora come commessa in un negozio di calzature e guadagna 8 euro all'ora più una commissione del 5% sul ricavo totale delle scarpe che riesce a vendere. ` +
+      r`Carlotta, nel periodo di Natale, lavora come commessa in un negozio di calzature e guadagna \(\var{paga}\) euro all'ora più una commissione del \(\var{perc}\%\) sul ricavo totale delle scarpe che riesce a vendere. ` +
       r`Quale formula esprime il suo guadagno \(g\), se lavora \(h\) ore e vende scarpe per un valore totale di \(s\) euro?`,
-    suggerimento: r`Per le ore guadagna \(8h\); il 5% di \(s\) è \(\frac{5}{100}s = 0{,}05s\). Quindi \(g = 8h + 0{,}05s\).`,
-    parti: [scelta("", [r`\(g = 8h + 0{,}05s\)`, r`\(g = 8h + 0{,}5s\)`, r`\(g = 5h + 8s\)`, r`\(g = 8h + 5s\)`], 0)],
+    suggerimento: r`Per le ore guadagna \(\var{paga}h\); il \(\var{perc}\%\) di \(s\) è \(\frac{\var{perc}}{100}s = \var{perc/100}s\). Quindi \(g = \var{paga}h + \var{perc/100}s\).`,
+    // Gli errori del fascicolo: la percentuale divisa per 10, i due numeri
+    // scambiati, la percentuale presa come numero intero.
+    parti: [
+      scelta(
+        "",
+        [
+          r`\(g = \var{paga}h + \var{perc/100}s\)`,
+          r`\(g = \var{paga}h + \var{perc/10}s\)`,
+          r`\(g = \var{perc}h + \var{paga}s\)`,
+          r`\(g = \var{paga}h + \var{perc}s\)`,
+        ],
+        0,
+      ),
+    ],
   },
   {
     numero: 28,
@@ -634,13 +713,16 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["multipli", "problemi"],
     difficolta: 2,
+    // Come nel fascicolo: tre multipli di 4 consecutivi e, fra il secondo e
+    // il terzo, un numero pari che non lo è.
+    variabili: [v("vinte", "random(4..12)", "le partite vinte nella prima risposta (fascicolo: 6)")],
     testo:
       "In un torneo di calcio fra scuole una squadra guadagna 3 punti se vince, 1 punto se pareggia e nessun punto se perde. " +
       "Una squadra ha vinto tante partite quante ne ha pareggiate. Quale dei seguenti punteggi NON può aver totalizzato la squadra?",
     suggerimento:
       r`Se la squadra ha vinto \(v\) partite e ne ha pareggiate altrettante, ha \(3v + v = 4v\) punti: il punteggio è un multiplo di 4. ` +
-      r`24, 28 e 32 lo sono (\(v = 6, 7, 8\)), 30 no.`,
-    parti: [scelta("", ["24", "28", "30", "32"], 2)],
+      r`\(\var{4*vinte}\), \(\var{4*vinte+4}\) e \(\var{4*vinte+8}\) lo sono (\(v = \var{vinte}, \var{vinte+1}, \var{vinte+2}\)), \(\var{4*vinte+6}\) no.`,
+    parti: [scelta("", [r`\(\var{4*vinte}\)`, r`\(\var{4*vinte+4}\)`, r`\(\var{4*vinte+6}\)`, r`\(\var{4*vinte+8}\)`], 2)],
   },
   {
     numero: 29,
@@ -649,11 +731,32 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["numeri decimali", "potenze di 10"],
     difficolta: 2,
-    testo: r`L'espressione \(\frac{9}{10} + \frac{8}{10^2} + \frac{7}{10^4} + \frac{2}{10^5}\) si può rappresentare mediante il numero decimale`,
+    // Cifre da 1 a 9: nessuna risposta perde una cifra finale, e le quattro
+    // risposte sono sempre diverse.
+    variabili: [
+      v("c1", "random(1..9)", "i decimi (fascicolo: 9)"),
+      v("c2", "random(1..9)", "i centesimi (fascicolo: 8)"),
+      v("c3", "random(1..9)", "i decimillesimi (fascicolo: 7)"),
+      v("c4", "random(1..9)", "i centomillesimi (fascicolo: 2)"),
+    ],
+    testo: r`L'espressione \(\frac{\var{c1}}{10} + \frac{\var{c2}}{10^2} + \frac{\var{c3}}{10^4} + \frac{\var{c4}}{10^5}\) si può rappresentare mediante il numero decimale`,
     suggerimento:
-      r`Ogni frazione è una cifra in una posizione: 9 decimi, 8 centesimi, 0 millesimi (manca \(\frac{\ldots}{10^3}\)), 7 decimillesimi, 2 centomillesimi: ` +
-      r`\(0{,}9 + 0{,}08 + 0{,}0007 + 0{,}00002 = 0{,}98072\).`,
-    parti: [scelta("", ["98,72", "9,8072", "0,9872", "0,98072"], 3)],
+      r`Ogni frazione è una cifra in una posizione: \(\var{c1}\) decimi, \(\var{c2}\) centesimi, 0 millesimi (manca \(\frac{\ldots}{10^3}\)), \(\var{c3}\) decimillesimi, \(\var{c4}\) centomillesimi: ` +
+      r`\(\var{c1/10} + \var{c2/100} + \var{c3/10000} + \var{c4/100000} = \var{(10000*c1 + 1000*c2 + 10*c3 + c4)/100000}\).`,
+    // Gli errori del fascicolo: le cifre senza lo zero con la virgola in mezzo,
+    // ogni cifra spostata di un posto a sinistra, lo zero dei millesimi dimenticato.
+    parti: [
+      scelta(
+        "",
+        [
+          r`\(\var{(1000*c1 + 100*c2 + 10*c3 + c4)/100}\)`,
+          r`\(\var{(10000*c1 + 1000*c2 + 10*c3 + c4)/10000}\)`,
+          r`\(\var{(1000*c1 + 100*c2 + 10*c3 + c4)/10000}\)`,
+          r`\(\var{(10000*c1 + 1000*c2 + 10*c3 + c4)/100000}\)`,
+        ],
+        3,
+      ),
+    ],
   },
   {
     numero: 30,

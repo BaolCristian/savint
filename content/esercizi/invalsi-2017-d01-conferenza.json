@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D1 · Donne e uomini alla conferenza",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D1.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D1. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,34 @@
   },
   "question": {
     "name": "INVALSI 2017 · D1 · Donne e uomini alla conferenza",
-    "statement": "<p>A una conferenza sono presenti 90 persone. Le donne sono 14 più degli uomini. Quanti sono gli uomini?</p>",
-    "advice": "<p>Se gli uomini sono \\(x\\), le donne sono \\(x + 14\\): \\(x + x + 14 = 90\\), cioè \\(2x = 76\\) e \\(x = 38\\). Infatti le donne sono 52 e \\(38 + 52 = 90\\). (76 è il doppio degli uomini, non gli uomini.)</p>",
-    "variables": {},
+    "statement": "<p>A una conferenza sono presenti \\(\\var{totale}\\) persone. Le donne sono \\(\\var{diff}\\) più degli uomini. Quanti sono gli uomini?</p>",
+    "advice": "<p>Se gli uomini sono \\(x\\), le donne sono \\(x + \\var{diff}\\): \\(x + x + \\var{diff} = \\var{totale}\\), cioè \\(2x = \\var{totale-diff}\\) e \\(x = \\var{uomini}\\). Infatti le donne sono \\(\\var{uomini+diff}\\) e \\(\\var{uomini} + \\var{uomini+diff} = \\var{totale}\\). (\\(\\var{totale-diff}\\) è il doppio degli uomini, non gli uomini.)</p>",
+    "variables": {
+      "uomini": {
+        "name": "uomini",
+        "definition": "random(32..45)",
+        "description": "gli uomini (fascicolo: 38)"
+      },
+      "diff": {
+        "name": "diff",
+        "definition": "2*random(4..10)",
+        "description": "quante donne più degli uomini, pari: il totale è pari (fascicolo: 14)"
+      },
+      "totale": {
+        "name": "totale",
+        "definition": "2*uomini + diff",
+        "description": "le persone presenti (fascicolo: 90)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "uomini",
+      "diff",
+      "totale"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +52,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>59</p>",
-          "<p>38</p>",
-          "<p>31</p>",
-          "<p>76</p>"
+          "<p>\\(\\var{totale/2 + diff}\\)</p>",
+          "<p>\\(\\var{uomini}\\)</p>",
+          "<p>\\(\\var{totale/2 - diff}\\)</p>",
+          "<p>\\(\\var{totale - diff}\\)</p>"
         ],
         "matrix": [
           "0",

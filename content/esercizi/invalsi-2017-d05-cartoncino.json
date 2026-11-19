@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D5 · La foto sul cartoncino",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D5.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D5. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -15,14 +15,28 @@
   },
   "question": {
     "name": "INVALSI 2017 · D5 · La foto sul cartoncino",
-    "statement": "<p>Franco incolla una fotografia rettangolare di dimensioni 22 cm × 15 cm su un cartoncino. Attorno alla fotografia resta una cornice larga 3 cm, come vedi in figura. <img data-savint-immagine=\"074b97c8-640b-47fc-8906-dc71300c9ace.png\" alt=\"Una fotografia rettangolare incollata su un cartoncino, con una cornice di 3 cm su tutti e quattro i lati\"> Qual è l'area del cartoncino?</p>",
-    "advice": "<p>La cornice di 3 cm c'è su entrambi i lati: il cartoncino misura \\((22 + 6) \\times (15 + 6) = 28 \\times 21\\) cm, e \\(28 \\cdot 21 = 588\\text{ cm}^2\\).</p>",
-    "variables": {},
+    "statement": "<p>Franco incolla una fotografia rettangolare di dimensioni \\(\\var{lungo}\\) cm × \\(\\var{largo}\\) cm su un cartoncino. Attorno alla fotografia resta una cornice larga 3 cm, come vedi in figura. <img data-savint-immagine=\"074b97c8-640b-47fc-8906-dc71300c9ace.png\" alt=\"Una fotografia rettangolare incollata su un cartoncino, con una cornice di 3 cm su tutti e quattro i lati\"> Qual è l'area del cartoncino?</p>",
+    "advice": "<p>La cornice di 3 cm c'è su entrambi i lati: il cartoncino misura \\((\\var{lungo} + 6) \\times (\\var{largo} + 6) = \\var{lungo+6} \\times \\var{largo+6}\\) cm, e \\(\\var{lungo+6} \\cdot \\var{largo+6} = \\var{(lungo+6)*(largo+6)}\\text{ cm}^2\\).</p>",
+    "variables": {
+      "lungo": {
+        "name": "lungo",
+        "definition": "random(18..30)",
+        "description": "il lato lungo della foto, in cm (fascicolo: 22)"
+      },
+      "largo": {
+        "name": "largo",
+        "definition": "lungo - random(4..9)",
+        "description": "il lato corto della foto, in cm (fascicolo: 15)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "lungo",
+      "largo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +46,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(588\\text{ cm}^2\\)</p>",
-          "<p>\\(525\\text{ cm}^2\\)</p>",
-          "<p>\\(504\\text{ cm}^2\\)</p>",
-          "<p>\\(450\\text{ cm}^2\\)</p>"
+          "<p>\\(\\var{(lungo+6)*(largo+6)}\\text{ cm}^2\\)</p>",
+          "<p>\\(\\var{(lungo+3)*(largo+6)}\\text{ cm}^2\\)</p>",
+          "<p>\\(\\var{(lungo+6)*(largo+3)}\\text{ cm}^2\\)</p>",
+          "<p>\\(\\var{(lungo+3)*(largo+3)}\\text{ cm}^2\\)</p>"
         ],
         "matrix": [
           "1",

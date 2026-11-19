@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D25 · Prato fiorito",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D25.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D25. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,13 +15,33 @@
   "question": {
     "name": "INVALSI 2014 · D25 · Prato fiorito",
     "statement": "<p>«Prato fiorito» è un gioco per computer che si gioca su una scacchiera. Cliccando sui riquadri della scacchiera, a volte si può scoprire un fiore nascosto. Per esempio, nella scacchiera di 9×9 riquadri rappresentata in figura sono nascosti 10 fiori. <img data-savint-immagine=\"1c4a450c-65f4-413a-8618-1b94553b904e.png\" alt=\"La finestra del gioco Prato fiorito con una scacchiera di 9 per 9 riquadri e il contatore dei fiori a 10\"></p>",
-    "advice": "<p>a) I riquadri sono \\(9 \\cdot 9 = 81\\), e 10 nascondono un fiore: \\(\\frac{10}{81}\\). b) I riquadri sono \\(12 \\cdot 20 = 240\\): perché la probabilità sia \\(\\frac{1}{8}\\) i fiori devono essere \\(240 : 8 = 30\\).</p>",
-    "variables": {},
+    "advice": "<p>a) I riquadri sono \\(9 \\cdot 9 = 81\\), e 10 nascondono un fiore: \\(\\frac{10}{81}\\). b) I riquadri sono \\(\\var{righe} \\cdot \\var{colonne} = \\var{righe*colonne}\\): perché la probabilità sia \\(\\frac{1}{\\var{q}}\\) i fiori devono essere \\(\\var{righe*colonne} : \\var{q} = \\var{righe*colonne/q}\\).</p>",
+    "variables": {
+      "righe": {
+        "name": "righe",
+        "definition": "2*random(5..8)",
+        "description": "le righe della scacchiera (fascicolo: 12)"
+      },
+      "colonne": {
+        "name": "colonne",
+        "definition": "4*random(4..7)",
+        "description": "le colonne della scacchiera (fascicolo: 20)"
+      },
+      "q": {
+        "name": "q",
+        "definition": "random(4, 8)",
+        "description": "la probabilità è 1/q (fascicolo: 8)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "righe",
+      "colonne",
+      "q"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -58,9 +78,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>b) È possibile personalizzare il gioco impostando le dimensioni della scacchiera (cioè il numero di righe e di colonne) e il numero di fiori nascosti. Se si gioca con una scacchiera di 12×20 riquadri, quale deve essere il numero dei fiori nascosti perché la probabilità di scoprire un fiore al primo tentativo sia \\(\\frac{1}{8}\\)?</p>",
-        "minValue": "30",
-        "maxValue": "30",
+        "prompt": "<p>b) È possibile personalizzare il gioco impostando le dimensioni della scacchiera (cioè il numero di righe e di colonne) e il numero di fiori nascosti. Se si gioca con una scacchiera di \\(\\var{righe} \\times \\var{colonne}\\) riquadri, quale deve essere il numero dei fiori nascosti perché la probabilità di scoprire un fiore al primo tentativo sia \\(\\frac{1}{\\var{q}}\\)?</p>",
+        "minValue": "righe*colonne/q",
+        "maxValue": "righe*colonne/q",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

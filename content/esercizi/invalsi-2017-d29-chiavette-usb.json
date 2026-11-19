@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D29 · Le chiavette USB",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D29.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D29. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,14 +15,46 @@
   },
   "question": {
     "name": "INVALSI 2017 · D29 · Le chiavette USB",
-    "statement": "<p>Una fabbrica utilizza due diverse macchine \\(M_1\\) e \\(M_2\\) che lavorano indipendentemente l'una dall'altra. Ciascuna delle due macchine produce chiavette USB da 16 GB e da 32 GB nelle percentuali descritte dalla seguente tabella. \\[\\begin{array}{|c|c|c|c|} \\hline &amp; \\text{16 GB} &amp; \\text{32 GB} &amp; \\text{Totale} \\\\ \\hline M_1 &amp; 18\\% &amp; 42\\% &amp; 60\\% \\\\ \\hline M_2 &amp; 22\\% &amp; 18\\% &amp; 40\\% \\\\ \\hline \\text{Totale} &amp; 40\\% &amp; 60\\% &amp; 100\\% \\\\ \\hline \\end{array}\\]</p>",
-    "advice": "<p>Le percentuali della tabella sono riferite a tutta la produzione. a) Chiavette da 16 GB prodotte da \\(M_1\\): la casella all'incrocio, 18%. b) Chiavette da 16 GB in tutto: il totale della colonna, \\(18\\% + 22\\% = 40\\%\\).</p>",
-    "variables": {},
+    "statement": "<p>Una fabbrica utilizza due diverse macchine \\(M_1\\) e \\(M_2\\) che lavorano indipendentemente l'una dall'altra. Ciascuna delle due macchine produce chiavette USB da 16 GB e da 32 GB nelle percentuali descritte dalla seguente tabella. \\[\\begin{array}{|c|c|c|c|} \\hline &amp; \\text{16 GB} &amp; \\text{32 GB} &amp; \\text{Totale} \\\\ \\hline M_1 &amp; \\var{p16a}\\% &amp; \\var{p32a}\\% &amp; \\var{tot1}\\% \\\\ \\hline M_2 &amp; \\var{p16b}\\% &amp; \\var{p32b}\\% &amp; \\var{100-tot1}\\% \\\\ \\hline \\text{Totale} &amp; \\var{p16a+p16b}\\% &amp; \\var{p32a+p32b}\\% &amp; 100\\% \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>Le percentuali della tabella sono riferite a tutta la produzione. a) Chiavette da 16 GB prodotte da \\(M_1\\): la casella all'incrocio, \\(\\var{p16a}\\%\\). b) Chiavette da 16 GB in tutto: il totale della colonna, \\(\\var{p16a}\\% + \\var{p16b}\\% = \\var{p16a+p16b}\\%\\).</p>",
+    "variables": {
+      "p16a": {
+        "name": "p16a",
+        "definition": "random(10..22)",
+        "description": "le chiavette da 16 GB di M1, in % (fascicolo: 18)"
+      },
+      "tot1": {
+        "name": "tot1",
+        "definition": "10*random(5..7)",
+        "description": "la produzione di M1, in % (fascicolo: 60)"
+      },
+      "p16b": {
+        "name": "p16b",
+        "definition": "random(12..25)",
+        "description": "le chiavette da 16 GB di M2, in % (fascicolo: 22)"
+      },
+      "p32a": {
+        "name": "p32a",
+        "definition": "tot1 - p16a",
+        "description": "le chiavette da 32 GB di M1, in % (fascicolo: 42)"
+      },
+      "p32b": {
+        "name": "p32b",
+        "definition": "100 - tot1 - p16b",
+        "description": "le chiavette da 32 GB di M2, in %: almeno 5 (fascicolo: 18)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "p16a",
+      "tot1",
+      "p16b",
+      "p32a",
+      "p32b"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +63,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) Qual è la probabilità di estrarre dalla produzione della fabbrica una chiavetta da 16 GB prodotta da \\(M_1\\)? Esprimi il risultato in forma percentuale (scrivi solo il numero).</p>",
-        "minValue": "18",
-        "maxValue": "18",
+        "minValue": "p16a",
+        "maxValue": "p16a",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -49,8 +81,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>b) Qual è la probabilità che una chiavetta USB estratta dalla produzione della fabbrica sia da 16 GB? Esprimi il risultato in forma percentuale (scrivi solo il numero).</p>",
-        "minValue": "40",
-        "maxValue": "40",
+        "minValue": "p16a + p16b",
+        "maxValue": "p16a + p16b",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

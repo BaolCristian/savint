@@ -17,7 +17,15 @@
  *   i quattro grafici della D8 sono ridisegnati con i grafici di funzione;
  * - le domande in cui si disegna (D15 a), si scrive un intervallo (D8 d), si
  *   motiva (D24 b, D30) o si scrivono i calcoli (D20 b) sono diventate a
- *   scelta o numeriche; la descrizione lo dice.
+ *   scelta o numeriche; la descrizione lo dice;
+ * - le domande di solo testo e calcolo hanno i NUMERI VARIABILI (regole in
+ *   `scripts/invalsi/comune.ts`): D2, D7, D11, D17, D18. Le altre restano con i
+ *   numeri del fascicolo: legate a un'immagine o a un grafico (D1, D3, D4, D8,
+ *   D10, D12, D13, D15, D21, D23, D24, D27, D29, D31, D32), concettuali (D5,
+ *   D16, D19, D25, D26), con dati reali (D6 masse di protone ed elettrone,
+ *   D9 formato A4, D20 dati Eurostat, D22 previsione ISTAT), con distrattori di
+ *   cui non si ricostruisce l'errore (D14, D28) o con conclusioni argomentate
+ *   che dipendono da quale offerta conviene (D30).
  */
 import {
   creaPacchetto,
@@ -29,6 +37,7 @@ import {
   scelta,
   scriviPacchetto,
   testoFile,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -93,12 +102,21 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["problemi", "equazioni"],
     difficolta: 1,
+    // L resta il triplo di D: il totale è un multiplo di 4 e tutte le
+    // risposte sono multipli delle pagine di D (4, 5, 6, 8 volte), mai uguali.
+    variabili: [
+      v("pagineD", "random(4..12)", "le pagine al minuto della deskjet D (fascicolo: 6)"),
+      v("totale", "4*pagineD", "le pagine al minuto di L e D insieme, multiplo di 4 (fascicolo: 24)"),
+    ],
     testo:
-      "La stampante laser L in un minuto stampa il triplo delle pagine della stampante deskjet D. Quando L e D lavorano contemporaneamente stampano in tutto 24 pagine al minuto. " +
+      r`La stampante laser L in un minuto stampa il triplo delle pagine della stampante deskjet D. Quando L e D lavorano contemporaneamente stampano in tutto \(\var{totale}\) pagine al minuto. ` +
       "Se D viene sostituita con una stampante laser identica a L, quante pagine potranno essere stampate complessivamente in un minuto?",
     suggerimento:
-      r`Se D stampa \(p\) pagine al minuto, L ne stampa \(3p\): insieme \(4p = 24\), quindi \(p = 6\) e L stampa 18 pagine al minuto. Due stampanti laser: \(2 \cdot 18 = 36\) pagine al minuto.`,
-    parti: [scelta("", ["24", "30", "36", "48"], 2)],
+      r`Se D stampa \(p\) pagine al minuto, L ne stampa \(3p\): insieme \(4p = \var{totale}\), quindi \(p = \var{pagineD}\) e L stampa \(\var{3*pagineD}\) pagine al minuto. Due stampanti laser: \(2 \cdot \var{3*pagineD} = \var{6*pagineD}\) pagine al minuto.`,
+    // Gli errori del fascicolo (24, 30, 48 con 24): il totale che non cambia,
+    // il totale più le pagine di D (si aggiunge D invece di 2D), il doppio del
+    // totale.
+    parti: [scelta("", [r`\(\var{totale}\)`, r`\(\var{5*pagineD}\)`, r`\(\var{6*pagineD}\)`, r`\(\var{8*pagineD}\)`], 2)],
   },
   {
     numero: 3,
@@ -205,19 +223,26 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["percentuali", "area", "quadrato"],
     difficolta: 2,
+    // Multipli di 10 fino a 50: l'aumento dell'area resta intero e le quattro
+    // risposte della parte b non coincidono mai (p, 2p, 2p + p²/100, 100 + p).
+    variabili: [v("perc", "10*random(1..5)", "l'aumento percentuale del lato (fascicolo: 20)")],
     testo: r`Considera un quadrato di lato \(a\).`,
     suggerimento:
-      r`a) Aumentare del 20% vuol dire aggiungere \(0{,}20\,a\): \(b = a + 0{,}20\,a = 1{,}20\,a\). ` +
-      r`b) L'area del nuovo quadrato è \(b^2 = (1{,}2\,a)^2 = 1{,}44\,a^2\): l'area aumenta del 44%, non del 20% né del 40%.`,
+      r`a) Aumentare del \(\var{perc}\%\) vuol dire aggiungere \(\var{dpformat(perc/100, 2)}\,a\): \(b = a + \var{dpformat(perc/100, 2)}\,a = \var{dpformat(1 + perc/100, 2)}\,a\). ` +
+      r`b) L'area del nuovo quadrato è \(b^2 = (\var{dpformat(1 + perc/100, 2)}\,a)^2 = \var{(100 + perc)^2/10000}\,a^2\): l'area aumenta del \(\var{2*perc + perc^2/100}\%\), non del \(\var{perc}\%\) né del \(\var{2*perc}\%\).`,
     parti: [
+      // Gli errori del fascicolo (20a, a + 20, a + 0,20): la percentuale come
+      // fattore, la percentuale come addendo, il decimale come addendo.
       scelta(
-        r`a) Se si aumenta il lato \(a\) del 20%, si ottiene un nuovo quadrato di lato \(b\). Quale delle seguenti espressioni rappresenta la misura di \(b\)?`,
-        [r`\(20\,a\)`, r`\(1{,}20\,a\)`, r`\(a + 20\)`, r`\(a + 0{,}20\)`],
+        r`a) Se si aumenta il lato \(a\) del \(\var{perc}\%\), si ottiene un nuovo quadrato di lato \(b\). Quale delle seguenti espressioni rappresenta la misura di \(b\)?`,
+        [r`\(\var{perc}\,a\)`, r`\(\var{dpformat(1 + perc/100, 2)}\,a\)`, r`\(a + \var{perc}\)`, r`\(a + \var{dpformat(perc/100, 2)}\)`],
         1,
       ),
+      // Gli errori del fascicolo (20%, 40%, 120%): lo stesso aumento del lato,
+      // il doppio (due dimensioni), il fattore 1,20 letto come percentuale.
       scelta(
         r`b) Di quanto aumenta in percentuale l'area del quadrato di lato \(b\) rispetto all'area del quadrato di lato \(a\)?`,
-        ["Del 20%", "Del 40%", "Del 44%", "Del 120%"],
+        [r`Del \(\var{perc}\%\)`, r`Del \(\var{2*perc}\%\)`, r`Del \(\var{2*perc + perc^2/100}\%\)`, r`Del \(\var{100 + perc}\%\)`],
         2,
       ),
     ],
@@ -291,17 +316,39 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità", "eventi indipendenti", "evento complementare"],
     difficolta: 2,
+    // Gli indici in centesimi, M2 migliore di M1 come nel fascicolo: con
+    // q1 < q2 le risposte della parte a sono sempre diverse, e nella parte b
+    // il prodotto (sopra l'81%), q2, la somma dei difetti (almeno 4) e la
+    // somma degli indici (sotto il 2) non coincidono mai.
+    variabili: [
+      v("q1", "random(90..96)", "l'indice di qualità di M1, in centesimi (fascicolo: 96)"),
+      v("q2", "q1 + random(1..3)", "l'indice di qualità di M2, in centesimi, più alto (fascicolo: 98)"),
+    ],
     testo:
-      "Una fabbrica utilizza due diversi macchinari, M1 e M2, per produrre tondini. M1 ha un indice di qualità uguale a 0,96 (cioè la probabilità che un tondino che esce da M1 non sia difettoso è del 96%), mentre M2 ha indice di qualità uguale a 0,98.",
+      r`Una fabbrica utilizza due diversi macchinari, M1 e M2, per produrre tondini. M1 ha un indice di qualità uguale a \(\var{dpformat(q1/100, 2)}\) (cioè la probabilità che un tondino che esce da M1 non sia difettoso è del \(\var{q1}\%\)), mentre M2 ha indice di qualità uguale a \(\var{dpformat(q2/100, 2)}\).`,
     suggerimento:
-      r`a) Difettoso è l'evento contrario di non difettoso: \(1 - 0{,}98 = 0{,}02\). ` +
-      r`b) Il tondino è buono alla fine se è buono dopo M1 E dopo M2; gli eventi sono indipendenti, quindi si moltiplica: \(0{,}96 \cdot 0{,}98 = 0{,}9408\), cioè il 94,08%.`,
+      r`a) Difettoso è l'evento contrario di non difettoso: \(1 - \var{dpformat(q2/100, 2)} = \var{dpformat((100 - q2)/100, 2)}\). ` +
+      r`b) Il tondino è buono alla fine se è buono dopo M1 E dopo M2; gli eventi sono indipendenti, quindi si moltiplica: \(\var{dpformat(q1/100, 2)} \cdot \var{dpformat(q2/100, 2)} = \var{q1*q2/10000}\), che in percentuale è \(\var{q1*q2/100}\%\).`,
     parti: [
-      scelta("a) La probabilità che un tondino esca da M2 difettoso è:", ["0,02", "0,04", "0,96", "0,98"], 0),
+      // Gli errori del fascicolo (0,04, 0,96, 0,98): il difetto di M1, gli
+      // indici di qualità di M1 e di M2.
+      scelta(
+        "a) La probabilità che un tondino esca da M2 difettoso è:",
+        [
+          r`\(\var{dpformat((100 - q2)/100, 2)}\)`,
+          r`\(\var{dpformat((100 - q1)/100, 2)}\)`,
+          r`\(\var{dpformat(q1/100, 2)}\)`,
+          r`\(\var{dpformat(q2/100, 2)}\)`,
+        ],
+        0,
+      ),
+      // Gli errori del fascicolo (98%, 6%, 1,94%): il solo indice di M2, la
+      // somma delle probabilità di difetto, la somma degli indici letta come
+      // percentuale.
       scelta(
         "b) Per la realizzazione di tondini metallici, M1 e M2 lavorano in serie, cioè ogni tondino viene lavorato prima da M1 e poi da M2. " +
           "Supponiamo che gli eventi «M1 produce un tondino non difettoso» e «M2 produce un tondino non difettoso» siano fra loro indipendenti; allora la probabilità che un tondino non sia difettoso alla fine del ciclo di produzione (cioè dopo essere stato lavorato sia da M1 che da M2) è:",
-        ["98%", "94,08%", "6%", "1,94%"],
+        [r`\(\var{q2}\%\)`, r`\(\var{q1*q2/100}\%\)`, r`\(\var{200 - q1 - q2}\%\)`, r`\(\var{(q1 + q2)/100}\%\)`],
         1,
       ),
     ],
@@ -414,13 +461,18 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["area", "parallelogramma", "quadrato"],
     difficolta: 1,
+    // La figura non porta misure; AE resta un terzo del lato, come è disegnata.
+    variabili: [
+      v("k", "random(2..6)", "AE e FC, in cm (fascicolo: 2)"),
+      v("lato", "3*k", "il lato del quadrato, il triplo di AE come in figura (fascicolo: 6)"),
+    ],
     testo:
-      "Considera il quadrato ABCD il cui lato misura 6 cm. AE e FC misurano ciascuno 2 cm. " +
+      r`Considera il quadrato ABCD il cui lato misura \(\var{lato}\) cm. AE e FC misurano ciascuno \(\var{k}\) cm. ` +
       img("d17", "Il quadrato ABCD con E sul lato AB e F sul lato DC; i segmenti AF ed EC sono paralleli"),
     suggerimento:
-      r`AECF è un parallelogramma con base \(AE = 2\) cm e altezza uguale al lato del quadrato, 6 cm: area \(2 \cdot 6 = 12\text{ cm}^2\). ` +
-      r`Oppure: al quadrato (\(36\text{ cm}^2\)) si tolgono i due triangoli rettangoli \(EBC\) e \(AFD\), ciascuno di area \(\frac{4 \cdot 6}{2} = 12\): \(36 - 24 = 12\).`,
-    parti: [numerica(r`Quanto misura la superficie del quadrilatero AECF, in \(\text{cm}^2\)?`, "12")],
+      r`AECF è un parallelogramma con base \(AE = \var{k}\) cm e altezza uguale al lato del quadrato, \(\var{lato}\) cm: area \(\var{k} \cdot \var{lato} = \var{k*lato}\text{ cm}^2\). ` +
+      r`Oppure: al quadrato (\(\var{lato^2}\text{ cm}^2\)) si tolgono i due triangoli rettangoli \(EBC\) e \(AFD\), ciascuno di area \(\frac{\var{lato-k} \cdot \var{lato}}{2} = \var{(lato-k)*lato/2}\): \(\var{lato^2} - \var{(lato-k)*lato} = \var{k*lato}\).`,
+    parti: [numerica(r`Quanto misura la superficie del quadrilatero AECF, in \(\text{cm}^2\)?`, "k*lato")],
   },
   {
     numero: 18,
@@ -429,11 +481,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["minimo comune multiplo"],
     difficolta: 1,
+    // I tre periodi sono 4, 3 e 2 volte uno stesso numero, come nel fascicolo
+    // (28, 21, 14 = 4, 3, 2 volte 7): il mcm è sempre 12 volte quel numero.
+    variabili: [
+      v("fattore", "random(4..10)", "il fattore comune dei tre periodi (fascicolo: 7)"),
+      v("carta", "4*fattore", "i giorni fra due raccolte della carta (fascicolo: 28)"),
+      v("vetro", "3*fattore", "i giorni fra due raccolte del vetro (fascicolo: 21)"),
+      v("plastica", "2*fattore", "i giorni fra due raccolte della plastica (fascicolo: 14)"),
+    ],
     testo:
-      "In un quartiere di una città, il calendario della raccolta differenziata (carta, vetro e plastica) prevede che la raccolta della carta avvenga ogni 28 giorni, quella del vetro ogni 21 giorni e quella della plastica ogni 14 giorni. Oggi sono state effettuate le raccolte di carta, vetro e plastica.",
+      r`In un quartiere di una città, il calendario della raccolta differenziata (carta, vetro e plastica) prevede che la raccolta della carta avvenga ogni \(\var{carta}\) giorni, quella del vetro ogni \(\var{vetro}\) giorni e quella della plastica ogni \(\var{plastica}\) giorni. Oggi sono state effettuate le raccolte di carta, vetro e plastica.`,
     suggerimento:
-      r`Serve il minimo comune multiplo: \(28 = 2^2 \cdot 7\), \(21 = 3 \cdot 7\), \(14 = 2 \cdot 7\); \(\text{mcm} = 2^2 \cdot 3 \cdot 7 = 84\).`,
-    parti: [numerica("Fra quanti giorni la raccolta di carta, vetro e plastica verrà fatta di nuovo contemporaneamente?", "84")],
+      r`Serve il minimo comune multiplo di \(\var{carta}\), \(\var{vetro}\) e \(\var{plastica}\). ` +
+      r`\(\var{carta} = 4 \cdot \var{fattore}\), \(\var{vetro} = 3 \cdot \var{fattore}\), \(\var{plastica} = 2 \cdot \var{fattore}\): il mcm è \(\var{fattore} \cdot \text{mcm}(4, 3, 2) = \var{fattore} \cdot 12 = \var{12*fattore}\).`,
+    parti: [numerica("Fra quanti giorni la raccolta di carta, vetro e plastica verrà fatta di nuovo contemporaneamente?", "12*fattore")],
   },
   {
     numero: 19,

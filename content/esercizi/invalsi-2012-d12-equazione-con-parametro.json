@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2012 · D12 · Un'equazione con parametro",
-    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D12.",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D12. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2012 · D12 · Un'equazione con parametro",
-    "statement": "<p>È data l'equazione \\((3k - 6)x - 5k + 2 = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
-    "advice": "<p>Se la soluzione è \\(x = 0\\), sostituendo si ottiene \\((3k - 6) \\cdot 0 - 5k + 2 = 0\\), cioè \\(-5k + 2 = 0\\), \\(k = \\frac{2}{5}\\). Per questo valore il coefficiente \\(3k - 6\\) non è zero, quindi \\(x = 0\\) è proprio l'unica soluzione.</p>",
-    "variables": {},
+    "statement": "<p>È data l'equazione \\((\\var{p}k - \\var{q})x - \\var{c}k + \\var{d} = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
+    "advice": "<p>Se la soluzione è \\(x = 0\\), sostituendo si ottiene \\((\\var{p}k - \\var{q}) \\cdot 0 - \\var{c}k + \\var{d} = 0\\), cioè \\(-\\var{c}k + \\var{d} = 0\\), \\(k = \\frac{\\var{d}}{\\var{c}}\\). Per questo valore il coefficiente \\(\\var{p}k - \\var{q}\\) non è zero (si annulla solo per \\(k = \\var{q/p}\\)), quindi \\(x = 0\\) è proprio l'unica soluzione.</p>",
+    "variables": {
+      "p": {
+        "name": "p",
+        "definition": "random(2..5)",
+        "description": "il coefficiente di k nel coefficiente di x (fascicolo: 3)"
+      },
+      "q": {
+        "name": "q",
+        "definition": "p*random(2..4)",
+        "description": "il termine noto nel coefficiente di x, multiplo di p (fascicolo: 6)"
+      },
+      "c": {
+        "name": "c",
+        "definition": "random(3, 5, 7)",
+        "description": "il coefficiente di k nel termine noto (fascicolo: 5)"
+      },
+      "d": {
+        "name": "d",
+        "definition": "random(1..c-1)",
+        "description": "il termine noto, minore di c (fascicolo: 2)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "p",
+      "q",
+      "c",
+      "d"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,7 +57,7 @@
         "type": "jme",
         "marks": 1,
         "prompt": "<p>Per quale valore di \\(k\\) la soluzione dell'equazione è 0? Scrivi il valore come frazione. \\(k =\\)</p>",
-        "answer": "2/5",
+        "answer": "{d}/{c}",
         "checkingType": "absdiff",
         "checkingAccuracy": 0.001,
         "failureRate": 1,

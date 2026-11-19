@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D2 · La corriera",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D2.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D2. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,14 +15,34 @@
   },
   "question": {
     "name": "INVALSI 2011 · D2 · La corriera",
-    "statement": "<p>La corriera passa alle 6:30 alla fermata dove sale Giorgio. Nel 40% dei casi è in orario, nel 50% dei casi ha un ritardo di 5 minuti e nei rimanenti casi ha un ritardo di 10 minuti. Se Giorgio arriva alla fermata alle 6:34, che probabilità ha di prendere la corriera?</p>",
-    "advice": "<p>Alle 6:34 la corriera in orario è già passata. Giorgio la prende se è in ritardo di 5 minuti (50% dei casi) o di 10 minuti (il restante 100% − 40% − 50% = 10%): 50% + 10% = 60%.</p>",
-    "variables": {},
+    "statement": "<p>La corriera passa alle 6:30 alla fermata dove sale Giorgio. Nel \\(\\var{orario}\\%\\) dei casi è in orario, nel \\(\\var{ritardo}\\%\\) dei casi ha un ritardo di 5 minuti e nei rimanenti casi ha un ritardo di 10 minuti. Se Giorgio arriva alla fermata alle 6:34, che probabilità ha di prendere la corriera?</p>",
+    "advice": "<p>Alle 6:34 la corriera in orario è già passata. Giorgio la prende se è in ritardo di 5 minuti (\\(\\var{ritardo}\\%\\) dei casi) o di 10 minuti (il restante \\(100\\% - \\var{orario}\\% - \\var{ritardo}\\% = \\var{resto}\\%\\)): \\(\\var{ritardo}\\% + \\var{resto}\\% = \\var{100-orario}\\%\\).</p>",
+    "variables": {
+      "orario": {
+        "name": "orario",
+        "definition": "5*random(4..8)",
+        "description": "la percentuale di corse in orario, da 20 a 40 (fascicolo: 40)"
+      },
+      "resto": {
+        "name": "resto",
+        "definition": "5*random(1..3)",
+        "description": "la percentuale di corse in ritardo di 10 minuti, da 5 a 15 (fascicolo: 10)"
+      },
+      "ritardo": {
+        "name": "ritardo",
+        "definition": "100 - orario - resto",
+        "description": "la percentuale di corse in ritardo di 5 minuti, da 45 a 75 (fascicolo: 50)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "orario",
+      "resto",
+      "ritardo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +52,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>10%</p>",
-          "<p>40%</p>",
-          "<p>50%</p>",
-          "<p>60%</p>"
+          "<p>\\(\\var{resto}\\%\\)</p>",
+          "<p>\\(\\var{orario}\\%\\)</p>",
+          "<p>\\(\\var{ritardo}\\%\\)</p>",
+          "<p>\\(\\var{100-orario}\\%\\)</p>"
         ],
         "matrix": [
           "0",

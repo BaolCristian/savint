@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D27 · La commessa",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D27.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D27. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -16,14 +16,28 @@
   },
   "question": {
     "name": "INVALSI 2011 · D27 · La commessa",
-    "statement": "<p>Carlotta, nel periodo di Natale, lavora come commessa in un negozio di calzature e guadagna 8 euro all'ora più una commissione del 5% sul ricavo totale delle scarpe che riesce a vendere. Quale formula esprime il suo guadagno \\(g\\), se lavora \\(h\\) ore e vende scarpe per un valore totale di \\(s\\) euro?</p>",
-    "advice": "<p>Per le ore guadagna \\(8h\\); il 5% di \\(s\\) è \\(\\frac{5}{100}s = 0{,}05s\\). Quindi \\(g = 8h + 0{,}05s\\).</p>",
-    "variables": {},
+    "statement": "<p>Carlotta, nel periodo di Natale, lavora come commessa in un negozio di calzature e guadagna \\(\\var{paga}\\) euro all'ora più una commissione del \\(\\var{perc}\\%\\) sul ricavo totale delle scarpe che riesce a vendere. Quale formula esprime il suo guadagno \\(g\\), se lavora \\(h\\) ore e vende scarpe per un valore totale di \\(s\\) euro?</p>",
+    "advice": "<p>Per le ore guadagna \\(\\var{paga}h\\); il \\(\\var{perc}\\%\\) di \\(s\\) è \\(\\frac{\\var{perc}}{100}s = \\var{perc/100}s\\). Quindi \\(g = \\var{paga}h + \\var{perc/100}s\\).</p>",
+    "variables": {
+      "paga": {
+        "name": "paga",
+        "definition": "random(7..12)",
+        "description": "la paga oraria in euro (fascicolo: 8)"
+      },
+      "perc": {
+        "name": "perc",
+        "definition": "random(2..6)",
+        "description": "la commissione in percentuale (fascicolo: 5)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "paga",
+      "perc"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -33,10 +47,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(g = 8h + 0{,}05s\\)</p>",
-          "<p>\\(g = 8h + 0{,}5s\\)</p>",
-          "<p>\\(g = 5h + 8s\\)</p>",
-          "<p>\\(g = 8h + 5s\\)</p>"
+          "<p>\\(g = \\var{paga}h + \\var{perc/100}s\\)</p>",
+          "<p>\\(g = \\var{paga}h + \\var{perc/10}s\\)</p>",
+          "<p>\\(g = \\var{perc}h + \\var{paga}s\\)</p>",
+          "<p>\\(g = \\var{paga}h + \\var{perc}s\\)</p>"
         ],
         "matrix": [
           "1",

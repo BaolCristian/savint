@@ -21,7 +21,15 @@
  * - dove il fascicolo chiedeva anche i calcoli (D9, D11, D16, D20, D22) si
  *   scrive solo il risultato;
  * - le probabilità e i rapporti si scrivono come frazione (parte
- *   «espressione», che accetta qualunque forma equivalente).
+ *   «espressione», che accetta qualunque forma equivalente);
+ * - le domande di solo testo e calcolo hanno i NUMERI VARIABILI (regole in
+ *   `scripts/invalsi/comune.ts`): D9, D12, D16, D17, D18, D19, D20, D21, D25
+ *   (parte b). Le altre restano con i numeri del fascicolo: legate a
+ *   un'immagine o a un grafico che mostra i numeri (D2, D3, D4, D5, D7, D11,
+ *   D14, D25 parte a, D26, D28), concettuali o Vero/Falso su affermazioni
+ *   fisse (D1, D6, D10, D15, D23, D24), con distrattori di cui non si
+ *   ricostruisce l'errore (D8, D13, D27), o in cui cambiare i numeri non
+ *   garantisce un problema pulito (D22).
  */
 import {
   creaPacchetto,
@@ -33,6 +41,7 @@ import {
   scelta,
   scriviPacchetto,
   testoFile,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -275,13 +284,23 @@ const DOMANDE: Domanda[] = [
     temi: ["percentuali", "problemi"],
     difficolta: 2,
     adattamento: SOLO_RISULTATO,
+    // Gli alunni restano 1 000 e le percentuali sono decine: ogni passaggio
+    // dà un intero. Tutte le percentuali si leggono «il …%» (niente 80, 11).
+    variabili: [
+      v("partecipa", "10*random(4..7)", "la percentuale di alunni che partecipano (fascicolo: 60)"),
+      v("ritiro1", "10*random(1..4)", "la percentuale di partecipanti che si ritira dopo 3 km (fascicolo: 30)"),
+      v("ritiro2", "10*random(2..5)", "la percentuale dei restanti che si ritira dopo altri 5 km (fascicolo: 40)"),
+      v("partenti", "10*partecipa", "gli alunni che partecipano (fascicolo: 600)"),
+      v("restano", "partenti*(100 - ritiro1)/100", "gli alunni rimasti dopo 3 km (fascicolo: 420)"),
+      v("arrivano", "restano*(100 - ritiro2)/100", "gli alunni che arrivano al traguardo (fascicolo: 252)"),
+    ],
     testo:
-      "A una corsa campestre partecipa il 60% degli alunni di una scuola. Dopo i primi 3 km il 30% degli alunni partecipanti si ritira e, dopo altri 5 km, si ritira il 40% dei restanti. " +
+      r`A una corsa campestre partecipa il \(\var{partecipa}\%\) degli alunni di una scuola. Dopo i primi 3 km il \(\var{ritiro1}\%\) degli alunni partecipanti si ritira e, dopo altri 5 km, si ritira il \(\var{ritiro2}\%\) dei restanti. ` +
       "Tutti gli altri arrivano al traguardo. Se gli alunni della scuola sono 1 000, quanti arrivano al traguardo?",
     suggerimento:
-      r`Partecipano \(1000 \cdot 0{,}6 = 600\) alunni. Dopo 3 km se ne ritira il 30%: restano \(600 \cdot 0{,}7 = 420\). ` +
-      r`Poi si ritira il 40% di questi: restano \(420 \cdot 0{,}6 = 252\) alunni. Le percentuali non si sommano: ognuna si calcola sui rimasti.`,
-    parti: [numerica("Numero di alunni che arrivano al traguardo:", "252")],
+      r`Partecipano \(1000 \cdot \var{partecipa/100} = \var{partenti}\) alunni. Dopo 3 km se ne ritira il \(\var{ritiro1}\%\): restano \(\var{partenti} \cdot \var{(100 - ritiro1)/100} = \var{restano}\). ` +
+      r`Poi si ritira il \(\var{ritiro2}\%\) di questi: restano \(\var{restano} \cdot \var{(100 - ritiro2)/100} = \var{arrivano}\) alunni. Le percentuali non si sommano: ognuna si calcola sui rimasti.`,
+    parti: [numerica("Numero di alunni che arrivano al traguardo:", "arrivano")],
   },
   {
     numero: 10,
@@ -330,24 +349,31 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["tabelle a doppia entrata", "probabilità", "probabilità condizionata"],
     difficolta: 2,
+    // Il campione resta di 1 500 donne: l'ultima casella completa il totale.
+    variabili: [
+      v("occpos", "random(400..500)", "occupate con giudizio positivo (fascicolo: 450)"),
+      v("disocpos", "random(250..300)", "disoccupate con giudizio positivo (fascicolo: 276)"),
+      v("occneg", "random(330..400)", "occupate con giudizio negativo (fascicolo: 367)"),
+      v("disocneg", "1500 - occpos - disocpos - occneg", "disoccupate con giudizio negativo, perché siano 1 500 in tutto: da 300 a 520 (fascicolo: 407)"),
+    ],
     testo:
       "È stato effettuato un sondaggio su un campione di 1 500 donne di età compresa tra i 25 e i 55 anni per conoscere la loro opinione su una rivista mensile dedicata alla salute. Si sono ottenuti i seguenti risultati: " +
-      r`\[\begin{array}{|l|c|c|} \hline & \text{Occupate} & \text{Disoccupate} \\ \hline \text{Giudizio positivo} & 450 & 276 \\ \hline \text{Giudizio negativo} & 367 & 407 \\ \hline \end{array}\]`,
+      r`\[\begin{array}{|l|c|c|} \hline & \text{Occupate} & \text{Disoccupate} \\ \hline \text{Giudizio positivo} & \var{occpos} & \var{disocpos} \\ \hline \text{Giudizio negativo} & \var{occneg} & \var{disocneg} \\ \hline \end{array}\]`,
     suggerimento:
-      r`a) Giudizio positivo: \(450 + 276 = 726\). ` +
-      r`b) Disoccupate: \(276 + 407 = 683\). ` +
-      r`c) Giudizio negativo: \(367 + 407 = 774\) donne su 1 500: \(\frac{774}{1500} = \frac{129}{250}\). ` +
-      r`d) Ora i casi possibili sono solo le 726 donne con giudizio positivo, di cui 450 occupate: \(\frac{450}{726} = \frac{75}{121}\).`,
+      r`a) Giudizio positivo: \(\var{occpos} + \var{disocpos} = \var{occpos+disocpos}\). ` +
+      r`b) Disoccupate: \(\var{disocpos} + \var{disocneg} = \var{disocpos+disocneg}\). ` +
+      r`c) Giudizio negativo: \(\var{occneg} + \var{disocneg} = \var{occneg+disocneg}\) donne su 1 500: \(\frac{\var{occneg+disocneg}}{1500}\). ` +
+      r`d) Ora i casi possibili sono solo le \(\var{occpos+disocpos}\) donne con giudizio positivo, di cui \(\var{occpos}\) occupate: \(\frac{\var{occpos}}{\var{occpos+disocpos}}\).`,
     parti: [
-      numerica("a) Quante sono le donne che hanno espresso un giudizio positivo?", "726"),
-      numerica("b) Quante sono le donne disoccupate intervistate?", "683"),
+      numerica("a) Quante sono le donne che hanno espresso un giudizio positivo?", "occpos + disocpos"),
+      numerica("b) Quante sono le donne disoccupate intervistate?", "disocpos + disocneg"),
       espressione(
         "c) Scegliendo a caso una delle donne intervistate, qual è la probabilità che abbia espresso un giudizio negativo? Scrivi il risultato come frazione.",
-        "774/1500",
+        "{occneg+disocneg}/1500",
       ),
       espressione(
         "d) Scegliendo a caso una delle donne intervistate tra quelle che hanno espresso un giudizio positivo, qual è la probabilità che sia una donna occupata? Scrivi il risultato come frazione.",
-        "450/726",
+        "{occpos}/{occpos+disocpos}",
       ),
     ],
   },
@@ -414,12 +440,13 @@ const DOMANDE: Domanda[] = [
     temi: ["circonferenza", "rettangolo", "diagonali"],
     difficolta: 2,
     adattamento: SOLO_RISULTATO,
+    variabili: [v("diametro", "2*random(4..10)", "il diametro in cm, pari: il raggio è intero (fascicolo: 12)")],
     testo:
-      r`La circonferenza disegnata qui sotto ha come centro l'origine \(O\) degli assi cartesiani e \(C\) è un suo punto. \(A\) e \(B\) sono le proiezioni sugli assi cartesiani di \(C\). Il diametro della circonferenza è 12 cm. ` +
+      r`La circonferenza disegnata qui sotto ha come centro l'origine \(O\) degli assi cartesiani e \(C\) è un suo punto. \(A\) e \(B\) sono le proiezioni sugli assi cartesiani di \(C\). Il diametro della circonferenza è \(\var{diametro}\) cm. ` +
       img("d16", "Circonferenza di centro O; il punto C sulla circonferenza e le sue proiezioni A sull'asse x e B sull'asse y formano il rettangolo OACB"),
     suggerimento:
-      r`\(OACB\) è un rettangolo: le sue diagonali \(AB\) e \(OC\) sono uguali. \(OC\) è un raggio, cioè metà del diametro: \(AB = OC = 6\) cm. Non serve sapere dove sta \(C\).`,
-    parti: [numerica(r`Qual è la lunghezza del segmento \(AB\), in cm?`, "6")],
+      r`\(OACB\) è un rettangolo: le sue diagonali \(AB\) e \(OC\) sono uguali. \(OC\) è un raggio, cioè metà del diametro: \(AB = OC = \var{diametro} : 2 = \var{diametro/2}\) cm. Non serve sapere dove sta \(C\).`,
+    parti: [numerica(r`Qual è la lunghezza del segmento \(AB\), in cm?`, "diametro/2")],
   },
   {
     numero: 17,
@@ -428,9 +455,17 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["equazioni", "parametri"],
     difficolta: 2,
-    testo: r`È data l'equazione \((2k - 3)x + 1 - k = 0\), in cui \(x\) è l'incognita e \(k\) è un numero reale.`,
-    suggerimento: r`Se la soluzione è 1, sostituendo \(x = 1\) l'uguaglianza è vera: \(2k - 3 + 1 - k = 0\), cioè \(k - 2 = 0\), \(k = 2\). Verifica: per \(k = 2\) l'equazione è \(x - 1 = 0\).`,
-    parti: [numerica(r`La soluzione dell'equazione è 1 per \(k =\)`, "2")],
+    // noto < coef/2: per il k giusto il coefficiente di x, coef - 2·noto, non
+    // si annulla (l'equazione ha davvero la sola soluzione 1).
+    variabili: [
+      v("coef", "random(3..9)", "il termine noto nel coefficiente di x (fascicolo: 3)"),
+      v("noto", "random(1..floor((coef-1)/2))", "il termine noto dell'equazione (fascicolo: 1)"),
+    ],
+    testo: r`È data l'equazione \((2k - \var{coef})x + \var{noto} - k = 0\), in cui \(x\) è l'incognita e \(k\) è un numero reale.`,
+    suggerimento:
+      r`Se la soluzione è 1, sostituendo \(x = 1\) l'uguaglianza è vera: \(2k - \var{coef} + \var{noto} - k = 0\), cioè \(k - \var{coef-noto} = 0\), \(k = \var{coef-noto}\). ` +
+      r`Verifica: per \(k = \var{coef-noto}\) il coefficiente di \(x\) vale \(2 \cdot \var{coef-noto} - \var{coef} = \var{coef-2*noto}\) e il termine noto \(\var{noto} - \var{coef-noto} = -\var{coef-2*noto}\): l'equazione ha la sola soluzione \(x = 1\).`,
+    parti: [numerica(r`La soluzione dell'equazione è 1 per \(k =\)`, "coef - noto")],
   },
   {
     numero: 18,
@@ -439,13 +474,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["area", "trapezio", "cerchio inscritto"],
     difficolta: 2,
+    // Le basi sommano più di 4 raggi: in un trapezio circoscritto la somma
+    // delle basi è quella dei lati obliqui, ognuno più lungo dell'altezza.
+    variabili: [
+      v("raggio", "random(3..8)", "il raggio del cerchio in cm (fascicolo: 5)"),
+      v("basi", "4*raggio + random(2..6)", "la somma delle basi in cm, più di 4 raggi (fascicolo: 24)"),
+      v("area", "raggio*basi", "l'area del trapezio in cm² (fascicolo: 120)"),
+    ],
     testo:
-      r`Il trapezio \(ABCD\), circoscritto a un cerchio di raggio 5 cm, ha l'area di \(120\text{ cm}^2\). ` +
+      r`Il trapezio \(ABCD\), circoscritto a un cerchio di raggio \(\var{raggio}\) cm, ha l'area di \(\var{area}\text{ cm}^2\). ` +
       img("d18", "Il trapezio ABCD con la base maggiore AB in basso, circoscritto a un cerchio che tocca le due basi e i due lati obliqui"),
     suggerimento:
-      r`Il cerchio tocca entrambe le basi: l'altezza del trapezio è il diametro, 10 cm. ` +
-      r`Da \(\frac{(AB + DC) \cdot 10}{2} = 120\) si ricava \(AB + DC = \frac{240}{10} = 24\) cm.`,
-    parti: [numerica(r`Quanto misura la somma delle basi \(AB\) e \(DC\), in cm?`, "24")],
+      r`Il cerchio tocca entrambe le basi: l'altezza del trapezio è il diametro, \(\var{2*raggio}\) cm. ` +
+      r`Da \(\frac{(AB + DC) \cdot \var{2*raggio}}{2} = \var{area}\) si ricava \(AB + DC = \frac{\var{2*area}}{\var{2*raggio}} = \var{basi}\) cm.`,
+    parti: [numerica(r`Quanto misura la somma delle basi \(AB\) e \(DC\), in cm?`, "basi")],
   },
   {
     numero: 19,
@@ -455,13 +497,22 @@ const DOMANDE: Domanda[] = [
     temi: ["insiemi", "diagrammi di Venn"],
     difficolta: 2,
     adattamento: "Nel fascicolo il numero andava scritto nella zona giusta del diagramma: qui si scrive come risposta.",
+    // Gli alunni restano 100; si parte dalle quattro zone del diagramma.
+    variabili: [
+      v("entrambi", "random(10..20)", "chi segue entrambi gli sport (fascicolo: 18)"),
+      v("solobasket", "random(5..12)", "chi segue solo il basket (fascicolo: 8)"),
+      v("nessuno", "random(5..12)", "chi non segue nessuno dei due (fascicolo: 10)"),
+      v("solocalcio", "100 - entrambi - solobasket - nessuno", "chi segue solo il calcio: da 56 a 80 (fascicolo: 64)"),
+      v("calcio", "solocalcio + entrambi", "chi segue il calcio (fascicolo: 82)"),
+      v("basket", "solobasket + entrambi", "chi segue il basket (fascicolo: 26)"),
+    ],
     testo:
-      "Su 100 alunni di una scuola, 82 alunni si interessano di calcio, 26 si interessano di basket, 10 non si interessano né di calcio, né di basket. " +
+      r`Su 100 alunni di una scuola, \(\var{calcio}\) alunni si interessano di calcio, \(\var{basket}\) si interessano di basket, \(\var{nessuno}\) non si interessano né di calcio, né di basket. ` +
       img("d19", "Diagramma di Eulero-Venn con due insiemi che si intersecano, Basket e Calcio, dentro un rettangolo"),
     suggerimento:
-      r`Si interessano di almeno uno dei due sport \(100 - 10 = 90\) alunni. Sommando \(82 + 26 = 108\) chi segue entrambi gli sport è contato due volte: ` +
-      r`\(108 - 90 = 18\) alunni, da scrivere nella zona comune ai due insiemi.`,
-    parti: [numerica("Quanti studenti si interessano sia di calcio sia di basket (la zona comune ai due insiemi)?", "18")],
+      r`Si interessano di almeno uno dei due sport \(100 - \var{nessuno} = \var{100-nessuno}\) alunni. Sommando \(\var{calcio} + \var{basket} = \var{calcio+basket}\) chi segue entrambi gli sport è contato due volte: ` +
+      r`\(\var{calcio+basket} - \var{100-nessuno} = \var{entrambi}\) alunni, da scrivere nella zona comune ai due insiemi.`,
+    parti: [numerica("Quanti studenti si interessano sia di calcio sia di basket (la zona comune ai due insiemi)?", "entrambi")],
   },
   {
     numero: 20,
@@ -471,11 +522,21 @@ const DOMANDE: Domanda[] = [
     temi: ["proporzioni", "stime"],
     difficolta: 2,
     adattamento: SOLO_RISULTATO,
+    // Si parte dalla stima: la seconda produzione, in decine, è quella che la
+    // dà quasi esatta. Con difettosi ≤ 20 e prima produzione ≥ 1 000 il
+    // quarto termine dista dalla stima al più 0,1: l'arrotondamento non è mai
+    // in bilico.
+    variabili: [
+      v("difettosi", "random(10..20)", "i pezzi difettosi della prima produzione (fascicolo: 14)"),
+      v("prod1", "100*random(10..15)", "i pezzi della prima produzione (fascicolo: 1 200)"),
+      v("stima", "difettosi + random(5..15)", "la stima arrotondata all'unità (fascicolo: 25)"),
+      v("prod2", "10*round(prod1*stima/(10*difettosi))", "i pezzi della seconda produzione, in decine (fascicolo: 2 150)"),
+    ],
     testo:
-      "Da un controllo di qualità è emerso che una macchina ha prodotto 14 pezzi difettosi su una produzione di 1 200 pezzi. Che stima è ragionevole fare del numero di pezzi difettosi su una produzione di 2 150 pezzi?",
+      r`Da un controllo di qualità è emerso che una macchina ha prodotto \(\var{difettosi}\) pezzi difettosi su una produzione di \(\var{prod1}\) pezzi. Che stima è ragionevole fare del numero di pezzi difettosi su una produzione di \(\var{prod2}\) pezzi?`,
     suggerimento:
-      r`Si suppone che la proporzione di pezzi difettosi resti la stessa: \(14 : 1200 = x : 2150\), da cui \(x = \frac{14 \cdot 2150}{1200} \approx 25{,}08\): circa 25 pezzi.`,
-    parti: [numerica("Numero di pezzi difettosi (approssimato all'unità):", "25")],
+      r`Si suppone che la proporzione di pezzi difettosi resti la stessa: \(\var{difettosi} : \var{prod1} = x : \var{prod2}\), da cui \(x = \frac{\var{difettosi} \cdot \var{prod2}}{\var{prod1}}\), che arrotondato all'unità dà circa \(\var{stima}\) pezzi.`,
+    parti: [numerica("Numero di pezzi difettosi (approssimato all'unità):", "stima")],
   },
   {
     numero: 21,
@@ -484,13 +545,17 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["quadrato", "area", "radicali"],
     difficolta: 2,
+    // Il lato grande è 4n: i lati dei quadrati sono 4n, 2n√2, 2n, n√2 (e n
+    // il quinto). Gli errori del fascicolo (2, 4, 4√2 con n = 2): un quadrato
+    // di troppo (o il lato grande diviso per 4), il terzo e il secondo quadrato.
+    variabili: [v("n", "random(2..6)", "un quarto del lato del quadrato grande, che ha area 16n² (fascicolo: 2)")],
     testo:
-      r`Si è costruita la figura che vedi inserendo nel quadrato più grande un secondo quadrato i cui vertici sono i punti medi dei lati del primo. Si è ripetuta la stessa procedura, inserendo altri due quadrati. Se la superficie del quadrato più grande misura \(64\text{ cm}^2\), quanto misura il lato del quadrato più piccolo? ` +
+      r`Si è costruita la figura che vedi inserendo nel quadrato più grande un secondo quadrato i cui vertici sono i punti medi dei lati del primo. Si è ripetuta la stessa procedura, inserendo altri due quadrati. Se la superficie del quadrato più grande misura \(\var{16*n^2}\text{ cm}^2\), quanto misura il lato del quadrato più piccolo? ` +
       img("d21", "Quattro quadrati uno dentro l'altro, ognuno con i vertici nei punti medi dei lati del precedente"),
     suggerimento:
-      r`Il quadrato con i vertici nei punti medi dei lati ha metà dell'area del precedente. Le aree sono 64, 32, 16, \(8\text{ cm}^2\): ` +
-      r`il quarto quadrato ha lato \(\sqrt{8} = 2\sqrt{2}\) cm.`,
-    parti: [scelta("", ["2 cm", r`\(2\sqrt{2}\) cm`, "4 cm", r`\(4\sqrt{2}\) cm`], 1)],
+      r`Il quadrato con i vertici nei punti medi dei lati ha metà dell'area del precedente. Le aree sono \(\var{16*n^2}\), \(\var{8*n^2}\), \(\var{4*n^2}\), \(\var{2*n^2}\text{ cm}^2\): ` +
+      r`il quarto quadrato ha lato \(\sqrt{\var{2*n^2}} = \var{n}\sqrt{2}\) cm.`,
+    parti: [scelta("", [r`\(\var{n}\) cm`, r`\(\var{n}\sqrt{2}\) cm`, r`\(\var{2*n}\) cm`, r`\(\var{2*n}\sqrt{2}\) cm`], 1)],
   },
   {
     numero: 22,
@@ -572,9 +637,16 @@ const DOMANDE: Domanda[] = [
       "«Prato fiorito» è un gioco per computer che si gioca su una scacchiera. Cliccando sui riquadri della scacchiera, a volte si può scoprire un fiore nascosto. " +
       "Per esempio, nella scacchiera di 9×9 riquadri rappresentata in figura sono nascosti 10 fiori. " +
       img("d25", "La finestra del gioco Prato fiorito con una scacchiera di 9 per 9 riquadri e il contatore dei fiori a 10"),
+    // Variabile solo la parte b: la a dipende dalla figura. Righe pari e
+    // colonne multiple di 4: i riquadri sono multipli di 8, i fiori interi.
+    variabili: [
+      v("righe", "2*random(5..8)", "le righe della scacchiera (fascicolo: 12)"),
+      v("colonne", "4*random(4..7)", "le colonne della scacchiera (fascicolo: 20)"),
+      v("q", "random(4, 8)", "la probabilità è 1/q (fascicolo: 8)"),
+    ],
     suggerimento:
       r`a) I riquadri sono \(9 \cdot 9 = 81\), e 10 nascondono un fiore: \(\frac{10}{81}\). ` +
-      r`b) I riquadri sono \(12 \cdot 20 = 240\): perché la probabilità sia \(\frac{1}{8}\) i fiori devono essere \(240 : 8 = 30\).`,
+      r`b) I riquadri sono \(\var{righe} \cdot \var{colonne} = \var{righe*colonne}\): perché la probabilità sia \(\frac{1}{\var{q}}\) i fiori devono essere \(\var{righe*colonne} : \var{q} = \var{righe*colonne/q}\).`,
     parti: [
       scelta(
         "a) Qual è la probabilità di scoprire al primo tentativo un fiore nella scacchiera rappresentata in figura?",
@@ -582,8 +654,8 @@ const DOMANDE: Domanda[] = [
         3,
       ),
       numerica(
-        r`b) È possibile personalizzare il gioco impostando le dimensioni della scacchiera (cioè il numero di righe e di colonne) e il numero di fiori nascosti. Se si gioca con una scacchiera di 12×20 riquadri, quale deve essere il numero dei fiori nascosti perché la probabilità di scoprire un fiore al primo tentativo sia \(\frac{1}{8}\)?`,
-        "30",
+        r`b) È possibile personalizzare il gioco impostando le dimensioni della scacchiera (cioè il numero di righe e di colonne) e il numero di fiori nascosti. Se si gioca con una scacchiera di \(\var{righe} \times \var{colonne}\) riquadri, quale deve essere il numero dei fiori nascosti perché la probabilità di scoprire un fiore al primo tentativo sia \(\frac{1}{\var{q}}\)?`,
+        "righe*colonne/q",
       ),
     ],
   },

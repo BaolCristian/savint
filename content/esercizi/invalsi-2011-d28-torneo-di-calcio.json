@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D28 · Il torneo di calcio",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D28.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D28. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -16,13 +16,21 @@
   "question": {
     "name": "INVALSI 2011 · D28 · Il torneo di calcio",
     "statement": "<p>In un torneo di calcio fra scuole una squadra guadagna 3 punti se vince, 1 punto se pareggia e nessun punto se perde. Una squadra ha vinto tante partite quante ne ha pareggiate. Quale dei seguenti punteggi NON può aver totalizzato la squadra?</p>",
-    "advice": "<p>Se la squadra ha vinto \\(v\\) partite e ne ha pareggiate altrettante, ha \\(3v + v = 4v\\) punti: il punteggio è un multiplo di 4. 24, 28 e 32 lo sono (\\(v = 6, 7, 8\\)), 30 no.</p>",
-    "variables": {},
+    "advice": "<p>Se la squadra ha vinto \\(v\\) partite e ne ha pareggiate altrettante, ha \\(3v + v = 4v\\) punti: il punteggio è un multiplo di 4. \\(\\var{4*vinte}\\), \\(\\var{4*vinte+4}\\) e \\(\\var{4*vinte+8}\\) lo sono (\\(v = \\var{vinte}, \\var{vinte+1}, \\var{vinte+2}\\)), \\(\\var{4*vinte+6}\\) no.</p>",
+    "variables": {
+      "vinte": {
+        "name": "vinte",
+        "definition": "random(4..12)",
+        "description": "le partite vinte nella prima risposta (fascicolo: 6)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "vinte"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +40,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>24</p>",
-          "<p>28</p>",
-          "<p>30</p>",
-          "<p>32</p>"
+          "<p>\\(\\var{4*vinte}\\)</p>",
+          "<p>\\(\\var{4*vinte+4}\\)</p>",
+          "<p>\\(\\var{4*vinte+6}\\)</p>",
+          "<p>\\(\\var{4*vinte+8}\\)</p>"
         ],
         "matrix": [
           "0",

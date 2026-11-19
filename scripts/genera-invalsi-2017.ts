@@ -20,7 +20,14 @@
  *   diventate a scelta; i numeri da posizionare sulla retta (D6) si indicano
  *   con il numero della tacca; la formula con un coefficiente decimale (D16 b)
  *   si sceglie fra quattro; i completamenti a scelta (D15, D16 a) sono
- *   domande a scelta, una per spazio. La descrizione lo dice.
+ *   domande a scelta, una per spazio. La descrizione lo dice;
+ * - le domande di solo testo e calcolo hanno i NUMERI VARIABILI (regole in
+ *   `scripts/invalsi/comune.ts`): D1, D5, D8, D9, D13, D14, D22, D29, D32.
+ *   Le altre restano con i numeri del fascicolo: legate a un'immagine o a un
+ *   grafico che mostra i numeri (D2, D4, D6, D7, D12, D16, D17, D18, D19,
+ *   D21, D23, D25), concettuali o Vero/Falso su affermazioni fisse (D3, D11,
+ *   D15, D20, D24, D27, D30, D31), con dati reali (D26) o con distrattori di
+ *   cui non si ricostruisce con certezza l'errore (D10, D28).
  */
 import {
   creaPacchetto,
@@ -33,6 +40,7 @@ import {
   sceltaMultipla,
   scriviPacchetto,
   testoFile,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -73,10 +81,27 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["problemi", "equazioni"],
     difficolta: 1,
-    testo: "A una conferenza sono presenti 90 persone. Le donne sono 14 più degli uomini. Quanti sono gli uomini?",
+    // Con almeno 32 uomini e una differenza al più 20, il distrattore
+    // «metà più differenza» (u + 1,5d) non coincide mai con «totale meno
+    // differenza» (2u).
+    variabili: [
+      v("uomini", "random(32..45)", "gli uomini (fascicolo: 38)"),
+      v("diff", "2*random(4..10)", "quante donne più degli uomini, pari: il totale è pari (fascicolo: 14)"),
+      v("totale", "2*uomini + diff", "le persone presenti (fascicolo: 90)"),
+    ],
+    testo: r`A una conferenza sono presenti \(\var{totale}\) persone. Le donne sono \(\var{diff}\) più degli uomini. Quanti sono gli uomini?`,
     suggerimento:
-      r`Se gli uomini sono \(x\), le donne sono \(x + 14\): \(x + x + 14 = 90\), cioè \(2x = 76\) e \(x = 38\). Infatti le donne sono 52 e \(38 + 52 = 90\). (76 è il doppio degli uomini, non gli uomini.)`,
-    parti: [scelta("", ["59", "38", "31", "76"], 1)],
+      r`Se gli uomini sono \(x\), le donne sono \(x + \var{diff}\): \(x + x + \var{diff} = \var{totale}\), cioè \(2x = \var{totale-diff}\) e \(x = \var{uomini}\). ` +
+      r`Infatti le donne sono \(\var{uomini+diff}\) e \(\var{uomini} + \var{uomini+diff} = \var{totale}\). (\(\var{totale-diff}\) è il doppio degli uomini, non gli uomini.)`,
+    // Gli errori del fascicolo (59, 31, 76 con 90 e 14): la metà del totale
+    // più o meno la differenza, il totale meno la differenza senza dividere.
+    parti: [
+      scelta(
+        "",
+        [r`\(\var{totale/2 + diff}\)`, r`\(\var{uomini}\)`, r`\(\var{totale/2 - diff}\)`, r`\(\var{totale - diff}\)`],
+        1,
+      ),
+    ],
   },
   {
     numero: 2,
@@ -169,13 +194,32 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["area", "rettangolo"],
     difficolta: 1,
+    // La cornice resta di 3 cm (è scritta nella figura); variano le misure
+    // della foto, mai uguali: (L + 3)(W + 6) e (L + 6)(W + 3) restano diversi.
+    variabili: [
+      v("lungo", "random(18..30)", "il lato lungo della foto, in cm (fascicolo: 22)"),
+      v("largo", "lungo - random(4..9)", "il lato corto della foto, in cm (fascicolo: 15)"),
+    ],
     testo:
-      "Franco incolla una fotografia rettangolare di dimensioni 22 cm × 15 cm su un cartoncino. Attorno alla fotografia resta una cornice larga 3 cm, come vedi in figura. " +
+      r`Franco incolla una fotografia rettangolare di dimensioni \(\var{lungo}\) cm × \(\var{largo}\) cm su un cartoncino. Attorno alla fotografia resta una cornice larga 3 cm, come vedi in figura. ` +
       img("d05", "Una fotografia rettangolare incollata su un cartoncino, con una cornice di 3 cm su tutti e quattro i lati") +
       " Qual è l'area del cartoncino?",
     suggerimento:
-      r`La cornice di 3 cm c'è su entrambi i lati: il cartoncino misura \((22 + 6) \times (15 + 6) = 28 \times 21\) cm, e \(28 \cdot 21 = 588\text{ cm}^2\).`,
-    parti: [scelta("", [r`\(588\text{ cm}^2\)`, r`\(525\text{ cm}^2\)`, r`\(504\text{ cm}^2\)`, r`\(450\text{ cm}^2\)`], 0)],
+      r`La cornice di 3 cm c'è su entrambi i lati: il cartoncino misura \((\var{lungo} + 6) \times (\var{largo} + 6) = \var{lungo+6} \times \var{largo+6}\) cm, e \(\var{lungo+6} \cdot \var{largo+6} = \var{(lungo+6)*(largo+6)}\text{ cm}^2\).`,
+    // Gli errori del fascicolo (525, 504, 450 con 22 e 15): la cornice
+    // contata una volta sola sul lato lungo, sul lato corto, su entrambi.
+    parti: [
+      scelta(
+        "",
+        [
+          r`\(\var{(lungo+6)*(largo+6)}\text{ cm}^2\)`,
+          r`\(\var{(lungo+3)*(largo+6)}\text{ cm}^2\)`,
+          r`\(\var{(lungo+6)*(largo+3)}\text{ cm}^2\)`,
+          r`\(\var{(lungo+3)*(largo+3)}\text{ cm}^2\)`,
+        ],
+        0,
+      ),
+    ],
   },
   {
     numero: 6,
@@ -228,12 +272,22 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["problemi", "divisione"],
     difficolta: 1,
+    // Come nel fascicolo, la menta basta per un sacchetto in meno del limone:
+    // chi guarda solo il limone sbaglia sempre.
+    variabili: [
+      v("menta", "random(12..18)", "le caramelle alla menta in un sacchetto (fascicolo: 15)"),
+      v("limone", "random(20..30)", "le caramelle al limone in un sacchetto (fascicolo: 25)"),
+      v("sacchetti", "random(5..9)", "i sacchetti che si riempiono (fascicolo: 6)"),
+      v("totmenta", "menta*sacchetti + random(1..(menta-1))", "le caramelle alla menta disponibili, con resto (fascicolo: 100)"),
+      v("totlimone", "limone*(sacchetti+1) + random(0..(limone-1))", "le caramelle al limone, per un sacchetto in più (fascicolo: 180)"),
+    ],
     testo:
-      "Un sacchetto di caramelle contiene 15 caramelle alla menta e 25 caramelle al limone. Con 100 caramelle alla menta e 180 caramelle al limone, qual è il numero massimo di sacchetti con la stessa composizione del precedente che si possono riempire?",
+      r`Un sacchetto di caramelle contiene \(\var{menta}\) caramelle alla menta e \(\var{limone}\) caramelle al limone. Con \(\var{totmenta}\) caramelle alla menta e \(\var{totlimone}\) caramelle al limone, qual è il numero massimo di sacchetti con la stessa composizione del precedente che si possono riempire?`,
     suggerimento:
-      r`Con la menta: \(100 : 15 \approx 6{,}7\), bastano per 6 sacchetti. Con il limone: \(180 : 25 = 7{,}2\), bastano per 7. ` +
-      r`Comanda la menta: 6 sacchetti (\(6 \cdot 15 = 90\) alla menta e \(6 \cdot 25 = 150\) al limone).`,
-    parti: [numerica("Numero di sacchetti:", "6")],
+      r`Con la menta: \(\var{totmenta} : \var{menta}\) fa \(\var{sacchetti}\) con resto \(\var{mod(totmenta, menta)}\), bastano per \(\var{sacchetti}\) sacchetti. ` +
+      r`Con il limone: \(\var{totlimone} : \var{limone}\) fa \(\var{sacchetti+1}\) con resto \(\var{mod(totlimone, limone)}\), bastano per \(\var{sacchetti+1}\). ` +
+      r`Comanda la menta: \(\var{sacchetti}\) sacchetti (\(\var{sacchetti} \cdot \var{menta} = \var{sacchetti*menta}\) alla menta e \(\var{sacchetti} \cdot \var{limone} = \var{sacchetti*limone}\) al limone).`,
+    parti: [numerica("Numero di sacchetti:", "sacchetti")],
   },
   {
     numero: 9,
@@ -245,11 +299,16 @@ const DOMANDE: Domanda[] = [
     testo:
       "Il rettangolo AFED è formato da due quadrati congruenti ABCD e BFEC con un lato in comune. " +
       img("d09", "Il rettangolo AFED diviso dal segmento BC nei due quadrati ABCD e BFEC") +
-      " Il perimetro di ciascuno dei quadrati misura 36 cm. Quanto misura il perimetro del rettangolo AFED?",
+      r` Il perimetro di ciascuno dei quadrati misura \(\var{perimetro}\) cm. Quanto misura il perimetro del rettangolo AFED?`,
+    // La figura non porta misure: varia il perimetro dei quadrati.
+    variabili: [
+      v("lato", "random(5..15)", "il lato di ogni quadrato, in cm (fascicolo: 9)"),
+      v("perimetro", "4*lato", "il perimetro di ogni quadrato, in cm (fascicolo: 36)"),
+    ],
     suggerimento:
-      r`Il lato di ogni quadrato è \(36 : 4 = 9\) cm. Il rettangolo è lungo \(18\) cm e alto \(9\) cm: perimetro \(2 \cdot (18 + 9) = 54\) cm. ` +
-      r`(Non è \(2 \cdot 36 = 72\): il lato comune BC non fa parte del contorno.)`,
-    parti: [numerica("Perimetro di AFED, in cm:", "54")],
+      r`Il lato di ogni quadrato è \(\var{perimetro} : 4 = \var{lato}\) cm. Il rettangolo è lungo \(\var{2*lato}\) cm e alto \(\var{lato}\) cm: perimetro \(2 \cdot (\var{2*lato} + \var{lato}) = \var{6*lato}\) cm. ` +
+      r`(Non è \(2 \cdot \var{perimetro} = \var{2*perimetro}\): il lato comune BC non fa parte del contorno.)`,
+    parti: [numerica("Perimetro di AFED, in cm:", "6*lato")],
   },
   {
     numero: 10,
@@ -318,9 +377,15 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["retta", "piano cartesiano"],
     difficolta: 1,
-    testo: r`Considera l'equazione \(y = 2x + k\). Per quale valore di \(k\) essa rappresenta una retta che passa per il punto di coordinate \((1; 5)\)?`,
-    suggerimento: r`Il punto sta sulla retta se le sue coordinate soddisfano l'equazione: \(5 = 2 \cdot 1 + k\), quindi \(k = 3\).`,
-    parti: [numerica(r`\(k =\)`, "3")],
+    variabili: [
+      v("pend", "random(2..5)", "il coefficiente di x (fascicolo: 2)"),
+      v("x0", "random(1..3)", "l'ascissa del punto (fascicolo: 1)"),
+      v("termine", "random(1..9)", "il valore di k (fascicolo: 3)"),
+      v("y0", "pend*x0 + termine", "l'ordinata del punto (fascicolo: 5)"),
+    ],
+    testo: r`Considera l'equazione \(y = \var{pend}x + k\). Per quale valore di \(k\) essa rappresenta una retta che passa per il punto di coordinate \((\var{x0}; \var{y0})\)?`,
+    suggerimento: r`Il punto sta sulla retta se le sue coordinate soddisfano l'equazione: \(\var{y0} = \var{pend} \cdot \var{x0} + k\), cioè \(\var{y0} = \var{pend*x0} + k\), quindi \(k = \var{termine}\).`,
+    parti: [numerica(r`\(k =\)`, "termine")],
   },
   {
     numero: 14,
@@ -329,27 +394,36 @@ const DOMANDE: Domanda[] = [
     ambito: "Relazioni e funzioni",
     temi: ["funzioni lineari", "modellizzazione", "percentuali"],
     difficolta: 2,
+    // Il 10% resta; il prezzo è un multiplo di 10 (la quota per copia è
+    // intera) e il compenso forfettario si costruisce dalle copie di pareggio.
+    variabili: [
+      v("fisso", "1000*random(2..8)", "il compenso fisso del contratto a partecipazione, in euro (fascicolo: 5000)"),
+      v("prezzo", "10*random(2..5)", "il prezzo di copertina, in euro (fascicolo: 30)"),
+      v("quota", "prezzo/10", "il 10% del prezzo di copertina (fascicolo: 3)"),
+      v("pareggio", "1000*random(8..20)", "le copie per cui i due contratti si equivalgono (fascicolo: 15000)"),
+      v("forfait", "fisso + quota*pareggio", "il compenso del contratto forfettario, in euro (fascicolo: 50000)"),
+    ],
     testo:
       "Una casa editrice propone all'autore di un libro di scegliere uno tra due diversi tipi di contratto relativi al suo compenso. " +
-      "Contratto forfettario: compenso di 50 000 €, indipendentemente dal numero di copie vendute. " +
-      "Contratto a partecipazione: compenso di 5 000 € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. " +
-      "Il prezzo di copertina del libro è di 30 €.",
+      r`Contratto forfettario: compenso di \(\var{forfait}\) €, indipendentemente dal numero di copie vendute. ` +
+      r`Contratto a partecipazione: compenso di \(\var{fisso}\) € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. ` +
+      r`Il prezzo di copertina del libro è di \(\var{prezzo}\) €.`,
     suggerimento:
-      r`Il 10% di 30 € è 3 €: con il contratto a partecipazione l'autore prende 5000 € più 3 € per copia. ` +
-      r`a) 0 copie: 5000 €; 1000 copie: \(5000 + 3000 = 8000\) €; 2000 copie: \(5000 + 6000 = 11\,000\) €. ` +
-      r`b) \(C = 5000 + 3n\). ` +
-      r`c) \(5000 + 3n = 50\,000\), cioè \(3n = 45\,000\) e \(n = 15\,000\) copie.`,
+      r`Il 10% di \(\var{prezzo}\) € è \(\var{quota}\) €: con il contratto a partecipazione l'autore prende \(\var{fisso}\) € più \(\var{quota}\) € per copia. ` +
+      r`a) 0 copie: \(\var{fisso}\) €; 1000 copie: \(\var{fisso} + \var{1000*quota} = \var{fisso + 1000*quota}\) €; 2000 copie: \(\var{fisso} + \var{2000*quota} = \var{fisso + 2000*quota}\) €. ` +
+      r`b) \(C = \var{fisso} + \var{quota}n\). ` +
+      r`c) \(\var{fisso} + \var{quota}n = \var{forfait}\), cioè \(\var{quota}n = \var{forfait - fisso}\) e \(n = \var{pareggio}\) copie.`,
     parti: [
-      numerica("a) L'autore sceglie il contratto a partecipazione. Completa la tabella. Compenso per l'autore (in euro) con 0 copie vendute:", "5000"),
-      numerica("Con 1000 copie vendute:", "8000"),
-      numerica("Con 2000 copie vendute:", "11000"),
+      numerica("a) L'autore sceglie il contratto a partecipazione. Completa la tabella. Compenso per l'autore (in euro) con 0 copie vendute:", "fisso"),
+      numerica("Con 1000 copie vendute:", "fisso + 1000*quota"),
+      numerica("Con 2000 copie vendute:", "fisso + 2000*quota"),
       espressione(
         r`b) Scrivi la formula che esprime il compenso \(C\) (in euro) dell'autore in funzione del numero \(n\) di copie vendute nel caso del contratto a partecipazione. \(C =\)`,
-        "5000 + 3*n",
+        "{fisso} + {quota}*n",
       ),
       numerica(
         "c) Qual è il numero di copie che devono essere vendute perché il compenso ottenuto con il contratto a partecipazione sia uguale a quello ottenuto con il contratto forfettario?",
-        "15000",
+        "pareggio",
       ),
     ],
   },
@@ -511,19 +585,26 @@ const DOMANDE: Domanda[] = [
     difficolta: 2,
     testo:
       "Agli alunni di una classe viene chiesto per quanto tempo al giorno, in media, utilizzano la connessione a Internet con i loro dispositivi (PC, Tablet, Smartphone, …). I risultati del sondaggio sono riportati nella seguente tabella. " +
-      r`\[\begin{array}{|c|c|} \hline \text{Minuti di connessione a Internet} & \text{Frequenze assolute} \\ \hline \text{Da 0 minuti fino a 60 minuti} & 2 \\ \hline \text{Più di 60 minuti fino a 120 minuti} & 4 \\ \hline \text{Più di 120 minuti fino a 180 minuti} & 12 \\ \hline \text{Più di 180 minuti fino a 300 minuti} & 8 \\ \hline \end{array}\]` +
+      r`\[\begin{array}{|c|c|} \hline \text{Minuti di connessione a Internet} & \text{Frequenze assolute} \\ \hline \text{Da 0 minuti fino a 60 minuti} & \var{f1} \\ \hline \text{Più di 60 minuti fino a 120 minuti} & \var{f2} \\ \hline \text{Più di 120 minuti fino a 180 minuti} & \var{f3} \\ \hline \text{Più di 180 minuti fino a 300 minuti} & \var{f4} \\ \hline \end{array}\]` +
       " Quale tra le seguenti espressioni permette di calcolare il tempo medio giornaliero di connessione a Internet degli alunni della classe?",
+    // Le classi restano quelle del fascicolo; variano le frequenze.
+    variabili: [
+      v("f1", "random(1..4)", "gli alunni fino a 60 minuti (fascicolo: 2)"),
+      v("f2", "random(3..6)", "gli alunni da 60 a 120 minuti (fascicolo: 4)"),
+      v("f3", "random(9..14)", "gli alunni da 120 a 180 minuti (fascicolo: 12)"),
+      v("f4", "random(5..9)", "gli alunni da 180 a 300 minuti (fascicolo: 8)"),
+    ],
     suggerimento:
-      "Con i dati in classi si usa il valore centrale di ogni classe (30, 90, 150, 240 minuti), lo si moltiplica per la frequenza e si divide per il numero totale di alunni (2 + 4 + 12 + 8 = 26): è una media ponderata. " +
+      r`Con i dati in classi si usa il valore centrale di ogni classe (30, 90, 150, 240 minuti), lo si moltiplica per la frequenza e si divide per il numero totale di alunni (\(\var{f1} + \var{f2} + \var{f3} + \var{f4} = \var{f1+f2+f3+f4}\)): è una media ponderata. ` +
       "La B usa gli estremi superiori delle classi, la A non tiene conto delle frequenze, la D è la media delle frequenze.",
     parti: [
       scelta(
         "",
         [
           r`\(\frac{30 + 90 + 150 + 240}{4}\)`,
-          r`\(\frac{60 \cdot 2 + 120 \cdot 4 + 180 \cdot 12 + 300 \cdot 8}{2 + 4 + 12 + 8}\)`,
-          r`\(\frac{30 \cdot 2 + 90 \cdot 4 + 150 \cdot 12 + 240 \cdot 8}{2 + 4 + 12 + 8}\)`,
-          r`\(\frac{2 + 4 + 12 + 8}{4}\)`,
+          r`\(\frac{60 \cdot \var{f1} + 120 \cdot \var{f2} + 180 \cdot \var{f3} + 300 \cdot \var{f4}}{\var{f1} + \var{f2} + \var{f3} + \var{f4}}\)`,
+          r`\(\frac{30 \cdot \var{f1} + 90 \cdot \var{f2} + 150 \cdot \var{f3} + 240 \cdot \var{f4}}{\var{f1} + \var{f2} + \var{f3} + \var{f4}}\)`,
+          r`\(\frac{\var{f1} + \var{f2} + \var{f3} + \var{f4}}{4}\)`,
         ],
         2,
       ),
@@ -643,20 +724,29 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità", "tabelle a doppia entrata"],
     difficolta: 2,
+    // Ogni casella è positiva e la tabella torna (totali calcolati); la
+    // casella 16 GB di M1 è sempre minore di quella 32 GB.
+    variabili: [
+      v("p16a", "random(10..22)", "le chiavette da 16 GB di M1, in % (fascicolo: 18)"),
+      v("tot1", "10*random(5..7)", "la produzione di M1, in % (fascicolo: 60)"),
+      v("p16b", "random(12..25)", "le chiavette da 16 GB di M2, in % (fascicolo: 22)"),
+      v("p32a", "tot1 - p16a", "le chiavette da 32 GB di M1, in % (fascicolo: 42)"),
+      v("p32b", "100 - tot1 - p16b", "le chiavette da 32 GB di M2, in %: almeno 5 (fascicolo: 18)"),
+    ],
     testo:
       r`Una fabbrica utilizza due diverse macchine \(M_1\) e \(M_2\) che lavorano indipendentemente l'una dall'altra. Ciascuna delle due macchine produce chiavette USB da 16 GB e da 32 GB nelle percentuali descritte dalla seguente tabella. ` +
-      r`\[\begin{array}{|c|c|c|c|} \hline & \text{16 GB} & \text{32 GB} & \text{Totale} \\ \hline M_1 & 18\% & 42\% & 60\% \\ \hline M_2 & 22\% & 18\% & 40\% \\ \hline \text{Totale} & 40\% & 60\% & 100\% \\ \hline \end{array}\]`,
+      r`\[\begin{array}{|c|c|c|c|} \hline & \text{16 GB} & \text{32 GB} & \text{Totale} \\ \hline M_1 & \var{p16a}\% & \var{p32a}\% & \var{tot1}\% \\ \hline M_2 & \var{p16b}\% & \var{p32b}\% & \var{100-tot1}\% \\ \hline \text{Totale} & \var{p16a+p16b}\% & \var{p32a+p32b}\% & 100\% \\ \hline \end{array}\]`,
     suggerimento:
-      r`Le percentuali della tabella sono riferite a tutta la produzione. a) Chiavette da 16 GB prodotte da \(M_1\): la casella all'incrocio, 18%. ` +
-      r`b) Chiavette da 16 GB in tutto: il totale della colonna, \(18\% + 22\% = 40\%\).`,
+      r`Le percentuali della tabella sono riferite a tutta la produzione. a) Chiavette da 16 GB prodotte da \(M_1\): la casella all'incrocio, \(\var{p16a}\%\). ` +
+      r`b) Chiavette da 16 GB in tutto: il totale della colonna, \(\var{p16a}\% + \var{p16b}\% = \var{p16a+p16b}\%\).`,
     parti: [
       numerica(
         r`a) Qual è la probabilità di estrarre dalla produzione della fabbrica una chiavetta da 16 GB prodotta da \(M_1\)? Esprimi il risultato in forma percentuale (scrivi solo il numero).`,
-        "18",
+        "p16a",
       ),
       numerica(
         "b) Qual è la probabilità che una chiavetta USB estratta dalla produzione della fabbrica sia da 16 GB? Esprimi il risultato in forma percentuale (scrivi solo il numero).",
-        "40",
+        "p16a + p16b",
       ),
     ],
   },
@@ -717,11 +807,12 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["frazioni", "espressioni"],
     difficolta: 1,
-    testo: r`Calcola l'espressione \[\frac{1 - \frac{1}{7}}{1 + \frac{1}{7}}\]`,
+    variabili: [v("den", "random(3..12)", "il denominatore della frazione interna (fascicolo: 7)")],
+    testo: r`Calcola l'espressione \[\frac{1 - \frac{1}{\var{den}}}{1 + \frac{1}{\var{den}}}\]`,
     suggerimento:
-      r`Numeratore: \(1 - \frac{1}{7} = \frac{6}{7}\). Denominatore: \(1 + \frac{1}{7} = \frac{8}{7}\). ` +
-      r`Dividere per \(\frac{8}{7}\) vuol dire moltiplicare per \(\frac{7}{8}\): \(\frac{6}{7} \cdot \frac{7}{8} = \frac{6}{8} = \frac{3}{4}\).`,
-    parti: [espressione("Scrivi il risultato sotto forma di un'unica frazione.", "3/4")],
+      r`Numeratore: \(1 - \frac{1}{\var{den}} = \frac{\var{den-1}}{\var{den}}\). Denominatore: \(1 + \frac{1}{\var{den}} = \frac{\var{den+1}}{\var{den}}\). ` +
+      r`Dividere per \(\frac{\var{den+1}}{\var{den}}\) vuol dire moltiplicare per \(\frac{\var{den}}{\var{den+1}}\): \(\frac{\var{den-1}}{\var{den}} \cdot \frac{\var{den}}{\var{den+1}} = \frac{\var{den-1}}{\var{den+1}}\), da semplificare se possibile.`,
+    parti: [espressione("Scrivi il risultato sotto forma di un'unica frazione.", "{den-1}/{den+1}")],
   },
 ];
 

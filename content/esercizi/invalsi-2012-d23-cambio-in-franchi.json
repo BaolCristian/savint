@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2012 · D23 · Il cambio in franchi",
-    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D23. Nel fascicolo la motivazione della parte b andava scritta: qui si sceglie fra motivazioni proposte.",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D23. Nel fascicolo la motivazione della parte b andava scritta: qui si sceglie fra motivazioni proposte. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -17,13 +17,21 @@
   "question": {
     "name": "INVALSI 2012 · D23 · Il cambio in franchi",
     "statement": "<p>Un turista italiano in viaggio in Svizzera, prima di cambiare i suoi euro in franchi, esamina le seguenti proposte fatte da due banche. Banca A: 1 euro viene scambiato con 1,412 franchi senza spese. Banca B: 1 euro viene scambiato con 1,416 franchi con una commissione fissa di 2 franchi.</p>",
-    "advice": "<p>a) \\(300 \\cdot 1{,}412 = 423{,}6\\) franchi. b) Cambiando \\(x\\) euro, A dà \\(1{,}412x\\) franchi e B dà \\(1{,}416x - 2\\). B dà di più quando \\(0{,}004x &gt; 2\\), cioè per \\(x &gt; 500\\) euro: per esempio con 1 000 euro A dà 1 412 franchi e B 1 414. Carlo non ha ragione.</p>",
-    "variables": {},
+    "advice": "<p>a) \\(\\var{somma} \\cdot 1{,}412 = \\var{somma*1412/1000}\\) franchi. b) Cambiando \\(x\\) euro, A dà \\(1{,}412x\\) franchi e B dà \\(1{,}416x - 2\\). B dà di più quando \\(0{,}004x &gt; 2\\), cioè per \\(x &gt; 500\\) euro: per esempio con 1 000 euro A dà 1 412 franchi e B 1 414. Carlo non ha ragione.</p>",
+    "variables": {
+      "somma": {
+        "name": "somma",
+        "definition": "50*random(2..9)",
+        "description": "gli euro cambiati nella parte a, da 100 a 450 (fascicolo: 300)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "somma"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,9 +39,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>a) Se il turista cambia 300 euro, quanti franchi ottiene presso la banca A?</p>",
-        "minValue": "423.6",
-        "maxValue": "423.6",
+        "prompt": "<p>a) Se il turista cambia \\(\\var{somma}\\) euro, quanti franchi ottiene presso la banca A?</p>",
+        "minValue": "somma*1412/1000",
+        "maxValue": "somma*1412/1000",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

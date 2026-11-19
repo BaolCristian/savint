@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D14 · Il contratto dell'autore",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D14.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D14. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -16,14 +16,46 @@
   },
   "question": {
     "name": "INVALSI 2017 · D14 · Il contratto dell'autore",
-    "statement": "<p>Una casa editrice propone all'autore di un libro di scegliere uno tra due diversi tipi di contratto relativi al suo compenso. Contratto forfettario: compenso di 50 000 €, indipendentemente dal numero di copie vendute. Contratto a partecipazione: compenso di 5 000 € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. Il prezzo di copertina del libro è di 30 €.</p>",
-    "advice": "<p>Il 10% di 30 € è 3 €: con il contratto a partecipazione l'autore prende 5000 € più 3 € per copia. a) 0 copie: 5000 €; 1000 copie: \\(5000 + 3000 = 8000\\) €; 2000 copie: \\(5000 + 6000 = 11\\,000\\) €. b) \\(C = 5000 + 3n\\). c) \\(5000 + 3n = 50\\,000\\), cioè \\(3n = 45\\,000\\) e \\(n = 15\\,000\\) copie.</p>",
-    "variables": {},
+    "statement": "<p>Una casa editrice propone all'autore di un libro di scegliere uno tra due diversi tipi di contratto relativi al suo compenso. Contratto forfettario: compenso di \\(\\var{forfait}\\) €, indipendentemente dal numero di copie vendute. Contratto a partecipazione: compenso di \\(\\var{fisso}\\) € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. Il prezzo di copertina del libro è di \\(\\var{prezzo}\\) €.</p>",
+    "advice": "<p>Il 10% di \\(\\var{prezzo}\\) € è \\(\\var{quota}\\) €: con il contratto a partecipazione l'autore prende \\(\\var{fisso}\\) € più \\(\\var{quota}\\) € per copia. a) 0 copie: \\(\\var{fisso}\\) €; 1000 copie: \\(\\var{fisso} + \\var{1000*quota} = \\var{fisso + 1000*quota}\\) €; 2000 copie: \\(\\var{fisso} + \\var{2000*quota} = \\var{fisso + 2000*quota}\\) €. b) \\(C = \\var{fisso} + \\var{quota}n\\). c) \\(\\var{fisso} + \\var{quota}n = \\var{forfait}\\), cioè \\(\\var{quota}n = \\var{forfait - fisso}\\) e \\(n = \\var{pareggio}\\) copie.</p>",
+    "variables": {
+      "fisso": {
+        "name": "fisso",
+        "definition": "1000*random(2..8)",
+        "description": "il compenso fisso del contratto a partecipazione, in euro (fascicolo: 5000)"
+      },
+      "prezzo": {
+        "name": "prezzo",
+        "definition": "10*random(2..5)",
+        "description": "il prezzo di copertina, in euro (fascicolo: 30)"
+      },
+      "quota": {
+        "name": "quota",
+        "definition": "prezzo/10",
+        "description": "il 10% del prezzo di copertina (fascicolo: 3)"
+      },
+      "pareggio": {
+        "name": "pareggio",
+        "definition": "1000*random(8..20)",
+        "description": "le copie per cui i due contratti si equivalgono (fascicolo: 15000)"
+      },
+      "forfait": {
+        "name": "forfait",
+        "definition": "fisso + quota*pareggio",
+        "description": "il compenso del contratto forfettario, in euro (fascicolo: 50000)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "fisso",
+      "prezzo",
+      "quota",
+      "pareggio",
+      "forfait"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +64,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) L'autore sceglie il contratto a partecipazione. Completa la tabella. Compenso per l'autore (in euro) con 0 copie vendute:</p>",
-        "minValue": "5000",
-        "maxValue": "5000",
+        "minValue": "fisso",
+        "maxValue": "fisso",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -50,8 +82,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Con 1000 copie vendute:</p>",
-        "minValue": "8000",
-        "maxValue": "8000",
+        "minValue": "fisso + 1000*quota",
+        "maxValue": "fisso + 1000*quota",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -68,8 +100,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Con 2000 copie vendute:</p>",
-        "minValue": "11000",
-        "maxValue": "11000",
+        "minValue": "fisso + 2000*quota",
+        "maxValue": "fisso + 2000*quota",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -86,7 +118,7 @@
         "type": "jme",
         "marks": 1,
         "prompt": "<p>b) Scrivi la formula che esprime il compenso \\(C\\) (in euro) dell'autore in funzione del numero \\(n\\) di copie vendute nel caso del contratto a partecipazione. \\(C =\\)</p>",
-        "answer": "5000 + 3*n",
+        "answer": "{fisso} + {quota}*n",
         "checkingType": "absdiff",
         "checkingAccuracy": 0.001,
         "failureRate": 1,
@@ -104,8 +136,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>c) Qual è il numero di copie che devono essere vendute perché il compenso ottenuto con il contratto a partecipazione sia uguale a quello ottenuto con il contratto forfettario?</p>",
-        "minValue": "15000",
-        "maxValue": "15000",
+        "minValue": "pareggio",
+        "maxValue": "pareggio",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

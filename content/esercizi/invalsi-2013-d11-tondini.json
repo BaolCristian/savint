@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2013 · D11 · I tondini",
-    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D11.",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D11. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -16,14 +16,28 @@
   },
   "question": {
     "name": "INVALSI 2013 · D11 · I tondini",
-    "statement": "<p>Una fabbrica utilizza due diversi macchinari, M1 e M2, per produrre tondini. M1 ha un indice di qualità uguale a 0,96 (cioè la probabilità che un tondino che esce da M1 non sia difettoso è del 96%), mentre M2 ha indice di qualità uguale a 0,98.</p>",
-    "advice": "<p>a) Difettoso è l'evento contrario di non difettoso: \\(1 - 0{,}98 = 0{,}02\\). b) Il tondino è buono alla fine se è buono dopo M1 E dopo M2; gli eventi sono indipendenti, quindi si moltiplica: \\(0{,}96 \\cdot 0{,}98 = 0{,}9408\\), cioè il 94,08%.</p>",
-    "variables": {},
+    "statement": "<p>Una fabbrica utilizza due diversi macchinari, M1 e M2, per produrre tondini. M1 ha un indice di qualità uguale a \\(\\var{dpformat(q1/100, 2)}\\) (cioè la probabilità che un tondino che esce da M1 non sia difettoso è del \\(\\var{q1}\\%\\)), mentre M2 ha indice di qualità uguale a \\(\\var{dpformat(q2/100, 2)}\\).</p>",
+    "advice": "<p>a) Difettoso è l'evento contrario di non difettoso: \\(1 - \\var{dpformat(q2/100, 2)} = \\var{dpformat((100 - q2)/100, 2)}\\). b) Il tondino è buono alla fine se è buono dopo M1 E dopo M2; gli eventi sono indipendenti, quindi si moltiplica: \\(\\var{dpformat(q1/100, 2)} \\cdot \\var{dpformat(q2/100, 2)} = \\var{q1*q2/10000}\\), che in percentuale è \\(\\var{q1*q2/100}\\%\\).</p>",
+    "variables": {
+      "q1": {
+        "name": "q1",
+        "definition": "random(90..96)",
+        "description": "l'indice di qualità di M1, in centesimi (fascicolo: 96)"
+      },
+      "q2": {
+        "name": "q2",
+        "definition": "q1 + random(1..3)",
+        "description": "l'indice di qualità di M2, in centesimi, più alto (fascicolo: 98)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "q1",
+      "q2"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -33,10 +47,10 @@
         "marks": 0,
         "prompt": "<p>a) La probabilità che un tondino esca da M2 difettoso è:</p>",
         "choices": [
-          "<p>0,02</p>",
-          "<p>0,04</p>",
-          "<p>0,96</p>",
-          "<p>0,98</p>"
+          "<p>\\(\\var{dpformat((100 - q2)/100, 2)}\\)</p>",
+          "<p>\\(\\var{dpformat((100 - q1)/100, 2)}\\)</p>",
+          "<p>\\(\\var{dpformat(q1/100, 2)}\\)</p>",
+          "<p>\\(\\var{dpformat(q2/100, 2)}\\)</p>"
         ],
         "matrix": [
           "1",
@@ -62,10 +76,10 @@
         "marks": 0,
         "prompt": "<p>b) Per la realizzazione di tondini metallici, M1 e M2 lavorano in serie, cioè ogni tondino viene lavorato prima da M1 e poi da M2. Supponiamo che gli eventi «M1 produce un tondino non difettoso» e «M2 produce un tondino non difettoso» siano fra loro indipendenti; allora la probabilità che un tondino non sia difettoso alla fine del ciclo di produzione (cioè dopo essere stato lavorato sia da M1 che da M2) è:</p>",
         "choices": [
-          "<p>98%</p>",
-          "<p>94,08%</p>",
-          "<p>6%</p>",
-          "<p>1,94%</p>"
+          "<p>\\(\\var{q2}\\%\\)</p>",
+          "<p>\\(\\var{q1*q2/100}\\%\\)</p>",
+          "<p>\\(\\var{200 - q1 - q2}\\%\\)</p>",
+          "<p>\\(\\var{(q1 + q2)/100}\\%\\)</p>"
         ],
         "matrix": [
           "0",

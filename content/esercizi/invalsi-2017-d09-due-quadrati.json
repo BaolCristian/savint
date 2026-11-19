@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D9 · Due quadrati",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D9.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D9. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -16,14 +16,28 @@
   },
   "question": {
     "name": "INVALSI 2017 · D9 · Due quadrati",
-    "statement": "<p>Il rettangolo AFED è formato da due quadrati congruenti ABCD e BFEC con un lato in comune. <img data-savint-immagine=\"cb6223c6-5b26-4038-a22b-daece54ec226.png\" alt=\"Il rettangolo AFED diviso dal segmento BC nei due quadrati ABCD e BFEC\"> Il perimetro di ciascuno dei quadrati misura 36 cm. Quanto misura il perimetro del rettangolo AFED?</p>",
-    "advice": "<p>Il lato di ogni quadrato è \\(36 : 4 = 9\\) cm. Il rettangolo è lungo \\(18\\) cm e alto \\(9\\) cm: perimetro \\(2 \\cdot (18 + 9) = 54\\) cm. (Non è \\(2 \\cdot 36 = 72\\): il lato comune BC non fa parte del contorno.)</p>",
-    "variables": {},
+    "statement": "<p>Il rettangolo AFED è formato da due quadrati congruenti ABCD e BFEC con un lato in comune. <img data-savint-immagine=\"cb6223c6-5b26-4038-a22b-daece54ec226.png\" alt=\"Il rettangolo AFED diviso dal segmento BC nei due quadrati ABCD e BFEC\"> Il perimetro di ciascuno dei quadrati misura \\(\\var{perimetro}\\) cm. Quanto misura il perimetro del rettangolo AFED?</p>",
+    "advice": "<p>Il lato di ogni quadrato è \\(\\var{perimetro} : 4 = \\var{lato}\\) cm. Il rettangolo è lungo \\(\\var{2*lato}\\) cm e alto \\(\\var{lato}\\) cm: perimetro \\(2 \\cdot (\\var{2*lato} + \\var{lato}) = \\var{6*lato}\\) cm. (Non è \\(2 \\cdot \\var{perimetro} = \\var{2*perimetro}\\): il lato comune BC non fa parte del contorno.)</p>",
+    "variables": {
+      "lato": {
+        "name": "lato",
+        "definition": "random(5..15)",
+        "description": "il lato di ogni quadrato, in cm (fascicolo: 9)"
+      },
+      "perimetro": {
+        "name": "perimetro",
+        "definition": "4*lato",
+        "description": "il perimetro di ogni quadrato, in cm (fascicolo: 36)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "lato",
+      "perimetro"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +46,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Perimetro di AFED, in cm:</p>",
-        "minValue": "54",
-        "maxValue": "54",
+        "minValue": "6*lato",
+        "maxValue": "6*lato",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2012 · D28 · Una soluzione dell'equazione",
-    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D28.",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D28. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -14,14 +14,28 @@
   },
   "question": {
     "name": "INVALSI 2012 · D28 · Una soluzione dell'equazione",
-    "statement": "<p>L'equazione \\(x(x - 1) = 6\\) ha fra le sue soluzioni</p>",
-    "advice": "<p>Basta provare: per \\(x = 3\\) si ha \\(3 \\cdot 2 = 6\\). (Svolgendo: \\(x^2 - x - 6 = 0\\), cioè \\((x - 3)(x + 2) = 0\\), con soluzioni 3 e \\(-2\\).) Per 6 si ottiene \\(6 \\cdot 5 = 30\\), per 7 si ottiene 42.</p>",
-    "variables": {},
+    "statement": "<p>L'equazione \\(x(x - 1) = \\var{prodotto}\\) ha fra le sue soluzioni</p>",
+    "advice": "<p>Basta provare: per \\(x = \\var{n}\\) si ha \\(\\var{n} \\cdot \\var{n-1} = \\var{prodotto}\\). (Svolgendo: \\(x^2 - x - \\var{prodotto} = 0\\), cioè \\((x - \\var{n})(x + \\var{n-1}) = 0\\), con soluzioni \\(\\var{n}\\) e \\(-\\var{n-1}\\).) Per \\(\\var{prodotto}\\) si ottiene \\(\\var{prodotto} \\cdot \\var{prodotto-1} = \\var{prodotto*(prodotto-1)}\\), per \\(\\var{prodotto+1}\\) si ottiene \\(\\var{(prodotto+1)*prodotto}\\).</p>",
+    "variables": {
+      "n": {
+        "name": "n",
+        "definition": "random(3..9)",
+        "description": "la soluzione positiva (fascicolo: 3)"
+      },
+      "prodotto": {
+        "name": "prodotto",
+        "definition": "n*(n - 1)",
+        "description": "il secondo membro (fascicolo: 6)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "n",
+      "prodotto"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,10 +45,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(\\frac{1}{6}\\)</p>",
-          "<p>3</p>",
-          "<p>6</p>",
-          "<p>7</p>"
+          "<p>\\(\\frac{1}{\\var{prodotto}}\\)</p>",
+          "<p>\\(\\var{n}\\)</p>",
+          "<p>\\(\\var{prodotto}\\)</p>",
+          "<p>\\(\\var{prodotto+1}\\)</p>"
         ],
         "matrix": [
           "0",

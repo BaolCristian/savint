@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D16 · Il rettangolo nella circonferenza",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D16. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D16. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -16,14 +16,22 @@
   },
   "question": {
     "name": "INVALSI 2014 · D16 · Il rettangolo nella circonferenza",
-    "statement": "<p>La circonferenza disegnata qui sotto ha come centro l'origine \\(O\\) degli assi cartesiani e \\(C\\) è un suo punto. \\(A\\) e \\(B\\) sono le proiezioni sugli assi cartesiani di \\(C\\). Il diametro della circonferenza è 12 cm. <img data-savint-immagine=\"9430c057-86d7-4d1a-9f16-d86c33d246e8.png\" alt=\"Circonferenza di centro O; il punto C sulla circonferenza e le sue proiezioni A sull'asse x e B sull'asse y formano il rettangolo OACB\"></p>",
-    "advice": "<p>\\(OACB\\) è un rettangolo: le sue diagonali \\(AB\\) e \\(OC\\) sono uguali. \\(OC\\) è un raggio, cioè metà del diametro: \\(AB = OC = 6\\) cm. Non serve sapere dove sta \\(C\\).</p>",
-    "variables": {},
+    "statement": "<p>La circonferenza disegnata qui sotto ha come centro l'origine \\(O\\) degli assi cartesiani e \\(C\\) è un suo punto. \\(A\\) e \\(B\\) sono le proiezioni sugli assi cartesiani di \\(C\\). Il diametro della circonferenza è \\(\\var{diametro}\\) cm. <img data-savint-immagine=\"9430c057-86d7-4d1a-9f16-d86c33d246e8.png\" alt=\"Circonferenza di centro O; il punto C sulla circonferenza e le sue proiezioni A sull'asse x e B sull'asse y formano il rettangolo OACB\"></p>",
+    "advice": "<p>\\(OACB\\) è un rettangolo: le sue diagonali \\(AB\\) e \\(OC\\) sono uguali. \\(OC\\) è un raggio, cioè metà del diametro: \\(AB = OC = \\var{diametro} : 2 = \\var{diametro/2}\\) cm. Non serve sapere dove sta \\(C\\).</p>",
+    "variables": {
+      "diametro": {
+        "name": "diametro",
+        "definition": "2*random(4..10)",
+        "description": "il diametro in cm, pari: il raggio è intero (fascicolo: 12)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "diametro"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +40,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Qual è la lunghezza del segmento \\(AB\\), in cm?</p>",
-        "minValue": "6",
-        "maxValue": "6",
+        "minValue": "diametro/2",
+        "maxValue": "diametro/2",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

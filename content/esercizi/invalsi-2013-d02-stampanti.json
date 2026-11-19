@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2013 · D2 · Le stampanti",
-    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D2.",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D2. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,28 @@
   },
   "question": {
     "name": "INVALSI 2013 · D2 · Le stampanti",
-    "statement": "<p>La stampante laser L in un minuto stampa il triplo delle pagine della stampante deskjet D. Quando L e D lavorano contemporaneamente stampano in tutto 24 pagine al minuto. Se D viene sostituita con una stampante laser identica a L, quante pagine potranno essere stampate complessivamente in un minuto?</p>",
-    "advice": "<p>Se D stampa \\(p\\) pagine al minuto, L ne stampa \\(3p\\): insieme \\(4p = 24\\), quindi \\(p = 6\\) e L stampa 18 pagine al minuto. Due stampanti laser: \\(2 \\cdot 18 = 36\\) pagine al minuto.</p>",
-    "variables": {},
+    "statement": "<p>La stampante laser L in un minuto stampa il triplo delle pagine della stampante deskjet D. Quando L e D lavorano contemporaneamente stampano in tutto \\(\\var{totale}\\) pagine al minuto. Se D viene sostituita con una stampante laser identica a L, quante pagine potranno essere stampate complessivamente in un minuto?</p>",
+    "advice": "<p>Se D stampa \\(p\\) pagine al minuto, L ne stampa \\(3p\\): insieme \\(4p = \\var{totale}\\), quindi \\(p = \\var{pagineD}\\) e L stampa \\(\\var{3*pagineD}\\) pagine al minuto. Due stampanti laser: \\(2 \\cdot \\var{3*pagineD} = \\var{6*pagineD}\\) pagine al minuto.</p>",
+    "variables": {
+      "pagineD": {
+        "name": "pagineD",
+        "definition": "random(4..12)",
+        "description": "le pagine al minuto della deskjet D (fascicolo: 6)"
+      },
+      "totale": {
+        "name": "totale",
+        "definition": "4*pagineD",
+        "description": "le pagine al minuto di L e D insieme, multiplo di 4 (fascicolo: 24)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "pagineD",
+      "totale"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +46,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>24</p>",
-          "<p>30</p>",
-          "<p>36</p>",
-          "<p>48</p>"
+          "<p>\\(\\var{totale}\\)</p>",
+          "<p>\\(\\var{5*pagineD}\\)</p>",
+          "<p>\\(\\var{6*pagineD}\\)</p>",
+          "<p>\\(\\var{8*pagineD}\\)</p>"
         ],
         "matrix": [
           "0",

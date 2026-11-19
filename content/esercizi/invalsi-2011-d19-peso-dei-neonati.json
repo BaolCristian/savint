@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D19 · Il peso dei neonati",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D19.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D19. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -16,14 +16,46 @@
   },
   "question": {
     "name": "INVALSI 2011 · D19 · Il peso dei neonati",
-    "statement": "<p>La seguente tabella riporta il peso alla nascita, suddiviso in 4 classi, di 30 neonati. \\[\\begin{array}{|c|c|} \\hline \\text{Classi di peso (in kg)} &amp; \\text{Numero neonati} \\\\ \\hline \\text{Da 1 kg e fino a 2 kg} &amp; 7 \\\\ \\hline \\text{Più di 2 kg e fino a 3 kg} &amp; 8 \\\\ \\hline \\text{Più di 3 kg e fino a 4 kg} &amp; 12 \\\\ \\hline \\text{Più di 4 kg e fino a 5 kg} &amp; 3 \\\\ \\hline \\end{array}\\] Quale delle seguenti espressioni devi usare per trovare il peso medio dei 30 neonati?</p>",
-    "advice": "<p>Ogni classe si rappresenta con il suo valore centrale (1,5; 2,5; 3,5; 4,5 kg), moltiplicato per il numero di neonati della classe; la somma è il peso totale (stimato) dei neonati, e va divisa per il numero dei neonati, 30, non per il numero delle classi.</p>",
-    "variables": {},
+    "statement": "<p>La seguente tabella riporta il peso alla nascita, suddiviso in 4 classi, di \\(\\var{neonati}\\) neonati. \\[\\begin{array}{|c|c|} \\hline \\text{Classi di peso (in kg)} &amp; \\text{Numero neonati} \\\\ \\hline \\text{Da 1 kg e fino a 2 kg} &amp; \\var{n1} \\\\ \\hline \\text{Più di 2 kg e fino a 3 kg} &amp; \\var{n2} \\\\ \\hline \\text{Più di 3 kg e fino a 4 kg} &amp; \\var{n3} \\\\ \\hline \\text{Più di 4 kg e fino a 5 kg} &amp; \\var{n4} \\\\ \\hline \\end{array}\\] Quale delle seguenti espressioni devi usare per trovare il peso medio dei \\(\\var{neonati}\\) neonati?</p>",
+    "advice": "<p>Ogni classe si rappresenta con il suo valore centrale (1,5; 2,5; 3,5; 4,5 kg), moltiplicato per il numero di neonati della classe; la somma è il peso totale (stimato) dei neonati, e va divisa per il numero dei neonati, \\(\\var{neonati}\\), non per il numero delle classi.</p>",
+    "variables": {
+      "n1": {
+        "name": "n1",
+        "definition": "random(5..9)",
+        "description": "i neonati da 1 a 2 kg (fascicolo: 7)"
+      },
+      "n2": {
+        "name": "n2",
+        "definition": "random(6..10)",
+        "description": "i neonati da 2 a 3 kg (fascicolo: 8)"
+      },
+      "n3": {
+        "name": "n3",
+        "definition": "random(10..14)",
+        "description": "i neonati da 3 a 4 kg (fascicolo: 12)"
+      },
+      "n4": {
+        "name": "n4",
+        "definition": "random(2..5)",
+        "description": "i neonati da 4 a 5 kg (fascicolo: 3)"
+      },
+      "neonati": {
+        "name": "neonati",
+        "definition": "n1 + n2 + n3 + n4",
+        "description": "i neonati in tutto, da 23 a 38 (fascicolo: 30)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "n1",
+      "n2",
+      "n3",
+      "n4",
+      "neonati"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -33,10 +65,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(\\frac{1{,}5 + 2{,}5 + 3{,}5 + 4{,}5}{30}\\)</p>",
-          "<p>\\(\\frac{7 + 8 + 12 + 3}{4}\\)</p>",
-          "<p>\\(\\frac{1{,}5 \\cdot 7 + 2{,}5 \\cdot 8 + 3{,}5 \\cdot 12 + 4{,}5 \\cdot 3}{30}\\)</p>",
-          "<p>\\(\\frac{1{,}5 \\cdot 7 + 2{,}5 \\cdot 8 + 3{,}5 \\cdot 12 + 4{,}5 \\cdot 3}{4}\\)</p>"
+          "<p>\\(\\frac{1{,}5 + 2{,}5 + 3{,}5 + 4{,}5}{\\var{neonati}}\\)</p>",
+          "<p>\\(\\frac{\\var{n1} + \\var{n2} + \\var{n3} + \\var{n4}}{4}\\)</p>",
+          "<p>\\(\\frac{1{,}5 \\cdot \\var{n1} + 2{,}5 \\cdot \\var{n2} + 3{,}5 \\cdot \\var{n3} + 4{,}5 \\cdot \\var{n4}}{\\var{neonati}}\\)</p>",
+          "<p>\\(\\frac{1{,}5 \\cdot \\var{n1} + 2{,}5 \\cdot \\var{n2} + 3{,}5 \\cdot \\var{n3} + 4{,}5 \\cdot \\var{n4}}{4}\\)</p>"
         ],
         "matrix": [
           "0",

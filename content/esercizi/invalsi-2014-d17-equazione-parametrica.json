@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D17 · Un'equazione con k",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D17.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D17. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,28 @@
   },
   "question": {
     "name": "INVALSI 2014 · D17 · Un'equazione con k",
-    "statement": "<p>È data l'equazione \\((2k - 3)x + 1 - k = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
-    "advice": "<p>Se la soluzione è 1, sostituendo \\(x = 1\\) l'uguaglianza è vera: \\(2k - 3 + 1 - k = 0\\), cioè \\(k - 2 = 0\\), \\(k = 2\\). Verifica: per \\(k = 2\\) l'equazione è \\(x - 1 = 0\\).</p>",
-    "variables": {},
+    "statement": "<p>È data l'equazione \\((2k - \\var{coef})x + \\var{noto} - k = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
+    "advice": "<p>Se la soluzione è 1, sostituendo \\(x = 1\\) l'uguaglianza è vera: \\(2k - \\var{coef} + \\var{noto} - k = 0\\), cioè \\(k - \\var{coef-noto} = 0\\), \\(k = \\var{coef-noto}\\). Verifica: per \\(k = \\var{coef-noto}\\) il coefficiente di \\(x\\) vale \\(2 \\cdot \\var{coef-noto} - \\var{coef} = \\var{coef-2*noto}\\) e il termine noto \\(\\var{noto} - \\var{coef-noto} = -\\var{coef-2*noto}\\): l'equazione ha la sola soluzione \\(x = 1\\).</p>",
+    "variables": {
+      "coef": {
+        "name": "coef",
+        "definition": "random(3..9)",
+        "description": "il termine noto nel coefficiente di x (fascicolo: 3)"
+      },
+      "noto": {
+        "name": "noto",
+        "definition": "random(1..floor((coef-1)/2))",
+        "description": "il termine noto dell'equazione (fascicolo: 1)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "coef",
+      "noto"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +45,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>La soluzione dell'equazione è 1 per \\(k =\\)</p>",
-        "minValue": "2",
-        "maxValue": "2",
+        "minValue": "coef - noto",
+        "maxValue": "coef - noto",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

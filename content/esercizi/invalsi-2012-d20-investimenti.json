@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2012 · D20 · Luigi e Paolo investono",
-    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si riportano solo i risultati.",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si riportano solo i risultati. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2012 · D20 · Luigi e Paolo investono",
-    "statement": "<p>Luigi e Paolo investono la stessa somma di denaro. Dopo il primo anno, la somma investita da Luigi è aumentata del 10% e quella investita da Paolo è diminuita del 5%. Luigi e Paolo decidono di reinvestire per un altro anno ancora le somme ottenute dopo il primo anno. Nel secondo anno Luigi perde il 5%, mentre Paolo guadagna il 10%. Se Luigi e Paolo hanno investito inizialmente una somma di 1 000 euro ciascuno, quanto avrà ciascuno dei due alla fine del secondo anno?</p>",
-    "advice": "<p>Luigi: \\(1000 \\cdot 1{,}10 = 1100\\), poi \\(1100 \\cdot 0{,}95 = 1045\\) euro. Paolo: \\(1000 \\cdot 0{,}95 = 950\\), poi \\(950 \\cdot 1{,}10 = 1045\\) euro. Hanno la stessa somma, perché la moltiplicazione è commutativa: \\(1{,}10 \\cdot 0{,}95 = 0{,}95 \\cdot 1{,}10 = 1{,}045\\). Non è \\(+10\\% - 5\\% = +5\\%\\): la seconda percentuale si calcola sulla somma già cambiata.</p>",
-    "variables": {},
+    "statement": "<p>Luigi e Paolo investono la stessa somma di denaro. Dopo il primo anno, la somma investita da Luigi è aumentata del \\(\\var{su}\\%\\) e quella investita da Paolo è diminuita del \\(\\var{giu}\\%\\). Luigi e Paolo decidono di reinvestire per un altro anno ancora le somme ottenute dopo il primo anno. Nel secondo anno Luigi perde il \\(\\var{giu}\\%\\), mentre Paolo guadagna il \\(\\var{su}\\%\\). Se Luigi e Paolo hanno investito inizialmente una somma di \\(\\var{somma}\\) euro ciascuno, quanto avrà ciascuno dei due alla fine del secondo anno?</p>",
+    "advice": "<p>Luigi: \\(\\var{somma} \\cdot \\var{(100+su)/100} = \\var{somma*(100+su)/100}\\), poi \\(\\var{somma*(100+su)/100} \\cdot \\var{(100-giu)/100} = \\var{finale}\\) euro. Paolo: \\(\\var{somma} \\cdot \\var{(100-giu)/100} = \\var{somma*(100-giu)/100}\\), poi \\(\\var{somma*(100-giu)/100} \\cdot \\var{(100+su)/100} = \\var{finale}\\) euro. Hanno la stessa somma, perché la moltiplicazione è commutativa: \\(\\var{(100+su)/100} \\cdot \\var{(100-giu)/100} = \\var{(100-giu)/100} \\cdot \\var{(100+su)/100} = \\var{(100+su)*(100-giu)/10000}\\). Non è \\(+\\var{su}\\% - \\var{giu}\\% = +\\var{su-giu}\\%\\): la seconda percentuale si calcola sulla somma già cambiata.</p>",
+    "variables": {
+      "su": {
+        "name": "su",
+        "definition": "10*random(1..3)",
+        "description": "la percentuale di guadagno (fascicolo: 10)"
+      },
+      "giu": {
+        "name": "giu",
+        "definition": "random(2, 3, 4, 5, 6, 7, 9)",
+        "description": "la percentuale di perdita; niente 8, che vorrebbe «dell'8%» (fascicolo: 5)"
+      },
+      "somma": {
+        "name": "somma",
+        "definition": "1000*random(1..3)",
+        "description": "la somma investita da ciascuno, in euro (fascicolo: 1 000)"
+      },
+      "finale": {
+        "name": "finale",
+        "definition": "somma*(100 + su)*(100 - giu)/10000",
+        "description": "la somma alla fine del secondo anno, la stessa per tutti e due"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "su",
+      "giu",
+      "somma",
+      "finale"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +57,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Luigi, in euro:</p>",
-        "minValue": "1045",
-        "maxValue": "1045",
+        "minValue": "finale",
+        "maxValue": "finale",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -49,8 +75,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Paolo, in euro:</p>",
-        "minValue": "1045",
-        "maxValue": "1045",
+        "minValue": "finale",
+        "maxValue": "finale",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

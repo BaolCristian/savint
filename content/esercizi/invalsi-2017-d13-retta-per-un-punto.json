@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D13 · La retta per un punto",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D13.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D13. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2017 · D13 · La retta per un punto",
-    "statement": "<p>Considera l'equazione \\(y = 2x + k\\). Per quale valore di \\(k\\) essa rappresenta una retta che passa per il punto di coordinate \\((1; 5)\\)?</p>",
-    "advice": "<p>Il punto sta sulla retta se le sue coordinate soddisfano l'equazione: \\(5 = 2 \\cdot 1 + k\\), quindi \\(k = 3\\).</p>",
-    "variables": {},
+    "statement": "<p>Considera l'equazione \\(y = \\var{pend}x + k\\). Per quale valore di \\(k\\) essa rappresenta una retta che passa per il punto di coordinate \\((\\var{x0}; \\var{y0})\\)?</p>",
+    "advice": "<p>Il punto sta sulla retta se le sue coordinate soddisfano l'equazione: \\(\\var{y0} = \\var{pend} \\cdot \\var{x0} + k\\), cioè \\(\\var{y0} = \\var{pend*x0} + k\\), quindi \\(k = \\var{termine}\\).</p>",
+    "variables": {
+      "pend": {
+        "name": "pend",
+        "definition": "random(2..5)",
+        "description": "il coefficiente di x (fascicolo: 2)"
+      },
+      "x0": {
+        "name": "x0",
+        "definition": "random(1..3)",
+        "description": "l'ascissa del punto (fascicolo: 1)"
+      },
+      "termine": {
+        "name": "termine",
+        "definition": "random(1..9)",
+        "description": "il valore di k (fascicolo: 3)"
+      },
+      "y0": {
+        "name": "y0",
+        "definition": "pend*x0 + termine",
+        "description": "l'ordinata del punto (fascicolo: 5)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "pend",
+      "x0",
+      "termine",
+      "y0"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +57,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>\\(k =\\)</p>",
-        "minValue": "3",
-        "maxValue": "3",
+        "minValue": "termine",
+        "maxValue": "termine",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

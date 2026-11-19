@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D12 · Il sondaggio sulla rivista",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D12.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D12. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -16,14 +16,40 @@
   },
   "question": {
     "name": "INVALSI 2014 · D12 · Il sondaggio sulla rivista",
-    "statement": "<p>È stato effettuato un sondaggio su un campione di 1 500 donne di età compresa tra i 25 e i 55 anni per conoscere la loro opinione su una rivista mensile dedicata alla salute. Si sono ottenuti i seguenti risultati: \\[\\begin{array}{|l|c|c|} \\hline &amp; \\text{Occupate} &amp; \\text{Disoccupate} \\\\ \\hline \\text{Giudizio positivo} &amp; 450 &amp; 276 \\\\ \\hline \\text{Giudizio negativo} &amp; 367 &amp; 407 \\\\ \\hline \\end{array}\\]</p>",
-    "advice": "<p>a) Giudizio positivo: \\(450 + 276 = 726\\). b) Disoccupate: \\(276 + 407 = 683\\). c) Giudizio negativo: \\(367 + 407 = 774\\) donne su 1 500: \\(\\frac{774}{1500} = \\frac{129}{250}\\). d) Ora i casi possibili sono solo le 726 donne con giudizio positivo, di cui 450 occupate: \\(\\frac{450}{726} = \\frac{75}{121}\\).</p>",
-    "variables": {},
+    "statement": "<p>È stato effettuato un sondaggio su un campione di 1 500 donne di età compresa tra i 25 e i 55 anni per conoscere la loro opinione su una rivista mensile dedicata alla salute. Si sono ottenuti i seguenti risultati: \\[\\begin{array}{|l|c|c|} \\hline &amp; \\text{Occupate} &amp; \\text{Disoccupate} \\\\ \\hline \\text{Giudizio positivo} &amp; \\var{occpos} &amp; \\var{disocpos} \\\\ \\hline \\text{Giudizio negativo} &amp; \\var{occneg} &amp; \\var{disocneg} \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Giudizio positivo: \\(\\var{occpos} + \\var{disocpos} = \\var{occpos+disocpos}\\). b) Disoccupate: \\(\\var{disocpos} + \\var{disocneg} = \\var{disocpos+disocneg}\\). c) Giudizio negativo: \\(\\var{occneg} + \\var{disocneg} = \\var{occneg+disocneg}\\) donne su 1 500: \\(\\frac{\\var{occneg+disocneg}}{1500}\\). d) Ora i casi possibili sono solo le \\(\\var{occpos+disocpos}\\) donne con giudizio positivo, di cui \\(\\var{occpos}\\) occupate: \\(\\frac{\\var{occpos}}{\\var{occpos+disocpos}}\\).</p>",
+    "variables": {
+      "occpos": {
+        "name": "occpos",
+        "definition": "random(400..500)",
+        "description": "occupate con giudizio positivo (fascicolo: 450)"
+      },
+      "disocpos": {
+        "name": "disocpos",
+        "definition": "random(250..300)",
+        "description": "disoccupate con giudizio positivo (fascicolo: 276)"
+      },
+      "occneg": {
+        "name": "occneg",
+        "definition": "random(330..400)",
+        "description": "occupate con giudizio negativo (fascicolo: 367)"
+      },
+      "disocneg": {
+        "name": "disocneg",
+        "definition": "1500 - occpos - disocpos - occneg",
+        "description": "disoccupate con giudizio negativo, perché siano 1 500 in tutto: da 300 a 520 (fascicolo: 407)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "occpos",
+      "disocpos",
+      "occneg",
+      "disocneg"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +58,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) Quante sono le donne che hanno espresso un giudizio positivo?</p>",
-        "minValue": "726",
-        "maxValue": "726",
+        "minValue": "occpos + disocpos",
+        "maxValue": "occpos + disocpos",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -50,8 +76,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>b) Quante sono le donne disoccupate intervistate?</p>",
-        "minValue": "683",
-        "maxValue": "683",
+        "minValue": "disocpos + disocneg",
+        "maxValue": "disocpos + disocneg",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -68,7 +94,7 @@
         "type": "jme",
         "marks": 1,
         "prompt": "<p>c) Scegliendo a caso una delle donne intervistate, qual è la probabilità che abbia espresso un giudizio negativo? Scrivi il risultato come frazione.</p>",
-        "answer": "774/1500",
+        "answer": "{occneg+disocneg}/1500",
         "checkingType": "absdiff",
         "checkingAccuracy": 0.001,
         "failureRate": 1,
@@ -86,7 +112,7 @@
         "type": "jme",
         "marks": 1,
         "prompt": "<p>d) Scegliendo a caso una delle donne intervistate tra quelle che hanno espresso un giudizio positivo, qual è la probabilità che sia una donna occupata? Scrivi il risultato come frazione.</p>",
-        "answer": "450/726",
+        "answer": "{occpos}/{occpos+disocpos}",
         "checkingType": "absdiff",
         "checkingAccuracy": 0.001,
         "failureRate": 1,

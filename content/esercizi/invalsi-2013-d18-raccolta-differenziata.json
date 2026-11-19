@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2013 · D18 · La raccolta differenziata",
-    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D18.",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D18. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -14,14 +14,40 @@
   },
   "question": {
     "name": "INVALSI 2013 · D18 · La raccolta differenziata",
-    "statement": "<p>In un quartiere di una città, il calendario della raccolta differenziata (carta, vetro e plastica) prevede che la raccolta della carta avvenga ogni 28 giorni, quella del vetro ogni 21 giorni e quella della plastica ogni 14 giorni. Oggi sono state effettuate le raccolte di carta, vetro e plastica.</p>",
-    "advice": "<p>Serve il minimo comune multiplo: \\(28 = 2^2 \\cdot 7\\), \\(21 = 3 \\cdot 7\\), \\(14 = 2 \\cdot 7\\); \\(\\text{mcm} = 2^2 \\cdot 3 \\cdot 7 = 84\\).</p>",
-    "variables": {},
+    "statement": "<p>In un quartiere di una città, il calendario della raccolta differenziata (carta, vetro e plastica) prevede che la raccolta della carta avvenga ogni \\(\\var{carta}\\) giorni, quella del vetro ogni \\(\\var{vetro}\\) giorni e quella della plastica ogni \\(\\var{plastica}\\) giorni. Oggi sono state effettuate le raccolte di carta, vetro e plastica.</p>",
+    "advice": "<p>Serve il minimo comune multiplo di \\(\\var{carta}\\), \\(\\var{vetro}\\) e \\(\\var{plastica}\\). \\(\\var{carta} = 4 \\cdot \\var{fattore}\\), \\(\\var{vetro} = 3 \\cdot \\var{fattore}\\), \\(\\var{plastica} = 2 \\cdot \\var{fattore}\\): il mcm è \\(\\var{fattore} \\cdot \\text{mcm}(4, 3, 2) = \\var{fattore} \\cdot 12 = \\var{12*fattore}\\).</p>",
+    "variables": {
+      "fattore": {
+        "name": "fattore",
+        "definition": "random(4..10)",
+        "description": "il fattore comune dei tre periodi (fascicolo: 7)"
+      },
+      "carta": {
+        "name": "carta",
+        "definition": "4*fattore",
+        "description": "i giorni fra due raccolte della carta (fascicolo: 28)"
+      },
+      "vetro": {
+        "name": "vetro",
+        "definition": "3*fattore",
+        "description": "i giorni fra due raccolte del vetro (fascicolo: 21)"
+      },
+      "plastica": {
+        "name": "plastica",
+        "definition": "2*fattore",
+        "description": "i giorni fra due raccolte della plastica (fascicolo: 14)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "fattore",
+      "carta",
+      "vetro",
+      "plastica"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -30,8 +56,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Fra quanti giorni la raccolta di carta, vetro e plastica verrà fatta di nuovo contemporaneamente?</p>",
-        "minValue": "84",
-        "maxValue": "84",
+        "minValue": "12*fattore",
+        "maxValue": "12*fattore",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

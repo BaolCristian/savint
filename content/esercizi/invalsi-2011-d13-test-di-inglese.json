@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D13 · Il test di inglese",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D13.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D13. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -16,14 +16,46 @@
   },
   "question": {
     "name": "INVALSI 2011 · D13 · Il test di inglese",
-    "statement": "<p>L'insegnante di inglese dà ai suoi studenti un test formato da 25 domande e spiega che il punteggio totale \\(p\\) è calcolato assegnando 4 punti per ogni risposta esatta e togliendo 2 punti per ogni risposta sbagliata o mancante.</p>",
-    "advice": "<p>a) Con 25 risposte esatte: \\(25 \\cdot 4 = 100\\). b) Con \\(n\\) risposte esatte le altre sono \\(25 - n\\): \\(p = 4n - 2(25 - n) = 6n - 50\\). c) \\(6n - 50 &gt; 60\\) dà \\(n &gt; \\frac{110}{6} \\approx 18{,}3\\): servono almeno 19 risposte esatte (\\(6 \\cdot 19 - 50 = 64\\), mentre con 18 si hanno 58 punti).</p>",
-    "variables": {},
+    "statement": "<p>L'insegnante di inglese dà ai suoi studenti un test formato da \\(\\var{domande}\\) domande e spiega che il punteggio totale \\(p\\) è calcolato assegnando \\(\\var{dati}\\) punti per ogni risposta esatta e togliendo \\(\\var{tolti}\\) punti per ogni risposta sbagliata o mancante.</p>",
+    "advice": "<p>a) Con \\(\\var{domande}\\) risposte esatte: \\(\\var{domande} \\cdot \\var{dati} = \\var{domande*dati}\\). b) Con \\(n\\) risposte esatte le altre sono \\(\\var{domande} - n\\): \\(p = \\var{dati}n - \\var{tolti}(\\var{domande} - n) = \\var{dati+tolti}n - \\var{tolti*domande}\\). c) \\(\\var{dati+tolti}n - \\var{tolti*domande} &gt; \\var{soglia}\\) dà \\(n &gt; \\frac{\\var{soglia + tolti*domande}}{\\var{dati+tolti}}\\): servono almeno \\(\\var{minimo}\\) risposte esatte (con \\(\\var{minimo}\\) si hanno \\(\\var{(dati+tolti)*minimo - tolti*domande}\\) punti, con \\(\\var{minimo-1}\\) solo \\(\\var{(dati+tolti)*(minimo-1) - tolti*domande}\\)).</p>",
+    "variables": {
+      "domande": {
+        "name": "domande",
+        "definition": "random(20..30)",
+        "description": "le domande del test (fascicolo: 25)"
+      },
+      "tolti": {
+        "name": "tolti",
+        "definition": "random(2..3)",
+        "description": "i punti tolti per ogni risposta sbagliata o mancante (fascicolo: 2)"
+      },
+      "dati": {
+        "name": "dati",
+        "definition": "tolti + random(1..2)",
+        "description": "i punti per ogni risposta esatta, più di quelli tolti (fascicolo: 4)"
+      },
+      "soglia": {
+        "name": "soglia",
+        "definition": "10*floor(6*dati*domande/100)",
+        "description": "la sufficienza, il 60% del massimo arrotondato per difetto alle decine (fascicolo: 60)"
+      },
+      "minimo": {
+        "name": "minimo",
+        "definition": "floor((soglia + tolti*domande)/(dati + tolti)) + 1",
+        "description": "le risposte esatte che servono per la sufficienza"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "domande",
+      "tolti",
+      "dati",
+      "soglia",
+      "minimo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +64,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) Il punteggio massimo possibile è</p>",
-        "minValue": "100",
-        "maxValue": "100",
+        "minValue": "domande*dati",
+        "maxValue": "domande*dati",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -50,7 +82,7 @@
         "type": "jme",
         "marks": 1,
         "prompt": "<p>b) Scrivi la formula che fornisce il punteggio \\(p\\) complessivo, indicando con \\(n\\) il numero di risposte esatte. \\(p =\\)</p>",
-        "answer": "6*n - 50",
+        "answer": "{dati+tolti}*n - {tolti*domande}",
         "checkingType": "absdiff",
         "checkingAccuracy": 0.001,
         "failureRate": 1,
@@ -67,9 +99,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>c) Se la sufficienza si ottiene con più di 60 punti, qual è il numero minimo di domande al quale occorre rispondere correttamente per avere la sufficienza?</p>",
-        "minValue": "19",
-        "maxValue": "19",
+        "prompt": "<p>c) Se la sufficienza si ottiene con più di \\(\\var{soglia}\\) punti, qual è il numero minimo di domande al quale occorre rispondere correttamente per avere la sufficienza?</p>",
+        "minValue": "minimo",
+        "maxValue": "minimo",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

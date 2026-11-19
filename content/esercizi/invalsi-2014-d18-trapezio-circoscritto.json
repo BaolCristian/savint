@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D18 · Il trapezio circoscritto",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D18.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D18. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -16,14 +16,34 @@
   },
   "question": {
     "name": "INVALSI 2014 · D18 · Il trapezio circoscritto",
-    "statement": "<p>Il trapezio \\(ABCD\\), circoscritto a un cerchio di raggio 5 cm, ha l'area di \\(120\\text{ cm}^2\\). <img data-savint-immagine=\"8ced7087-6f63-4897-aa2b-c05e4bdd707c.png\" alt=\"Il trapezio ABCD con la base maggiore AB in basso, circoscritto a un cerchio che tocca le due basi e i due lati obliqui\"></p>",
-    "advice": "<p>Il cerchio tocca entrambe le basi: l'altezza del trapezio è il diametro, 10 cm. Da \\(\\frac{(AB + DC) \\cdot 10}{2} = 120\\) si ricava \\(AB + DC = \\frac{240}{10} = 24\\) cm.</p>",
-    "variables": {},
+    "statement": "<p>Il trapezio \\(ABCD\\), circoscritto a un cerchio di raggio \\(\\var{raggio}\\) cm, ha l'area di \\(\\var{area}\\text{ cm}^2\\). <img data-savint-immagine=\"8ced7087-6f63-4897-aa2b-c05e4bdd707c.png\" alt=\"Il trapezio ABCD con la base maggiore AB in basso, circoscritto a un cerchio che tocca le due basi e i due lati obliqui\"></p>",
+    "advice": "<p>Il cerchio tocca entrambe le basi: l'altezza del trapezio è il diametro, \\(\\var{2*raggio}\\) cm. Da \\(\\frac{(AB + DC) \\cdot \\var{2*raggio}}{2} = \\var{area}\\) si ricava \\(AB + DC = \\frac{\\var{2*area}}{\\var{2*raggio}} = \\var{basi}\\) cm.</p>",
+    "variables": {
+      "raggio": {
+        "name": "raggio",
+        "definition": "random(3..8)",
+        "description": "il raggio del cerchio in cm (fascicolo: 5)"
+      },
+      "basi": {
+        "name": "basi",
+        "definition": "4*raggio + random(2..6)",
+        "description": "la somma delle basi in cm, più di 4 raggi (fascicolo: 24)"
+      },
+      "area": {
+        "name": "area",
+        "definition": "raggio*basi",
+        "description": "l'area del trapezio in cm² (fascicolo: 120)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "raggio",
+      "basi",
+      "area"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +52,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Quanto misura la somma delle basi \\(AB\\) e \\(DC\\), in cm?</p>",
-        "minValue": "24",
-        "maxValue": "24",
+        "minValue": "basi",
+        "maxValue": "basi",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

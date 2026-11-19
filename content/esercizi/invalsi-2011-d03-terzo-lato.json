@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D3 · Il terzo lato",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D3.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D3. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -15,14 +15,34 @@
   },
   "question": {
     "name": "INVALSI 2011 · D3 · Il terzo lato",
-    "statement": "<p>Un triangolo ha un lato di 6 cm e uno di 10 cm. Quale tra le seguenti NON può essere la misura della lunghezza del terzo lato?</p>",
-    "advice": "<p>In un triangolo ogni lato è minore della somma degli altri due e maggiore della loro differenza: il terzo lato deve stare fra 10 − 6 = 4 cm e 10 + 6 = 16 cm. 17 cm è troppo lungo.</p>",
-    "variables": {},
+    "statement": "<p>Un triangolo ha un lato di \\(\\var{corto}\\) cm e uno di \\(\\var{lungo}\\) cm. Quale tra le seguenti NON può essere la misura della lunghezza del terzo lato?</p>",
+    "advice": "<p>In un triangolo ogni lato è minore della somma degli altri due e maggiore della loro differenza: il terzo lato deve stare fra \\(\\var{lungo} - \\var{corto} = \\var{scarto}\\) cm e \\(\\var{lungo} + \\var{corto} = \\var{lungo+corto}\\) cm. \\(\\var{lungo+corto+1}\\) cm è troppo lungo.</p>",
+    "variables": {
+      "corto": {
+        "name": "corto",
+        "definition": "random(4..8)",
+        "description": "il lato più corto, in cm (fascicolo: 6)"
+      },
+      "scarto": {
+        "name": "scarto",
+        "definition": "random(3..6)",
+        "description": "di quanto l'altro lato è più lungo (fascicolo: 4)"
+      },
+      "lungo": {
+        "name": "lungo",
+        "definition": "corto + scarto",
+        "description": "il lato più lungo, in cm (fascicolo: 10)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "corto",
+      "scarto",
+      "lungo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +52,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>6,5 cm</p>",
-          "<p>10 cm</p>",
-          "<p>15,5 cm</p>",
-          "<p>17 cm</p>"
+          "<p>\\(\\var{scarto + 5/2}\\) cm</p>",
+          "<p>\\(\\var{lungo}\\) cm</p>",
+          "<p>\\(\\var{lungo + corto - 1/2}\\) cm</p>",
+          "<p>\\(\\var{lungo + corto + 1}\\) cm</p>"
         ],
         "matrix": [
           "0",

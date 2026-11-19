@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2011 · D11 · La spesa per l'automobile",
-    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D11. La tabella è trasposta: le auto sono in colonna.",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D11. La tabella è trasposta: le auto sono in colonna. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -17,13 +17,21 @@
   "question": {
     "name": "INVALSI 2011 · D11 · La spesa per l'automobile",
     "statement": "<p>La relazione seguente esprime la spesa annuale per l'automobile, composta da una parte fissa e da una parte proporzionale al numero di km percorsi: \\[S = F + c \\cdot k\\] dove \\(F\\) sono le spese fisse, \\(c\\) è il costo al km e \\(k\\) è il numero di km percorsi. Nella tabella sono riportate le spese fisse e il costo al km per alcuni tipi di automobile. \\[\\begin{array}{|c|c|c|} \\hline &amp; \\text{Spese fisse } F &amp; \\text{Costo al km } c \\\\ \\hline \\text{Auto A} &amp; 900 \\text{ euro} &amp; 0{,}25 \\text{ euro/km} \\\\ \\hline \\text{Auto B} &amp; 580 \\text{ euro} &amp; 0{,}33 \\text{ euro/km} \\\\ \\hline \\text{Auto C} &amp; 650 \\text{ euro} &amp; 0{,}27 \\text{ euro/km} \\\\ \\hline \\text{Auto D} &amp; 1\\,200 \\text{ euro} &amp; 0{,}31 \\text{ euro/km} \\\\ \\hline \\end{array}\\]</p>",
-    "advice": "<p>a) Con \\(k = 10\\,000\\): A \\(900 + 2\\,500 = 3\\,400\\), B \\(580 + 3\\,300 = 3\\,880\\), C \\(650 + 2\\,700 = 3\\,350\\), D \\(1\\,200 + 3\\,100 = 4\\,300\\) euro: la più conveniente è C. b) \\(900 + 0{,}25k = 3\\,000\\), cioè \\(0{,}25k = 2\\,100\\), \\(k = 8\\,400\\) km. c) B ha spese fisse più basse ma costa di più al km: \\(580 + 0{,}33k = 1\\,200 + 0{,}31k\\) per \\(k = 31\\,000\\). Fino a 31 000 km conviene B, oltre conviene D.</p>",
-    "variables": {},
+    "advice": "<p>a) Con \\(k = 10\\,000\\): A \\(900 + 2\\,500 = 3\\,400\\), B \\(580 + 3\\,300 = 3\\,880\\), C \\(650 + 2\\,700 = 3\\,350\\), D \\(1\\,200 + 3\\,100 = 4\\,300\\) euro: la più conveniente è C. b) \\(900 + 0{,}25k = \\var{speso}\\), cioè \\(0{,}25k = \\var{speso-900}\\), \\(k = \\var{speso-900} : 0{,}25 = \\var{4*(speso-900)}\\) km. c) B ha spese fisse più basse ma costa di più al km: \\(580 + 0{,}33k = 1\\,200 + 0{,}31k\\) per \\(k = 31\\,000\\). Fino a 31 000 km conviene B, oltre conviene D.</p>",
+    "variables": {
+      "speso": {
+        "name": "speso",
+        "definition": "100*random(15..40)",
+        "description": "la spesa annuale dell'auto A, in euro (fascicolo: 3 000)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "speso"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -60,9 +68,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>b) Il proprietario di un'auto di tipo A ha speso 3 000 euro in un anno. Quanti km ha percorso?</p>",
-        "minValue": "8400",
-        "maxValue": "8400",
+        "prompt": "<p>b) Il proprietario di un'auto di tipo A ha speso \\(\\var{speso}\\) euro in un anno. Quanti km ha percorso?</p>",
+        "minValue": "4*(speso - 900)",
+        "maxValue": "4*(speso - 900)",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

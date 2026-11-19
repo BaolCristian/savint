@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D20 · I pezzi difettosi",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2014 · D20 · I pezzi difettosi",
-    "statement": "<p>Da un controllo di qualità è emerso che una macchina ha prodotto 14 pezzi difettosi su una produzione di 1 200 pezzi. Che stima è ragionevole fare del numero di pezzi difettosi su una produzione di 2 150 pezzi?</p>",
-    "advice": "<p>Si suppone che la proporzione di pezzi difettosi resti la stessa: \\(14 : 1200 = x : 2150\\), da cui \\(x = \\frac{14 \\cdot 2150}{1200} \\approx 25{,}08\\): circa 25 pezzi.</p>",
-    "variables": {},
+    "statement": "<p>Da un controllo di qualità è emerso che una macchina ha prodotto \\(\\var{difettosi}\\) pezzi difettosi su una produzione di \\(\\var{prod1}\\) pezzi. Che stima è ragionevole fare del numero di pezzi difettosi su una produzione di \\(\\var{prod2}\\) pezzi?</p>",
+    "advice": "<p>Si suppone che la proporzione di pezzi difettosi resti la stessa: \\(\\var{difettosi} : \\var{prod1} = x : \\var{prod2}\\), da cui \\(x = \\frac{\\var{difettosi} \\cdot \\var{prod2}}{\\var{prod1}}\\), che arrotondato all'unità dà circa \\(\\var{stima}\\) pezzi.</p>",
+    "variables": {
+      "difettosi": {
+        "name": "difettosi",
+        "definition": "random(10..20)",
+        "description": "i pezzi difettosi della prima produzione (fascicolo: 14)"
+      },
+      "prod1": {
+        "name": "prod1",
+        "definition": "100*random(10..15)",
+        "description": "i pezzi della prima produzione (fascicolo: 1 200)"
+      },
+      "stima": {
+        "name": "stima",
+        "definition": "difettosi + random(5..15)",
+        "description": "la stima arrotondata all'unità (fascicolo: 25)"
+      },
+      "prod2": {
+        "name": "prod2",
+        "definition": "10*round(prod1*stima/(10*difettosi))",
+        "description": "i pezzi della seconda produzione, in decine (fascicolo: 2 150)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "difettosi",
+      "prod1",
+      "stima",
+      "prod2"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +57,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Numero di pezzi difettosi (approssimato all'unità):</p>",
-        "minValue": "25",
-        "maxValue": "25",
+        "minValue": "stima",
+        "maxValue": "stima",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

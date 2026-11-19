@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2013 · D7 · Il quadrato ingrandito",
-    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D7.",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D7. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -17,13 +17,21 @@
   "question": {
     "name": "INVALSI 2013 · D7 · Il quadrato ingrandito",
     "statement": "<p>Considera un quadrato di lato \\(a\\).</p>",
-    "advice": "<p>a) Aumentare del 20% vuol dire aggiungere \\(0{,}20\\,a\\): \\(b = a + 0{,}20\\,a = 1{,}20\\,a\\). b) L'area del nuovo quadrato è \\(b^2 = (1{,}2\\,a)^2 = 1{,}44\\,a^2\\): l'area aumenta del 44%, non del 20% né del 40%.</p>",
-    "variables": {},
+    "advice": "<p>a) Aumentare del \\(\\var{perc}\\%\\) vuol dire aggiungere \\(\\var{dpformat(perc/100, 2)}\\,a\\): \\(b = a + \\var{dpformat(perc/100, 2)}\\,a = \\var{dpformat(1 + perc/100, 2)}\\,a\\). b) L'area del nuovo quadrato è \\(b^2 = (\\var{dpformat(1 + perc/100, 2)}\\,a)^2 = \\var{(100 + perc)^2/10000}\\,a^2\\): l'area aumenta del \\(\\var{2*perc + perc^2/100}\\%\\), non del \\(\\var{perc}\\%\\) né del \\(\\var{2*perc}\\%\\).</p>",
+    "variables": {
+      "perc": {
+        "name": "perc",
+        "definition": "10*random(1..5)",
+        "description": "l'aumento percentuale del lato (fascicolo: 20)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "perc"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,12 +39,12 @@
       {
         "type": "1_n_2",
         "marks": 0,
-        "prompt": "<p>a) Se si aumenta il lato \\(a\\) del 20%, si ottiene un nuovo quadrato di lato \\(b\\). Quale delle seguenti espressioni rappresenta la misura di \\(b\\)?</p>",
+        "prompt": "<p>a) Se si aumenta il lato \\(a\\) del \\(\\var{perc}\\%\\), si ottiene un nuovo quadrato di lato \\(b\\). Quale delle seguenti espressioni rappresenta la misura di \\(b\\)?</p>",
         "choices": [
-          "<p>\\(20\\,a\\)</p>",
-          "<p>\\(1{,}20\\,a\\)</p>",
-          "<p>\\(a + 20\\)</p>",
-          "<p>\\(a + 0{,}20\\)</p>"
+          "<p>\\(\\var{perc}\\,a\\)</p>",
+          "<p>\\(\\var{dpformat(1 + perc/100, 2)}\\,a\\)</p>",
+          "<p>\\(a + \\var{perc}\\)</p>",
+          "<p>\\(a + \\var{dpformat(perc/100, 2)}\\)</p>"
         ],
         "matrix": [
           "0",
@@ -62,10 +70,10 @@
         "marks": 0,
         "prompt": "<p>b) Di quanto aumenta in percentuale l'area del quadrato di lato \\(b\\) rispetto all'area del quadrato di lato \\(a\\)?</p>",
         "choices": [
-          "<p>Del 20%</p>",
-          "<p>Del 40%</p>",
-          "<p>Del 44%</p>",
-          "<p>Del 120%</p>"
+          "<p>Del \\(\\var{perc}\\%\\)</p>",
+          "<p>Del \\(\\var{2*perc}\\%\\)</p>",
+          "<p>Del \\(\\var{2*perc + perc^2/100}\\%\\)</p>",
+          "<p>Del \\(\\var{100 + perc}\\%\\)</p>"
         ],
         "matrix": [
           "0",

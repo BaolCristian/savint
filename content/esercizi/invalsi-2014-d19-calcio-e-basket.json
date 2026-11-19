@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D19 · Calcio e basket",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D19. Nel fascicolo il numero andava scritto nella zona giusta del diagramma: qui si scrive come risposta.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D19. Nel fascicolo il numero andava scritto nella zona giusta del diagramma: qui si scrive come risposta. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,14 +15,52 @@
   },
   "question": {
     "name": "INVALSI 2014 · D19 · Calcio e basket",
-    "statement": "<p>Su 100 alunni di una scuola, 82 alunni si interessano di calcio, 26 si interessano di basket, 10 non si interessano né di calcio, né di basket. <img data-savint-immagine=\"0e511a88-5ae5-4824-8e74-f04973b3d2cc.png\" alt=\"Diagramma di Eulero-Venn con due insiemi che si intersecano, Basket e Calcio, dentro un rettangolo\"></p>",
-    "advice": "<p>Si interessano di almeno uno dei due sport \\(100 - 10 = 90\\) alunni. Sommando \\(82 + 26 = 108\\) chi segue entrambi gli sport è contato due volte: \\(108 - 90 = 18\\) alunni, da scrivere nella zona comune ai due insiemi.</p>",
-    "variables": {},
+    "statement": "<p>Su 100 alunni di una scuola, \\(\\var{calcio}\\) alunni si interessano di calcio, \\(\\var{basket}\\) si interessano di basket, \\(\\var{nessuno}\\) non si interessano né di calcio, né di basket. <img data-savint-immagine=\"0e511a88-5ae5-4824-8e74-f04973b3d2cc.png\" alt=\"Diagramma di Eulero-Venn con due insiemi che si intersecano, Basket e Calcio, dentro un rettangolo\"></p>",
+    "advice": "<p>Si interessano di almeno uno dei due sport \\(100 - \\var{nessuno} = \\var{100-nessuno}\\) alunni. Sommando \\(\\var{calcio} + \\var{basket} = \\var{calcio+basket}\\) chi segue entrambi gli sport è contato due volte: \\(\\var{calcio+basket} - \\var{100-nessuno} = \\var{entrambi}\\) alunni, da scrivere nella zona comune ai due insiemi.</p>",
+    "variables": {
+      "entrambi": {
+        "name": "entrambi",
+        "definition": "random(10..20)",
+        "description": "chi segue entrambi gli sport (fascicolo: 18)"
+      },
+      "solobasket": {
+        "name": "solobasket",
+        "definition": "random(5..12)",
+        "description": "chi segue solo il basket (fascicolo: 8)"
+      },
+      "nessuno": {
+        "name": "nessuno",
+        "definition": "random(5..12)",
+        "description": "chi non segue nessuno dei due (fascicolo: 10)"
+      },
+      "solocalcio": {
+        "name": "solocalcio",
+        "definition": "100 - entrambi - solobasket - nessuno",
+        "description": "chi segue solo il calcio: da 56 a 80 (fascicolo: 64)"
+      },
+      "calcio": {
+        "name": "calcio",
+        "definition": "solocalcio + entrambi",
+        "description": "chi segue il calcio (fascicolo: 82)"
+      },
+      "basket": {
+        "name": "basket",
+        "definition": "solobasket + entrambi",
+        "description": "chi segue il basket (fascicolo: 26)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "entrambi",
+      "solobasket",
+      "nessuno",
+      "solocalcio",
+      "calcio",
+      "basket"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +69,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Quanti studenti si interessano sia di calcio sia di basket (la zona comune ai due insiemi)?</p>",
-        "minValue": "18",
-        "maxValue": "18",
+        "minValue": "entrambi",
+        "maxValue": "entrambi",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2017 · D8 · Sacchetti di caramelle",
-    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D8.",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D8. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,46 @@
   },
   "question": {
     "name": "INVALSI 2017 · D8 · Sacchetti di caramelle",
-    "statement": "<p>Un sacchetto di caramelle contiene 15 caramelle alla menta e 25 caramelle al limone. Con 100 caramelle alla menta e 180 caramelle al limone, qual è il numero massimo di sacchetti con la stessa composizione del precedente che si possono riempire?</p>",
-    "advice": "<p>Con la menta: \\(100 : 15 \\approx 6{,}7\\), bastano per 6 sacchetti. Con il limone: \\(180 : 25 = 7{,}2\\), bastano per 7. Comanda la menta: 6 sacchetti (\\(6 \\cdot 15 = 90\\) alla menta e \\(6 \\cdot 25 = 150\\) al limone).</p>",
-    "variables": {},
+    "statement": "<p>Un sacchetto di caramelle contiene \\(\\var{menta}\\) caramelle alla menta e \\(\\var{limone}\\) caramelle al limone. Con \\(\\var{totmenta}\\) caramelle alla menta e \\(\\var{totlimone}\\) caramelle al limone, qual è il numero massimo di sacchetti con la stessa composizione del precedente che si possono riempire?</p>",
+    "advice": "<p>Con la menta: \\(\\var{totmenta} : \\var{menta}\\) fa \\(\\var{sacchetti}\\) con resto \\(\\var{mod(totmenta, menta)}\\), bastano per \\(\\var{sacchetti}\\) sacchetti. Con il limone: \\(\\var{totlimone} : \\var{limone}\\) fa \\(\\var{sacchetti+1}\\) con resto \\(\\var{mod(totlimone, limone)}\\), bastano per \\(\\var{sacchetti+1}\\). Comanda la menta: \\(\\var{sacchetti}\\) sacchetti (\\(\\var{sacchetti} \\cdot \\var{menta} = \\var{sacchetti*menta}\\) alla menta e \\(\\var{sacchetti} \\cdot \\var{limone} = \\var{sacchetti*limone}\\) al limone).</p>",
+    "variables": {
+      "menta": {
+        "name": "menta",
+        "definition": "random(12..18)",
+        "description": "le caramelle alla menta in un sacchetto (fascicolo: 15)"
+      },
+      "limone": {
+        "name": "limone",
+        "definition": "random(20..30)",
+        "description": "le caramelle al limone in un sacchetto (fascicolo: 25)"
+      },
+      "sacchetti": {
+        "name": "sacchetti",
+        "definition": "random(5..9)",
+        "description": "i sacchetti che si riempiono (fascicolo: 6)"
+      },
+      "totmenta": {
+        "name": "totmenta",
+        "definition": "menta*sacchetti + random(1..(menta-1))",
+        "description": "le caramelle alla menta disponibili, con resto (fascicolo: 100)"
+      },
+      "totlimone": {
+        "name": "totlimone",
+        "definition": "limone*(sacchetti+1) + random(0..(limone-1))",
+        "description": "le caramelle al limone, per un sacchetto in più (fascicolo: 180)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "menta",
+      "limone",
+      "sacchetti",
+      "totmenta",
+      "totlimone"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +63,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Numero di sacchetti:</p>",
-        "minValue": "6",
-        "maxValue": "6",
+        "minValue": "sacchetti",
+        "maxValue": "sacchetti",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

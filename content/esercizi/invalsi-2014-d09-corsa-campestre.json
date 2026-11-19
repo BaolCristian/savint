@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2014 · D9 · La corsa campestre",
-    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D9. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D9. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,52 @@
   },
   "question": {
     "name": "INVALSI 2014 · D9 · La corsa campestre",
-    "statement": "<p>A una corsa campestre partecipa il 60% degli alunni di una scuola. Dopo i primi 3 km il 30% degli alunni partecipanti si ritira e, dopo altri 5 km, si ritira il 40% dei restanti. Tutti gli altri arrivano al traguardo. Se gli alunni della scuola sono 1 000, quanti arrivano al traguardo?</p>",
-    "advice": "<p>Partecipano \\(1000 \\cdot 0{,}6 = 600\\) alunni. Dopo 3 km se ne ritira il 30%: restano \\(600 \\cdot 0{,}7 = 420\\). Poi si ritira il 40% di questi: restano \\(420 \\cdot 0{,}6 = 252\\) alunni. Le percentuali non si sommano: ognuna si calcola sui rimasti.</p>",
-    "variables": {},
+    "statement": "<p>A una corsa campestre partecipa il \\(\\var{partecipa}\\%\\) degli alunni di una scuola. Dopo i primi 3 km il \\(\\var{ritiro1}\\%\\) degli alunni partecipanti si ritira e, dopo altri 5 km, si ritira il \\(\\var{ritiro2}\\%\\) dei restanti. Tutti gli altri arrivano al traguardo. Se gli alunni della scuola sono 1 000, quanti arrivano al traguardo?</p>",
+    "advice": "<p>Partecipano \\(1000 \\cdot \\var{partecipa/100} = \\var{partenti}\\) alunni. Dopo 3 km se ne ritira il \\(\\var{ritiro1}\\%\\): restano \\(\\var{partenti} \\cdot \\var{(100 - ritiro1)/100} = \\var{restano}\\). Poi si ritira il \\(\\var{ritiro2}\\%\\) di questi: restano \\(\\var{restano} \\cdot \\var{(100 - ritiro2)/100} = \\var{arrivano}\\) alunni. Le percentuali non si sommano: ognuna si calcola sui rimasti.</p>",
+    "variables": {
+      "partecipa": {
+        "name": "partecipa",
+        "definition": "10*random(4..7)",
+        "description": "la percentuale di alunni che partecipano (fascicolo: 60)"
+      },
+      "ritiro1": {
+        "name": "ritiro1",
+        "definition": "10*random(1..4)",
+        "description": "la percentuale di partecipanti che si ritira dopo 3 km (fascicolo: 30)"
+      },
+      "ritiro2": {
+        "name": "ritiro2",
+        "definition": "10*random(2..5)",
+        "description": "la percentuale dei restanti che si ritira dopo altri 5 km (fascicolo: 40)"
+      },
+      "partenti": {
+        "name": "partenti",
+        "definition": "10*partecipa",
+        "description": "gli alunni che partecipano (fascicolo: 600)"
+      },
+      "restano": {
+        "name": "restano",
+        "definition": "partenti*(100 - ritiro1)/100",
+        "description": "gli alunni rimasti dopo 3 km (fascicolo: 420)"
+      },
+      "arrivano": {
+        "name": "arrivano",
+        "definition": "restano*(100 - ritiro2)/100",
+        "description": "gli alunni che arrivano al traguardo (fascicolo: 252)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "partecipa",
+      "ritiro1",
+      "ritiro2",
+      "partenti",
+      "restano",
+      "arrivano"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +69,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Numero di alunni che arrivano al traguardo:</p>",
-        "minValue": "252",
-        "maxValue": "252",
+        "minValue": "arrivano",
+        "maxValue": "arrivano",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
