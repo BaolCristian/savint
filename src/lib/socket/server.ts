@@ -345,7 +345,12 @@ export function setupSocketHandlers(io: TypedIO) {
         const asHost = rawName === "__host__";
         const playerName = asHost ? rawName : String(rawName ?? "").trim();
         const playerAvatar = sanitizeAvatar(rawAvatar);
-        if (!asHost && (playerName.length < 2 || playerName.length > 24)) {
+        // The host's name is reserved: compared after normalisation so that
+        // e.g. " __host__" cannot become a player named "__host__"
+        if (
+          !asHost &&
+          (playerName.length < 2 || playerName.length > 24 || playerName === "__host__")
+        ) {
           socket.emit("sessionError", { message: "invalidName" });
           return;
         }
