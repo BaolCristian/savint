@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D28 · Il torneo di calcio",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "multipli",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D28 · Il torneo di calcio",
+    "statement": "<p>In un torneo di calcio fra scuole una squadra guadagna 3 punti se vince, 1 punto se pareggia e nessun punto se perde. Una squadra ha vinto tante partite quante ne ha pareggiate. Quale dei seguenti punteggi NON può aver totalizzato la squadra?</p>",
+    "advice": "<p>Se la squadra ha vinto \\(v\\) partite e ne ha pareggiate altrettante, ha \\(3v + v = 4v\\) punti: il punteggio è un multiplo di 4. 24, 28 e 32 lo sono (\\(v = 6, 7, 8\\)), 30 no.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>24</p>",
+          "<p>28</p>",
+          "<p>30</p>",
+          "<p>32</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

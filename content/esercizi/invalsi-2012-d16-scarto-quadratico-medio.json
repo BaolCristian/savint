@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D16 · Lo scarto quadratico medio",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D16. Nel fascicolo la motivazione andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "media",
+      "deviazione standard",
+      "argomentare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D16 · Lo scarto quadratico medio",
+    "statement": "<p>La professoressa Rossi vuole verificare il livello delle conoscenze in scienze nelle classi 1A e 1B. Decide di somministrare lo stesso test nelle due classi. Elaborando i punteggi del test ottiene i seguenti risultati. \\[\\begin{array}{|c|c|c|} \\hline &amp; \\text{Classe 1A} &amp; \\text{Classe 1B} \\\\ \\hline \\text{media aritmetica} &amp; 6{,}5 &amp; 6{,}5 \\\\ \\hline \\text{scarto quadratico medio} &amp; 1{,}1 &amp; 2{,}3 \\\\ \\hline \\end{array}\\]Martina, un'alunna di 1B, afferma che i risultati indicano che gli alunni delle due classi hanno lo stesso livello medio di conoscenze, ma gli studenti della classe 1A hanno ottenuto complessivamente punteggi più vicini alla media. Martina ha ragione?</p>",
+    "advice": "<p>Le medie sono uguali (6,5): stesso livello medio. Lo scarto quadratico medio (deviazione standard) misura quanto i punteggi si allontanano dalla media: in 1A è più piccolo (1,1 contro 2,3), quindi i punteggi di 1A sono più vicini alla media. Martina ha ragione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Sì, perché le medie sono uguali e lo scarto quadratico medio della 1A è minore: i punteggi della 1A sono meno dispersi attorno alla media</p>",
+          "<p>Sì, perché lo scarto quadratico medio della 1A è minore, e quindi la 1A ha anche la media più alta</p>",
+          "<p>No, perché con la stessa media i punteggi delle due classi sono distribuiti allo stesso modo</p>",
+          "<p>No, perché la 1B ha lo scarto quadratico medio maggiore, quindi i suoi punteggi sono più vicini alla media</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

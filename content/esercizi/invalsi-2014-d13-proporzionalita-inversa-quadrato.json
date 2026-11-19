@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D13 · Inversamente proporzionale al quadrato",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D13.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "proporzionalità inversa"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D13 · Inversamente proporzionale al quadrato",
+    "statement": "<p>La grandezza \\(y\\) è inversamente proporzionale al quadrato della grandezza \\(x\\) e, per \\(x = 2\\), si ha \\(y = 4\\). Quindi, se \\(x = 8\\), \\(y\\) è uguale a</p>",
+    "advice": "<p>\\(y = \\frac{k}{x^2}\\): da \\(4 = \\frac{k}{4}\\) si ha \\(k = 16\\). Per \\(x = 8\\): \\(y = \\frac{16}{64} = \\frac{1}{4}\\). In altre parole: \\(x\\) diventa 4 volte più grande, \\(x^2\\) 16 volte, quindi \\(y\\) diventa 16 volte più piccolo: \\(4 : 16 = \\frac{1}{4}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(\\frac{1}{4}\\)</p>",
+          "<p>\\(4\\)</p>",
+          "<p>\\(16\\)</p>",
+          "<p>\\(\\frac{1}{16}\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

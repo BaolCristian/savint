@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D22 · Gli italiani nel 2020",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D22.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "percentuali",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D22 · Gli italiani nel 2020",
+    "statement": "<p>L'ISTAT, nelle «Previsioni della popolazione italiana per l'Anno 2020», prevede che in quell'anno i quindicenni italiani saranno circa 592 000, cioè lo 0,95% della popolazione italiana del 2020.</p>",
+    "advice": "<p>Se \\(P\\) è la popolazione, \\(0{,}95\\% \\cdot P = 592\\,000\\), cioè \\(0{,}0095 \\cdot P = 592\\,000\\): \\(P = \\frac{592\\,000}{0{,}0095} \\approx 62\\,315\\,789\\). Attenzione: 0,95% è \\(0{,}0095\\), non \\(0{,}95\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Calcola qual è, secondo l'ISTAT, il numero stimato di italiani nel 2020. Esprimi il risultato con un numero intero (senza spazi né punti).</p>",
+        "minValue": "(592000/0.0095) - (1)",
+        "maxValue": "(592000/0.0095) + (1)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D32 · Una frazione di frazioni",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D32.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "frazioni",
+      "espressioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D32 · Una frazione di frazioni",
+    "statement": "<p>Calcola l'espressione \\[\\frac{1 - \\frac{1}{7}}{1 + \\frac{1}{7}}\\]</p>",
+    "advice": "<p>Numeratore: \\(1 - \\frac{1}{7} = \\frac{6}{7}\\). Denominatore: \\(1 + \\frac{1}{7} = \\frac{8}{7}\\). Dividere per \\(\\frac{8}{7}\\) vuol dire moltiplicare per \\(\\frac{7}{8}\\): \\(\\frac{6}{7} \\cdot \\frac{7}{8} = \\frac{6}{8} = \\frac{3}{4}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Scrivi il risultato sotto forma di un'unica frazione.</p>",
+        "answer": "3/4",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}

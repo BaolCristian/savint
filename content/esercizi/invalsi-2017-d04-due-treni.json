@@ -1,0 +1,114 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D4 · Due treni",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D4. Nella parte b la motivazione andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "grafici",
+      "moto rettilineo uniforme",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D4 · Due treni",
+    "statement": "<p>In figura sono rappresentati i grafici della posizione \\(s\\) (in km) in funzione del tempo \\(t\\) (in minuti) di due treni in moto rettilineo uniforme su due binari paralleli. <img data-savint-immagine=\"d06920af-605b-44c4-9229-8dde94648de7.png\" alt=\"Due rette nel piano t (minuti), s (km): una sale da (0; 0) a (60; 120), l'altra scende da (0; 120) a (40; 0); si incontrano vicino a (24; 48)\"></p>",
+    "advice": "<p>Un treno va da \\(s = 0\\) a \\(s = 120\\) km in 60 minuti (2 km al minuto), l'altro da \\(s = 120\\) a \\(s = 0\\) in 40 minuti (3 km al minuto). a1) Uno si allontana dall'origine e l'altro si avvicina: versi opposti, vera. a2) Le rette si incontrano a \\(t = 24\\) minuti, cioè circa 25: vera. a3) A \\(t = 30\\) il primo treno ha percorso 60 km, il secondo è nella posizione 30 km ma ha percorso \\(120 - 30 = 90\\) km: falsa. b) Le due rette hanno pendenze diverse: i treni hanno velocità diverse (2 km/min e 3 km/min), quindi nello stesso tempo percorrono distanze diverse.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>a) Basandoti sulle informazioni fornite nei grafici, indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>I due treni si muovono in versi opposti</p>",
+          "<p>Dopo circa 25 minuti dall'istante \\(t = 0\\) i due treni passano per la stessa posizione nel sistema di riferimento scelto</p>",
+          "<p>Dopo 30 minuti dall'istante \\(t = 0\\), uno dei due treni ha percorso circa 30 km</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Anna afferma che, in uno stesso intervallo di tempo, i due treni percorrono la stessa distanza. Anna ha torto. Perché?</p>",
+        "choices": [
+          "<p>Perché i due treni si muovono in versi opposti</p>",
+          "<p>Perché i due treni hanno velocità diverse: le due rette hanno pendenze diverse (in valore assoluto)</p>",
+          "<p>Perché i due treni partono da posizioni diverse</p>",
+          "<p>Perché i due treni si incontrano dopo circa 25 minuti</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

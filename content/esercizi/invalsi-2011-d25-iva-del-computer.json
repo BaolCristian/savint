@@ -1,0 +1,49 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D25 · L'IVA del computer",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D25.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "percentuali"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D25 · L'IVA del computer",
+    "statement": "<p>Per l'acquisto di un computer sono stati spesi 300 euro. Il prezzo è composto dal costo base più l'IVA, pari al 20% del costo base. Quanto è stato pagato di IVA?</p>",
+    "advice": "<p>Il prezzo pagato è il 120% del costo base: costo base \\(= 300 : 1{,}2 = 250\\) euro, e l'IVA è \\(300 - 250 = 50\\) euro (il 20% di 250). Attenzione: il 20% di 300 (60 euro) è sbagliato, perché l'IVA si calcola sul costo base, non sul prezzo finale.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>IVA, in euro:</p>",
+        "minValue": "50",
+        "maxValue": "50",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

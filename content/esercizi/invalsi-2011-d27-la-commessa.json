@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D27 · La commessa",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "formule",
+      "percentuali",
+      "modellizzazione"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D27 · La commessa",
+    "statement": "<p>Carlotta, nel periodo di Natale, lavora come commessa in un negozio di calzature e guadagna 8 euro all'ora più una commissione del 5% sul ricavo totale delle scarpe che riesce a vendere. Quale formula esprime il suo guadagno \\(g\\), se lavora \\(h\\) ore e vende scarpe per un valore totale di \\(s\\) euro?</p>",
+    "advice": "<p>Per le ore guadagna \\(8h\\); il 5% di \\(s\\) è \\(\\frac{5}{100}s = 0{,}05s\\). Quindi \\(g = 8h + 0{,}05s\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(g = 8h + 0{,}05s\\)</p>",
+          "<p>\\(g = 8h + 0{,}5s\\)</p>",
+          "<p>\\(g = 5h + 8s\\)</p>",
+          "<p>\\(g = 8h + 5s\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

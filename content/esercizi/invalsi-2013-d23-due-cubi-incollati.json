@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D23 · Due cubi incollati",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D23.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "superficie",
+      "cubo",
+      "espressioni letterali"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D23 · Due cubi incollati",
+    "statement": "<p>Un solido \\(S\\) è ottenuto incollando uno sopra l'altro due cubi come mostra la seguente figura: <img data-savint-immagine=\"20cf5123-1612-4727-9227-432dcc4a465d.png\" alt=\"Un cubo di spigolo a con sopra, al centro della faccia superiore, un cubo più piccolo di spigolo b\"> Quale delle seguenti espressioni esprime l'area della superficie totale del solido \\(S\\)?</p>",
+    "advice": "<p>Il cubo grande ha superficie \\(6a^2\\), ma un quadrato \\(b^2\\) della faccia di sopra è coperto: \\(6a^2 - b^2\\). Del cubo piccolo si vedono 5 facce (quella di sotto è incollata): \\(5b^2\\). In tutto \\(6a^2 - b^2 + 5b^2 = 6a^2 + 4b^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(5a^2 + 4b^2\\)</p>",
+          "<p>\\(6a^2 + 4b^2\\)</p>",
+          "<p>\\(6a^2 + 5b^2\\)</p>",
+          "<p>\\(6a^2 + 6b^2\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

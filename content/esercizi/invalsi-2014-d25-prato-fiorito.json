@@ -1,0 +1,78 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D25 · Prato fiorito",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D25.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "probabilità"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2014 · D25 · Prato fiorito",
+    "statement": "<p>«Prato fiorito» è un gioco per computer che si gioca su una scacchiera. Cliccando sui riquadri della scacchiera, a volte si può scoprire un fiore nascosto. Per esempio, nella scacchiera di 9×9 riquadri rappresentata in figura sono nascosti 10 fiori. <img data-savint-immagine=\"1c4a450c-65f4-413a-8618-1b94553b904e.png\" alt=\"La finestra del gioco Prato fiorito con una scacchiera di 9 per 9 riquadri e il contatore dei fiori a 10\"></p>",
+    "advice": "<p>a) I riquadri sono \\(9 \\cdot 9 = 81\\), e 10 nascondono un fiore: \\(\\frac{10}{81}\\). b) I riquadri sono \\(12 \\cdot 20 = 240\\): perché la probabilità sia \\(\\frac{1}{8}\\) i fiori devono essere \\(240 : 8 = 30\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Qual è la probabilità di scoprire al primo tentativo un fiore nella scacchiera rappresentata in figura?</p>",
+        "choices": [
+          "<p>\\(\\frac{1}{9}\\)</p>",
+          "<p>\\(\\frac{1}{81}\\)</p>",
+          "<p>\\(\\frac{10}{80}\\)</p>",
+          "<p>\\(\\frac{10}{81}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) È possibile personalizzare il gioco impostando le dimensioni della scacchiera (cioè il numero di righe e di colonne) e il numero di fiori nascosti. Se si gioca con una scacchiera di 12×20 riquadri, quale deve essere il numero dei fiori nascosti perché la probabilità di scoprire un fiore al primo tentativo sia \\(\\frac{1}{8}\\)?</p>",
+        "minValue": "30",
+        "maxValue": "30",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

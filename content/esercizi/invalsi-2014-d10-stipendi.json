@@ -1,0 +1,86 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D10 · Gli stipendi",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D10.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "moda",
+      "mediana",
+      "media",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D10 · Gli stipendi",
+    "statement": "<p>Osserva la seguente tabella, che riporta la distribuzione di frequenza degli stipendi mensili dei dipendenti di un'azienda. \\[\\begin{array}{|c|c|} \\hline \\text{Stipendio (in €)} &amp; \\text{N° dipendenti} \\\\ \\hline 1\\,000 &amp; 12 \\\\ \\hline 1\\,300 &amp; 145 \\\\ \\hline 1\\,800 &amp; 20 \\\\ \\hline 3\\,500 &amp; 8 \\\\ \\hline 5\\,000 &amp; 6 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) La moda è il valore più frequente, cioè lo stipendio di 1 300 euro; 145 è la sua frequenza: falsa. b) I dipendenti sono 12 + 145 + 20 + 8 + 6 = 191: la mediana è il 96° stipendio in ordine, che cade fra il 13° e il 157°, cioè 1 300 euro: vera. c) Somma degli stipendi: \\(12\\,000 + 188\\,500 + 36\\,000 + 28\\,000 + 30\\,000 = 294\\,500\\); \\(294\\,500 : 191 \\approx 1\\,542\\) euro, minore di 1 800: vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>La moda della distribuzione è 145</p>",
+          "<p>La mediana della distribuzione è 1 300 euro</p>",
+          "<p>La media aritmetica della distribuzione è minore di 1 800 euro</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

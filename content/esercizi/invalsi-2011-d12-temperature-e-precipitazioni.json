@@ -1,0 +1,188 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D12 · Temperature e precipitazioni",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D12. La tabella con tre colonne (Vero, Falso, Non si può ricavare) è diventata una scelta per ogni affermazione.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "grafici",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D12 · Temperature e precipitazioni",
+    "statement": "<p>Osserva il seguente grafico che rappresenta l'andamento delle temperature (scala a sinistra) e delle precipitazioni piovose (scala a destra) in Italia negli ultimi anni. <img data-savint-immagine=\"bd9150df-9087-4ea3-bb86-7b61ba76dace.png\" alt=\"Figura 1: media annua della temperatura media, massima e minima giornaliera (linee) e precipitazioni totali annue (barre) in Italia, anni 2000-2009\"> Indica per ciascuna delle seguenti affermazioni se è vera o falsa o se non si può ricavare dal grafico.</p>",
+    "advice": "<p>a) Il grafico non riporta dati del periodo 1971-2000: non si può ricavare. b) La linea delle temperature massime ha il punto più alto nel 2003: vera. c) Nel 2005 la media delle temperature minime è la più bassa, non la più alta (la più alta è nel 2009): falsa. d) Le massime sono più alte nel 2003, ma le precipitazioni più basse sono nel 2001: falsa. e) Il grafico riporta solo medie annue, non le temperature dei singoli giorni: non si può ricavare. f) La barra più alta è quella del 2002, non del 2004: falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Nel decennio 2000-2009 la temperatura media annua è risultata più alta di 0,8 gradi rispetto al periodo 1971-2000</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) L'anno 2003 è quello in cui si è registrato il più alto valore per la media delle temperature massime</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) L'anno 2005 è quello in cui si è registrato il più alto valore per la media delle temperature minime</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>d) L'anno in cui la media delle temperature massime è stata più alta è anche quello in cui le precipitazioni sono state minori</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>e) L'anno 2005 è quello in cui c'è stato il giorno più freddo</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>f) Il 2004 è stato l'anno più piovoso</p>",
+        "choices": [
+          "<p>Vero</p>",
+          "<p>Falso</p>",
+          "<p>Non si può ricavare dal grafico</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

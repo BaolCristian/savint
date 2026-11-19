@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D10 · Il solido che ruota",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D10.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "solidi",
+      "visualizzazione spaziale",
+      "rotazioni"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2013 · D10 · Il solido che ruota",
+    "statement": "<p>Se il solido S viene fatto ruotare, <img data-savint-immagine=\"d692a82a-e6a6-451f-b0ab-9eab97975dcf.png\" alt=\"Il solido S, formato da sei cubetti: una fila di quattro, un cubetto sopra il primo a destra e un cubetto dietro il secondo da sinistra\"> quale tra le seguenti configurazioni NON può assumere? <img data-savint-immagine=\"941621af-714a-4b0f-a3e3-4512fe217c8a.png\" alt=\"Quattro solidi formati da sei cubetti, disegnati in posizioni diverse: figura 1, figura 2, figura 3, figura 4\"></p>",
+    "advice": "<p>S è una fila di quattro cubetti con un cubetto attaccato a un'estremità (sopra) e uno attaccato al cubetto che sta a due posti di distanza (di lato). Tutte e quattro le figure hanno questa struttura, ma due solidi così possono essere uno l'immagine allo specchio dell'altro, e una rotazione non trasforma un solido nella sua immagine allo specchio. Guarda la fila dal cubetto «libero» verso quello con il cubetto sopra: in S il cubetto laterale sta da una certa parte; nelle figure 1, 2 e 3 ruotate in modo che il cubetto in più all'estremità stia sopra, il cubetto laterale finisce dalla stessa parte, nella figura 4 dalla parte opposta. La figura 4 è S visto allo specchio.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Figura 1</p>",
+          "<p>Figura 2</p>",
+          "<p>Figura 3</p>",
+          "<p>Figura 4</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

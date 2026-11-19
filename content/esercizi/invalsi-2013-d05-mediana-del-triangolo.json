@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D5 · La mediana del triangolo",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D5.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "triangoli",
+      "area",
+      "mediana"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D5 · La mediana del triangolo",
+    "statement": "<p>H è il punto medio del lato AB del triangolo ABC. <img data-savint-immagine=\"4c20679c-5ee4-4269-81a1-dc6d4b014a45.png\" alt=\"Il triangolo ABC con il segmento CH che unisce C al punto medio H di AB\"> I triangoli AHC e HBC hanno la stessa area perché</p>",
+    "advice": "<p>L'area di un triangolo è base per altezza diviso 2. Prese come basi AH e HB, che sono uguali, i due triangoli hanno la stessa altezza: la distanza di C dalla retta AB. CH non è un'altezza (non è perpendicolare ad AB), i due triangoli non sono congruenti né isosceli in generale.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>la distanza di C da AB è la stessa nei due triangoli e AH = HB</p>",
+          "<p>la mediana CH divide il triangolo in due triangoli congruenti</p>",
+          "<p>hanno come altezza comune CH e le relative basi sono della stessa lunghezza</p>",
+          "<p>i triangoli CHA e CHB sono tutti e due triangoli isosceli</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

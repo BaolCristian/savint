@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D30 · Quale trasformazione?",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D30.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "trasformazioni geometriche",
+      "simmetria",
+      "piano cartesiano"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D30 · Quale trasformazione?",
+    "statement": "<p>Il quadrilatero A'B'C'D' è ottenuto applicando al quadrilatero ABCD una trasformazione. <img data-savint-immagine=\"bbef3ed9-ccf4-47d8-b9f9-b503da08a60a.png\" alt=\"Il quadrilatero ABCD sopra l'asse x e il quadrilatero A'B'C'D' sotto, capovolto: ogni vertice ha la stessa ascissa e l'ordinata opposta\"> Di quale trasformazione si tratta?</p>",
+    "advice": "<p>Ogni vertice ha la sua immagine sulla stessa verticale, alla stessa distanza dall'asse x ma dall'altra parte (C è il più in alto, C' il più in basso): la figura è ribaltata rispetto all'asse x. Una traslazione non la capovolgerebbe; la simmetria rispetto all'asse y la porterebbe a sinistra; una rotazione attorno all'origine (di mezzo giro) scambierebbe anche destra e sinistra.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Traslazione</p>",
+          "<p>Simmetria rispetto all'asse y</p>",
+          "<p>Simmetria rispetto all'asse x</p>",
+          "<p>Rotazione attorno all'origine</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

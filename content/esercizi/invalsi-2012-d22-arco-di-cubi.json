@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D22 · L'arco da dipingere",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D22.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "superficie",
+      "geometria solida",
+      "parallelepipedo"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2012 · D22 · L'arco da dipingere",
+    "statement": "<p>L'arco mostrato in figura è formato da sei cubi di lato \\(L\\) e da un parallelepipedo di dimensioni \\(L\\), \\(L\\), \\(4L\\). <img data-savint-immagine=\"0a44fad7-2bfe-42f1-adcc-530f34595f2d.png\" alt=\"Un arco appoggiato su un piano: due colonne di tre cubi ciascuna, alle estremità, sostengono un parallelepipedo lungo quattro cubi\"> Si vuole dipingere l'arco; quanto misura la superficie da colorare?</p>",
+    "advice": "<p>Si contano le facce che restano visibili. Ogni colonna di 3 cubi ha 4 facce laterali di \\(3L^2\\): \\(12L^2\\), e due colonne \\(24L^2\\); le basi poggiano a terra e le cime sono coperte dal parallelepipedo. Il parallelepipedo: sopra \\(4L^2\\), i due fianchi lunghi \\(2 \\cdot 4L^2 = 8L^2\\), le due testate \\(2L^2\\), sotto \\(4L^2 - 2L^2 = 2L^2\\) (due quadretti poggiano sulle colonne). In tutto \\(24L^2 + 4L^2 + 8L^2 + 2L^2 + 2L^2 = 40L^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(42L^2\\)</p>",
+          "<p>\\(40L^2\\)</p>",
+          "<p>\\(38L^2\\)</p>",
+          "<p>\\(36L^2\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

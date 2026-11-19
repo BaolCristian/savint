@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D3 · La lastra di alluminio",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D3.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "indici statistici",
+      "media"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D3 · La lastra di alluminio",
+    "statement": "<p>Con una bilancia si è misurata 10 volte la massa di una lastra di alluminio ottenendo le seguenti misure in chilogrammi: \\[10{,}55 \\quad 10{,}76 \\quad 10{,}60 \\quad 10{,}87 \\quad 10{,}64 \\quad 10{,}67 \\quad 10{,}84 \\quad 10{,}46 \\quad 10{,}55 \\quad 10{,}70\\] Quale fra i seguenti indici statistici è quello più adatto a rappresentare la massa della lastra di alluminio?</p>",
+    "advice": "<p>Le misure ripetute di una stessa grandezza si sintetizzano con la media aritmetica, che compensa gli errori per eccesso e per difetto. La moda (10,55) dipende da una sola coincidenza; varianza e scarto quadratico medio misurano quanto le misure sono disperse, non la massa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>La moda</p>",
+          "<p>La media aritmetica</p>",
+          "<p>La varianza</p>",
+          "<p>Lo scarto quadratico medio (o deviazione standard)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

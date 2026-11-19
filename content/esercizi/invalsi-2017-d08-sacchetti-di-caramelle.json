@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D8 · Sacchetti di caramelle",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D8.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "problemi",
+      "divisione"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D8 · Sacchetti di caramelle",
+    "statement": "<p>Un sacchetto di caramelle contiene 15 caramelle alla menta e 25 caramelle al limone. Con 100 caramelle alla menta e 180 caramelle al limone, qual è il numero massimo di sacchetti con la stessa composizione del precedente che si possono riempire?</p>",
+    "advice": "<p>Con la menta: \\(100 : 15 \\approx 6{,}7\\), bastano per 6 sacchetti. Con il limone: \\(180 : 25 = 7{,}2\\), bastano per 7. Comanda la menta: 6 sacchetti (\\(6 \\cdot 15 = 90\\) alla menta e \\(6 \\cdot 25 = 150\\) al limone).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Numero di sacchetti:</p>",
+        "minValue": "6",
+        "maxValue": "6",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

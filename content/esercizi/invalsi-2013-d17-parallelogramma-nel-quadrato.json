@@ -1,0 +1,51 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D17 · Il parallelogramma nel quadrato",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D17.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "area",
+      "parallelogramma",
+      "quadrato"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D17 · Il parallelogramma nel quadrato",
+    "statement": "<p>Considera il quadrato ABCD il cui lato misura 6 cm. AE e FC misurano ciascuno 2 cm. <img data-savint-immagine=\"91ae4f41-219f-438b-b027-cc33d3b6aaca.png\" alt=\"Il quadrato ABCD con E sul lato AB e F sul lato DC; i segmenti AF ed EC sono paralleli\"></p>",
+    "advice": "<p>AECF è un parallelogramma con base \\(AE = 2\\) cm e altezza uguale al lato del quadrato, 6 cm: area \\(2 \\cdot 6 = 12\\text{ cm}^2\\). Oppure: al quadrato (\\(36\\text{ cm}^2\\)) si tolgono i due triangoli rettangoli \\(EBC\\) e \\(AFD\\), ciascuno di area \\(\\frac{4 \\cdot 6}{2} = 12\\): \\(36 - 24 = 12\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Quanto misura la superficie del quadrilatero AECF, in \\(\\text{cm}^2\\)?</p>",
+        "minValue": "12",
+        "maxValue": "12",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

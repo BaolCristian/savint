@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D19 · Il cubo forato",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D19.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "volume",
+      "cubo",
+      "visualizzazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D19 · Il cubo forato",
+    "statement": "<p>La figura rappresenta un cubo di legno di spigolo 3 cm in cui sono stati creati dei fori a sezione quadrata di lato 1 cm. I fori sono centrati su ogni faccia, hanno i lati paralleli agli spigoli del cubo e attraversano l'intero solido fino alla faccia opposta. <img data-savint-immagine=\"76fadded-94dd-4807-b254-b0da1e56624b.png\" alt=\"Un cubo con un foro quadrato al centro di ogni faccia visibile\"> Quanti cubi di \\(1\\text{ cm}^3\\) di volume sono necessari per riempire nuovamente il cubo?</p>",
+    "advice": "<p>Il cubo è fatto di \\(3 \\cdot 3 \\cdot 3 = 27\\) cubetti. Ogni foro attraversa 3 cubetti in fila, e i fori sono 3 (uno per ogni coppia di facce opposte): \\(3 \\cdot 3 = 9\\), ma il cubetto centrale è comune a tutti e tre i fori ed è stato contato tre volte. I cubetti mancanti sono \\(9 - 2 = 7\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>3</p>",
+          "<p>6</p>",
+          "<p>7</p>",
+          "<p>4</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

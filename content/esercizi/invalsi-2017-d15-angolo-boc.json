@@ -1,0 +1,185 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D15 · L'angolo BOC",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D15. Ogni spazio della dimostrazione è una domanda a scelta fra i termini proposti dal fascicolo.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "dimostrazioni",
+      "triangoli",
+      "angoli",
+      "circonferenza inscritta"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2017 · D15 · L'angolo BOC",
+    "statement": "<p>\\(ABC\\) è un triangolo rettangolo di ipotenusa \\(BC\\) e \\(O\\) è il centro della circonferenza inscritta nel triangolo. <img data-savint-immagine=\"fa56b0bc-a471-4458-aa10-70eb9689a910.png\" alt=\"Il triangolo ABC rettangolo in A con la circonferenza inscritta di centro O; sono tracciati i segmenti OC e OB e segnato l'angolo BOC\"> Si vuole dimostrare che l'ampiezza dell'angolo \\(B\\hat{O}C\\) è 135°. Completa il testo della dimostrazione scegliendo i termini; ogni termine può essere utilizzato una sola volta. \\[\\begin{array}{l} \\text{Il centro } O \\text{ della circonferenza inscritta è il punto di incontro delle bisettrici} \\\\ \\text{degli angoli interni del triangolo } ABC. \\\\ \\text{Gli angoli } A\\hat{C}B \\text{ e } A\\hat{B}C \\text{ sono } \\ldots(1)\\ldots \\text{, cioè la loro somma misura } \\ldots(2)\\ldots \\\\ \\text{perché sono angoli acuti di un triangolo rettangolo. Per quanto affermato in precedenza} \\\\ \\text{la somma degli angoli } O\\hat{C}B \\text{ e } O\\hat{B}C \\text{ misura } \\ldots(3)\\ldots \\\\ \\text{Quindi, poiché la somma degli angoli } \\ldots(4)\\ldots \\text{ misura } \\ldots(5)\\ldots \\\\ \\text{possiamo concludere che } B\\hat{O}C = 135^\\circ\\text{, che è la tesi.} \\end{array}\\]</p>",
+    "advice": "<p>Gli angoli acuti di un triangolo rettangolo sono complementari: \\(A\\hat{C}B + A\\hat{B}C = 90^\\circ\\). \\(OC\\) e \\(OB\\) sono bisettrici, quindi \\(O\\hat{C}B + O\\hat{B}C\\) è la metà: \\(45^\\circ\\). Nel triangolo \\(BOC\\) la somma degli angoli interni di un triangolo è \\(180^\\circ\\): \\(B\\hat{O}C = 180^\\circ - 45^\\circ = 135^\\circ\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Spazio (1):</p>",
+        "choices": [
+          "<p>supplementari</p>",
+          "<p>alterni interni</p>",
+          "<p>opposti al vertice</p>",
+          "<p>complementari</p>",
+          "<p>interni di un triangolo</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Spazio (2):</p>",
+        "choices": [
+          "<p>180°</p>",
+          "<p>90°</p>",
+          "<p>45°</p>",
+          "<p>360°</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Spazio (3):</p>",
+        "choices": [
+          "<p>180°</p>",
+          "<p>90°</p>",
+          "<p>45°</p>",
+          "<p>360°</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Spazio (4):</p>",
+        "choices": [
+          "<p>supplementari</p>",
+          "<p>alterni interni</p>",
+          "<p>opposti al vertice</p>",
+          "<p>complementari</p>",
+          "<p>interni di un triangolo</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Spazio (5):</p>",
+        "choices": [
+          "<p>180°</p>",
+          "<p>90°</p>",
+          "<p>45°</p>",
+          "<p>360°</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D9 · Due quadrati",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D9.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "perimetro",
+      "quadrato",
+      "rettangolo"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D9 · Due quadrati",
+    "statement": "<p>Il rettangolo AFED è formato da due quadrati congruenti ABCD e BFEC con un lato in comune. <img data-savint-immagine=\"cb6223c6-5b26-4038-a22b-daece54ec226.png\" alt=\"Il rettangolo AFED diviso dal segmento BC nei due quadrati ABCD e BFEC\"> Il perimetro di ciascuno dei quadrati misura 36 cm. Quanto misura il perimetro del rettangolo AFED?</p>",
+    "advice": "<p>Il lato di ogni quadrato è \\(36 : 4 = 9\\) cm. Il rettangolo è lungo \\(18\\) cm e alto \\(9\\) cm: perimetro \\(2 \\cdot (18 + 9) = 54\\) cm. (Non è \\(2 \\cdot 36 = 72\\): il lato comune BC non fa parte del contorno.)</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Perimetro di AFED, in cm:</p>",
+        "minValue": "54",
+        "maxValue": "54",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

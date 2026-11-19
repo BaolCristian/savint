@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D13 · La retta per un punto",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D13.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "retta",
+      "piano cartesiano"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D13 · La retta per un punto",
+    "statement": "<p>Considera l'equazione \\(y = 2x + k\\). Per quale valore di \\(k\\) essa rappresenta una retta che passa per il punto di coordinate \\((1; 5)\\)?</p>",
+    "advice": "<p>Il punto sta sulla retta se le sue coordinate soddisfano l'equazione: \\(5 = 2 \\cdot 1 + k\\), quindi \\(k = 3\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>\\(k =\\)</p>",
+        "minValue": "3",
+        "maxValue": "3",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

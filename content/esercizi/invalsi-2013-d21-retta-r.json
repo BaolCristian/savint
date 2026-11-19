@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D21 · La retta r",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D21.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "retta",
+      "piano cartesiano",
+      "area del triangolo"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D21 · La retta r",
+    "statement": "<p>Osserva la seguente figura. <img data-savint-immagine=\"64b27132-52a1-40d6-99fd-6f67804adcb7.png\" alt=\"Piano cartesiano con la retta r che taglia l'asse x nel punto A, a sinistra dell'origine O, e l'asse y nel punto B, sopra l'origine\"> Le coordinate di \\(A\\) sono \\((-3; 0)\\) e l'area del triangolo \\(AOB\\) è 9. Quale fra le seguenti equazioni rappresenta la retta \\(r\\)?</p>",
+    "advice": "<p>Il triangolo \\(AOB\\) è rettangolo in \\(O\\): \\(\\frac{OA \\cdot OB}{2} = 9\\) con \\(OA = 3\\), quindi \\(OB = 6\\) e \\(B(0; 6)\\). La retta passa per \\((0; 6)\\) e per \\((-3; 0)\\): sale di 6 mentre \\(x\\) aumenta di 3, pendenza 2. È \\(y = 2x + 6\\) (infatti per \\(x = -3\\) dà 0).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(y = 2x + 6\\)</p>",
+          "<p>\\(y = -2x - 6\\)</p>",
+          "<p>\\(y = 3x + 9\\)</p>",
+          "<p>\\(y = -3x - 9\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D7 · Il poligono sulla griglia",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D7.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "area",
+      "poligoni"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D7 · Il poligono sulla griglia",
+    "statement": "<p>Osserva la figura. <img data-savint-immagine=\"df492ea7-4a73-492b-81cb-4b9f209d6345.png\" alt=\"Un poligono di cinque lati disegnato su una griglia a quadretti\"></p>",
+    "advice": "<p>Il poligono sta in un rettangolo di 5 × 7 = 35 quadretti. Si tolgono i quattro triangoli rettangoli che restano fuori: a sinistra 3 × 7 : 2 = 10,5; in alto a destra 2 × 2 : 2 = 2; la rientranza a destra 4 × 1 : 2 = 2; in basso 5 × 1 : 2 = 2,5. \\(35 - 10{,}5 - 2 - 2 - 2{,}5 = 18\\text{ m}^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Se il lato di ogni quadretto della griglia corrisponde a 1 m, quanto misura la superficie del poligono, in \\(\\text{m}^2\\)?</p>",
+        "minValue": "18",
+        "maxValue": "18",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

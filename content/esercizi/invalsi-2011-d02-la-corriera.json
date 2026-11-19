@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D2 · La corriera",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D2.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "probabilità",
+      "percentuali"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D2 · La corriera",
+    "statement": "<p>La corriera passa alle 6:30 alla fermata dove sale Giorgio. Nel 40% dei casi è in orario, nel 50% dei casi ha un ritardo di 5 minuti e nei rimanenti casi ha un ritardo di 10 minuti. Se Giorgio arriva alla fermata alle 6:34, che probabilità ha di prendere la corriera?</p>",
+    "advice": "<p>Alle 6:34 la corriera in orario è già passata. Giorgio la prende se è in ritardo di 5 minuti (50% dei casi) o di 10 minuti (il restante 100% − 40% − 50% = 10%): 50% + 10% = 60%.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>10%</p>",
+          "<p>40%</p>",
+          "<p>50%</p>",
+          "<p>60%</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

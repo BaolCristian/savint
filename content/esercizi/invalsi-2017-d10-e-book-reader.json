@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D10 · Gli e-book reader",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D10. Il grafico a barre è riportato come tabella, con i valori scritti sulle barre.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "media",
+      "istogrammi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D10 · Gli e-book reader",
+    "statement": "<p>Il grafico riporta il numero di e-book reader (lettori di libri elettronici) venduti nei mesi di luglio, agosto e settembre da un negozio di informatica. Negli altri nove mesi dell'anno lo stesso negozio ha venduto in media 18 e-book reader al mese. \\[\\begin{array}{|c|c|} \\hline \\text{Mese} &amp; \\text{E-book reader venduti} \\\\ \\hline \\text{luglio} &amp; 28 \\\\ \\hline \\text{agosto} &amp; 34 \\\\ \\hline \\text{settembre} &amp; 30 \\\\ \\hline \\end{array}\\] Qual è il numero medio mensile di e-book reader venduti in quell'anno dal negozio?</p>",
+    "advice": "<p>In tutto l'anno: \\(28 + 34 + 30 = 92\\) nei tre mesi estivi e \\(9 \\cdot 18 = 162\\) negli altri nove, cioè \\(254\\). La media mensile è \\(254 : 12 \\approx 21\\). (Non si fa la media fra 18 e la media estiva: i mesi sono 9 e 3, non pesano uguale.)</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Circa 31</p>",
+          "<p>Circa 28</p>",
+          "<p>Circa 21</p>",
+          "<p>Circa 24</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

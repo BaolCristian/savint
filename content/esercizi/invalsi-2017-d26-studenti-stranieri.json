@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D26 · Studenti stranieri in Italia",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D26. Il grafico a barre è riportato come tabella, con i valori scritti sulle barre.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "istogrammi",
+      "percentuali",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D26 · Studenti stranieri in Italia",
+    "statement": "<p>Il seguente grafico mostra il numero di studenti stranieri presenti in Italia dal 2001 al 2011, espresso in migliaia. \\[\\begin{array}{|c|c|} \\hline \\text{Anno} &amp; \\text{Studenti stranieri (migliaia)} \\\\ \\hline 2001 &amp; 196{,}4 \\\\ \\hline 2002 &amp; 239{,}8 \\\\ \\hline 2003 &amp; 307{,}1 \\\\ \\hline 2004 &amp; 370{,}8 \\\\ \\hline 2005 &amp; 431{,}2 \\\\ \\hline 2006 &amp; 501{,}4 \\\\ \\hline 2007 &amp; 574{,}1 \\\\ \\hline 2008 &amp; 629{,}4 \\\\ \\hline 2009 &amp; 673{,}6 \\\\ \\hline 2010 &amp; 711{,}0 \\\\ \\hline 2011 &amp; 755{,}9 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) \\(370{,}8 - 239{,}8 = 131\\) migliaia. b) L'aumento è \\(629{,}4 - 501{,}4 = 128\\) migliaia, da confrontare con il valore del 2006: \\(\\frac{128}{501{,}4} \\approx 0{,}255\\), circa il 26%.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Di quanto sono aumentati gli studenti stranieri tra il 2002 e il 2004? Rispondi in migliaia.</p>",
+        "minValue": "(131) - (0.05)",
+        "maxValue": "(131) + (0.05)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Di quanto sono aumentati in percentuale gli studenti stranieri nel 2008 rispetto al 2006?</p>",
+        "choices": [
+          "<p>Circa del 26%</p>",
+          "<p>Circa del 20%</p>",
+          "<p>Circa dell'80%</p>",
+          "<p>Circa del 64%</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

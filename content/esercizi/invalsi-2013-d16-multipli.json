@@ -1,0 +1,92 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D16 · Multipli e condizioni",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D16.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "divisibilità",
+      "multipli",
+      "condizioni necessarie e sufficienti"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D16 · Multipli e condizioni",
+    "statement": "<p>Leggi con attenzione le seguenti proposizioni sui numeri naturali.</p>",
+    "advice": "<p>a) 6 è pari ma non è multiplo di 4. Falsa. b) Se un numero è 9·k, è anche 3·(3k). Vera. c) «Solo se è pari» vuol dire che essere pari è necessario: ogni multiplo di 6 è 2·(3k), quindi è pari. Vera. d) 15 è multiplo di 5 ma non di 10. Falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna proposizione è vera o falsa.</p>",
+        "choices": [
+          "<p>Se un numero è pari allora è multiplo di 4</p>",
+          "<p>Se un numero è multiplo di 9 allora è multiplo di 3</p>",
+          "<p>Un numero è multiplo di 6 solo se è pari</p>",
+          "<p>Un numero è multiplo di 5 se e solo se è multiplo di 10</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

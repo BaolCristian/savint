@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D28 · Il detersivo scontato",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "percentuali",
+      "sconti"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D28 · Il detersivo scontato",
+    "statement": "<p>Ai soci di un supermercato un detersivo è venduto, con lo sconto del 20%, al prezzo di 1,40 €. Quanto costa quel detersivo ai clienti che non sono soci del supermercato e che pertanto non hanno diritto allo sconto?</p>",
+    "advice": "<p>Con lo sconto del 20% si paga l'80% del prezzo pieno: \\(0{,}8 \\cdot P = 1{,}40\\), quindi \\(P = 1{,}40 : 0{,}8 = 1{,}75\\) €. (Aggiungere il 20% a 1,40 € dà 1,68 €, ma il 20% va calcolato sul prezzo pieno, non su quello scontato.)</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>1,68 €</p>",
+          "<p>1,75 €</p>",
+          "<p>2,80 €</p>",
+          "<p>1,12 €</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

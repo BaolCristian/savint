@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D26 · Il foglio elettronico",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D26. Le due colonne del foglio elettronico sono riscritte come tabella.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "funzioni",
+      "radicali",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D26 · Il foglio elettronico",
+    "statement": "<p>Nelle prime due colonne di un foglio elettronico sono state calcolate alcune coppie di valori \\((x, y)\\) di una funzione. \\[\\begin{array}{|c|c|} \\hline x &amp; y \\\\ \\hline 1 &amp; 0 \\\\ \\hline 2 &amp; 1 \\\\ \\hline 5 &amp; 2 \\\\ \\hline 10 &amp; 3 \\\\ \\hline 17 &amp; 4 \\\\ \\hline 26 &amp; 5 \\\\ \\hline 37 &amp; 6 \\\\ \\hline \\end{array}\\]Quale tra le seguenti è la funzione di cui sono stati calcolati i valori \\((x, y)\\)?</p>",
+    "advice": "<p>Ogni \\(x\\) è uno più di un quadrato: \\(x - 1 = 0, 1, 4, 9, 16, 25, 36\\), e \\(y\\) è la radice di quel quadrato. Quindi \\(y = \\sqrt{x - 1}\\). Basta una prova per scartare le altre: per \\(x = 1\\), \\(\\sqrt{x} - 1 = 0\\) va bene, ma per \\(x = 2\\) dà \\(\\sqrt{2} - 1 \\approx 0{,}41\\), non 1.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(y = \\sqrt{x} - 1\\)</p>",
+          "<p>\\(y = \\sqrt{x + 1}\\)</p>",
+          "<p>\\(y = \\sqrt{x - 1}\\)</p>",
+          "<p>\\(y = 1 + \\sqrt{x}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

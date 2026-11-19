@@ -1,0 +1,81 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D12 · La materia preferita",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D12.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "diagramma a torta",
+      "percentuali",
+      "probabilità",
+      "campione"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D12 · La materia preferita",
+    "statement": "<p>In una scuola frequentata da 800 studenti si sceglie un campione di 300 studenti per un sondaggio sulla materia preferita. I risultati del sondaggio sono rappresentati nel seguente diagramma. <img data-savint-immagine=\"b27c713b-353d-477e-b89a-94dda6fbe053.png\" alt=\"Diagramma a torta: matematica 20%, francese 7%, scienze 3%, italiano 27%, inglese 13%, storia 7%, educazione fisica 23%\"></p>",
+    "advice": "<p>Le percentuali si riferiscono al campione di 300 studenti, non agli 800 della scuola. a) Non hanno scelto matematica l'\\(80\\%\\) del campione: \\(300 \\cdot 0{,}80 = 240\\) studenti. b) Hanno scelto matematica il \\(20\\% = \\frac{20}{100} = \\frac{1}{5}\\) del campione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Qual è il numero di studenti del campione che NON hanno indicato come materia preferita la matematica?</p>",
+        "minValue": "240",
+        "maxValue": "240",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Qual è la probabilità che uno studente, scelto a caso dal campione, abbia indicato come materia preferita la matematica?</p>",
+        "choices": [
+          "<p>\\(\\frac{1}{20}\\)</p>",
+          "<p>\\(\\frac{1}{15}\\)</p>",
+          "<p>\\(\\frac{1}{7}\\)</p>",
+          "<p>\\(\\frac{1}{5}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D3 · Il terzo lato",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D3.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "triangoli",
+      "disuguaglianza triangolare"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D3 · Il terzo lato",
+    "statement": "<p>Un triangolo ha un lato di 6 cm e uno di 10 cm. Quale tra le seguenti NON può essere la misura della lunghezza del terzo lato?</p>",
+    "advice": "<p>In un triangolo ogni lato è minore della somma degli altri due e maggiore della loro differenza: il terzo lato deve stare fra 10 − 6 = 4 cm e 10 + 6 = 16 cm. 17 cm è troppo lungo.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>6,5 cm</p>",
+          "<p>10 cm</p>",
+          "<p>15,5 cm</p>",
+          "<p>17 cm</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

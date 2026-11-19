@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D31 · Sterlina, euro e dollaro",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D31.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "lettura di grafici",
+      "grafici a linee"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D31 · Sterlina, euro e dollaro",
+    "statement": "<p>Nel seguente grafico sono indicati il rapporto di cambio fra sterlina ed euro dal 2000 al 2010 (linea più scura) e il rapporto di cambio fra sterlina e dollaro dal 2000 al 2010 (linea più chiara). <img data-savint-immagine=\"3e79bff6-48ed-4ba3-9996-4b2e2ce0f180.png\" alt=\"Grafico a linee dal 2000 al 2010 fra 1,0 e 2,2: la linea scura (euro per una sterlina) e la linea chiara (dollari per una sterlina) si incrociano intorno al 2003; dopo il 2003 la linea chiara sta sempre sopra la scura\"> Dalle informazioni riportate sul grafico puoi dedurre che:</p>",
+    "advice": "<p>La linea più alta indica la valuta di cui servono più unità per una sterlina. Fino al 2003 la linea scura (euro) sta sopra la chiara (dollari) quasi sempre; dal 2003 al 2010 la linea chiara (dollari) sta sempre sopra. Quindi dal 2003 al 2010 occorrevano più dollari che euro per acquistare una sterlina.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>dal 2000 al 2010 occorrevano più dollari che euro per acquistare una sterlina</p>",
+          "<p>dal 2000 al 2010 occorrevano più euro che dollari per acquistare una sterlina</p>",
+          "<p>dal 2003 al 2010 occorrevano più dollari che euro per acquistare una sterlina</p>",
+          "<p>dal 2003 al 2010 occorrevano più euro che dollari per acquistare una sterlina</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

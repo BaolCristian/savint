@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D15 · Dividere per 0,2",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D15.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "numeri decimali",
+      "reciproco"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D15 · Dividere per 0,2",
+    "statement": "<p>Dividere un numero per 0,2 è lo stesso che moltiplicarlo per</p>",
+    "advice": "<p>\\(0{,}2 = \\frac{1}{5}\\), e dividere per \\(\\frac{1}{5}\\) vuol dire moltiplicare per il reciproco, 5. Per esempio \\(1 : 0{,}2 = 5\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(\\frac{1}{5}\\)</p>",
+          "<p>\\(\\frac{1}{2}\\)</p>",
+          "<p>2</p>",
+          "<p>5</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

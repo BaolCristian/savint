@@ -1,0 +1,84 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D11 · La produzione dell'azienda",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D11.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "percentuali",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D11 · La produzione dell'azienda",
+    "statement": "<p>La seguente tabella indica di quanto è aumentata ogni anno in percentuale la produzione di un'azienda rispetto all'anno precedente negli anni dal 2010 al 2015. \\[\\begin{array}{|c|c|} \\hline \\text{Anno} &amp; \\text{Aumento percentuale annuo} \\\\ \\hline 2010 &amp; +2\\% \\\\ \\hline 2011 &amp; +5\\% \\\\ \\hline 2012 &amp; +12\\% \\\\ \\hline 2013 &amp; +8\\% \\\\ \\hline 2014 &amp; +4\\% \\\\ \\hline 2015 &amp; +8\\% \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>Ogni anno la produzione aumenta rispetto all'anno prima: la tabella dice di quanto, non quanto si produce. a) Nel 2013 la produzione è aumentata dell'8% (è aumentata meno che nel 2012, ma è aumentata): falsa. b) Raddoppiare vorrebbe dire +100%; nel 2015 è +8%: falsa. c) La produzione cresce ogni anno, quindi il massimo è nell'ultimo anno, il 2015: vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Basandoti sui dati della tabella indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Dal 2012 al 2013 la produzione è diminuita</p>",
+          "<p>Dal 2014 al 2015 la produzione è raddoppiata</p>",
+          "<p>Nel periodo 2010 - 2015 il massimo di produzione si è avuto nel 2015</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

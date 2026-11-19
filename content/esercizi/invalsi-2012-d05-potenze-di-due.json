@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D5 · Potenze di 2 e di 10",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D5.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "potenze",
+      "stime"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D5 · Potenze di 2 e di 10",
+    "statement": "<p>Si sa che \\(2^{10} = 1024\\). Quale fra le seguenti potenze del 10 è quella che più si avvicina a \\(2^{70}\\)?</p>",
+    "advice": "<p>\\(2^{70} = (2^{10})^7 = 1024^7\\), e \\(1024 \\approx 1000 = 10^3\\): quindi \\(2^{70} \\approx (10^3)^7 = 10^{21}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(10^{24}\\)</p>",
+          "<p>\\(10^{21}\\)</p>",
+          "<p>\\(10^{14}\\)</p>",
+          "<p>\\(10^{7}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

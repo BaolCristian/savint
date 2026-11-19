@@ -1,0 +1,114 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D5 · La frequenza cardiaca",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D5.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "funzioni lineari",
+      "percentuali",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D5 · La frequenza cardiaca",
+    "statement": "<p>Le persone, durante le attività sportive, non dovrebbero superare una determinata frequenza del battito cardiaco, frequenza che varia in funzione dell'età. Il numero massimo di battiti al minuto che non dovrebbe essere superato (frequenza cardiaca massima consigliata) si può calcolare sottraendo a 220 l'età \\(x\\) del soggetto. Inoltre, affinché un allenamento in palestra sia efficace, il numero dei battiti \\(y\\) dovrebbe essere mantenuto in un intervallo compreso tra il 70% e il 90% della frequenza cardiaca massima consigliata. Sul seguente diagramma cartesiano sono rappresentate, in funzione dell'età (\\(x\\)), le frequenze cardiache (F) massima e minima entro le quali si ha un allenamento efficace per soggetti che hanno un'età compresa tra 20 e 70 anni. <img data-savint-immagine=\"71b9a253-3204-4c97-8039-37c86057835a.png\" alt=\"Due segmenti nel piano età-frequenza: la frequenza massima scende da 180 a 20 anni a circa 135 a 70 anni, la minima da 140 a circa 105\"></p>",
+    "advice": "<p>a) La frequenza massima consigliata è \\(220 - x\\); il 70% e il 90% si ottengono moltiplicandola per \\(0{,}7\\) e per \\(0{,}9\\): \\(0{,}7 \\cdot (220 - x) \\le y \\le 0{,}9 \\cdot (220 - x)\\). b1) A 20 anni le frequenze sono 180 e 140 (differenza 40), a 70 anni 135 e 105 (differenza 30): falsa. b2) A 20 anni le due rette partono da 140 e 180: vera. b3) A 70 anni la frequenza massima è circa 135, non 120: falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale delle seguenti disuguaglianze esprime il numero di battiti da mantenere in un allenamento efficace?</p>",
+        "choices": [
+          "<p>\\(70 \\cdot (220 - x) \\le y \\le 90 \\cdot (220 - x)\\)</p>",
+          "<p>\\(0{,}7 \\cdot (220 - x) \\le y \\le 0{,}9 \\cdot (220 - x)\\)</p>",
+          "<p>\\(220 - 0{,}9 \\cdot x \\le y \\le 220 - 0{,}7 \\cdot x\\)</p>",
+          "<p>\\(0{,}9 \\cdot 220 - x \\le y \\le 0{,}7 \\cdot 220 - x\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>b) Aiutandoti con il diagramma cartesiano, indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>La differenza fra la frequenza massima e la frequenza minima a 70 anni è maggiore di quella a 20 anni</p>",
+          "<p>A vent'anni un allenamento è efficace quando la frequenza cardiaca si mantiene all'incirca tra 140 e 180 battiti al minuto</p>",
+          "<p>Perché un allenamento sia efficace, chi ha 70 anni non deve superare la frequenza cardiaca di circa 120 battiti al minuto</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

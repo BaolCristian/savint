@@ -1,0 +1,77 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D22 · Le tariffe del parcheggio",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D22. Nella parte a la tariffa si sceglie fra le tre; nella parte b si scrive solo il risultato, senza i calcoli.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "modellizzazione",
+      "equazioni",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D22 · Le tariffe del parcheggio",
+    "statement": "<p>Un parcheggio propone ai clienti tre tariffe: tariffa A: 15 euro per tutta la giornata (24 ore); tariffa B: 1 euro all'ora; tariffa C: la prima ora gratis e 1,20 euro per ogni ora successiva.</p>",
+    "advice": "<p>a) Per 8 ore: A costa 15 euro, B \\(8 \\cdot 1 = 8\\) euro, C \\(7 \\cdot 1{,}20 = 8{,}40\\) euro. Conviene la B. b) B costa \\(h\\) euro, C costa \\(1{,}20 \\cdot (h - 1)\\) euro: \\(h = 1{,}2h - 1{,}2\\), cioè \\(0{,}2h = 1{,}2\\), \\(h = 6\\) ore (6 euro in entrambi i casi).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Mario deve lasciare al parcheggio l'auto per 8 ore. Quale tariffa gli conviene scegliere?</p>",
+        "choices": [
+          "<p>La tariffa A</p>",
+          "<p>La tariffa B</p>",
+          "<p>La tariffa C</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Qual è il numero \\(h\\) di ore di parcheggio per cui le tariffe B e C si equivalgono? \\(h =\\)</p>",
+        "minValue": "6",
+        "maxValue": "6",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

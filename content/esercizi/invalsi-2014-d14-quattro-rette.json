@@ -1,0 +1,120 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D14 · Le rette F, G, H, K",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D14. Nel fascicolo è una tabella con una crocetta per riga: qui ogni riga è una domanda a scelta.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "retta",
+      "piano cartesiano",
+      "equazione della retta"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D14 · Le rette F, G, H, K",
+    "statement": "<p>Sul seguente piano cartesiano sono rappresentate le rette \\(F\\), \\(G\\), \\(H\\), \\(K\\). <img data-savint-immagine=\"d60b79b6-e496-4df3-9858-a0f3564be33d.png\" alt=\"Piano cartesiano con quattro rette: F passa per l'origine e per (−1; 2), G per (0; 4) e (2; 0), H è orizzontale a y = −2, K è verticale a x = −2\"> Associa a ciascuna delle equazioni la retta corrispondente.</p>",
+    "advice": "<p>a) \\(y = -2x + 4\\) passa per \\((0; 4)\\) e per \\((2; 0)\\): è la retta \\(G\\). b) \\(y = -2x\\) passa per l'origine e per \\((-1; 2)\\): è la retta \\(F\\), parallela a \\(G\\). c) \\(y = -2\\) è la retta orizzontale con tutti i punti di ordinata \\(-2\\): è \\(H\\). (La retta verticale \\(K\\) ha equazione \\(x = -2\\).)</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) \\(y = -2x + 4\\)</p>",
+        "choices": [
+          "<p>Retta F</p>",
+          "<p>Retta G</p>",
+          "<p>Retta H</p>",
+          "<p>Retta K</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) \\(y = -2x\\)</p>",
+        "choices": [
+          "<p>Retta F</p>",
+          "<p>Retta G</p>",
+          "<p>Retta H</p>",
+          "<p>Retta K</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) \\(y = -2\\)</p>",
+        "choices": [
+          "<p>Retta F</p>",
+          "<p>Retta G</p>",
+          "<p>Retta H</p>",
+          "<p>Retta K</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

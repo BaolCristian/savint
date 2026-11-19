@@ -1,0 +1,91 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D3 · La nave e i fari",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D3. Nella parte a la nave andava segnata sulla mappa: qui si sceglie la sua posizione fra quelle proposte.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "orientamento",
+      "teorema di Pitagora",
+      "distanza"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D3 · La nave e i fari",
+    "statement": "<p>Un capitano vede dalla sua nave che il faro A sulla costa si trova esattamente in direzione Nord-Est (NE), mentre il faro B si trova esattamente in direzione Est (E). <img data-savint-immagine=\"2c7cd723-dcb6-45b1-8bf9-e850def1879c.png\" alt=\"Mappa a quadretti con la rosa dei venti, l'Isola Rotonda a sinistra e i fari A e B sulla costa a destra\"></p>",
+    "advice": "<p>a) B è a Est della nave: la nave sta sulla stessa riga orizzontale di B, 6 quadretti più in basso di A. A è a Nord-Est, cioè sulla diagonale dei quadretti: per scendere di 6 quadretti lungo la diagonale ci si sposta anche di 6 quadretti verso Ovest. La nave è 6 quadretti a sud e 6 a ovest di A. b) Dall'Isola Rotonda al faro A ci sono 10 quadretti in orizzontale e 3 in verticale: per il teorema di Pitagora \\(\\sqrt{10^2 + 3^2} = \\sqrt{109} \\approx 10{,}4\\) miglia.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Dove si trova la nave?</p>",
+        "choices": [
+          "<p>6 quadretti a ovest del faro A, alla stessa altezza di A</p>",
+          "<p>6 quadretti a sud e 6 quadretti a ovest del faro A</p>",
+          "<p>6 quadretti a sud del faro A</p>",
+          "<p>3 quadretti a sud e 3 quadretti a ovest del faro A</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Se il lato di ogni quadretto della mappa corrisponde a 1 miglio nautico, qual è la distanza del faro A dall'Isola Rotonda?</p>",
+        "choices": [
+          "<p>13 miglia nautiche</p>",
+          "<p>Dalle 9 alle 10 miglia nautiche</p>",
+          "<p>Dalle 10 alle 11 miglia nautiche</p>",
+          "<p>12 miglia nautiche</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

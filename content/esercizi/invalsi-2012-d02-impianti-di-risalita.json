@@ -1,0 +1,169 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D2 · Gli impianti di risalita",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D2.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "funzioni lineari",
+      "modellizzazione",
+      "grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D2 · Gli impianti di risalita",
+    "statement": "<p>Mario va in vacanza in una località sciistica. Per usufruire degli impianti di risalita (seggiovie, funivie, ...), può scegliere tra due offerte, A e B, entrambe valide per tutta la stagione invernale. Offerta A: costo iniziale fisso di 100 euro più 15 euro per ogni giornaliero (ossia per ogni giorno in cui si usano gli impianti di risalita). Offerta B: 30 euro per ogni giornaliero, senza costo iniziale. Osserva la seguente figura. <img data-savint-immagine=\"7aa3cdcb-3555-401d-b0ac-d83c7cb53e07.png\" alt=\"Due grafici a punti del costo in euro in funzione del numero di giornalieri, da 0 a 12: il grafico F parte da 0, il grafico G parte da 100\"></p>",
+    "advice": "<p>a) L'offerta A costa già 100 euro con 0 giornalieri: è il grafico G, che parte da 100. b) Con l'offerta B si pagano 30 euro al giorno: \\(2 \\cdot 30 = 60\\) e \\(3 \\cdot 30 = 90\\) euro. c) Per 5 giorni: A costa \\(100 + 5 \\cdot 15 = 175\\) euro, B costa \\(5 \\cdot 30 = 150\\) euro: conviene B. d) \\(c = 100 + 15g\\) per l'offerta A, \\(c = 30g\\) per l'offerta B. e) \\(30g = 1{,}5 \\cdot (100 + 15g)\\), cioè \\(30g = 150 + 22{,}5g\\), \\(7{,}5g = 150\\), \\(g = 20\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale, fra i grafici F e G, rappresenta l'offerta A?</p>",
+        "choices": [
+          "<p>Il grafico F</p>",
+          "<p>Il grafico G</p>"
+        ],
+        "matrix": [
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Completa la tabella relativa all'offerta B. Costo in euro per 2 giorni:</p>",
+        "minValue": "60",
+        "maxValue": "60",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Costo in euro per 3 giorni:</p>",
+        "minValue": "90",
+        "maxValue": "90",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) Se Mario usa gli impianti di risalita solo per cinque giorni durante la stagione invernale, quale offerta gli conviene scegliere?</p>",
+        "choices": [
+          "<p>L'offerta A</p>",
+          "<p>L'offerta B</p>"
+        ],
+        "matrix": [
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>d) Scrivi la formula che esprime il costo \\(c\\) dell'offerta A al variare del numero di giornalieri \\(g\\). \\(c =\\)</p>",
+        "answer": "100 + 15*g",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Scrivi la formula per l'offerta B. \\(c =\\)</p>",
+        "answer": "30*g",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>e) Qual è il numero di giornalieri per cui il costo dell'offerta B è una volta e mezza il costo dell'offerta A?</p>",
+        "minValue": "20",
+        "maxValue": "20",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

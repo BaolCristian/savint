@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D17 · Un'equazione con k",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D17.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "equazioni",
+      "parametri"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D17 · Un'equazione con k",
+    "statement": "<p>È data l'equazione \\((2k - 3)x + 1 - k = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
+    "advice": "<p>Se la soluzione è 1, sostituendo \\(x = 1\\) l'uguaglianza è vera: \\(2k - 3 + 1 - k = 0\\), cioè \\(k - 2 = 0\\), \\(k = 2\\). Verifica: per \\(k = 2\\) l'equazione è \\(x - 1 = 0\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>La soluzione dell'equazione è 1 per \\(k =\\)</p>",
+        "minValue": "2",
+        "maxValue": "2",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

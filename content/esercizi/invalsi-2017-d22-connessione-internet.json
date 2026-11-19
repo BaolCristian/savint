@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D22 · Minuti su Internet",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D22.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "media",
+      "classi di frequenza",
+      "tabelle"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D22 · Minuti su Internet",
+    "statement": "<p>Agli alunni di una classe viene chiesto per quanto tempo al giorno, in media, utilizzano la connessione a Internet con i loro dispositivi (PC, Tablet, Smartphone, …). I risultati del sondaggio sono riportati nella seguente tabella. \\[\\begin{array}{|c|c|} \\hline \\text{Minuti di connessione a Internet} &amp; \\text{Frequenze assolute} \\\\ \\hline \\text{Da 0 minuti fino a 60 minuti} &amp; 2 \\\\ \\hline \\text{Più di 60 minuti fino a 120 minuti} &amp; 4 \\\\ \\hline \\text{Più di 120 minuti fino a 180 minuti} &amp; 12 \\\\ \\hline \\text{Più di 180 minuti fino a 300 minuti} &amp; 8 \\\\ \\hline \\end{array}\\] Quale tra le seguenti espressioni permette di calcolare il tempo medio giornaliero di connessione a Internet degli alunni della classe?</p>",
+    "advice": "<p>Con i dati in classi si usa il valore centrale di ogni classe (30, 90, 150, 240 minuti), lo si moltiplica per la frequenza e si divide per il numero totale di alunni (2 + 4 + 12 + 8 = 26): è una media ponderata. La B usa gli estremi superiori delle classi, la A non tiene conto delle frequenze, la D è la media delle frequenze.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(\\frac{30 + 90 + 150 + 240}{4}\\)</p>",
+          "<p>\\(\\frac{60 \\cdot 2 + 120 \\cdot 4 + 180 \\cdot 12 + 300 \\cdot 8}{2 + 4 + 12 + 8}\\)</p>",
+          "<p>\\(\\frac{30 \\cdot 2 + 90 \\cdot 4 + 150 \\cdot 12 + 240 \\cdot 8}{2 + 4 + 12 + 8}\\)</p>",
+          "<p>\\(\\frac{2 + 4 + 12 + 8}{4}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

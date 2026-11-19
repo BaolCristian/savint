@@ -1,0 +1,93 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D23 · Il triangolo isoscele e la bisettrice",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D23.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "triangoli",
+      "angoli",
+      "bisettrice",
+      "similitudine"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2014 · D23 · Il triangolo isoscele e la bisettrice",
+    "statement": "<p>Il triangolo \\(ABC\\) è isoscele sulla base \\(AB\\). L'angolo in \\(C\\) è la metà dell'angolo in \\(B\\) e \\(AD\\) è la bisettrice dell'angolo \\(B\\hat{A}C\\). <img data-savint-immagine=\"de8184ae-98d9-4863-a22a-60cc3974fdae.png\" alt=\"Il triangolo isoscele ABC con la base AB in basso e il segmento AD, con D sul lato BC\"></p>",
+    "advice": "<p>Gli angoli alla base sono uguali: \\(\\hat{A} = \\hat{B}\\), \\(\\hat{C} = \\frac{\\hat{B}}{2}\\). Da \\(\\hat{B} + \\hat{B} + \\frac{\\hat{B}}{2} = 180°\\) si ha \\(\\hat{B} = 72°\\) e \\(\\hat{C} = 36°\\) (b vera). La bisettrice divide \\(\\hat{A}\\) in due angoli di 36°. In \\(ABD\\) l'angolo in \\(D\\) è \\(180° - 36° - 72° = 72°\\), non 90°: \\(AD\\) non è un'altezza (a falsa). \\(ADC\\) ha due angoli di 36°: \\(DC = AD\\); \\(ABD\\) ha due angoli di 72°: \\(AD = AB\\). I due triangoli hanno la stessa altezza da \\(A\\), quindi le aree stanno come \\(DC : BD\\), circa \\(1{,}6\\), non 2 (c falsa). \\(ABD\\) ha gli stessi angoli di \\(ABC\\) (36°, 72°, 72°): sono simili, e \\(AD : AC = BD : AB\\) (d vera).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>\\(AD\\) è anche l'altezza relativa al lato \\(BC\\)</p>",
+          "<p>L'angolo in \\(B\\) misura 72°</p>",
+          "<p>L'area del triangolo \\(ADC\\) è il doppio dell'area del triangolo \\(ABD\\)</p>",
+          "<p>\\(AD : AC = BD : AB\\)</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

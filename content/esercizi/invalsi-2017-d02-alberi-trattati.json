@@ -1,0 +1,85 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D2 · Gli alberi trattati",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D2.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "istogrammi",
+      "percentuali",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D2 · Gli alberi trattati",
+    "statement": "<p>In un parco, da alcuni anni, viene somministrato un prodotto a una certa specie di alberi per eliminare un parassita che ne causa la morte. I grafici rappresentano il numero di alberi sottoposti a trattamento negli anni indicati e il numero di alberi completamente guariti nello stesso anno del trattamento. <img data-savint-immagine=\"5ff9eb77-e05e-4baa-afac-629395d8079d.png\" alt=\"Istogramma del numero di alberi trattati: 700 nel 2005, 1000 nel 2006, 700 nel 2007, 800 nel 2008, 600 nel 2009\"> <img data-savint-immagine=\"58a9a27a-afe9-4ea4-876d-f5886e7fa3f5.png\" alt=\"Istogramma del numero di alberi guariti: circa 325 nel 2005, 400 nel 2006, 360 nel 2007, 360 nel 2008, 300 nel 2009\"></p>",
+    "advice": "<p>a) Trattamenti: \\(700 + 1000 + 700 + 800 + 600 = 3800\\). Vera. b) Nel 2009 sono guariti \\(300\\) alberi su \\(600\\), il 50%; nel 2006 \\(400\\) su \\(1000\\), il 40%: la percentuale del 2009 è maggiore. Falsa. c) Nel 2005 sono guariti circa 325 alberi su 700; il 40% di 700 è 280, e 325 è di più (circa il 46%). Falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Sulla base dei dati riportati nei grafici indica se ciascuna delle seguenti affermazioni è vera o falsa.</p>",
+        "choices": [
+          "<p>Nei cinque anni sono stati effettuati circa 3 800 trattamenti</p>",
+          "<p>Nel 2009 la percentuale di alberi guariti rispetto a quelli trattati è inferiore a quella del 2006</p>",
+          "<p>Nel 2005 è guarito meno del 40% degli alberi trattati</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

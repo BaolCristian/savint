@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D23 · Il trapezio attorno alla base minore",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D23.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "solidi di rotazione"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2017 · D23 · Il trapezio attorno alla base minore",
+    "statement": "<p>Osserva la figura. <img data-savint-immagine=\"cfedc487-3ecb-4aaf-8879-f92752be7226.png\" alt=\"Il trapezio rettangolo ABCD con la base minore BC in alto, la base maggiore AD in basso e il lato AB perpendicolare alle basi; il segmento tratteggiato CE è perpendicolare ad AD\"> Se si fa ruotare il trapezio rettangolo \\(ABCD\\) di un giro completo attorno alla sua base minore si ottiene un solido formato da:</p>",
+    "advice": "<p>L'asse di rotazione è la retta \\(BC\\). Il rettangolo \\(ABCE\\) ruotando genera un cilindro di raggio \\(AB\\). Il triangolo \\(CED\\) ha il vertice \\(C\\) sull'asse: ruotando, il lato \\(ED\\) (parallelo all'asse) prosegue il cilindro, mentre l'ipotenusa \\(CD\\) descrive un cono con il vertice in \\(C\\) e la base nel cerchio descritto da \\(D\\). Quel cono è vuoto: si ottiene un cilindro (di altezza \\(AD\\)) con una cavità conica.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>un cilindro con una cavità conica</p>",
+          "<p>un tronco di cono</p>",
+          "<p>un cilindro e un cono sovrapposti</p>",
+          "<p>un cilindro e due coni sovrapposti</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

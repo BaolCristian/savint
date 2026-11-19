@@ -1,0 +1,51 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D18 · L'area del quadrilatero",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "area",
+      "piano cartesiano",
+      "quadrilateri"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D18 · L'area del quadrilatero",
+    "statement": "<p>L'unità di misura riportata sugli assi cartesiani rappresenta 1 cm. <img data-savint-immagine=\"e784bb5a-b75a-42d3-bd01-e555b1fb15d5.png\" alt=\"Il quadrilatero ABCD nel piano cartesiano, con A(6; 1), B(5; 7), C(1; 4), D(5; 1)\"> Calcola l'area del quadrilatero ABCD.</p>",
+    "advice": "<p>I vertici sono A(6; 1), B(5; 7), C(1; 4), D(5; 1). Il rettangolo che li contiene, da \\(x = 1\\) a \\(x = 6\\) e da \\(y = 1\\) a \\(y = 7\\), ha area \\(5 \\cdot 6 = 30\\). Si tolgono i triangoli attorno: fra C, B e l'angolo (1; 7) \\(\\frac{4 \\cdot 3}{2} = 6\\); fra C, D e l'angolo (1; 1) \\(\\frac{4 \\cdot 3}{2} = 6\\); fra B, A e l'angolo (6; 7) \\(\\frac{1 \\cdot 6}{2} = 3\\). Area \\(= 30 - 6 - 6 - 3 = 15\\ \\text{cm}^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Area, in \\(\\text{cm}^2\\):</p>",
+        "minValue": "15",
+        "maxValue": "15",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

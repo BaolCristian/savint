@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D19 · Potenze di una frazione",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D19.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "potenze",
+      "frazioni",
+      "confronto"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D19 · Potenze di una frazione",
+    "statement": "<p>Giovanni afferma che \\(\\left(\\frac{3}{40}\\right)^{80}\\) è maggiore di \\(\\left(\\frac{3}{40}\\right)^{81}\\). Ha ragione?</p>",
+    "advice": "<p>\\(\\left(\\frac{3}{40}\\right)^{81} = \\left(\\frac{3}{40}\\right)^{80} \\cdot \\frac{3}{40}\\), e moltiplicare un numero positivo per un numero minore di 1 lo rende più piccolo: Giovanni ha ragione. Non vale per «qualsiasi frazione»: con una frazione maggiore di 1, come \\(\\frac{3}{2}\\), le potenze crescono.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Giovanni ha ragione perché quando si eleva a potenza una qualsiasi frazione il risultato diminuisce all'aumentare dell'esponente</p>",
+          "<p>Giovanni non ha ragione perché l'esponente della seconda frazione è maggiore dell'esponente della prima</p>",
+          "<p>Giovanni ha ragione perché moltiplicando \\(\\left(\\frac{3}{40}\\right)^{80}\\) per \\(\\frac{3}{40}\\), che è minore di 1, si ottiene un numero minore di \\(\\left(\\frac{3}{40}\\right)^{80}\\)</p>",
+          "<p>Giovanni non ha ragione perché calcolando \\(\\left(\\frac{3}{40}\\right)^{81}\\) si ottiene una frazione con un numeratore maggiore di quello di \\(\\left(\\frac{3}{40}\\right)^{80}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

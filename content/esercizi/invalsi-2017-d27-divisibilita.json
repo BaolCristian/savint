@@ -1,0 +1,85 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D27 · Multipli e divisibilità",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "divisibilità",
+      "multipli",
+      "numeri interi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D27 · Multipli e divisibilità",
+    "statement": "<p>Considera le seguenti affermazioni relative a numeri interi.</p>",
+    "advice": "<p>a) \\(a = 3h\\) e \\(b = 4k\\), quindi \\(a \\cdot b = 12hk = 6 \\cdot 2hk\\): multiplo di 6, vera. b) \\(2 \\cdot 3 = 6\\) è divisibile per 6, ma né 2 né 3 lo sono: falsa. c) \\(1 + 3 = 4\\) è divisibile per 2, ma 1 e 3 sono dispari: falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Se \\(a\\) è un multiplo di 3 e \\(b\\) è un multiplo di 4, allora \\(a \\cdot b\\) è un multiplo di 6</p>",
+          "<p>Se il prodotto di due numeri è divisibile per 6, allora almeno uno dei due fattori è divisibile per 6</p>",
+          "<p>Se \\(a + b\\) è divisibile per 2, allora sia \\(a\\) sia \\(b\\) sono divisibili per 2</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

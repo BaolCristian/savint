@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D10 · La metà di una potenza",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D10.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "potenze"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D10 · La metà di una potenza",
+    "statement": "<p>Qual è la metà del numero \\(\\left(\\frac{1}{2}\\right)^{50}\\)?</p>",
+    "advice": "<p>La metà si ottiene moltiplicando per \\(\\frac{1}{2}\\): \\(\\left(\\frac{1}{2}\\right)^{50} \\cdot \\frac{1}{2} = \\left(\\frac{1}{2}\\right)^{51}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(\\left(\\frac{1}{4}\\right)^{50}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{25}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{51}\\)</p>",
+          "<p>\\(\\left(\\frac{1}{2}\\right)^{49}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

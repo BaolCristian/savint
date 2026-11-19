@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D30 · La negazione",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D30.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "logica",
+      "quantificatori",
+      "numeri naturali"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D30 · La negazione",
+    "statement": "<p>Quale tra le seguenti frasi è la negazione della proposizione «Tutti i numeri naturali sono dispari»?</p>",
+    "advice": "<p>Per negare «tutti sono dispari» basta che ce ne sia almeno uno che non lo è: «Almeno un numero naturale non è dispari». «Nessuno è dispari» e «tutti sono pari» dicono molto di più, sono affermazioni contrarie, non la negazione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Tutti i numeri naturali sono pari</p>",
+          "<p>Nessun numero naturale è dispari</p>",
+          "<p>Almeno un numero naturale non è dispari</p>",
+          "<p>Qualche numero naturale è dispari</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

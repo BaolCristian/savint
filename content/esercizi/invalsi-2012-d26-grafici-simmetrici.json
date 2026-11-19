@@ -1,0 +1,120 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D26 · Grafici simmetrici",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D26.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "simmetrie",
+      "grafici",
+      "piano cartesiano"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D26 · Grafici simmetrici",
+    "statement": "<p>Di seguito sono rappresentati cinque grafici. <img data-savint-immagine=\"ce48e24b-939d-4e42-abfd-8ce03ca97641.png\" alt=\"Cinque grafici: 1 una curva che parte dall'origine e sale verso destra, piegando; 2 una curva che parte dall'origine e sale ripida verso destra; 3 una curva che parte dall'origine e scende verso sinistra; 4 una curva che parte dall'origine e sale verso sinistra; 5 una curva che parte dall'origine e scende verso destra\"></p>",
+    "advice": "<p>Il grafico 1 sta nel primo quadrante (\\(x \\ge 0\\), \\(y \\ge 0\\)). a) La simmetria rispetto all'asse \\(x\\) cambia il segno di \\(y\\): la curva va a destra e verso il basso, grafico 5. b) La simmetria rispetto all'asse \\(y\\) cambia il segno di \\(x\\): la curva va a sinistra e verso l'alto, grafico 4. c) La simmetria rispetto all'origine cambia il segno di entrambe: la curva va a sinistra e verso il basso, grafico 3. Il grafico 2 è il simmetrico rispetto alla bisettrice \\(y = x\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale grafico è il simmetrico del grafico 1 rispetto all'asse delle \\(x\\)?</p>",
+        "choices": [
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>",
+          "<p>Il grafico 5</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Quale grafico è il simmetrico del grafico 1 rispetto all'asse delle \\(y\\)?</p>",
+        "choices": [
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>",
+          "<p>Il grafico 5</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) Quale grafico è il simmetrico del grafico 1 rispetto all'origine \\(O(0; 0)\\)?</p>",
+        "choices": [
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>",
+          "<p>Il grafico 5</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

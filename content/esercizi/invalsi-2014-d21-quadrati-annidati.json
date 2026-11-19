@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D21 · Quadrati uno nell'altro",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D21.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "quadrato",
+      "area",
+      "radicali"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D21 · Quadrati uno nell'altro",
+    "statement": "<p>Si è costruita la figura che vedi inserendo nel quadrato più grande un secondo quadrato i cui vertici sono i punti medi dei lati del primo. Si è ripetuta la stessa procedura, inserendo altri due quadrati. Se la superficie del quadrato più grande misura \\(64\\text{ cm}^2\\), quanto misura il lato del quadrato più piccolo? <img data-savint-immagine=\"2f44c761-86d3-4a87-a20b-4404a91c82ed.png\" alt=\"Quattro quadrati uno dentro l'altro, ognuno con i vertici nei punti medi dei lati del precedente\"></p>",
+    "advice": "<p>Il quadrato con i vertici nei punti medi dei lati ha metà dell'area del precedente. Le aree sono 64, 32, 16, \\(8\\text{ cm}^2\\): il quarto quadrato ha lato \\(\\sqrt{8} = 2\\sqrt{2}\\) cm.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>2 cm</p>",
+          "<p>\\(2\\sqrt{2}\\) cm</p>",
+          "<p>4 cm</p>",
+          "<p>\\(4\\sqrt{2}\\) cm</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

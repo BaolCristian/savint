@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D19 · Un quadrato positivo",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D19.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "disequazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D19 · Un quadrato positivo",
+    "statement": "<p>Nell'insieme dei numeri reali, la disequazione \\(x^2 &gt; 0\\) è verificata</p>",
+    "advice": "<p>Il quadrato di un numero diverso da zero è sempre positivo (anche per i negativi: \\((-3)^2 = 9\\)); per \\(x = 0\\) si ha \\(0 &gt; 0\\), falso. Quindi per ogni \\(x \\ne 0\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>per ogni \\(x \\ne 0\\)</p>",
+          "<p>per ogni \\(x\\)</p>",
+          "<p>solo per ogni \\(x &lt; 0\\)</p>",
+          "<p>solo per ogni \\(x &gt; 0\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

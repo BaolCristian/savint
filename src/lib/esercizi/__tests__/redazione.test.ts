@@ -8,7 +8,22 @@ import {
   creaEsercizio, salvaNuovaVersione, duplicaEsercizio, elencoRedazione, caricaPerEditor, caricaPerAnteprima,
 } from "../redazione";
 import { seedEsercizi } from "../seed";
+import { PACCHETTO_INVALSI_2011 } from "../../../../scripts/genera-invalsi-2011";
+import { PACCHETTO_INVALSI_2012 } from "../../../../scripts/genera-invalsi-2012";
+import { PACCHETTO_INVALSI_2013 } from "../../../../scripts/genera-invalsi-2013";
+import { PACCHETTO_INVALSI_2014 } from "../../../../scripts/genera-invalsi-2014";
 import { PACCHETTO_INVALSI_2015 } from "../../../../scripts/genera-invalsi-2015";
+import { PACCHETTO_INVALSI_2017 } from "../../../../scripts/genera-invalsi-2017";
+
+/** Tutte le prove INVALSI trascritte, scritte con i modelli dell'editor. */
+const PROVE_INVALSI = [
+  ...PACCHETTO_INVALSI_2011,
+  ...PACCHETTO_INVALSI_2012,
+  ...PACCHETTO_INVALSI_2013,
+  ...PACCHETTO_INVALSI_2014,
+  ...PACCHETTO_INVALSI_2015,
+  ...PACCHETTO_INVALSI_2017,
+];
 import { creaBatteria as creaBatteriaGrezza } from "../batterie";
 import { creaContenitore, aggiungiEsercizi, contenutoContenitore } from "../contenitori";
 import { consegneDelCompito } from "../compiti";
@@ -454,7 +469,7 @@ describe("elencoRedazione", () => {
   // `elencoRedazione` usa davvero.
   // Dal pacchetto «Percentuali» (09-17), scritti con l'editor stesso: tutti
   // modificabili, come i due originali scritti nella forma dell'editor.
-  it("degli esercizi seminati sono modificabili 01, 02, il pacchetto delle percentuali e la prova INVALSI 2015", async () => {
+  it("degli esercizi seminati sono modificabili 01, 02, il pacchetto delle percentuali e le prove INVALSI", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "redazionetest-corpus-"));
     const corpusDir = path.resolve(process.cwd(), "content/esercizi");
     const nomi = readdirSync(corpusDir).filter((f) => f.endsWith(".json"));
@@ -469,7 +484,7 @@ describe("elencoRedazione", () => {
 
     const elenco = await elencoRedazione(docente);
     const miei = elenco.filter((v) => v.id.startsWith(PREFIX));
-    expect(miei).toHaveLength(17 + PACCHETTO_INVALSI_2015.length);
+    expect(miei).toHaveLength(17 + PROVE_INVALSI.length);
 
     const modificabili = miei.filter((v) => v.modificabile).map((v) => v.id).sort();
     expect(modificabili).toEqual([
@@ -484,8 +499,8 @@ describe("elencoRedazione", () => {
       `${PREFIX}15-variazione-percentuale`,
       `${PREFIX}16-sconti-successivi`,
       `${PREFIX}17-interesse-semplice`,
-      // La prova INVALSI 2015, scritta anch'essa con i modelli dell'editor.
-      ...PACCHETTO_INVALSI_2015.map((e) => `${PREFIX}${e.nome}`),
+      // Le prove INVALSI, scritte anch'esse con i modelli dell'editor.
+      ...PROVE_INVALSI.map((e) => `${PREFIX}${e.nome}`),
     ].sort());
   });
 });

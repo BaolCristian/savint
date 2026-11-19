@@ -1,0 +1,90 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D26 · L'intensità luminosa",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D26.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "proporzionalità quadratica inversa",
+      "formule"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D26 · L'intensità luminosa",
+    "statement": "<p>Una sorgente luminosa puntiforme è posta nel vuoto. \\(I\\) è l'intensità luminosa misurata a una distanza \\(r\\) dalla sorgente. Il prodotto fra l'intensità luminosa \\(I\\) e il quadrato della distanza \\(r\\) dalla sorgente è uguale a una costante \\(k\\).</p>",
+    "advice": "<p>a) «Il prodotto fra \\(I\\) e il quadrato di \\(r\\)» è \\(I \\cdot r^2\\): \\(I \\cdot r^2 = k\\). b) Se \\(r\\) raddoppia, \\(r^2\\) diventa 4 volte più grande; perché il prodotto resti \\(k\\), \\(I\\) deve diventare un quarto: \\(\\frac{I}{4} \\cdot (2r)^2 = I \\cdot r^2 = k\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale fra le seguenti formule esprime la relazione tra \\(I\\) e \\(r\\)?</p>",
+        "choices": [
+          "<p>\\(\\frac{I}{r^2} = k\\)</p>",
+          "<p>\\(\\left(\\frac{I}{r}\\right)^2 = k\\)</p>",
+          "<p>\\(I \\cdot r^2 = k\\)</p>",
+          "<p>\\((I \\cdot r)^2 = k\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Se la distanza \\(r\\) raddoppia, allora l'intensità luminosa \\(I\\)</p>",
+        "choices": [
+          "<p>diventa il doppio</p>",
+          "<p>diventa la metà</p>",
+          "<p>diventa il quadruplo</p>",
+          "<p>diventa un quarto</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

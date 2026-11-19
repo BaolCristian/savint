@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D25 · Dieci cubi incollati",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D25.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "superficie",
+      "cubo",
+      "visualizzazione"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2017 · D25 · Dieci cubi incollati",
+    "statement": "<p>Dieci cubi di spigolo \\(L\\) sono stati incollati insieme, come mostrato in figura. <img data-savint-immagine=\"50595593-95b9-442b-8097-f23a75f20c23.png\" alt=\"Dieci cubi uguali impilati in un unico strato a forma di piramide: 4 nella fila in basso, poi 3, 2 e 1 in cima\"> L'area della superficie totale del solido così ottenuto è:</p>",
+    "advice": "<p>Si contano le facce visibili da ogni direzione. Davanti e dietro: 10 facce ciascuno, 20. Da sopra si vede una faccia per ogni colonna, 4 (e altrettante da sotto): 8. Da sinistra e da destra si vede una faccia per ogni fila, 4 ciascuno: 8. In tutto \\(20 + 8 + 8 = 36\\) facce, cioè \\(36L^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(32L^2\\)</p>",
+          "<p>\\(35L^2\\)</p>",
+          "<p>\\(36L^2\\)</p>",
+          "<p>\\(30L^2\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

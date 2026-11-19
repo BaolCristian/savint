@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D29 · La lampada",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D29.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "similitudine",
+      "triangoli simili",
+      "proporzioni"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D29 · La lampada",
+    "statement": "<p>In figura è rappresentata una lampada con paralume e relative misure. <img data-savint-immagine=\"1c388b7f-8431-414c-99a9-2973dab83c20.png\" alt=\"Lampada con paralume: la lampadina è 10 cm sopra il bordo inferiore del paralume, che è 30 cm sopra il piano e sporge di 20 cm dall'asse; il raggio di luce passa per il bordo e arriva sul piano a distanza x dall'asse\"> Quanto misura il raggio \\(x\\) del cerchio di luce proiettato sul piano d'appoggio della lampada?</p>",
+    "advice": "<p>Il raggio di luce parte dalla lampadina e passa per il bordo del paralume: scendendo di 10 cm si sposta di 20 cm. Fino al piano scende di \\(10 + 30 = 40\\) cm, 4 volte tanto: per i triangoli simili \\(\\frac{x}{20} = \\frac{40}{10}\\), \\(x = 80\\) cm.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>50 cm</p>",
+          "<p>60 cm</p>",
+          "<p>70 cm</p>",
+          "<p>80 cm</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

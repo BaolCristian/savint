@@ -1,0 +1,116 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D10 · Lo spazio di frenata",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D10.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "formule",
+      "funzione quadratica",
+      "grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D10 · Lo spazio di frenata",
+    "statement": "<p>Con «spazio di frenata» intendiamo lo spazio che un'auto percorre dall'inizio della frenata fino a quando si ferma. Una regola pratica per stimare lo spazio di frenata (in metri), nel caso in cui l'auto viaggi su una strada asfaltata in buone condizioni e non bagnata, è la seguente: «Eleva al quadrato il valore della velocità (in km/h) dell'auto all'inizio della frenata e dividi il risultato ottenuto per 200». a) Completa la tabella seguente, che fornisce lo spazio di frenata \\(s\\) (approssimato per eccesso al metro) per alcuni valori della velocità \\(v\\). \\[\\begin{array}{|c|c|} \\hline v\\ (\\text{km/h}) &amp; s\\ (\\text{m, per eccesso}) \\\\ \\hline 40 &amp; 8 \\\\ \\hline 50 &amp; 13 \\\\ \\hline 60 &amp; \\ldots \\\\ \\hline 70 &amp; 25 \\\\ \\hline 80 &amp; \\ldots \\\\ \\hline 90 &amp; \\ldots \\\\ \\hline 100 &amp; 50 \\\\ \\hline \\end{array}\\] I grafici per la parte b: <img data-savint-immagine=\"fa014805-98ce-4fa2-9d1c-efa6a345e645.png\" alt=\"Quattro grafici di s in funzione di v: 1 una curva che parte da 0 e sale sempre più ripida; 2 una retta che sale dall'origine; 3 una curva che scende verso l'asse v; 4 una retta che scende\"></p>",
+    "advice": "<p>a) \\(s = \\frac{v^2}{200}\\): \\(\\frac{3600}{200} = 18\\), \\(\\frac{6400}{200} = 32\\), \\(\\frac{8100}{200} = 40{,}5\\), che per eccesso diventa 41. b) Lo spazio cresce con il quadrato della velocità: parte da 0 e cresce sempre più in fretta (raddoppiando la velocità, lo spazio quadruplica). È una parabola, il grafico 1.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(v = 60\\): \\(s =\\)</p>",
+        "minValue": "18",
+        "maxValue": "18",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(v = 80\\): \\(s =\\)</p>",
+        "minValue": "32",
+        "maxValue": "32",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Per \\(v = 90\\): \\(s =\\)</p>",
+        "minValue": "41",
+        "maxValue": "41",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Quale fra i grafici della figura può rappresentare lo spazio di frenata \\(s\\) al variare della velocità \\(v\\)?</p>",
+        "choices": [
+          "<p>Il grafico 1</p>",
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D20 · Luigi e Paolo investono",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si riportano solo i risultati.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "percentuali",
+      "aumenti e sconti successivi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D20 · Luigi e Paolo investono",
+    "statement": "<p>Luigi e Paolo investono la stessa somma di denaro. Dopo il primo anno, la somma investita da Luigi è aumentata del 10% e quella investita da Paolo è diminuita del 5%. Luigi e Paolo decidono di reinvestire per un altro anno ancora le somme ottenute dopo il primo anno. Nel secondo anno Luigi perde il 5%, mentre Paolo guadagna il 10%. Se Luigi e Paolo hanno investito inizialmente una somma di 1 000 euro ciascuno, quanto avrà ciascuno dei due alla fine del secondo anno?</p>",
+    "advice": "<p>Luigi: \\(1000 \\cdot 1{,}10 = 1100\\), poi \\(1100 \\cdot 0{,}95 = 1045\\) euro. Paolo: \\(1000 \\cdot 0{,}95 = 950\\), poi \\(950 \\cdot 1{,}10 = 1045\\) euro. Hanno la stessa somma, perché la moltiplicazione è commutativa: \\(1{,}10 \\cdot 0{,}95 = 0{,}95 \\cdot 1{,}10 = 1{,}045\\). Non è \\(+10\\% - 5\\% = +5\\%\\): la seconda percentuale si calcola sulla somma già cambiata.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Luigi, in euro:</p>",
+        "minValue": "1045",
+        "maxValue": "1045",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Paolo, in euro:</p>",
+        "minValue": "1045",
+        "maxValue": "1045",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

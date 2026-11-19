@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D12 · Un'equazione con parametro",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D12.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "equazioni",
+      "parametri"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D12 · Un'equazione con parametro",
+    "statement": "<p>È data l'equazione \\((3k - 6)x - 5k + 2 = 0\\), in cui \\(x\\) è l'incognita e \\(k\\) è un numero reale.</p>",
+    "advice": "<p>Se la soluzione è \\(x = 0\\), sostituendo si ottiene \\((3k - 6) \\cdot 0 - 5k + 2 = 0\\), cioè \\(-5k + 2 = 0\\), \\(k = \\frac{2}{5}\\). Per questo valore il coefficiente \\(3k - 6\\) non è zero, quindi \\(x = 0\\) è proprio l'unica soluzione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Per quale valore di \\(k\\) la soluzione dell'equazione è 0? Scrivi il valore come frazione. \\(k =\\)</p>",
+        "answer": "2/5",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}

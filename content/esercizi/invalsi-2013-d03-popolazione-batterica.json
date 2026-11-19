@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D3 · La popolazione batterica",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D3.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "crescita esponenziale",
+      "percentuali",
+      "grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D3 · La popolazione batterica",
+    "statement": "<p>Una popolazione batterica aumenta nel tempo con un tasso di crescita costante (cioè la variazione percentuale del numero di batteri tra un qualunque giorno e il giorno precedente è costante). La seguente tabella riporta il numero \\(N\\) di milioni di batteri della popolazione al trascorrere dei giorni: \\[\\begin{array}{|c|c|} \\hline \\text{Giorni trascorsi} &amp; N \\text{ (milioni di batteri)} \\\\ \\hline 0 &amp; 1000 \\\\ \\hline 1 &amp; 1100 \\\\ \\hline 2 &amp; 1210 \\\\ \\hline 3 &amp; 1331 \\\\ \\hline 4 &amp; \\ldots \\\\ \\hline 5 &amp; \\ldots \\\\ \\hline \\end{array}\\]<img data-savint-immagine=\"9a69572e-688a-40cb-b2fa-7f167f6d6f66.png\" alt=\"Quattro grafici di N in funzione di t, tutti con N = 1000 per t = 0: il grafico 1 cresce sempre più rapidamente, il 2 cresce sempre più lentamente, il 3 sale a gradini, il 4 è una retta poco inclinata\"></p>",
+    "advice": "<p>Ogni giorno il numero aumenta del 10% (\\(1100 = 1000 \\cdot 1{,}1\\), \\(1210 = 1100 \\cdot 1{,}1\\), …): gli aumenti diventano sempre più grandi (100, 110, 121, …). a) La curva deve salire sempre più ripida: è il grafico 1. b) \\(1331 \\cdot 1{,}1 = 1464{,}1\\) il quarto giorno e \\(1464{,}1 \\cdot 1{,}1 = 1610{,}51\\) il quinto, cioè \\(1000 \\cdot 1{,}1^5\\). Non si aggiunge 100 ogni giorno: quello sarebbe una crescita lineare.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale fra i grafici può rappresentare l'andamento del numero \\(N\\) di batteri al variare del tempo \\(t\\), in almeno 20 giorni?</p>",
+        "choices": [
+          "<p>Il grafico 1</p>",
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Quanti milioni di batteri ci saranno il quinto giorno?</p>",
+        "minValue": "(1610.51) - (0.5)",
+        "maxValue": "(1610.51) + (0.5)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

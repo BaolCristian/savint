@@ -1,0 +1,105 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D6 · Numeri sulla retta",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D6. Nel fascicolo i numeri andavano segnati sulla retta: qui si indica il numero della tacca.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "retta numerica",
+      "frazioni",
+      "numeri decimali"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D6 · Numeri sulla retta",
+    "statement": "<p>Posiziona sulla retta i seguenti numeri: \\[4 \\qquad 2{,}5 \\qquad \\frac{3}{2} \\qquad \\frac{5}{10}\\]<img data-savint-immagine=\"acc32924-9b55-4585-a298-fee446013fa6.png\" alt=\"Una retta orientata con nove tacche equidistanti; sotto la prima c'è 0, sotto la terza 1, sotto la settima 3\"> Numera le tacche da sinistra a destra partendo da 0: la tacca dello 0 è la numero 0, quella successiva la numero 1, e così via.</p>",
+    "advice": "<p>Fra 0 e 1 ci sono due intervalli: ogni tacca vale \\(0{,}5\\), e la tacca numero \\(k\\) rappresenta \\(k \\cdot 0{,}5\\). Quindi \\(4\\) va sulla tacca 8 (l'ultima), \\(2{,}5\\) sulla 5, \\(\\frac{3}{2} = 1{,}5\\) sulla 3, \\(\\frac{5}{10} = 0{,}5\\) sulla 1.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Su quale tacca va il numero 4?</p>",
+        "minValue": "8",
+        "maxValue": "8",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Su quale tacca va il numero 2,5?</p>",
+        "minValue": "5",
+        "maxValue": "5",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Su quale tacca va il numero \\(\\frac{3}{2}\\)?</p>",
+        "minValue": "3",
+        "maxValue": "3",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Su quale tacca va il numero \\(\\frac{5}{10}\\)?</p>",
+        "minValue": "1",
+        "maxValue": "1",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

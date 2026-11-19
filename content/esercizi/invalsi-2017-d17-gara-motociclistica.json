@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D17 · La gara motociclistica",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D17.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "probabilità",
+      "diagramma ad albero"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D17 · La gara motociclistica",
+    "statement": "<p>In una gara motociclistica la moto M ha probabilità di vincere la gara 0,3 se il terreno è bagnato e 0,6 se il terreno è asciutto. La probabilità che il giorno della gara il terreno sia asciutto è 0,2. <img data-savint-immagine=\"8263a799-e8a9-4234-898b-f4d303322f3c.png\" alt=\"Diagramma ad albero: terreno bagnato con probabilità 0,8, poi vince 0,3 e perde 0,7; terreno asciutto con probabilità 0,2, poi vince 0,6 e perde 0,4\"> Il diagramma può aiutare a determinare, per esempio, la probabilità che il terreno sia asciutto e che la moto M perda la gara. Essa è \\(0{,}2 \\cdot 0{,}4 = 0{,}08\\).</p>",
+    "advice": "<p>La moto vince lungo due rami: terreno bagnato e vince, \\(0{,}8 \\cdot 0{,}3 = 0{,}24\\); terreno asciutto e vince, \\(0{,}2 \\cdot 0{,}6 = 0{,}12\\). I due casi si escludono, quindi si sommano: \\(0{,}24 + 0{,}12 = 0{,}36\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Qual è la probabilità che la moto M vinca la gara? Scrivi il risultato come numero decimale.</p>",
+        "minValue": "0.36",
+        "maxValue": "0.36",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

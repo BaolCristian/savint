@@ -1,0 +1,85 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D29 · Lati e altezze di un triangolo",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D29.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "triangoli",
+      "disuguaglianza triangolare",
+      "proporzionalità inversa"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D29 · Lati e altezze di un triangolo",
+    "statement": "<p>Leggi con attenzione le affermazioni sui triangoli.</p>",
+    "advice": "<p>a) È la disuguaglianza triangolare: vera. b) Per ogni lato \\(b\\) e la sua altezza \\(h\\) vale \\(b \\cdot h = 2A\\), un prodotto costante: sono inversamente proporzionali. Vera. c) Da \\(a &lt; b + c\\) si ricava \\(a - b &lt; c\\): la differenza di due lati è sempre minore del terzo. Falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Se tre punti A, B, C non sono allineati, nel triangolo ABC ciascun lato è minore della somma degli altri due lati</p>",
+          "<p>Dato un triangolo di area \\(A\\), i lati e le altezze ad essi relative sono grandezze inversamente proporzionali</p>",
+          "<p>In un triangolo la differenza tra due lati può essere maggiore del terzo lato</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

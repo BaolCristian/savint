@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D18 · n per k",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "numeri relativi",
+      "retta numerica",
+      "stime"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D18 · n per k",
+    "statement": "<p>Sulla seguente retta orientata sono riportati alcuni numeri. <img data-savint-immagine=\"fa1dcbfa-5459-4e55-b9a7-99afff5c80fe.png\" alt=\"Una retta orientata con i numeri −4, −3, −2, −1, 0, 1; il punto p è poco a destra di −3, il punto n è poco a sinistra di 1\"> Se moltiplichi \\(n\\) per un numero indicato con \\(k\\) ottieni come risultato \\(p\\), cioè \\(n \\cdot k = p\\). Quale tra i seguenti può essere il valore di \\(k\\)?</p>",
+    "advice": "<p>\\(n\\) è positivo e un po' minore di 1 (circa \\(0{,}75\\)), \\(p\\) è negativo e vale circa \\(-3\\). Per passare da un positivo a un negativo \\(k\\) deve essere negativo; e siccome \\(|p|\\) è circa 4 volte \\(n\\), \\(k = -4\\): \\(0{,}75 \\cdot (-4) = -3\\). Con \\(k = -\\frac{1}{4}\\) si otterrebbe circa \\(-0{,}19\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(-4\\)</p>",
+          "<p>\\(4\\)</p>",
+          "<p>\\(-\\frac{1}{4}\\)</p>",
+          "<p>\\(\\frac{1}{4}\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

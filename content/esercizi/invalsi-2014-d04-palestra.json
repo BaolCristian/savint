@@ -1,0 +1,98 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D4 · La palestra",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D4.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "funzioni lineari",
+      "modellizzazione",
+      "grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D4 · La palestra",
+    "statement": "<p>Per frequentare una palestra Paolo deve pagare quest'anno una quota fissa di 60 euro e 5 euro per ogni ingresso. <img data-savint-immagine=\"99efd70f-9071-40be-beb0-b39abc29a579.png\" alt=\"Quattro grafici a punti del costo C in funzione del numero n di ingressi: Grafico 1 costante a 60, Grafico 2 da 0 a 90, Grafico 3 da 5 a 65, Grafico 4 da 60 a 160\"></p>",
+    "advice": "<p>a) Con 0 ingressi si pagano già 60 euro, e ogni ingresso aggiunge 5 euro: con 20 ingressi \\(60 + 100 = 160\\) euro. È il Grafico 4. b) Tolta la quota fissa restano \\(200 - 60 = 140\\) euro, e \\(140 : 5 = 28\\) ingressi. c) \\(C = 60 + 5n\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale fra i grafici descrive il costo \\(C\\) (in euro) della palestra in funzione del numero \\(n\\) di ingressi?</p>",
+        "choices": [
+          "<p>Grafico 1</p>",
+          "<p>Grafico 2</p>",
+          "<p>Grafico 3</p>",
+          "<p>Grafico 4</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Paolo ha a disposizione 200 euro. Se si iscrive alla palestra, qual è il numero massimo di ingressi a cui ha diritto quest'anno?</p>",
+        "minValue": "28",
+        "maxValue": "28",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>c) Completa la formula che esprime il costo \\(C\\) della palestra in funzione del numero \\(n\\) di ingressi. \\(C =\\)</p>",
+        "answer": "60 + 5*n",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}

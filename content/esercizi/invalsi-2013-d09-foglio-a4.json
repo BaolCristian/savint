@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D9 · Il foglio A4",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D9.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "stime",
+      "misure",
+      "area"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D9 · Il foglio A4",
+    "statement": "<p>Su una risma di carta di fogli di formato A4 è scritto: \\(80\\text{ g/m}^2\\) (cioè 80 grammi al metro quadrato); A4 \\(210 \\times 297\\) mm (cioè le dimensioni di un foglio A4 sono 0,210 metri per 0,297 metri). Un foglio A4 è all'incirca</p>",
+    "advice": "<p>L'area di un foglio è \\(0{,}210 \\cdot 0{,}297 \\approx 0{,}062\\text{ m}^2\\). Un metro quadrato pesa 80 g, quindi un foglio pesa \\(80 \\cdot 0{,}062 \\approx 5\\) g.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>0,5 grammi</p>",
+          "<p>1,5 grammi</p>",
+          "<p>5 grammi</p>",
+          "<p>10 grammi</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

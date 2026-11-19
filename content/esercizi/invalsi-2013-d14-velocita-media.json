@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D14 · La velocità media",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D14.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "velocità",
+      "media",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D14 · La velocità media",
+    "statement": "<p>Un automobilista percorre i primi 120 km di un certo percorso alla velocità media di 60 km/h e i successivi 120 km alla velocità media di 120 km/h. Qual è la sua velocità media durante l'intero percorso?</p>",
+    "advice": "<p>Non è la media fra 60 e 120. I primi 120 km richiedono 2 ore, i successivi 120 km 1 ora: 240 km in 3 ore, cioè \\(240 : 3 = 80\\) km/h.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>70 km/h</p>",
+          "<p>80 km/h</p>",
+          "<p>90 km/h</p>",
+          "<p>100 km/h</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

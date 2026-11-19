@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D21 · Somma di potenze",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D21.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "potenze",
+      "raccoglimento"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D21 · Somma di potenze",
+    "statement": "<p>L'espressione \\(a^{37} + a^{38}\\) è uguale a</p>",
+    "advice": "<p>Si raccoglie \\(a^{37}\\): \\(a^{37} + a^{38} = a^{37} + a^{37} \\cdot a = a^{37}(a + 1)\\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(2a^{75}\\)</p>",
+          "<p>\\(a^{75}\\)</p>",
+          "<p>\\(a^{37}(a + 1)\\)</p>",
+          "<p>\\(a^{37 \\cdot 38}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

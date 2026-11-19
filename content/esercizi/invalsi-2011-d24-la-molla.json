@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D24 · La molla",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D24.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "funzioni lineari",
+      "formule",
+      "modellizzazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D24 · La molla",
+    "statement": "<p>La formula \\(l = l_0 + k \\cdot P\\) esprime la lunghezza \\(l\\) di una molla al variare del peso \\(P\\) applicato. \\(l_0\\) rappresenta la lunghezza in centimetri «a riposo» della molla; \\(k\\) indica di quanto si allunga in centimetri la molla quando si applica una unità di peso. Quale delle formule elencate si adatta meglio alla seguente descrizione: «È una molla molto lunga e molto resistente alla trazione»?</p>",
+    "advice": "<p>Molto lunga: \\(l_0\\) grande (70 o 75 cm, non 15). Molto resistente alla trazione: si allunga pochissimo per ogni unità di peso, cioè \\(k\\) piccolo. Fra le molle lunghe, quella con \\(k = 0{,}01\\) è \\(l = 70 + 0{,}01 \\cdot P\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(l = 15 + 0{,}5 \\cdot P\\)</p>",
+          "<p>\\(l = 75 + 7 \\cdot P\\)</p>",
+          "<p>\\(l = 70 + 0{,}01 \\cdot P\\)</p>",
+          "<p>\\(l = 60 + 6 \\cdot P\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

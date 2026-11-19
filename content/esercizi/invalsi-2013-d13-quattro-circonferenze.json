@@ -1,0 +1,81 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D13 · Quattro circonferenze",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D13.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "circonferenza",
+      "cerchio",
+      "area",
+      "perimetro"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D13 · Quattro circonferenze",
+    "statement": "<p>Ricorda che la lunghezza di una circonferenza si calcola moltiplicando il suo diametro per \\(\\pi\\) e che l'area di un cerchio si ottiene moltiplicando il quadrato del suo raggio per \\(\\pi\\). Quattro circonferenze, ciascuna con diametro 10 cm, sono tangenti a due a due come mostrato nella seguente figura. <img data-savint-immagine=\"c4921b17-997e-468a-b2a6-2662446237df.png\" alt=\"Quattro cerchi uguali disposti in un quadrato due per due, tangenti fra loro; in grigio la regione al centro, delimitata da quattro archi\"></p>",
+    "advice": "<p>a) La regione grigia è delimitata da quattro archi, ciascuno un quarto di circonferenza: in tutto una circonferenza intera, \\(10\\pi\\) cm. b) I centri dei quattro cerchi formano un quadrato di lato 10 cm (area \\(100\\text{ cm}^2\\)); dentro il quadrato ci sono quattro quarti di cerchio di raggio 5 cm, cioè un cerchio intero di area \\(25\\pi\\). La regione grigia misura \\(100 - 25\\pi \\approx 21{,}46\\text{ cm}^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Il perimetro della regione evidenziata in grigio misura in centimetri:</p>",
+        "choices": [
+          "<p>\\(20\\pi\\)</p>",
+          "<p>\\(10\\pi\\)</p>",
+          "<p>\\(5\\pi\\)</p>",
+          "<p>\\(4\\pi\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Quanto misura, in \\(\\text{cm}^2\\), la superficie della regione evidenziata in grigio? Arrotonda ai centesimi.</p>",
+        "minValue": "(21.46) - (0.05)",
+        "maxValue": "(21.46) + (0.05)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D8 · Il televisore 16:9",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D8.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "teorema di Pitagora",
+      "proporzioni",
+      "rettangolo"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D8 · Il televisore 16:9",
+    "statement": "<p>La dimensione di un televisore è la misura della diagonale dello schermo espressa in pollici (1 pollice = 2,54 cm). Nei televisori di nuova generazione il rapporto tra la larghezza e l'altezza dello schermo è 16:9.</p>",
+    "advice": "<p>a) \\(\\frac{\\text{altezza}}{57{,}5} = \\frac{9}{16}\\), quindi altezza \\(= 57{,}5 \\cdot 9 : 16 \\approx 32{,}3\\) cm. b) Con il teorema di Pitagora la diagonale è \\(\\sqrt{57{,}5^2 + 32{,}3^2} \\approx \\sqrt{4\\,350} \\approx 66\\) cm, cioè 26 pollici (66,04 cm).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Se la larghezza dello schermo di uno di questi televisori è circa 57,5 cm, qual è all'incirca la sua altezza, in cm?</p>",
+        "minValue": "(32.34) - (0.5)",
+        "maxValue": "(32.34) + (0.5)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Da quanti pollici è il televisore?</p>",
+        "choices": [
+          "<p>20 pollici (= 50,80 cm)</p>",
+          "<p>26 pollici (= 66,04 cm)</p>",
+          "<p>28 pollici (= 71,12 cm)</p>",
+          "<p>32 pollici (= 81,28 cm)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

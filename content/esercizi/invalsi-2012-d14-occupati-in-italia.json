@@ -1,0 +1,98 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D14 · Gli occupati in Italia",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D14.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "tabelle",
+      "variazioni percentuali",
+      "media"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D14 · Gli occupati in Italia",
+    "statement": "<p>La seguente tabella riporta il numero di occupati, in migliaia, in Italia in ciascuno degli anni dal 1995 al 2005. \\[\\begin{array}{|c|c|} \\hline \\text{Anni} &amp; \\text{Occupati (in migliaia)} \\\\ \\hline 1995 &amp; 20\\,240 \\\\ \\hline 1996 &amp; 20\\,326 \\\\ \\hline 1997 &amp; 20\\,384 \\\\ \\hline 1998 &amp; 20\\,591 \\\\ \\hline 1999 &amp; 20\\,847 \\\\ \\hline 2000 &amp; 21\\,210 \\\\ \\hline 2001 &amp; 21\\,604 \\\\ \\hline 2002 &amp; 21\\,913 \\\\ \\hline 2003 &amp; 22\\,241 \\\\ \\hline 2004 &amp; 22\\,404 \\\\ \\hline 2005 &amp; 22\\,563 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) L'aumento è \\(21\\,604 - 21\\,210 = 394\\) migliaia, e la percentuale si calcola rispetto al valore di partenza, quello del 2000: \\(\\frac{394}{21\\,210} \\times 100\\). b) \\(22\\,563 - 20\\,240 = 2\\,323\\) migliaia. c) Dal 1995 al 2005 ci sono 10 anni: \\(2\\,323 : 10 = 232{,}3\\) migliaia all'anno.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale tra le seguenti espressioni dà come risultato l'aumento percentuale del numero di occupati nel 2001 rispetto al numero di occupati nel 2000?</p>",
+        "choices": [
+          "<p>\\(\\frac{21\\,604}{21\\,210} \\times 100\\)</p>",
+          "<p>\\(\\frac{394}{21\\,210} \\times 100\\)</p>",
+          "<p>\\(\\frac{21\\,210}{21\\,604} \\times 100\\)</p>",
+          "<p>\\(\\frac{394}{21\\,604} \\times 100\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Di quante migliaia sono aumentati gli occupati dal 1995 al 2005?</p>",
+        "minValue": "2323",
+        "maxValue": "2323",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>c) Qual è stato l'aumento medio annuo del numero di occupati nei dieci anni dal 1995 al 2005, in migliaia?</p>",
+        "minValue": "232.3",
+        "maxValue": "232.3",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

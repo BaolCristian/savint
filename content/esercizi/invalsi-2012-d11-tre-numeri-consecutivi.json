@@ -1,0 +1,127 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D11 · Tre numeri consecutivi",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D11. Nel fascicolo la spiegazione (b) e la dimostrazione (c) andavano scritte: qui si sceglie fra quelle proposte; nella tabella si può scrivere il prodotto o il suo risultato.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "divisibilità",
+      "polinomi",
+      "argomentare"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2012 · D11 · Tre numeri consecutivi",
+    "statement": "<p>a) Osserva e completa la seguente tabella. \\[\\begin{array}{|c|c|} \\hline n &amp; (n-1)n(n+1) \\\\ \\hline 2 &amp; 1 \\times 2 \\times 3 \\\\ \\hline 3 &amp; 2 \\times 3 \\times 4 \\\\ \\hline 4 &amp; \\ldots \\\\ \\hline 5 &amp; \\ldots \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Per \\(n = 4\\): \\(3 \\times 4 \\times 5 = 60\\); per \\(n = 5\\): \\(4 \\times 5 \\times 6 = 120\\). b) \\(n - 1\\), \\(n\\), \\(n + 1\\) sono tre numeri naturali consecutivi: almeno uno è pari e uno è multiplo di 3, quindi il prodotto è divisibile per 2 e per 3, cioè per 6. Controllare qualche caso non basta: bisogna che valga per ogni \\(n\\). c) Si raccoglie \\(n\\) e si riconosce una differenza di quadrati: \\(n^3 - n = n(n^2 - 1) = n(n - 1)(n + 1)\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Per \\(n = 4\\): \\((n-1)n(n+1) =\\)</p>",
+        "answer": "3*4*5",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Per \\(n = 5\\): \\((n-1)n(n+1) =\\)</p>",
+        "answer": "4*5*6",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Giulia afferma: «Per ogni numero naturale \\(n\\) maggiore di 1, \\((n-1)n(n+1)\\) è divisibile per 6». Perché Giulia ha ragione?</p>",
+        "choices": [
+          "<p>Perché nella tabella i risultati 6, 24, 60, 120 sono tutti divisibili per 6</p>",
+          "<p>Perché fra tre numeri naturali consecutivi c'è sempre almeno un numero pari e sempre un multiplo di 3, quindi il prodotto è divisibile per 2 e per 3</p>",
+          "<p>Perché la somma dei tre fattori è sempre un multiplo di 6</p>",
+          "<p>Perché \\(1 \\times 2 \\times 3 = 6\\), e il primo prodotto della tabella è divisibile per 6</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) Francesco afferma: «\\(n^3 - n\\) è uguale a \\((n-1)n(n+1)\\)». Quale ragionamento dimostra che Francesco ha ragione?</p>",
+        "choices": [
+          "<p>Per \\(n = 2\\) si ottiene \\(8 - 2 = 6\\) e \\(1 \\times 2 \\times 3 = 6\\): i due risultati coincidono</p>",
+          "<p>\\((n-1)n(n+1) = (n^2 - 1) \\cdot n\\), ma \\(n^2 - 1 = (n-1)^2\\), quindi si ottiene \\(n^3 - n\\)</p>",
+          "<p>\\(n^3 - n = n(n^2 - 1) = n(n-1)(n+1)\\), raccogliendo \\(n\\) e scomponendo la differenza di quadrati \\(n^2 - 1\\)</p>",
+          "<p>\\(n^3 - n = n^2\\), e anche \\((n-1)n(n+1)\\) ha il termine di grado più alto uguale a \\(n^2\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

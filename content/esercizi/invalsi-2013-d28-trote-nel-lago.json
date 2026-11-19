@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D28 · Le trote nel lago",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "campione",
+      "proporzioni",
+      "stime"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D28 · Le trote nel lago",
+    "statement": "<p>Un gruppo di biologi, per stimare quante trote ci sono in un lago, ne pesca 200 e, dopo averle marcate, le rigetta nel lago. Dopo qualche giorno, utilizzando la stessa rete, vengono pescate 720 trote e solo 12 di esse sono marcate. In base a queste informazioni, quante trote possiamo pensare che ci siano all'incirca nel lago?</p>",
+    "advice": "<p>Nel campione le trote marcate sono \\(\\frac{12}{720} = \\frac{1}{60}\\). Se nel lago la proporzione è la stessa, le 200 trote marcate sono \\(\\frac{1}{60}\\) del totale: \\(200 \\cdot 60 = 12\\,000\\) trote.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>2 000</p>",
+          "<p>9 000</p>",
+          "<p>12 000</p>",
+          "<p>144 000</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

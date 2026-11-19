@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D29 · Frazioni decimali",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D29.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "numeri decimali",
+      "potenze di 10"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D29 · Frazioni decimali",
+    "statement": "<p>L'espressione \\(\\frac{9}{10} + \\frac{8}{10^2} + \\frac{7}{10^4} + \\frac{2}{10^5}\\) si può rappresentare mediante il numero decimale</p>",
+    "advice": "<p>Ogni frazione è una cifra in una posizione: 9 decimi, 8 centesimi, 0 millesimi (manca \\(\\frac{\\ldots}{10^3}\\)), 7 decimillesimi, 2 centomillesimi: \\(0{,}9 + 0{,}08 + 0{,}0007 + 0{,}00002 = 0{,}98072\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>98,72</p>",
+          "<p>9,8072</p>",
+          "<p>0,9872</p>",
+          "<p>0,98072</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

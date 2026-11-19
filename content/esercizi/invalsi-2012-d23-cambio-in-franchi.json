@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D23 · Il cambio in franchi",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D23. Nel fascicolo la motivazione della parte b andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "funzioni lineari",
+      "modellizzazione",
+      "argomentare"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2012 · D23 · Il cambio in franchi",
+    "statement": "<p>Un turista italiano in viaggio in Svizzera, prima di cambiare i suoi euro in franchi, esamina le seguenti proposte fatte da due banche. Banca A: 1 euro viene scambiato con 1,412 franchi senza spese. Banca B: 1 euro viene scambiato con 1,416 franchi con una commissione fissa di 2 franchi.</p>",
+    "advice": "<p>a) \\(300 \\cdot 1{,}412 = 423{,}6\\) franchi. b) Cambiando \\(x\\) euro, A dà \\(1{,}412x\\) franchi e B dà \\(1{,}416x - 2\\). B dà di più quando \\(0{,}004x &gt; 2\\), cioè per \\(x &gt; 500\\) euro: per esempio con 1 000 euro A dà 1 412 franchi e B 1 414. Carlo non ha ragione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Se il turista cambia 300 euro, quanti franchi ottiene presso la banca A?</p>",
+        "minValue": "423.6",
+        "maxValue": "423.6",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Carlo afferma che, qualunque sia la somma che si vuole cambiare, è sempre più conveniente la banca A. Carlo ha ragione?</p>",
+        "choices": [
+          "<p>Carlo ha ragione perché la banca A non fa pagare spese</p>",
+          "<p>Carlo ha ragione perché la commissione di 2 franchi rende la banca B sempre più cara</p>",
+          "<p>Carlo non ha ragione perché per somme maggiori di 500 euro la banca B dà più franchi (con 1 000 euro: 1 412 franchi dalla A, 1 414 dalla B)</p>",
+          "<p>Carlo non ha ragione perché la banca B conviene sempre, dato che il suo cambio è più alto</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

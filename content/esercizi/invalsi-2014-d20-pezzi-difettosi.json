@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D20 · I pezzi difettosi",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D20. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "proporzioni",
+      "stime"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D20 · I pezzi difettosi",
+    "statement": "<p>Da un controllo di qualità è emerso che una macchina ha prodotto 14 pezzi difettosi su una produzione di 1 200 pezzi. Che stima è ragionevole fare del numero di pezzi difettosi su una produzione di 2 150 pezzi?</p>",
+    "advice": "<p>Si suppone che la proporzione di pezzi difettosi resti la stessa: \\(14 : 1200 = x : 2150\\), da cui \\(x = \\frac{14 \\cdot 2150}{1200} \\approx 25{,}08\\): circa 25 pezzi.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Numero di pezzi difettosi (approssimato all'unità):</p>",
+        "minValue": "25",
+        "maxValue": "25",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

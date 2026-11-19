@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D14 · La somma di tre dispari consecutivi",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D14.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "calcolo letterale",
+      "multipli",
+      "numeri pari e dispari"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D14 · La somma di tre dispari consecutivi",
+    "statement": "<p>L'insegnante chiede: «Se \\(n\\) è un numero naturale qualsiasi, cosa si ottiene addizionando i tre numeri \\(2n+1\\), \\(2n+3\\) e \\(2n+5\\)?» Mario afferma: «Si ottiene sempre il triplo di uno dei tre numeri». Luisa risponde: «Si ottiene sempre un numero dispari». Giovanni dice: «Si ottiene sempre un multiplo di 3». Chi ha ragione?</p>",
+    "advice": "<p>La somma è \\(6n + 9 = 3(2n + 3)\\): è il triplo del numero centrale \\(2n + 3\\) (Mario), è un multiplo di 3 (Giovanni) ed è dispari, perché \\(6n\\) è pari e \\(9\\) è dispari (Luisa). Hanno ragione tutti e tre.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Tutti e tre</p>",
+          "<p>Solo Mario</p>",
+          "<p>Solo Luisa</p>",
+          "<p>Solo Giovanni</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

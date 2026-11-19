@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D27 · Un polinomio divisibile",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "polinomi",
+      "divisibilità",
+      "scomposizione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D27 · Un polinomio divisibile",
+    "statement": "<p>Il polinomio \\(x^3 - 8\\) è divisibile per</p>",
+    "advice": "<p>Un polinomio è divisibile per \\(x - c\\) quando si annulla per \\(x = c\\) (teorema di Ruffini): \\(2^3 - 8 = 0\\). Infatti \\(x^3 - 8 = (x - 2)(x^2 + 2x + 4)\\). Per \\(x = -8\\), \\(-4\\), \\(4\\) il polinomio non si annulla.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(x + 8\\)</p>",
+          "<p>\\(x - 2\\)</p>",
+          "<p>\\(x + 4\\)</p>",
+          "<p>\\(x - 4\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

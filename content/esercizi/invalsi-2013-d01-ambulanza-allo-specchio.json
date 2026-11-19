@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D1 · L'ambulanza allo specchio",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D1. Le quattro scritte delle risposte sono in un'unica immagine, con le lettere A, B, C, D.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "simmetria assiale",
+      "trasformazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D1 · L'ambulanza allo specchio",
+    "statement": "<p>Osserva la seguente fotografia: <img data-savint-immagine=\"0a28a47d-460a-4bc8-8bb7-13bdd201dc0a.png\" alt=\"Il cofano di un'ambulanza con la scritta AMBULANZA scritta al contrario, come allo specchio\"> Gli automobilisti che precedono l'autoambulanza vedono riflessa nello specchietto retrovisore la scritta: <img data-savint-immagine=\"1aa950c6-7155-479b-b392-f56f77ab1326.png\" alt=\"La scritta AMBULANZA leggibile normalmente\"> Se la parola \"AMBULANZA\" fosse scritta normalmente sulle autoambulanze, in quale dei seguenti modi gli automobilisti la vedrebbero riflessa nello specchietto retrovisore? <img data-savint-immagine=\"526f7bb9-6d8c-46c0-9c35-e80cd26c872a.png\" alt=\"Quattro scritte: A ribaltata da destra a sinistra, B normale, C capovolta dall'alto in basso e letta da sinistra, D capovolta dall'alto in basso e ribaltata\"></p>",
+    "advice": "<p>Lo specchietto scambia la destra con la sinistra, ma non l'alto con il basso: per questo sulle ambulanze la scritta è ribaltata, così allo specchio si legge dritta. Una scritta normale, riflessa, appare ribaltata da destra a sinistra (si legge «AZNALUBMA» con le lettere a specchio) e non capovolta: è la scritta A.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Quale scritta vedrebbero?</p>",
+        "choices": [
+          "<p>A</p>",
+          "<p>B</p>",
+          "<p>C</p>",
+          "<p>D</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

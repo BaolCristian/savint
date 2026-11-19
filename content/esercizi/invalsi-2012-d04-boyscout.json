@@ -1,0 +1,85 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D4 · L'età dei boyscout",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D4.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "istogrammi",
+      "frequenze percentuali",
+      "lettura di grafici"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D4 · L'età dei boyscout",
+    "statement": "<p>Un gruppo di boyscout è formato da ragazzi di età compresa tra i 10 e i 14 anni. La distribuzione delle frequenze percentuali delle età è riportata nel diagramma seguente. <img data-savint-immagine=\"673685b7-0d84-4015-a245-b27c218101f7.png\" alt=\"Diagramma a barre dei ragazzi per età in percentuale: 10 anni 5%, 11 anni 30%, 12 anni 40%, 13 anni 15%, 14 anni 10%\"></p>",
+    "advice": "<p>Dal diagramma: 10 anni 5%, 11 anni 30%, 12 anni 40%, 13 anni 15%, 14 anni 10%. a) Meno di 13 anni: 5% + 30% + 40% = 75%, non più dell'80%: falsa. b) Più di 11 anni: 40% + 15% + 10% = 65%, meno del 70%: vera. c) 12 o 14 anni: 40% + 10% = 50%; 10, 11 o 13 anni: 5% + 30% + 15% = 50%: vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Sulla base dei dati riportati nel diagramma, indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Più dell'80% dei ragazzi ha meno di 13 anni</p>",
+          "<p>Meno del 70% dei ragazzi ha più di 11 anni</p>",
+          "<p>La percentuale di ragazzi che hanno 12 o 14 anni è uguale alla percentuale di ragazzi che hanno 10 o 11 o 13 anni</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

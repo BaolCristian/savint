@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D17 · Asse di simmetria del parallelogramma",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D17.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "simmetria",
+      "parallelogramma"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D17 · Asse di simmetria del parallelogramma",
+    "statement": "<p>Quale fra le rette a, b e c, nel piano della figura, è un asse di simmetria del parallelogramma PQRS? <img data-savint-immagine=\"1829f7f7-48d5-4013-ac9e-073e7d962062.png\" alt=\"Il parallelogramma PQRS con la retta a passante per P e R, la retta c passante per Q e S, e la retta b che le incrocia nel centro\"></p>",
+    "advice": "<p>Le rette a e c sono le diagonali PR e QS: una diagonale è asse di simmetria solo se il parallelogramma è un rombo, e PQRS ha i lati PQ e PS ben diversi. La retta b passa per il centro, ma non è perpendicolare ai lati: lo sarebbe solo in un rettangolo. Un parallelogramma qualunque non ha assi di simmetria.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>La retta a</p>",
+          "<p>La retta b</p>",
+          "<p>La retta c</p>",
+          "<p>Nessuna delle tre</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

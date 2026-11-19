@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D6 · L'atomo di idrogeno",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D6.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "notazione scientifica",
+      "potenze",
+      "stime"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D6 · L'atomo di idrogeno",
+    "statement": "<p>Un atomo di idrogeno contiene un protone la cui massa \\(m_p\\) è all'incirca \\(2 \\cdot 10^{-27}\\) kg, e un elettrone la cui massa \\(m_e\\) è all'incirca \\(9 \\cdot 10^{-31}\\) kg. Quale tra i seguenti valori approssima meglio la massa totale dell'atomo di idrogeno (cioè \\(m_p + m_e\\))?</p>",
+    "advice": "<p>\\(9 \\cdot 10^{-31} = 0{,}0009 \\cdot 10^{-27}\\): la massa dell'elettrone è circa duemila volte più piccola di quella del protone. \\(m_p + m_e = 2{,}0009 \\cdot 10^{-27} \\approx 2 \\cdot 10^{-27}\\) kg. Non si sommano le mantisse se gli esponenti sono diversi, e gli esponenti si sommano solo nel prodotto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(2 \\cdot 10^{-27}\\) kg</p>",
+          "<p>\\(11 \\cdot 10^{-31}\\) kg</p>",
+          "<p>\\(11 \\cdot 10^{-58}\\) kg</p>",
+          "<p>\\(18 \\cdot 10^{-58}\\) kg</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

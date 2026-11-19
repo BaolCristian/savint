@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D9 · La corsa campestre",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D9. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "percentuali",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D9 · La corsa campestre",
+    "statement": "<p>A una corsa campestre partecipa il 60% degli alunni di una scuola. Dopo i primi 3 km il 30% degli alunni partecipanti si ritira e, dopo altri 5 km, si ritira il 40% dei restanti. Tutti gli altri arrivano al traguardo. Se gli alunni della scuola sono 1 000, quanti arrivano al traguardo?</p>",
+    "advice": "<p>Partecipano \\(1000 \\cdot 0{,}6 = 600\\) alunni. Dopo 3 km se ne ritira il 30%: restano \\(600 \\cdot 0{,}7 = 420\\). Poi si ritira il 40% di questi: restano \\(420 \\cdot 0{,}6 = 252\\) alunni. Le percentuali non si sommano: ognuna si calcola sui rimasti.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Numero di alunni che arrivano al traguardo:</p>",
+        "minValue": "252",
+        "maxValue": "252",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

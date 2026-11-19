@@ -1,0 +1,84 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D1 · Lo zucchero nei cereali",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D1.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "percentuali",
+      "tabelle"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D1 · Lo zucchero nei cereali",
+    "statement": "<p>La tabella seguente riporta alcune informazioni nutrizionali stampate su tre confezioni di cereali per la prima colazione. \\[\\begin{array}{|c|c|c|} \\hline &amp; \\text{Grammi di cereali} &amp; \\text{Percentuale di zucchero} \\\\ \\hline \\text{Confezione 1} &amp; 100 &amp; 20\\% \\\\ \\hline \\text{Confezione 2} &amp; 200 &amp; 10\\% \\\\ \\hline \\text{Confezione 3} &amp; 70 &amp; 20\\% \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>Lo zucchero è la percentuale dei grammi di cereali. Confezione 1: \\(20\\%\\) di 100 g = 20 g; confezione 2: \\(10\\%\\) di 200 g = 20 g; confezione 3: \\(20\\%\\) di 70 g = 14 g. a) 20 g e 14 g: falsa. b) 20 g e 20 g sono uguali, la 1 non ne ha di più: falsa. c) 20 g contro 14 g: vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Sulla base dei dati in tabella, indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>La quantità di zucchero contenuta nella confezione 2 è uguale alla quantità di zucchero contenuta nella confezione 3</p>",
+          "<p>La quantità di zucchero contenuta nella confezione 1 è maggiore della quantità di zucchero contenuta nella confezione 2</p>",
+          "<p>La quantità di zucchero contenuta nella confezione 1 è maggiore della quantità di zucchero contenuta nella confezione 3</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

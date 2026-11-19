@@ -1,0 +1,188 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D6 · Il test diagnostico",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D6.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "probabilità",
+      "diagramma ad albero",
+      "tabelle a doppia entrata"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2012 · D6 · Il test diagnostico",
+    "statement": "<p>Si sa che in una popolazione di 10 000 individui il 10% è affetto da una malattia, mentre il 90% è sano. Il test che diagnostica la presenza della malattia è affidabile solo parzialmente: nel 5% dei casi rileva la malattia su un individuo sano e nell'1% dei casi non rileva la malattia su un individuo malato. Il diagramma seguente riassume la situazione. <img data-savint-immagine=\"1ad1d28f-d0a6-41f7-95be-503763145e9e.png\" alt=\"Diagramma ad albero: 10 000 individui, di cui 9 000 sani (8 550 esito corretto del test, 450 esito errato) e 1 000 malati (990 esito corretto, 10 esito errato)\"> a) Utilizzando i dati del diagramma ad albero, completa la seguente tabella. \\[\\begin{array}{|c|c|c|c|} \\hline &amp; \\text{Esito corretto} &amp; \\text{Esito errato} &amp; \\text{Totale} \\\\ \\hline \\text{Sani} &amp; \\ldots &amp; 450 &amp; \\ldots \\\\ \\hline \\text{Malati} &amp; \\ldots &amp; \\ldots &amp; \\ldots \\\\ \\hline \\text{Totale} &amp; 9\\,540 &amp; \\ldots &amp; 10\\,000 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Dall'albero: sani con esito corretto 8 550, in tutto 9 000; malati con esito corretto 990 ed errato 10, in tutto 1 000; esiti errati \\(450 + 10 = 460\\). b) Gli esiti corretti sono \\(8\\,550 + 990 = 9\\,540\\) su 10 000: \\(\\frac{9\\,540}{10\\,000} = 95{,}4\\%\\). c) Ora i casi possibili sono solo i 9 540 esiti corretti, e di questi 8 550 sono sani: \\(\\frac{8\\,550}{9\\,540} \\approx 0{,}896\\), cioè \\(89{,}6\\%\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Sani con esito corretto del test:</p>",
+        "minValue": "8550",
+        "maxValue": "8550",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Sani, totale:</p>",
+        "minValue": "9000",
+        "maxValue": "9000",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Malati con esito corretto del test:</p>",
+        "minValue": "990",
+        "maxValue": "990",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Malati con esito errato del test:</p>",
+        "minValue": "10",
+        "maxValue": "10",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Malati, totale:</p>",
+        "minValue": "1000",
+        "maxValue": "1000",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Totale degli esiti errati del test:</p>",
+        "minValue": "460",
+        "maxValue": "460",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Qual è la probabilità che l'esito del test sia corretto per una persona scelta a caso da quella popolazione?</p>",
+        "choices": [
+          "<p>99,0%</p>",
+          "<p>97,0%</p>",
+          "<p>95,4%</p>",
+          "<p>85,5%</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>c) Qual è la probabilità che un individuo, preso a caso tra tutti quelli che hanno avuto un esito corretto al test, sia sano? Scrivi il risultato in percentuale con una cifra dopo la virgola (solo il numero).</p>",
+        "minValue": "(89.6) - (0.05)",
+        "maxValue": "(89.6) + (0.05)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

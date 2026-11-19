@@ -1,0 +1,51 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D18 · Il trapezio circoscritto",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "area",
+      "trapezio",
+      "cerchio inscritto"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D18 · Il trapezio circoscritto",
+    "statement": "<p>Il trapezio \\(ABCD\\), circoscritto a un cerchio di raggio 5 cm, ha l'area di \\(120\\text{ cm}^2\\). <img data-savint-immagine=\"8ced7087-6f63-4897-aa2b-c05e4bdd707c.png\" alt=\"Il trapezio ABCD con la base maggiore AB in basso, circoscritto a un cerchio che tocca le due basi e i due lati obliqui\"></p>",
+    "advice": "<p>Il cerchio tocca entrambe le basi: l'altezza del trapezio è il diametro, 10 cm. Da \\(\\frac{(AB + DC) \\cdot 10}{2} = 120\\) si ricava \\(AB + DC = \\frac{240}{10} = 24\\) cm.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Quanto misura la somma delle basi \\(AB\\) e \\(DC\\), in cm?</p>",
+        "minValue": "24",
+        "maxValue": "24",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

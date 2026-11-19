@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D6 · Marco e i numeri primi",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D6. Nel fascicolo la motivazione andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "numeri primi",
+      "controesempio",
+      "argomentare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D6 · Marco e i numeri primi",
+    "statement": "<p>Marco afferma che, per ogni numero naturale \\(n\\) maggiore di 0, \\(n^2 + n + 1\\) è un numero primo. Marco ha ragione?</p>",
+    "advice": "<p>Per \\(n = 1, 2, 3\\) si ottengono 3, 7, 13, che sono primi, ma qualche esempio non basta a dire «per ogni \\(n\\)». Per \\(n = 4\\): \\(16 + 4 + 1 = 21 = 3 \\cdot 7\\), che non è primo. Basta un controesempio: Marco non ha ragione.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Marco ha ragione, perché per \\(n = 1, 2, 3\\) si ottengono 3, 7 e 13, che sono numeri primi</p>",
+          "<p>Marco ha ragione, perché \\(n^2 + n + 1\\) è sempre dispari</p>",
+          "<p>Marco non ha ragione, perché per \\(n = 4\\) si ottiene \\(21 = 3 \\cdot 7\\), che non è primo</p>",
+          "<p>Marco non ha ragione, perché \\(n^2 + n + 1\\) è sempre pari</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

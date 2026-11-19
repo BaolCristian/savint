@@ -1,0 +1,127 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D20 · Il cambio euro-dollaro",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D20. Nella parte b la giustificazione si sceglie fra quelle proposte invece di scriverla.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "lettura di grafici",
+      "proporzionalità",
+      "cambio di valuta"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D20 · Il cambio euro-dollaro",
+    "statement": "<p>Il grafico rappresenta l'andamento del cambio euro-dollaro (quanti dollari vale 1 euro) nel periodo 3 settembre 2009 - 3 marzo 2010. <img data-savint-immagine=\"4296a38a-c3a0-4392-b012-dfe48c34b901.png\" alt=\"Grafico «La frenata dell'euro»: 1,42 il 3 settembre, 1,50 il 21 ottobre, 1,51 il 25 novembre, 1,42 il 21 dicembre 2009, 1,45 l'11 gennaio, 1,38 il 28 gennaio, 1,34 il 18 febbraio, 1,37 il 3 marzo 2010\"></p>",
+    "advice": "<p>a) e b) Conviene cambiare euro in dollari quando con 1 euro si ottengono più dollari: fra il 21 ottobre e il 25 novembre 2009 il cambio è al massimo (1,50 e 1,51). c) Il 18 febbraio 1 euro vale 1,34 dollari: \\(1\\,000 \\cdot 1{,}34 = 1\\,340\\) dollari. d) Servono \\(1\\,000 : 1{,}34 \\approx 746\\) euro.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) In base al grafico in quale periodo mi sarebbe convenuto cambiare i miei euro in dollari per andare negli Stati Uniti?</p>",
+        "choices": [
+          "<p>Dal 3 settembre al 21 ottobre 2009</p>",
+          "<p>Dal 21 ottobre al 25 novembre del 2009</p>",
+          "<p>Dall'11 gennaio al 28 gennaio 2010</p>",
+          "<p>Dal 18 febbraio al 3 marzo 2010</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Quale fra le seguenti giustifica la risposta?</p>",
+        "choices": [
+          "<p>In quel periodo con 1 euro si ottenevano più dollari che in tutti gli altri periodi</p>",
+          "<p>In quel periodo con 1 dollaro si ottenevano più euro che in tutti gli altri periodi</p>",
+          "<p>In quel periodo il valore dell'euro rispetto al dollaro è sceso più rapidamente</p>",
+          "<p>In quel periodo il cambio è rimasto quasi costante</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>c) Se Maria il 18 febbraio 2010 cambia 1 000 euro in dollari, quanti dollari riceve in cambio?</p>",
+        "minValue": "1340",
+        "maxValue": "1340",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>d) Sempre lo stesso giorno (18 febbraio), quanti euro deve cambiare Maria per avere 1 000 dollari? Arrotonda all'unità.</p>",
+        "minValue": "(1000/1.34) - (0.5)",
+        "maxValue": "(1000/1.34) + (0.5)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D24 · La tenda da sole",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D24. Nel fascicolo andavano scritti anche i calcoli: qui si riporta solo il risultato.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "teorema di Pitagora",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D24 · La tenda da sole",
+    "statement": "<p>Occorre confezionare una tenda da sole per il balcone in figura. La tenda deve essere fissata al muro a 3 m di altezza dal pavimento del balcone, che è largo 1 m. La tenda deve sporgere 0,5 m dalla ringhiera che è alta 1 m. <img data-savint-immagine=\"c7fa317d-55d9-49fe-8b2d-dece864237d5.png\" alt=\"Un balcone largo 1 m con la ringhiera alta 1 m; la tenda parte dal muro a 3 m di altezza e scende fino all'altezza della ringhiera, 0,5 m oltre la ringhiera; x è la lunghezza della tenda\"></p>",
+    "advice": "<p>La tenda è l'ipotenusa di un triangolo rettangolo. Il cateto verticale va da 3 m all'altezza della ringhiera: \\(3 - 1 = 2\\) m; quello orizzontale va dal muro a 0,5 m oltre la ringhiera: \\(1 + 0{,}5 = 1{,}5\\) m. \\(x = \\sqrt{2^2 + 1{,}5^2} = \\sqrt{4 + 2{,}25} = \\sqrt{6{,}25} = 2{,}5\\) m.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Qual è la lunghezza \\(x\\) della tenda, in metri?</p>",
+        "minValue": "(2.5) - (0.01)",
+        "maxValue": "(2.5) + (0.01)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

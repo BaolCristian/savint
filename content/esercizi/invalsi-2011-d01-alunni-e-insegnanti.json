@@ -1,0 +1,84 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D1 · Alunni e insegnanti",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D1. La tabella è trasposta: le aree geografiche sono in colonna.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "tabelle",
+      "rapporti"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D1 · Alunni e insegnanti",
+    "statement": "<p>Nella tabella che vedi sono riportati i dati relativi alla distribuzione di alunni e insegnanti nella scuola secondaria di primo grado in Italia. \\[\\begin{array}{|l|r|r|r|r|} \\hline &amp; \\text{ITALIA} &amp; \\text{Nord} &amp; \\text{Centro} &amp; \\text{Sud} \\\\ \\hline \\text{Scuole} &amp; 7\\,939 &amp; 3\\,381 &amp; 1\\,358 &amp; 3\\,200 \\\\ \\hline \\text{Classi} &amp; 82\\,446 &amp; 33\\,131 &amp; 14\\,656 &amp; 34\\,659 \\\\ \\hline \\text{Alunni (compresi i ripetenti), maschi e femmine} &amp; 1\\,727\\,339 &amp; 711\\,292 &amp; 312\\,700 &amp; 703\\,347 \\\\ \\hline \\text{Alunni (compresi i ripetenti), femmine} &amp; 826\\,869 &amp; 339\\,508 &amp; 150\\,098 &amp; 337\\,263 \\\\ \\hline \\text{Ripetenti, maschi e femmine} &amp; 51\\,407 &amp; 19\\,615 &amp; 8\\,066 &amp; 23\\,726 \\\\ \\hline \\text{Ripetenti, femmine} &amp; 16\\,199 &amp; 5\\,679 &amp; 2\\,508 &amp; 8\\,012 \\\\ \\hline \\text{Insegnanti} &amp; 212\\,041 &amp; 86\\,312 &amp; 36\\,570 &amp; 89\\,159 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Nel Nord gli alunni sono 711 292, di cui 339 508 femmine: i maschi sono \\(711\\,292 - 339\\,508 = 371\\,784\\), più delle femmine. Falsa. b) In Italia \\(212\\,041 : 82\\,446 \\approx 2{,}57\\) insegnanti per classe, meno di 3. Vera. c) Nel Sud \\(34\\,659 : 3\\,200 \\approx 10{,}8\\) classi per scuola, più di 10. Vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Sulla base dei dati in tabella, indica se le seguenti affermazioni sono vere o false.</p>",
+        "choices": [
+          "<p>Nel Nord gli alunni maschi sono meno delle femmine</p>",
+          "<p>In Italia il rapporto insegnanti/classi è inferiore a 3</p>",
+          "<p>Nel Sud ci sono mediamente più di 10 classi per scuola</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

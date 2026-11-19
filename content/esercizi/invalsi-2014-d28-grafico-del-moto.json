@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D28 · Il grafico del moto",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "grafici",
+      "velocità",
+      "lettura di grafici"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D28 · Il grafico del moto",
+    "statement": "<p>Il seguente grafico rappresenta le posizioni assunte da un corpo in funzione del tempo. La posizione \\(s\\) è espressa in chilometri (km) e il tempo \\(t\\) in ore (h). <img data-savint-immagine=\"d527d5e9-d27e-4c57-bba6-db0a735ad581.png\" alt=\"Grafico della posizione s in km in funzione del tempo t in ore: sale da 0 a 200 km fino a t = 2 h, resta a 200 km fino a t = 6 h, poi sale ripidamente\"> Quale fra le seguenti è una corretta descrizione del movimento del corpo?</p>",
+    "advice": "<p>Fino a 2 h la posizione cresce in modo lineare: velocità costante (100 km/h). Da 2 h a 6 h la posizione resta 200 km: il corpo è fermo per 6 − 2 = 4 ore, non 6. Dopo le 6 h il grafico è molto più ripido che all'inizio: la velocità è maggiore.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Si muove con velocità costante per 2 ore, poi si ferma per 6 ore e infine riparte con una velocità maggiore di quella con cui si è mosso nelle prime 2 ore</p>",
+          "<p>Si muove con velocità costante per 2 ore, poi si ferma per 4 ore e infine riparte con una velocità minore di quella con cui si è mosso nelle prime 2 ore</p>",
+          "<p>Si muove con velocità costante per 2 ore, poi si ferma per 6 ore e infine riparte con una velocità minore di quella con cui si è mosso nelle prime 2 ore</p>",
+          "<p>Si muove con velocità costante per 2 ore, poi si ferma per 4 ore e infine riparte con una velocità maggiore di quella con cui si è mosso nelle prime 2 ore</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

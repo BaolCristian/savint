@@ -1,0 +1,137 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D2 · La pioggia a Udine",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D2.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "grafici",
+      "lettura di grafici",
+      "istogrammi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D2 · La pioggia a Udine",
+    "statement": "<p>Osserva il grafico che riporta alcuni dati raccolti dalla stazione meteorologica di Udine. <img data-savint-immagine=\"7ed654ff-18e1-45ae-b049-9fcbd210359d.png\" alt=\"Istogramma del numero di giorni di pioggia per mese: media dal 2001 al 2011 (nero), 2010 (bianco), 2011 (grigio)\"> La figura seguente mostra la precipitazione mensile cumulata del 2010 e del 2011. Per esempio, come si vede, a Udine, nel 2010, dall'inizio dell'anno fino ad Aprile sono caduti all'incirca 400 mm di pioggia. <img data-savint-immagine=\"fb6a2be4-7b95-471b-899a-47f1dfa77105.png\" alt=\"Grafico della precipitazione mensile cumulata in mm, mese per mese, nel 2010 (triangoli) e nel 2011 (cerchi)\"></p>",
+    "advice": "<p>a1) A Settembre 2010 i giorni di pioggia sono 13, a Settembre 2011 sono 5: vera. a2) La barra nera più alta è quella di Agosto (circa 12,3), più di Aprile (circa 11,4): falsa. a3) Nel 2010 (barre bianche) Giugno ha 7 giorni, il valore più basso dell'anno: vera. b1) A fine Aprile 2010 la cumulata è circa 400 mm, a fine Giugno circa 880 mm: in Maggio e Giugno sono caduti circa 480 mm, cioè circa 500: vera. b2) Da Aprile in poi i triangoli (2010) stanno sempre sopra i cerchi (2011): vera. b3) La cumulata cresce sempre perché somma la pioggia dei mesi precedenti, ma la pioggia di ogni mese è la differenza fra due punti vicini, che non cresce sempre (per esempio nel 2011 da Ottobre a Novembre la cumulata aumenta pochissimo): falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>a) Sulla base dei dati riportati nel primo grafico (giorni di pioggia) indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Nel mese di Settembre 2010 ci sono stati più giorni di pioggia che nel mese di Settembre 2011</p>",
+          "<p>Nel periodo 2001-2011, Aprile è stato il mese con il maggior numero medio di giorni di pioggia</p>",
+          "<p>Nel 2010, Giugno è stato il mese con il minor numero di giorni di pioggia</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "3/3",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>b) Sulla base dei dati rappresentati nel secondo grafico (precipitazione mensile cumulata) indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Nei mesi di Maggio e Giugno 2010 sono caduti complessivamente circa 500 mm di pioggia</p>",
+          "<p>Da Aprile in poi la precipitazione mensile cumulata del 2010 è stata maggiore della precipitazione mensile cumulata del 2011</p>",
+          "<p>Sia nel 2010 sia nel 2011, a partire da Gennaio ogni mese è piovuto sempre di più fino ad avere un massimo di precipitazioni in Dicembre</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

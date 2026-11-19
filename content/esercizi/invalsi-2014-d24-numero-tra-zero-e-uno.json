@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D24 · Un numero tra 0 e 1",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D24.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "ordinamento",
+      "potenze",
+      "radicali"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D24 · Un numero tra 0 e 1",
+    "statement": "<p>Se \\(a\\) è un numero reale compreso tra 0 e 1 \\((0 &lt; a &lt; 1)\\), allora</p>",
+    "advice": "<p>Prova con \\(a = \\frac{1}{4}\\): \\(a^2 = \\frac{1}{16}\\), \\(\\sqrt{a} = \\frac{1}{2}\\), \\(\\frac{1}{a} = 4\\). Fra 0 e 1 il quadrato rimpicciolisce, la radice ingrandisce e il reciproco supera 1: \\(a^2 &lt; a &lt; \\sqrt{a} &lt; \\frac{1}{a}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(a &lt; \\sqrt{a} &lt; \\frac{1}{a} &lt; a^2\\)</p>",
+          "<p>\\(\\frac{1}{a} &lt; \\sqrt{a} &lt; a &lt; a^2\\)</p>",
+          "<p>\\(a^2 &lt; a &lt; \\sqrt{a} &lt; \\frac{1}{a}\\)</p>",
+          "<p>\\(\\sqrt{a} &lt; a &lt; a^2 &lt; \\frac{1}{a}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D28 · Una soluzione dell'equazione",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D28.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "equazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D28 · Una soluzione dell'equazione",
+    "statement": "<p>L'equazione \\(x(x - 1) = 6\\) ha fra le sue soluzioni</p>",
+    "advice": "<p>Basta provare: per \\(x = 3\\) si ha \\(3 \\cdot 2 = 6\\). (Svolgendo: \\(x^2 - x - 6 = 0\\), cioè \\((x - 3)(x + 2) = 0\\), con soluzioni 3 e \\(-2\\).) Per 6 si ottiene \\(6 \\cdot 5 = 30\\), per 7 si ottiene 42.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(\\frac{1}{6}\\)</p>",
+          "<p>3</p>",
+          "<p>6</p>",
+          "<p>7</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

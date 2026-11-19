@@ -1,0 +1,92 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D15 · Se… allora",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D15.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "implicazione",
+      "legge di annullamento del prodotto",
+      "quadrati"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D15 · Se… allora",
+    "statement": "<p>\\(a\\) e \\(b\\) sono due numeri reali.</p>",
+    "advice": "<p>a) \\(2^2 = 4\\): vera. b) Anche \\((-2)^2 = 4\\): da \\(a^2 = 4\\) segue \\(a = 2\\) oppure \\(a = -2\\). Falsa. c) Se \\(a \\cdot b = 0\\) può essere \\(b = 0\\) e \\(a\\) qualunque (per esempio \\(3 \\cdot 0 = 0\\)). Falsa. d) Zero per qualunque numero fa zero: vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Se \\(a = 2\\), allora \\(a^2 = 4\\)</p>",
+          "<p>Se \\(a^2 = 4\\), allora \\(a = 2\\)</p>",
+          "<p>Se \\(a \\cdot b = 0\\), allora \\(a = 0\\)</p>",
+          "<p>Se \\(a = 0\\), allora \\(a \\cdot b = 0\\)</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

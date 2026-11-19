@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D30 · Il nuovo motorino",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D30. Nel fascicolo si sceglieva fra le due offerte e si scrivevano i calcoli: qui si sceglie fra quattro conclusioni con i calcoli.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "percentuali",
+      "sconti",
+      "argomentare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D30 · Il nuovo motorino",
+    "statement": "<p>Marco vuole acquistare un nuovo motorino e un amico gli offre 400 euro per il vecchio. Due rivenditori gli fanno le seguenti offerte per lo stesso modello di motorino. Offerta A: prezzo di 2500 euro e il 10% di sconto se consegna al rivenditore il vecchio motorino. Offerta B: prezzo di 2950 euro, sul quale è praticato uno sconto del 20%. Che cosa conviene fare a Marco?</p>",
+    "advice": "<p>Offerta A: \\(2500 - 10\\% \\cdot 2500 = 2500 - 250 = 2250\\) euro, e il vecchio motorino va al rivenditore. Offerta B: \\(2950 - 20\\% \\cdot 2950 = 2950 - 590 = 2360\\) euro, ma Marco vende il vecchio motorino all'amico e incassa 400 euro: spende \\(2360 - 400 = 1960\\) euro. Conviene B.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Conviene l'offerta A consegnando il vecchio motorino: spende 2250 euro, meno dei 2360 euro dell'offerta B</p>",
+          "<p>Conviene l'offerta B vendendo il vecchio motorino all'amico: spende 2360 − 400 = 1960 euro, meno dei 2250 euro dell'offerta A</p>",
+          "<p>Conviene l'offerta A consegnando il vecchio motorino: spende 2500 − 250 − 400 = 1850 euro, meno dei 1960 euro dell'offerta B</p>",
+          "<p>Le due scelte si equivalgono: in entrambi i casi spende 2250 euro</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

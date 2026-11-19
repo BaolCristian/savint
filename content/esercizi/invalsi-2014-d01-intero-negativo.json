@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D1 · Un intero negativo",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D1.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "numeri relativi",
+      "potenze"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2014 · D1 · Un intero negativo",
+    "statement": "<p>Se \\(k\\) è un numero intero negativo, qual è il maggiore tra i seguenti numeri?</p>",
+    "advice": "<p>Con \\(k\\) negativo: \\(5 + k\\) è minore di 5, \\(5 \\cdot k\\) è negativo, \\(5^k\\) è una frazione minore di 1 (per esempio \\(5^{-1} = \\frac{1}{5}\\)), mentre \\(5 - k\\) è maggiore di 5, perché togliere un numero negativo vuol dire aggiungere (per \\(k = -2\\): \\(5 - (-2) = 7\\)).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(5 + k\\)</p>",
+          "<p>\\(5 \\cdot k\\)</p>",
+          "<p>\\(5 - k\\)</p>",
+          "<p>\\(5^k\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

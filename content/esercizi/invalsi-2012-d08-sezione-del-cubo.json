@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D8 · La sezione del cubo",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D8. Nel fascicolo la motivazione andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "cubo",
+      "geometria solida",
+      "argomentare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D8 · La sezione del cubo",
+    "statement": "<p>La seguente figura rappresenta in prospettiva un cubo che è stato sezionato con il piano passante per i vertici B, D, E. <img data-savint-immagine=\"9bd1e874-2d47-4fe0-8c87-e2a7e22126bc.png\" alt=\"Il cubo ABCDEFGH, con la base ABCD e la faccia superiore EFGH (E sopra A), e il triangolo BDE tracciato\"> Marina afferma: «Il triangolo BDE è un triangolo equilatero». Marina ha ragione?</p>",
+    "advice": "<p>BD, BE e DE sono ciascuno la diagonale di una faccia del cubo (la base ABCD, la faccia ABFE, la faccia ADHE). Le facce sono quadrati uguali, quindi le tre diagonali sono uguali (lunghe \\(\\ell\\sqrt{2}\\) se \\(\\ell\\) è lo spigolo): il triangolo è equilatero.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Sì, perché i suoi tre lati sono diagonali di facce del cubo, che sono quadrati uguali: i tre lati sono uguali</p>",
+          "<p>Sì, perché i suoi vertici sono vertici del cubo, e tre vertici di un cubo formano sempre un triangolo equilatero</p>",
+          "<p>No, perché BD è la diagonale della base ed è più lunga di BE e di DE</p>",
+          "<p>No, perché il triangolo BDE è rettangolo, come gli angoli del cubo</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

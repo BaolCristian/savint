@@ -1,0 +1,105 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D12 · Il sondaggio sulla rivista",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D12.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "tabelle a doppia entrata",
+      "probabilità",
+      "probabilità condizionata"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D12 · Il sondaggio sulla rivista",
+    "statement": "<p>È stato effettuato un sondaggio su un campione di 1 500 donne di età compresa tra i 25 e i 55 anni per conoscere la loro opinione su una rivista mensile dedicata alla salute. Si sono ottenuti i seguenti risultati: \\[\\begin{array}{|l|c|c|} \\hline &amp; \\text{Occupate} &amp; \\text{Disoccupate} \\\\ \\hline \\text{Giudizio positivo} &amp; 450 &amp; 276 \\\\ \\hline \\text{Giudizio negativo} &amp; 367 &amp; 407 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Giudizio positivo: \\(450 + 276 = 726\\). b) Disoccupate: \\(276 + 407 = 683\\). c) Giudizio negativo: \\(367 + 407 = 774\\) donne su 1 500: \\(\\frac{774}{1500} = \\frac{129}{250}\\). d) Ora i casi possibili sono solo le 726 donne con giudizio positivo, di cui 450 occupate: \\(\\frac{450}{726} = \\frac{75}{121}\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quante sono le donne che hanno espresso un giudizio positivo?</p>",
+        "minValue": "726",
+        "maxValue": "726",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Quante sono le donne disoccupate intervistate?</p>",
+        "minValue": "683",
+        "maxValue": "683",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>c) Scegliendo a caso una delle donne intervistate, qual è la probabilità che abbia espresso un giudizio negativo? Scrivi il risultato come frazione.</p>",
+        "answer": "774/1500",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      },
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>d) Scegliendo a caso una delle donne intervistate tra quelle che hanno espresso un giudizio positivo, qual è la probabilità che sia una donna occupata? Scrivi il risultato come frazione.</p>",
+        "answer": "450/726",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D24 · Un quadrato di binomio",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D24.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "prodotti notevoli",
+      "calcolo letterale"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D24 · Un quadrato di binomio",
+    "statement": "<p>L'espressione \\(\\left(a - \\frac{1}{a}\\right)^2\\) si può scrivere come:</p>",
+    "advice": "<p>Quadrato di binomio: \\(\\left(a - \\frac{1}{a}\\right)^2 = a^2 - 2 \\cdot a \\cdot \\frac{1}{a} + \\frac{1}{a^2} = a^2 + \\frac{1}{a^2} - 2\\), perché \\(a \\cdot \\frac{1}{a} = 1\\). La B dimentica il doppio prodotto, la C confonde il quadrato di un binomio con la differenza di due quadrati, la D sbaglia il doppio prodotto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(a^2 + \\frac{1}{a^2} - 2\\)</p>",
+          "<p>\\(\\frac{a^4 + 1}{a^2}\\)</p>",
+          "<p>\\(a^2 - \\left(\\frac{1}{a}\\right)^2\\)</p>",
+          "<p>\\(\\frac{a^2 - 2a + 1}{a^2}\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

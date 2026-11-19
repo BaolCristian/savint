@@ -1,0 +1,60 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D8 · Una potenza diviso 2",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D8.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "potenze"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D8 · Una potenza diviso 2",
+    "statement": "<p>Il risultato di \\(16^{100} : 2\\) è uguale a</p>",
+    "advice": "<p>\\(16 = 2^4\\), quindi \\(16^{100} = 2^{400}\\) e \\(2^{400} : 2 = 2^{399}\\). Dividere per 2 non dimezza l'esponente né la base: \\(16^{50}\\) e \\(8^{100}\\) sono molto più piccoli.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(8^{99}\\)</p>",
+          "<p>\\(8^{100}\\)</p>",
+          "<p>\\(16^{50}\\)</p>",
+          "<p>\\(2^{399}\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

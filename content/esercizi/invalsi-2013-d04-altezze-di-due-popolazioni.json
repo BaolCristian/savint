@@ -1,0 +1,92 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D4 · Le altezze di due popolazioni",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D4.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "distribuzioni",
+      "lettura di grafici",
+      "media"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D4 · Le altezze di due popolazioni",
+    "statement": "<p>Nel seguente grafico sono riportate le distribuzioni delle altezze di 1 000 individui di una popolazione A e di 1 200 individui di una popolazione B. <img data-savint-immagine=\"6875751f-f8ba-4485-b34e-e89cba2ec846.png\" alt=\"Due curve a campana: popolazione A (1000 individui) da 130 a circa 172 cm con picco di 300 a 150 cm; popolazione B (1200 individui) da circa 142 a 200 cm con picco di 200 a 170 cm\"></p>",
+    "advice": "<p>a) La curva di A è centrata intorno a 150 cm, quella di B intorno a 170 cm: in media sono più alti quelli di B. Falsa. b) Le due curve si sovrappongono fra 142 e 172 cm: ci sono individui di B più bassi di individui di A. Falsa. c) Quasi tutta la curva di A sta a sinistra di 155 cm (il picco è a 150 cm e dopo 155 cm la curva scende in fretta): più della metà ha un'altezza minore di 155 cm. Vera. d) I più alti di B arrivano a 200 cm, quelli di A a circa 172 cm. Falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Sulla base delle informazioni fornite dal grafico, indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Gli individui della popolazione A sono mediamente più alti degli individui della popolazione B</p>",
+          "<p>Ogni individuo della popolazione A è più alto di ogni individuo della popolazione B</p>",
+          "<p>Più della metà degli individui della popolazione A ha un'altezza minore di 155 cm</p>",
+          "<p>Gli individui più alti della popolazione B sono più bassi degli individui più alti della popolazione A</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

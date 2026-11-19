@@ -1,0 +1,84 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D31 · Numeri dispari",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D31.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "calcolo letterale",
+      "pari e dispari"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D31 · Numeri dispari",
+    "statement": "<p>L'espressione \\(2n - 1\\) rappresenta, al variare di \\(n\\) nell'insieme dei numeri naturali maggiori di 0, un qualunque numero dispari. Nelle affermazioni seguenti \\(n\\) varia nell'insieme dei numeri naturali.</p>",
+    "advice": "<p>a) \\(2n\\) è pari, quindi \\(2n + 1\\) è sempre dispari: vera. b) Per \\(n = 2\\) si ottiene \\(3n = 6\\), pari: falsa (\\(3n\\) è dispari solo se \\(n\\) è dispari). c) \\(2n - 1\\) è dispari, e il prodotto di due dispari è dispari: \\((2n - 1)^2\\) è dispari, non pari. Falsa (per esempio con \\(n = 2\\) si ottiene 9).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 3,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Per ogni \\(n\\), \\(2n + 1\\) rappresenta un numero dispari</p>",
+          "<p>Per ogni \\(n\\), \\(3n\\) rappresenta un numero dispari</p>",
+          "<p>Per ogni \\(n\\), \\((2n - 1)^2\\) rappresenta un numero pari</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "3/3",
+            "0"
+          ],
+          [
+            "0",
+            "3/3"
+          ],
+          [
+            "0",
+            "3/3"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

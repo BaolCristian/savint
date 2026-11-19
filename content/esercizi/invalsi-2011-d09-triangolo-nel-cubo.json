@@ -1,0 +1,146 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D9 · Il triangolo nel cubo",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D9.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "cubo",
+      "teorema di Pitagora",
+      "geometria solida"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2011 · D9 · Il triangolo nel cubo",
+    "statement": "<p>Nella figura è rappresentato un cubo. <img data-savint-immagine=\"51bfa504-181a-42c9-89bd-32d84fd36f7b.png\" alt=\"Un cubo con il triangolo ABC: C vertice in alto dietro, A vertice in basso dietro sotto C, B vertice in basso davanti\"> Il triangolo ABC ha come lati uno spigolo del cubo, la diagonale di una sua faccia e una diagonale del cubo.</p>",
+    "advice": "<p>AC è uno spigolo, AB la diagonale della faccia di base, BC la diagonale del cubo. Lo spigolo AC è perpendicolare alla faccia di base, quindi ad AB: il triangolo è rettangolo in A e BC, l'ipotenusa, è il lato più lungo. b) \\(AC = 1\\) m, \\(AB = \\sqrt{1^2 + 1^2} = \\sqrt{2} \\approx 1{,}41\\) m, \\(BC = \\sqrt{AB^2 + AC^2} = \\sqrt{3} \\approx 1{,}73\\) m. Quindi AB non è uguale ad AC, e l'angolo in B non è di 45° (lo sarebbe se i cateti fossero uguali: ha la tangente \\(\\frac{1}{\\sqrt{2}}\\), circa 35°).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>a) Indica se ciascuna delle seguenti affermazioni è vera o falsa.</p>",
+        "choices": [
+          "<p>Il lato AB è uguale al lato AC</p>",
+          "<p>Il triangolo ABC è rettangolo</p>",
+          "<p>Il lato BC è il più lungo dei tre</p>",
+          "<p>L'angolo ABC è di 45°</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Se lo spigolo del cubo misura 1 m, quanto misurano i lati del triangolo ABC? Arrotonda ai centesimi. AC (in m) =</p>",
+        "minValue": "1",
+        "maxValue": "1",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>AB (in m) =</p>",
+        "minValue": "(sqrt(2)) - (0.01)",
+        "maxValue": "(sqrt(2)) + (0.01)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>BC (in m) =</p>",
+        "minValue": "(sqrt(3)) - (0.01)",
+        "maxValue": "(sqrt(3)) + (0.01)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

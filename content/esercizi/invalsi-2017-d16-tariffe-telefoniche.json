@@ -1,0 +1,169 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D16 · Tre tariffe telefoniche",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D16. La tabella della parte a è diventata una domanda a scelta per tariffa; nella parte b la formula si sceglie fra quattro (ha un coefficiente decimale); nella parte c la motivazione si sceglie fra quelle proposte.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "funzioni lineari",
+      "grafici",
+      "modellizzazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D16 · Tre tariffe telefoniche",
+    "statement": "<p>Nel 2008 un gestore telefonico aveva proposto a Marcella tre possibili tariffe mensili per le telefonate nazionali da telefono fisso. Tariffa 1: telefonate a 26 centesimi di euro l'una. Tariffa 2: 30 euro con chiamate illimitate senza ulteriore spesa. Tariffa 3: 10 euro di spesa fissa più 15 centesimi di euro per ogni telefonata. In figura sono disegnati i grafici che rappresentano le tre tariffe: in ascissa è riportato il numero \\(n\\) di telefonate e in ordinata il costo \\(C\\) in euro. <img data-savint-immagine=\"b057b05a-7737-429d-a1b0-ac9872ba4a22.png\" alt=\"Tre grafici nel piano n, C: F è la retta orizzontale C = 30; G parte da C = 10 e sale lentamente; H parte dall'origine e sale più ripida, incontrando G a circa n = 90 e F a circa n = 115\"></p>",
+    "advice": "<p>a) La tariffa 2 costa sempre 30 €: retta orizzontale F. La tariffa 1 parte da 0 € (nessuna telefonata, nessuna spesa): retta H dall'origine. La tariffa 3 parte da 10 €: retta G. b) 10 euro fissi più 0,15 euro a telefonata: \\(C = 10 + 0{,}15n\\). c) La tariffa 1 è la più conveniente solo per poche telefonate: \\(0{,}26n &gt; 10 + 0{,}15n\\) per \\(n &gt; 90\\) circa, e \\(0{,}26n &gt; 30\\) per \\(n &gt; 115\\) circa. Dove H sta sopra G (e poi sopra F), la tariffa 1 costa di più.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Quale grafico rappresenta la tariffa 1?</p>",
+        "choices": [
+          "<p>Grafico F</p>",
+          "<p>Grafico G</p>",
+          "<p>Grafico H</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Quale grafico rappresenta la tariffa 2?</p>",
+        "choices": [
+          "<p>Grafico F</p>",
+          "<p>Grafico G</p>",
+          "<p>Grafico H</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>Quale grafico rappresenta la tariffa 3?</p>",
+        "choices": [
+          "<p>Grafico F</p>",
+          "<p>Grafico G</p>",
+          "<p>Grafico H</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Le formule \\(C = 0{,}26n\\) (tariffa 1) e \\(C = 30\\) (tariffa 2) esprimono il costo \\(C\\) (in euro) in funzione del numero \\(n\\) di telefonate. Qual è la formula per la tariffa 3?</p>",
+        "choices": [
+          "<p>\\(C = 0{,}15 + 10n\\)</p>",
+          "<p>\\(C = 10 + 0{,}15n\\)</p>",
+          "<p>\\(C = 10 + 15n\\)</p>",
+          "<p>\\(C = 10{,}15n\\)</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>c) Marcella dice che, qualunque sia il numero di telefonate, la tariffa 1 costa sempre meno delle altre due. Marcella ha torto. Perché?</p>",
+        "choices": [
+          "<p>Perché la tariffa 1 non ha una spesa fissa</p>",
+          "<p>Perché oltre circa 90 telefonate il grafico H sta sopra il grafico G: con molte telefonate la tariffa 1 costa più della tariffa 3 (e oltre circa 115 anche più della tariffa 2)</p>",
+          "<p>Perché la tariffa 2 costa sempre meno delle altre due</p>",
+          "<p>Perché con poche telefonate la tariffa 1 costa più della tariffa 3</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

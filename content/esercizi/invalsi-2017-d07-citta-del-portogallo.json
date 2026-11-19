@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D7 · Città del Portogallo",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D7.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "disuguaglianza triangolare",
+      "distanze"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D7 · Città del Portogallo",
+    "statement": "<p>Sulla cartina geografica sono indicate alcune città del Portogallo. Tra di esse ci sono: Lisbona (in portoghese Lisboa), Coimbra (a circa 180 km in linea d'aria da Lisbona) e Beja (a circa 140 km in linea d'aria da Lisbona). <img data-savint-immagine=\"0d01db14-be16-4b8b-9fcf-128e679ded44.png\" alt=\"Cartina del Portogallo con le città di Lisboa, Coimbra (a nord di Lisbona) e Beja (a sud-est di Lisbona)\"> La distanza in linea d'aria tra Beja e Coimbra è</p>",
+    "advice": "<p>Lisbona, Coimbra e Beja sono i vertici di un triangolo: ogni lato è minore della somma degli altri due e maggiore della loro differenza. Quindi la distanza Beja–Coimbra sta fra \\(180 - 140 = 40\\) km e \\(180 + 140 = 320\\) km (sarebbe 40 o 320 solo se le tre città fossero allineate).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>circa 320 km</p>",
+          "<p>circa 40 km</p>",
+          "<p>sicuramente maggiore di 40 km e minore di 320 km</p>",
+          "<p>sicuramente maggiore di 320 km e minore di 500 km</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

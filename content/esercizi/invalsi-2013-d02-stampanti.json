@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D2 · Le stampanti",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D2.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "problemi",
+      "equazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D2 · Le stampanti",
+    "statement": "<p>La stampante laser L in un minuto stampa il triplo delle pagine della stampante deskjet D. Quando L e D lavorano contemporaneamente stampano in tutto 24 pagine al minuto. Se D viene sostituita con una stampante laser identica a L, quante pagine potranno essere stampate complessivamente in un minuto?</p>",
+    "advice": "<p>Se D stampa \\(p\\) pagine al minuto, L ne stampa \\(3p\\): insieme \\(4p = 24\\), quindi \\(p = 6\\) e L stampa 18 pagine al minuto. Due stampanti laser: \\(2 \\cdot 18 = 36\\) pagine al minuto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>24</p>",
+          "<p>30</p>",
+          "<p>36</p>",
+          "<p>48</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

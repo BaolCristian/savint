@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D5 · L'età della Terra",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D5.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "notazione scientifica",
+      "stime",
+      "potenze di 10"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D5 · L'età della Terra",
+    "statement": "<p>L'età della Terra è valutata intorno ai \\(4{,}5 \\times 10^9\\) anni. L'Homo Erectus è comparso circa \\(10^6\\) anni fa. Qual è la stima che più si avvicina all'età che la Terra aveva quando è comparso l'Homo Erectus?</p>",
+    "advice": "<p>L'età di allora è \\(4{,}5 \\times 10^9 - 10^6 = 4\\,500\\,000\\,000 - 1\\,000\\,000 = 4\\,499\\,000\\,000\\) anni: un milione è trascurabile rispetto a 4,5 miliardi, quindi la stima migliore resta \\(4{,}5 \\times 10^9\\) anni.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(4{,}5 \\times 10^9\\) anni</p>",
+          "<p>\\(3{,}5 \\times 10^9\\) anni</p>",
+          "<p>\\(4{,}5 \\times 10^6\\) anni</p>",
+          "<p>\\(4{,}5 \\times 10^3\\) anni</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

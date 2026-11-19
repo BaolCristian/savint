@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D25 · Due sconti",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D25.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "percentuali",
+      "sconti successivi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D25 · Due sconti",
+    "statement": "<p>In un negozio un abito è messo in vendita con uno sconto del 30% sul prezzo originario. Durante la stagione dei saldi il prezzo già scontato viene ancora abbassato del 10%. Qual è la percentuale complessiva di sconto sul prezzo originario dell'abito?</p>",
+    "advice": "<p>Dopo il primo sconto si paga il 70% del prezzo, dopo il secondo il 90% di quello: \\(0{,}70 \\cdot 0{,}90 = 0{,}63\\), cioè il 63% del prezzo originario. Lo sconto complessivo è \\(100\\% - 63\\% = 37\\%\\), non 40%: il 10% si calcola sul prezzo già scontato.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>20%</p>",
+          "<p>33%</p>",
+          "<p>37%</p>",
+          "<p>40%</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

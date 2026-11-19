@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D23 · La manifestazione in piazza",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D23. Nella parte b i calcoli non si scrivono: si chiede il numero di partecipanti che ne risulta.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "stime",
+      "area",
+      "problemi"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2011 · D23 · La manifestazione in piazza",
+    "statement": "<p>Le dimensioni di una piazza rettangolare di una grande città sono circa 620 m × 120 m. Le stime comparse sui giornali sul numero di partecipanti a una manifestazione che ha riempito la piazza variano da 100 000 a oltre 1 000 000. Diverse fotografie scattate durante la manifestazione evidenziano una densità di circa 4 persone al metro quadro.</p>",
+    "advice": "<p>L'area della piazza è \\(620 \\cdot 120 = 74\\,400\\ \\text{m}^2\\); con 4 persone al metro quadro ci stanno \\(74\\,400 \\cdot 4 = 297\\,600\\) persone, cioè circa 300 000.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) Che cosa si può concludere circa l'effettivo numero dei partecipanti?</p>",
+        "choices": [
+          "<p>Le stime dei giornali sono tutte errate perché dalle informazioni disponibili i partecipanti non potevano essere più di 20 000.</p>",
+          "<p>Una stima ragionevole è di circa 300 000 partecipanti.</p>",
+          "<p>Ha ragione chi ha parlato di più di un milione di partecipanti.</p>",
+          "<p>La piazza non può contenere molte persone più di uno stadio, quindi c'erano meno di 150 000 partecipanti.</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Quanti partecipanti risultano dai tuoi calcoli?</p>",
+        "minValue": "(297600) - (3000)",
+        "maxValue": "(297600) + (3000)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

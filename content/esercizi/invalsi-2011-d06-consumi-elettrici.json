@@ -1,0 +1,111 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D6 · Consumi elettrici",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D6. Nel fascicolo la provenienza andava scritta: qui si sceglie fra le tre.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "grafici",
+      "lettura di grafici",
+      "istogrammi"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2011 · D6 · Consumi elettrici",
+    "statement": "<p>Nel diagramma di figura 1 sono riportati i consumi elettrici (in TWh, terawattora) in Italia dal 2000 al 2005 in funzione della provenienza dell'energia dall'Autoproduzione, dal Mercato libero o dal Mercato vincolato. <img data-savint-immagine=\"af793232-849a-42bd-a6d4-3d460a78dbc2.png\" alt=\"Figura 1: istogramma a barre sovrapposte dei consumi elettrici dal 2000 al 2005, divisi in Mercato vincolato, Mercato libero e Autoproduzione\"> I grafici A, B e C in figura 2 sono stati costruiti con gli stessi dati rappresentati nel diagramma di figura 1. <img data-savint-immagine=\"9336690a-6dfa-4cb0-9f38-ae59525b004a.png\" alt=\"Figura 2: tre grafici a linee A, B e C dei consumi dal 2000 al 2005; C scende dall'alto, B sale, A resta basso e quasi costante\"> Confronta le figure 1 e 2 e completa le frasi indicando la provenienza dell'energia.</p>",
+    "advice": "<p>Nella figura 1 l'Autoproduzione resta bassa e quasi costante (da 23,8 a 21,3 TWh): è il grafico A. Il Mercato libero cresce (da 46,1 a 135,5 TWh): è il grafico B. Il Mercato vincolato è il più grande e diminuisce (da 209,4 a 153,0 TWh): è il grafico C.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>1. Il grafico A corrisponde all'andamento dei consumi di energia proveniente da</p>",
+        "choices": [
+          "<p>Autoproduzione</p>",
+          "<p>Mercato libero</p>",
+          "<p>Mercato vincolato</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>2. Il grafico B corrisponde all'andamento dei consumi di energia proveniente da</p>",
+        "choices": [
+          "<p>Autoproduzione</p>",
+          "<p>Mercato libero</p>",
+          "<p>Mercato vincolato</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>3. Il grafico C corrisponde all'andamento dei consumi di energia proveniente da</p>",
+        "choices": [
+          "<p>Autoproduzione</p>",
+          "<p>Mercato libero</p>",
+          "<p>Mercato vincolato</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

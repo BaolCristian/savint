@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D18 · La metà di una potenza",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "potenze",
+      "calcolo letterale"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D18 · La metà di una potenza",
+    "statement": "<p>Armando, Bruno, Caterina e Daniela hanno opinioni diverse sul numero che si ottiene dividendo \\(a^4\\) per 2. Armando dice: «si ottiene \\(\\left(\\frac{a}{2}\\right)^4\\)». Bruno sostiene: «si ottiene \\(a^2\\)». Caterina dice: «si ottiene \\(\\frac{1}{2}a^4\\)». Daniela afferma: «si ottiene \\(\\left(\\frac{a}{2}\\right)^2\\)». Chi ha ragione?</p>",
+    "advice": "<p>Dividere per 2 vuol dire moltiplicare per \\(\\frac{1}{2}\\): \\(a^4 : 2 = \\frac{1}{2}a^4\\). Invece \\(\\left(\\frac{a}{2}\\right)^4 = \\frac{a^4}{16}\\), e dividere per 2 non dimezza l'esponente.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Armando</p>",
+          "<p>Bruno</p>",
+          "<p>Caterina</p>",
+          "<p>Daniela</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

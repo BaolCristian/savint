@@ -1,0 +1,49 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D18 · La raccolta differenziata",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D18.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "minimo comune multiplo"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D18 · La raccolta differenziata",
+    "statement": "<p>In un quartiere di una città, il calendario della raccolta differenziata (carta, vetro e plastica) prevede che la raccolta della carta avvenga ogni 28 giorni, quella del vetro ogni 21 giorni e quella della plastica ogni 14 giorni. Oggi sono state effettuate le raccolte di carta, vetro e plastica.</p>",
+    "advice": "<p>Serve il minimo comune multiplo: \\(28 = 2^2 \\cdot 7\\), \\(21 = 3 \\cdot 7\\), \\(14 = 2 \\cdot 7\\); \\(\\text{mcm} = 2^2 \\cdot 3 \\cdot 7 = 84\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Fra quanti giorni la raccolta di carta, vetro e plastica verrà fatta di nuovo contemporaneamente?</p>",
+        "minValue": "84",
+        "maxValue": "84",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

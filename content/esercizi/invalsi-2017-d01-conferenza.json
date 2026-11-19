@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D1 · Donne e uomini alla conferenza",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D1.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "problemi",
+      "equazioni"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2017 · D1 · Donne e uomini alla conferenza",
+    "statement": "<p>A una conferenza sono presenti 90 persone. Le donne sono 14 più degli uomini. Quanti sono gli uomini?</p>",
+    "advice": "<p>Se gli uomini sono \\(x\\), le donne sono \\(x + 14\\): \\(x + x + 14 = 90\\), cioè \\(2x = 76\\) e \\(x = 38\\). Infatti le donne sono 52 e \\(38 + 52 = 90\\). (76 è il doppio degli uomini, non gli uomini.)</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>59</p>",
+          "<p>38</p>",
+          "<p>31</p>",
+          "<p>76</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D12 · Tredici quadrati",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D12.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "area",
+      "similitudine"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D12 · Tredici quadrati",
+    "statement": "<p>La seguente figura è composta da 13 quadrati tutti di lato 1 cm. <img data-savint-immagine=\"fe98d5fc-2e6e-46e3-82ad-36473275e99a.png\" alt=\"Una figura a croce formata da 13 quadratini uguali: righe di 1, 3, 5, 3, 1 quadratini\"> Se il lato di ciascun quadrato si dimezza, quanto diventa la superficie della figura, in \\(\\text{cm}^2\\)?</p>",
+    "advice": "<p>Un quadrato di lato \\(\\frac{1}{2}\\) cm ha area \\(\\frac{1}{2} \\cdot \\frac{1}{2} = \\frac{1}{4}\\text{ cm}^2\\): dimezzando il lato l'area diventa un quarto, non la metà. La figura: \\(13 \\cdot \\frac{1}{4} = 3{,}25\\text{ cm}^2\\).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Superficie, in \\(\\text{cm}^2\\):</p>",
+        "minValue": "3.25",
+        "maxValue": "3.25",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

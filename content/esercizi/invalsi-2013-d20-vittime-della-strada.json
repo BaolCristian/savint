@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D20 · Le vittime della strada",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D20. Nella parte b i calcoli non si scrivono: si inserisce solo il risultato.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "tabelle",
+      "percentuali",
+      "variazione percentuale"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D20 · Le vittime della strada",
+    "statement": "<p>La seguente tabella riporta il numero di vittime per incidenti stradali dal 2001 al 2007 in una regione italiana (fonte: Eurostat, Regional Transport Statistics). \\[\\begin{array}{|c|c|} \\hline \\text{Anno} &amp; \\text{Numero di vittime} \\\\ \\hline 2001 &amp; 792 \\\\ \\hline 2002 &amp; 776 \\\\ \\hline 2003 &amp; 700 \\\\ \\hline 2004 &amp; 681 \\\\ \\hline 2005 &amp; 635 \\\\ \\hline 2006 &amp; 539 \\\\ \\hline 2007 &amp; 531 \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) Le diminuzioni sono 16 (2001-2002), 76 (2002-2003), 19 (2003-2004), 46 (2004-2005): la più grande è fra il 2002 e il 2003. b) La diminuzione è \\(792 - 531 = 261\\) vittime, da confrontare con il valore di partenza, quello del 2001: \\(\\frac{261}{792} \\approx 0{,}33\\), cioè circa il 33%.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>a) In quale dei seguenti periodi si è avuta la diminuzione più consistente del numero di vittime per incidenti stradali?</p>",
+        "choices": [
+          "<p>tra il 2001 e il 2002</p>",
+          "<p>tra il 2002 e il 2003</p>",
+          "<p>tra il 2003 e il 2004</p>",
+          "<p>tra il 2004 e il 2005</p>"
+        ],
+        "matrix": [
+          "0",
+          "1",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>b) Di quale percentuale è diminuito il numero di vittime per incidenti stradali dal 2001 al 2007? Scrivi solo il numero, arrotondato all'unità.</p>",
+        "minValue": "(26100/792) - (0.5)",
+        "maxValue": "(26100/792) + (0.5)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

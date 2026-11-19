@@ -1,0 +1,91 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D9 · Le carte di credito",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D9.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "lettura di grafici",
+      "variazioni percentuali"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2012 · D9 · Le carte di credito",
+    "statement": "<p>Osserva i seguenti grafici relativi alle operazioni effettuate con carte di credito dal 2004 al 2008 (fonte: Osservatorio sulle carte di credito). <img data-savint-immagine=\"2dc10e1e-d42a-42d6-9326-b38256f229d7.png\" alt=\"A sinistra, istogramma del numero di operazioni in milioni: 433,6 nel 2004, 463,5 nel 2005, 465,9 nel 2006, 503,9 nel 2007, 522,6 nel 2008. A destra, grafico a linea della variazione percentuale annua: 15,90%, 6,90%, 0,50%, 8,20%, 3,70%\"></p>",
+    "advice": "<p>Il primo grafico dà il numero di operazioni, il secondo di quanto per cento è cresciuto ogni anno: una variazione positiva, anche piccola, vuol dire che il numero è aumentato. a) Il numero cresce ogni anno (è la crescita a rallentare): falsa. b) Non c'è contraddizione: le variazioni sono tutte positive, quindi il numero cresce sempre: falsa. c) Dal 2006 al 2007 l'aumento è \\(503{,}9 - 465{,}9 = 38\\) milioni, dal 2007 al 2008 \\(522{,}6 - 503{,}9 = 18{,}7\\) milioni: vera. d) Nel 2006 si è quasi azzerata la crescita (0,50%), non il numero di operazioni (465,9 milioni): falsa.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Il numero di operazioni effettuate con carte di credito è diminuito dal 2004 fino al 2006, poi è aumentato e, successivamente, è di nuovo diminuito fino al 2008</p>",
+          "<p>I due grafici sono in contraddizione perché il primo mostra una continua crescita nel tempo, mentre il secondo no</p>",
+          "<p>L'aumento del numero di operazioni effettuate con carte di credito che si è avuto dal 2006 al 2007 è stato superiore all'aumento che si è avuto dal 2007 al 2008</p>",
+          "<p>Nel 2006 il numero di operazioni effettuate con carte di credito si è quasi azzerato</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

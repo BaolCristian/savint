@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D13 · Angoli alla circonferenza",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D13.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "circonferenza",
+      "angoli alla circonferenza"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D13 · Angoli alla circonferenza",
+    "statement": "<p>Osserva la circonferenza di centro O rappresentata in figura. <img data-savint-immagine=\"97964789-2ee2-4854-9f43-455fa88a8af9.png\" alt=\"Una circonferenza di centro O con i punti C, B, D, E; sono tracciate le corde CB, CE, CD, BE e BD\"> Comunque siano presi i punti B, C, D, E sulla circonferenza, è possibile affermare che</p>",
+    "advice": "<p>Gli angoli CEB e CDB sono angoli alla circonferenza che insistono sullo stesso arco CB (dalla stessa parte): sono congruenti, comunque si scelgano i punti. Le altre affermazioni valgono solo per particolari posizioni dei punti.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>il triangolo BCE è congruente al triangolo CBD</p>",
+          "<p>il segmento BD è congruente al segmento CE</p>",
+          "<p>l'angolo EBC è congruente all'angolo DCB</p>",
+          "<p>l'angolo CEB è congruente all'angolo CDB</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

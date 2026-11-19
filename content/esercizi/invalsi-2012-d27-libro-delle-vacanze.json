@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D27 · Il libro delle vacanze",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "lettura di grafici",
+      "modellizzazione"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2012 · D27 · Il libro delle vacanze",
+    "statement": "<p>Durante il periodo estivo Anna deve leggere un libro di 305 pagine come compito per le vacanze. Nel mese di giugno si riposa e a partire dal primo giorno di luglio legge 5 pagine al giorno per tutto il mese. In agosto va in vacanza con i genitori e dimentica il libro a casa; al suo ritorno, negli ultimi 10 giorni di vacanza, per terminare il libro legge 15 pagine al giorno. Quale, fra i seguenti grafici, può rappresentare l'andamento del numero di pagine lette da Anna nel periodo estivo? <img data-savint-immagine=\"d6ea9259-9b95-4500-bd97-496634c6b6b4.png\" alt=\"Quattro grafici delle pagine lette nel tempo: 1 piatto, poi una salita, poi piatto, poi una salita più ripida; 2 come il primo ma l'ultima salita ha la stessa pendenza della prima; 3 sale subito, poi più ripido; 4 piatto, poi una curva che sale, piatto, poi un'altra curva\"></p>",
+    "advice": "<p>In giugno Anna non legge: il grafico è piatto a zero. In luglio legge 5 pagine al giorno, sempre lo stesso numero: un tratto di retta in salita (155 pagine). In agosto, finché è via, il numero di pagine lette non cambia: tratto piatto. Negli ultimi 10 giorni legge 15 pagine al giorno, il triplo di prima: una retta in salita più ripida. È il grafico 1 (il 2 ha l'ultima salita come la prima, il 4 ha tratti curvi, cioè una velocità di lettura che cambia).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Il grafico 1</p>",
+          "<p>Il grafico 2</p>",
+          "<p>Il grafico 3</p>",
+          "<p>Il grafico 4</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

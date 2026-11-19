@@ -1,0 +1,92 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2017 · D30 · Zeri e pendenza",
+    "description": "Prova INVALSI di matematica 2016/17, classe seconda della secondaria di secondo grado, domanda D30.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2017",
+      "funzioni lineari",
+      "zeri di una funzione",
+      "coefficiente angolare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2017 · D30 · Zeri e pendenza",
+    "statement": "<p>In una funzione del tipo \\(f(x) = ax + b\\), il numero reale \\(a\\) si dice pendenza. Inoltre si dice zero di una funzione \\(f\\) ogni valore di \\(x\\) per cui \\(f(x) = 0\\).</p>",
+    "advice": "<p>a) \\(x - 5 = 0\\) per \\(x = 5\\): vera. b) \\(3x = 0\\) per \\(x = 0\\), non per \\(x = -3\\) (che dà \\(f(-3) = -9\\)): falsa. c) Se \\(b \\ne 0\\), \\(f(x) = b\\) non vale mai 0: nessuno zero, vera. d) \\(f(x) = b\\) è \\(f(x) = 0 \\cdot x + b\\): la pendenza è 0 (retta orizzontale), vera.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "m_n_x",
+        "marks": 4,
+        "prompt": "<p>Indica se ciascuna affermazione è vera o falsa.</p>",
+        "choices": [
+          "<p>Lo zero della funzione \\(f(x) = x - 5\\) è 5</p>",
+          "<p>Lo zero della funzione \\(f(x) = 3x\\) è \\(-3\\)</p>",
+          "<p>Le funzioni del tipo \\(f(x) = b\\), con \\(b \\ne 0\\), non hanno zeri</p>",
+          "<p>Nelle funzioni del tipo \\(f(x) = b\\), la pendenza è 0</p>"
+        ],
+        "answers": [
+          "Vero",
+          "Falso"
+        ],
+        "matrix": [
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "0",
+            "4/4"
+          ],
+          [
+            "4/4",
+            "0"
+          ],
+          [
+            "4/4",
+            "0"
+          ]
+        ],
+        "displayType": "radiogroup",
+        "shuffleChoices": true,
+        "shuffleAnswers": false,
+        "minAnswers": 0,
+        "maxAnswers": 0,
+        "warningType": "none",
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "layout": {
+          "type": "all",
+          "expression": ""
+        },
+        "distractors": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

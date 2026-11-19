@@ -1,0 +1,50 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D19 · Calcio e basket",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D19. Nel fascicolo il numero andava scritto nella zona giusta del diagramma: qui si scrive come risposta.",
+    "yearLevel": 2,
+    "topic": "Dati e previsioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "insiemi",
+      "diagrammi di Venn"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D19 · Calcio e basket",
+    "statement": "<p>Su 100 alunni di una scuola, 82 alunni si interessano di calcio, 26 si interessano di basket, 10 non si interessano né di calcio, né di basket. <img data-savint-immagine=\"0e511a88-5ae5-4824-8e74-f04973b3d2cc.png\" alt=\"Diagramma di Eulero-Venn con due insiemi che si intersecano, Basket e Calcio, dentro un rettangolo\"></p>",
+    "advice": "<p>Si interessano di almeno uno dei due sport \\(100 - 10 = 90\\) alunni. Sommando \\(82 + 26 = 108\\) chi segue entrambi gli sport è contato due volte: \\(108 - 90 = 18\\) alunni, da scrivere nella zona comune ai due insiemi.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>Quanti studenti si interessano sia di calcio sia di basket (la zona comune ai due insiemi)?</p>",
+        "minValue": "18",
+        "maxValue": "18",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      }
+    ]
+  }
+}

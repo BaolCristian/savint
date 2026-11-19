@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2011 · D7 · La mappa",
+    "description": "Prova INVALSI di matematica 2010/11, classe seconda della secondaria di secondo grado, domanda D7. Sullo schermo la mappa non ha le dimensioni della stampa: si dice quanto misurava, sul fascicolo, il tratto di via 20 Settembre percorso.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2011",
+      "scala",
+      "mappe",
+      "proporzioni"
+    ],
+    "difficulty": 3
+  },
+  "question": {
+    "name": "INVALSI 2011 · D7 · La mappa",
+    "statement": "<p>Il Signor Carlo scende dal tram all'incrocio di via Pietro Micca con via 20 Settembre (nella mappa che vedi qui sotto il punto è contrassegnato da un asterisco). <img data-savint-immagine=\"9f1dd18c-02a4-47f1-93c7-1fca372bb047.png\" alt=\"Mappa di un quartiere con via Pietro Micca, via 20 Settembre, via A. G. I. Bertola, via G. Botero; un asterisco all'incrocio di via Pietro Micca con via 20 Settembre\"> Il Signor Carlo percorre 150 metri di via 20 Settembre e, all'incrocio con via A. G. I. Bertola, svolta a destra risalendo fino all'incrocio con via G. Botero. Sulla mappa stampata nel fascicolo il tratto di via 20 Settembre percorso (150 m) misurava circa 2,8 cm.</p>",
+    "advice": "<p>a) Sulla mappa il tratto di via Bertola fino a via Botero è lungo circa 3 volte il tratto di via 20 Settembre: circa \\(3 \\cdot 150 = 450\\) m. In tutto circa \\(150 + 450 = 600\\) m. b) 150 m sono \\(15\\,000\\) cm, rappresentati da circa 2,8 cm: \\(15\\,000 : 2{,}8 \\approx 5\\,400\\). La scala più vicina è 1:6 000 (1 cm sulla mappa corrisponde a 60 m).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti metri all'incirca ha percorso in tutto?</p>",
+        "minValue": "(600) - (100)",
+        "maxValue": "(600) + (100)",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Qual è, all'incirca, la scala della mappa?</p>",
+        "choices": [
+          "<p>1:60</p>",
+          "<p>1:600</p>",
+          "<p>1:6 000</p>",
+          "<p>1:60 000</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D24 · Le cornici di quadrati",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D24. Nella parte b la motivazione andava scritta: qui si sceglie fra motivazioni proposte.",
+    "yearLevel": 2,
+    "topic": "Relazioni e funzioni",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "successioni",
+      "regolarità",
+      "argomentare"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D24 · Le cornici di quadrati",
+    "statement": "<p>Al centro della figura c'è un quadrato nero Q. Il quadrato è circondato da una prima cornice bianca formata da 8 quadrati tutti uguali a Q e da una seconda cornice grigia. Immagina che la figura si estenda con successive cornici (terza, quarta, ecc.) sempre formate da quadrati tutti uguali a Q. <img data-savint-immagine=\"9c6992c5-43cc-4f11-ae5f-0122d4390d45.png\" alt=\"Il quadrato nero Q al centro, la prima cornice bianca di 8 quadrati e la seconda cornice grigia di 16 quadrati\"></p>",
+    "advice": "<p>La cornice numero \\(n\\) è il bordo di un quadrato di lato \\(2n + 1\\) da cui si toglie il quadrato di lato \\(2n - 1\\): \\((2n+1)^2 - (2n-1)^2 = 8n\\) quadrati (8, 16, 24, 32, …). a) La quarta cornice ha \\(8 \\cdot 4 = 32\\) quadrati. b) Ogni cornice ha un multiplo di 8 quadrati, e 70 non è multiplo di 8 (\\(8 \\cdot 8 = 64\\), \\(8 \\cdot 9 = 72\\)): non è possibile.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "numberentry",
+        "marks": 1,
+        "prompt": "<p>a) Quanti sono i quadrati della quarta cornice?</p>",
+        "minValue": "32",
+        "maxValue": "32",
+        "correctAnswerFraction": false,
+        "allowFractions": false,
+        "notationStyles": [
+          "plain",
+          "en",
+          "si-en",
+          "plain-eu",
+          "eu",
+          "si-fr"
+        ],
+        "correctAnswerStyle": "plain-eu"
+      },
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p>b) Se si continua a estendere la figura nello stesso modo, è possibile ottenere una cornice formata da 70 quadrati tutti uguali a Q?</p>",
+        "choices": [
+          "<p>È possibile, perché 70 è un numero pari, come il numero di quadrati di ogni cornice</p>",
+          "<p>È possibile: è la nona cornice</p>",
+          "<p>Non è possibile, perché il numero di quadrati di ogni cornice è un multiplo di 8, e 70 non è multiplo di 8</p>",
+          "<p>Non è possibile, perché le cornici hanno sempre un numero di quadrati multiplo di 10</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D3 · Triangoli con la stessa base",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D3.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "area",
+      "triangoli",
+      "rette parallele"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D3 · Triangoli con la stessa base",
+    "statement": "<p>ABC è uno degli infiniti triangoli aventi la base AB sulla retta \\(r\\) e il terzo vertice in un punto qualunque della retta \\(s\\) parallela a \\(r\\) e passante per C. <img data-savint-immagine=\"766ce61b-9649-46cf-80e8-eb0a515b5d93.png\" alt=\"Due rette parallele r e s; il triangolo ABC ha la base AB su r e il vertice C su s; C' è il simmetrico di C rispetto all'asse di AB, tratteggiato\"> Fra gli infiniti triangoli descritti sopra, quali hanno la stessa area di ABC?</p>",
+    "advice": "<p>L'area è \\(\\frac{\\text{base} \\cdot \\text{altezza}}{2}\\). Tutti questi triangoli hanno la stessa base AB e la stessa altezza, la distanza fra le rette parallele \\(r\\) e \\(s\\): hanno tutti la stessa area.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>Soltanto il triangolo ABC', simmetrico di ABC rispetto all'asse di AB</p>",
+          "<p>Soltanto il triangolo isoscele di base AB</p>",
+          "<p>Soltanto il triangolo rettangolo in A e il triangolo rettangolo in B</p>",
+          "<p>Tutti gli infiniti triangoli di base AB</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

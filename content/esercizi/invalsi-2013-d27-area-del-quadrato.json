@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D27 · L'area del quadrato",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D27.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "teorema di Pitagora",
+      "area",
+      "quadrato"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2013 · D27 · L'area del quadrato",
+    "statement": "<p>ABCD è un quadrato, il segmento EC è lungo 2 dm e il segmento EB è lungo 1 dm. <img data-savint-immagine=\"9d32c6b9-9ec1-409f-9cf2-c5f4fb29970f.png\" alt=\"Il quadrato ABCD con il punto E sul lato AB; il segmento EC è lungo 2 e il segmento EB è lungo 1\"> La superficie del quadrato ABCD misura</p>",
+    "advice": "<p>Il triangolo \\(EBC\\) è rettangolo in \\(B\\): per il teorema di Pitagora \\(BC^2 = EC^2 - EB^2 = 4 - 1 = 3\\). L'area del quadrato è proprio \\(BC^2 = 3\\text{ dm}^2\\) (il lato è \\(\\sqrt{3}\\) dm).</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>\\(3\\text{ dm}^2\\)</p>",
+          "<p>\\(4\\text{ dm}^2\\)</p>",
+          "<p>\\(5\\text{ dm}^2\\)</p>",
+          "<p>\\(4\\sqrt{3}\\text{ dm}^2\\)</p>"
+        ],
+        "matrix": [
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

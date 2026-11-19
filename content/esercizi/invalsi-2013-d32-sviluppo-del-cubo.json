@@ -1,0 +1,62 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2013 · D32 · Lo sviluppo del cubo",
+    "description": "Prova INVALSI di matematica 2012/13, classe seconda della secondaria di secondo grado, domanda D32.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2013",
+      "cubo",
+      "sviluppo piano",
+      "visualizzazione spaziale"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2013 · D32 · Lo sviluppo del cubo",
+    "statement": "<p>La seguente figura rappresenta uno sviluppo piano di un cubo. <img data-savint-immagine=\"413901cd-afea-4c50-9e19-13decf4ecded.png\" alt=\"Sviluppo del cubo: una fila di quattro facce 2, 3, 4, 5; la faccia 6 sopra la 5 e la faccia 1 sotto la 2\"> Quale tra le seguenti coppie è formata da facce opposte del cubo?</p>",
+    "advice": "<p>Nella fila di quattro facce 2, 3, 4, 5, che si chiude ad anello attorno al cubo, sono opposte le facce a un posto di distanza: 2 e 4, 3 e 5. Le facce 1 e 6 chiudono il cubo sopra e sotto e sono opposte fra loro.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>1 e 4</p>",
+          "<p>2 e 5</p>",
+          "<p>3 e 5</p>",
+          "<p>4 e 6</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

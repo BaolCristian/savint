@@ -1,0 +1,61 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2012 · D15 · Le elezioni",
+    "description": "Prova INVALSI di matematica 2011/12, classe seconda della secondaria di secondo grado, domanda D15.",
+    "yearLevel": 2,
+    "topic": "Numeri",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2012",
+      "percentuali",
+      "percentuale di una percentuale"
+    ],
+    "difficulty": 1
+  },
+  "question": {
+    "name": "INVALSI 2012 · D15 · Le elezioni",
+    "statement": "<p>Nelle ultime elezioni svoltesi in un paese europeo è andato a votare il 70% degli aventi diritto al voto. Di questi il 20% ha votato per il partito A. Quale percentuale di aventi diritto al voto ha votato per il partito A?</p>",
+    "advice": "<p>È il 20% del 70%: \\(0{,}20 \\cdot 0{,}70 = 0{,}14\\), cioè il 14% degli aventi diritto.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "1_n_2",
+        "marks": 0,
+        "prompt": "<p></p>",
+        "choices": [
+          "<p>60%</p>",
+          "<p>50%</p>",
+          "<p>20%</p>",
+          "<p>14%</p>"
+        ],
+        "matrix": [
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "displayType": "radiogroup",
+        "displayColumns": 0,
+        "shuffleChoices": true,
+        "showCellAnswerState": true,
+        "minMarks": 0,
+        "maxMarks": 0,
+        "distractors": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    ]
+  }
+}

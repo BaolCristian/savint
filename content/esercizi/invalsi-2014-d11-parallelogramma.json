@@ -1,0 +1,51 @@
+{
+  "savint": {
+    "version": 1,
+    "title": "INVALSI 2014 · D11 · Il triangolo nel parallelogramma",
+    "description": "Prova INVALSI di matematica 2013/14, classe seconda della secondaria di secondo grado, domanda D11. Nel fascicolo andavano scritti anche i calcoli: qui si scrive solo il risultato.",
+    "yearLevel": 2,
+    "topic": "Spazio e figure",
+    "tags": [
+      "INVALSI",
+      "INVALSI 2014",
+      "area",
+      "parallelogramma",
+      "triangoli"
+    ],
+    "difficulty": 2
+  },
+  "question": {
+    "name": "INVALSI 2014 · D11 · Il triangolo nel parallelogramma",
+    "statement": "<p>\\(PQRS\\) è un parallelogramma e \\(T\\) è il punto medio di \\(SR\\). <img data-savint-immagine=\"c8834c5c-6f4e-467c-a614-939f470db249.png\" alt=\"Il parallelogramma PQRS con il punto T a metà del lato SR e il triangolo QST\"></p>",
+    "advice": "<p>Il triangolo \\(QST\\) ha per base \\(ST\\), metà di \\(SR\\), e la stessa altezza del parallelogramma. Area del triangolo: \\(\\frac{1}{2} \\cdot \\frac{SR}{2} \\cdot h = \\frac{1}{4} \\cdot SR \\cdot h\\), cioè un quarto dell'area del parallelogramma.</p>",
+    "variables": {},
+    "variablesTest": {
+      "condition": "",
+      "maxRuns": 10
+    },
+    "ungrouped_variables": [],
+    "variable_groups": [],
+    "functions": {},
+    "rulesets": {},
+    "parts": [
+      {
+        "type": "jme",
+        "marks": 1,
+        "prompt": "<p>Qual è il rapporto tra l'area del triangolo \\(QST\\) e l'area del parallelogramma? Scrivi il risultato come frazione.</p>",
+        "answer": "1/4",
+        "checkingType": "absdiff",
+        "checkingAccuracy": 0.001,
+        "failureRate": 1,
+        "vsetRange": [
+          0,
+          1
+        ],
+        "vsetRangePoints": 5,
+        "checkVariableNames": false,
+        "expectedVariableNames": [],
+        "showPreview": true,
+        "valuegenerators": []
+      }
+    ]
+  }
+}
