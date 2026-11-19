@@ -48,9 +48,11 @@ describe("seed degli esercizi", () => {
     const versioni = await prisma.esercizioVersione.findMany({ where: { esercizioId: { startsWith: PREFIX } } });
     expect(versioni).toHaveLength(1);
     expect(versioni[0]!.version).toBe(1);
-    // Il catalogo di partenza nasce modificabile da tutta la scuola.
+    // Il catalogo di partenza nasce modificabile da tutta la scuola, ma agli
+    // studenti arriva solo assegnato: non è nella pratica libera.
     const esercizio = await prisma.esercizio.findUniqueOrThrow({ where: { id: versioni[0]!.esercizioId } });
     expect(esercizio.accessoScuola).toBe("EDITOR");
+    expect(esercizio.inPraticaLibera).toBe(false);
   });
 
   it("un secondo giro con lo stesso contenuto non crea versioni", async () => {

@@ -146,6 +146,10 @@ export async function seedEsercizi(dir: string, opzioni: OpzioniSeed = {}): Prom
         yearLevel: savint.yearLevel, topic: savint.topic, tags: savint.tags, difficulty: savint.difficulty,
         // Il catalogo di partenza è della scuola: ogni docente lo può modificare.
         accessoScuola: "EDITOR",
+        // Ma agli studenti arriva solo assegnato da un docente, non da solo
+        // nella pratica libera. Solo alla creazione: un aggiornamento non
+        // tocca una scelta fatta dopo.
+        inPraticaLibera: false,
       },
       update: {
         title: savint.title, description: savint.description ?? null,

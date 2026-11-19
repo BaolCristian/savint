@@ -10,12 +10,20 @@ import { estrazioniDegliStudenti } from "./versioni-compito";
  * studenti.
  */
 export async function eserciziPraticaLibera(): Promise<Set<string>> {
-  return new Set((await ruoliEsercizi("scuola")).keys());
+  const scuola = [...(await ruoliEsercizi("scuola")).keys()];
+  // Il catalogo pronto (inPraticaLibera false) lo vede la scuola ma non va
+  // da solo agli studenti: arriva solo con un compito del docente.
+  const esclusi = await prisma.esercizio.findMany({
+    where: { id: { in: scuola }, inPraticaLibera: false },
+    select: { id: true },
+  });
+  const fuori = new Set(esclusi.map((e) => e.id));
+  return new Set(scuola.filter((id) => !fuori.has(id)));
 }
 
 /**
  * Vero se lo studente può aprire l'esercizio dal link libero (senza
- * `compitoId`): perché la scuola lo vede, oppure perché l'ha avuto in un
+ * `compitoId`): perché è nella pratica libera, oppure perché l'ha avuto in un
  * compito non ritirato di una sua classe — così "esercitati di nuovo" non si
  * rompe anche se nel frattempo l'esercizio è tornato privato. Iscrizione,
  * ritiro e apertura si leggono come in `compitiDelloStudente` e
@@ -31,7 +39,7 @@ export async function eserciziPraticaLibera(): Promise<Set<string>> {
  * dare un modo di allenarcisi sopra.
  */
 export async function esercizioApribileDaStudente(studentId: string, esercizioId: string): Promise<boolean> {
-  if ((await ruoliEsercizi("scuola")).has(esercizioId)) return true;
+  if ((await eserciziPraticaLibera()).has(esercizioId)) return true;
 
   const versioni = await prisma.esercizioVersione.findMany({ where: { esercizioId }, select: { id: true } });
   if (versioni.length === 0) return false;

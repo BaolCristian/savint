@@ -611,31 +611,35 @@ enum RuoloEsercizi {
 }
 
 model Esercizio {
-  id            String                  @id @default(cuid())
-  title         String
-  description   String?
+  id              String                  @id @default(cuid())
+  title           String
+  description     String?
   // Il proprietario. Se il suo account sparisce l'esercizio resta, senza
   // autore (SetNull): non si perde il lavoro fatto, ma NON passa alla
   // scuola. Uno privato resta privato e senza proprietario: oltre alle
   // condivisioni nominate rimaste, lo vede e lo gestisce solo l'ADMIN (che
   // può trasferirlo); argomenti e raccolte non lo trasmettono più.
-  authorId      String?
-  yearLevel     Int
-  topic         String
-  tags          String[]
-  difficulty    Int
+  authorId        String?
+  yearLevel       Int
+  topic           String
+  tags            String[]
+  difficulty      Int
   // Quanto vede di questo esercizio il resto della scuola: null = privato
   // (solo l'autore e chi ha una condivisione). Gli esercizi nati prima della
   // condivisione sono stati portati a EDITOR dalla migrazione, perché fino
   // ad allora ogni docente li poteva modificare tutti.
-  accessoScuola RuoloEsercizi?
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  author        User?                   @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  versions      EsercizioVersione[]
-  contenitori   ContenitoreEsercizio[]
-  condivisioni  CondivisioneEsercizio[]
-  commenti      CommentoEsercizio[]
+  accessoScuola   RuoloEsercizi?
+  // Se gli studenti lo trovano da soli nella pratica libera (quando la
+  // scuola lo vede). Il catalogo caricato dal seed nasce con false: lo
+  // vedono e lo usano i docenti, agli studenti arriva solo assegnato.
+  inPraticaLibera Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  author          User?                   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  versions        EsercizioVersione[]
+  contenitori     ContenitoreEsercizio[]
+  condivisioni    CondivisioneEsercizio[]
+  commenti        CommentoEsercizio[]
 
   @@index([yearLevel, topic])
 }

@@ -106,6 +106,21 @@ describe("pratica libera degli studenti", () => {
     expect(await esercizioApribileDaStudente(studente, soloB.esercizioId)).toBe(false);
   });
 
+  it("il catalogo pronto (inPraticaLibera false) la scuola lo vede, ma non è nella pratica libera e non si apre da solo", async () => {
+    const catalogo = await esercizio("catalogo", A, "prova", "VISUALIZZATORE");
+    await prisma.esercizio.update({ where: { id: catalogo.esercizioId }, data: { inPraticaLibera: false } });
+    expect((await eserciziPraticaLibera()).has(catalogo.esercizioId)).toBe(false);
+    expect(await esercizioApribileDaStudente(studente, catalogo.esercizioId)).toBe(false);
+  });
+
+  it("lo stesso esercizio del catalogo, assegnato in un compito della classe, si riapre", async () => {
+    const catalogo = await esercizio("catalogo-assegnato", A, "prova", "VISUALIZZATORE");
+    await prisma.esercizio.update({ where: { id: catalogo.esercizioId }, data: { inPraticaLibera: false } });
+    await compito(classe, [catalogo.versioneId]);
+    expect(await esercizioApribileDaStudente(studente, catalogo.esercizioId)).toBe(true);
+    expect(await esercizioApribileDaStudente(studenteAltro, catalogo.esercizioId)).toBe(false);
+  });
+
   it("un esercizio che non esiste non si apre", async () => {
     expect(await esercizioApribileDaStudente(studente, `${P}inesistente`)).toBe(false);
   });
