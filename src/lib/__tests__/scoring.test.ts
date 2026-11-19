@@ -4,6 +4,7 @@ import {
   calculateScore,
   calculatePartialScore,
   applyConfidence,
+  scoreAnswer,
 } from "../scoring";
 
 // ── checkAnswer: existing types (smoke) ─────────────────────────────
@@ -409,5 +410,52 @@ describe("checkAnswer – MATCHING", () => {
 
   it("undefined matchedPairs → false", () => {
     expect(checkAnswer("MATCHING", opts, {})).toBe(false);
+  });
+});
+
+describe("scoreAnswer – punti di una risposta live, scomposti", () => {
+  const vf = { type: "TRUE_FALSE", options: { correct: true }, points: 1000, timeLimit: 20 };
+  const mc = {
+    type: "MULTIPLE_CHOICE",
+    options: { choices: [{ text: "a", isCorrect: true }, { text: "b", isCorrect: true }, { text: "c", isCorrect: false }] },
+    points: 1000,
+    timeLimit: 20,
+  };
+
+  it("risposta istantanea giusta: metà correttezza, metà velocità", () => {
+    expect(scoreAnswer(vf, { selected: true }, 0)).toEqual({ isCorrect: true, points: 1000, correctness: 500, speed: 500 });
+  });
+
+  it("allo scadere resta solo la correttezza", () => {
+    expect(scoreAnswer(vf, { selected: true }, 20000)).toEqual({ isCorrect: true, points: 500, correctness: 500, speed: 0 });
+  });
+
+  it("a metà tempo la velocità vale metà della sua parte", () => {
+    expect(scoreAnswer(vf, { selected: true }, 10000)).toEqual({ isCorrect: true, points: 750, correctness: 500, speed: 250 });
+  });
+
+  it("risposta sbagliata: zero in tutto", () => {
+    expect(scoreAnswer(vf, { selected: false }, 1000)).toEqual({ isCorrect: false, points: 0, correctness: 0, speed: 0 });
+  });
+
+  it("risposta parzialmente giusta: correttezza e velocità in proporzione", () => {
+    // Una giusta su due: vale 500, metà correttezza (250) e metà velocità
+    expect(scoreAnswer(mc, { selected: [0] }, 0)).toMatchObject({ points: 500, correctness: 250, speed: 250 });
+  });
+
+  it("correttezza + velocità tornano sempre col totale, a qualunque tempo", () => {
+    for (let ms = 0; ms <= 22000; ms += 731) {
+      const r = scoreAnswer(vf, { selected: true }, ms);
+      expect(r.correctness + r.speed).toBe(r.points);
+      expect(r.speed).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("coincide con calculateScore, che il gioco usava prima", () => {
+    for (const ms of [0, 1234, 9999, 15000, 20000, 25000]) {
+      expect(scoreAnswer(vf, { selected: true }, ms).points).toBe(
+        calculateScore({ isCorrect: true, responseTimeMs: ms, timeLimit: 20, maxPoints: 1000 }),
+      );
+    }
   });
 });

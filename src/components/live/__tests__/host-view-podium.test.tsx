@@ -156,3 +156,101 @@ describe("HostView: after every question, only that question's ranking", () => {
   });
 });
 
+
+describe("HostView: how the points of a question were earned", () => {
+  beforeEach(() => {
+    fake.removeAllListeners();
+    fake.sent = [];
+    vi.clearAllMocks();
+  });
+
+  function toResults(payload: unknown, questionIndex = 0, totalQuestions = 10) {
+    render(<HostView session={SESSION} />);
+    fake.fire("questionStart", {
+      questionIndex,
+      totalQuestions,
+      question: { text: "2+2?", type: "TRUE_FALSE", options: { correct: true }, timeLimit: 20, points: 1000, mediaUrl: null },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /skipToResults/ }));
+    fake.fire("questionResult", payload);
+  }
+
+  it("each row shows correctness, speed, confidence and time", () => {
+    toResults({
+      correctAnswer: { correct: true },
+      distribution: {},
+      questionRanking: [
+        { playerName: "Bruno", points: 960, breakdown: { correctness: 500, speed: 300, confidence: 160, responseTimeMs: 8000 } },
+        { playerName: "Anna", points: 700, breakdown: { correctness: 500, speed: 200, confidence: null, responseTimeMs: 12000 } },
+      ],
+    });
+    expect(screen.getAllByText(/breakdownCorrectness \+500/)).toHaveLength(2);
+    expect(screen.getByText(/breakdownSpeed \+300/)).toBeTruthy();
+    // Confidence only where it was asked and given
+    expect(screen.getAllByText(/breakdownConfidence/)).toHaveLength(1);
+    expect(screen.getByText(/breakdownConfidence \+160/)).toBeTruthy();
+    expect(screen.getByText(/breakdownTime:\{"seconds":"8,0"\}/)).toBeTruthy();
+  });
+
+  it("a wrong 'very sure' answer shows the penalty with a minus", () => {
+    toResults({
+      correctAnswer: { correct: true },
+      distribution: {},
+      questionRanking: [
+        { playerName: "Bruno", points: 300, breakdown: { correctness: 250, speed: 250, confidence: -200, responseTimeMs: 1000 } },
+      ],
+    });
+    expect(screen.getByText(/breakdownConfidence −200/)).toBeTruthy();
+  });
+});
+
+describe("HostView: overall standings every third question", () => {
+  beforeEach(() => {
+    fake.removeAllListeners();
+    fake.sent = [];
+    vi.clearAllMocks();
+  });
+
+  const base = {
+    correctAnswer: { correct: true },
+    distribution: {},
+    questionRanking: [{ playerName: "Bruno", points: 800 }],
+  };
+
+  function toResults(payload: unknown) {
+    render(<HostView session={SESSION} />);
+    fake.fire("questionStart", {
+      questionIndex: 2,
+      totalQuestions: 10,
+      question: { text: "2+2?", type: "TRUE_FALSE", options: { correct: true }, timeLimit: 20, points: 1000, mediaUrl: null },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /skipToResults/ }));
+    fake.fire("questionResult", payload);
+  }
+
+  it("without the overall standings, the button goes straight to the next question", () => {
+    toResults(base);
+    expect(screen.queryByText(/showOverallStandings/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "nextQuestion" }));
+    expect(fake.sent.some((m) => m.event === "nextQuestion")).toBe(true);
+  });
+
+  it("with them, the button first shows the overall standings, then the next question", () => {
+    toResults({
+      ...base,
+      overallRanking: [
+        { playerName: "Carla", score: 2400 },
+        { playerName: "Bruno", score: 1800 },
+      ],
+    });
+    expect(screen.queryByRole("button", { name: "nextQuestion" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /showOverallStandings/ }));
+    expect(screen.getByText(/overallStandings/)).toBeTruthy();
+    expect(screen.getByText("2400")).toBeTruthy();
+    const names = screen.getAllByText(/^(Bruno|Carla)$/).map((el) => el.textContent);
+    expect(names).toEqual(["Carla", "Bruno"]);
+    expect(fake.sent.some((m) => m.event === "nextQuestion")).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "nextQuestion" }));
+    expect(fake.sent.some((m) => m.event === "nextQuestion")).toBe(true);
+  });
+});

@@ -83,6 +83,16 @@ export type AnswerValue =
   | CodeCompletionValue;
 
 // Socket.io events
+/** How a live answer earned its points (see scoreAnswer in scoring.ts):
+ * correctness + speed + confidence = points. */
+export interface PointsBreakdown {
+  correctness: number;
+  speed: number;
+  /** Bonus or penalty of the declared confidence; null when not asked or not given */
+  confidence: number | null;
+  responseTimeMs: number;
+}
+
 export interface ServerToClientEvents {
   playerJoined: (data: { playerName: string; playerCount: number; playerAvatar?: string }) => void;
   playerLeft: (data: { playerName: string; playerCount: number }) => void;
@@ -116,11 +126,16 @@ export interface ServerToClientEvents {
     correctAnswer: QuestionOptions;
     distribution: Record<string, number>;
     /**
-     * Best of this question only (points earned now, highest first). The
-     * overall standings are never sent during the game: they are the
+     * Best of this question only (points earned now, highest first), each
+     * with how the points were earned.
+     */
+    questionRanking: { playerName: string; points: number; playerAvatar?: string; breakdown?: PointsBreakdown }[];
+    /**
+     * Overall standings (top 5), sent only every third question and never
+     * in the last three (see live-classifica.ts): the end stays the
      * podium's surprise.
      */
-    questionRanking: { playerName: string; points: number; playerAvatar?: string }[];
+    overallRanking?: { playerName: string; score: number; playerAvatar?: string }[];
   }) => void;
   /** Answer stored; the outcome arrives later with answerFeedback */
   answerReceived: (data: { confidenceEnabled: boolean }) => void;
@@ -131,6 +146,8 @@ export interface ServerToClientEvents {
     totalScore: number;
     classCorrectPercent: number;
     confidenceEnabled?: boolean;
+    /** How the points were earned (absent if the player did not answer) */
+    breakdown?: PointsBreakdown;
   }) => void;
   playerStats: (data: {
     /** Overall position; 0 on the last question (kept for the podium) */
@@ -140,6 +157,8 @@ export interface ServerToClientEvents {
     correctCount: number;
     totalAnswered: number;
     streak: number;
+    /** Overall position, only when the board shows the overall standings */
+    overallPosition?: number;
   }) => void;
   gameOver: (data: {
     podium: { playerName: string; score: number; position: number; playerAvatar?: string }[];

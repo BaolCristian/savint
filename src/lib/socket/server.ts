@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db/client";
-import { checkAnswer, calculateScore, calculatePartialScore, applyConfidence } from "@/lib/scoring";
+import { applyConfidence, scoreAnswer } from "@/lib/scoring";
+import { classificaGeneraleDopo } from "@/lib/live-classifica";
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -13,6 +14,7 @@ import type {
   NumericEstimationOptions,
   ImageHotspotOptions,
   CodeCompletionOptions,
+  PointsBreakdown,
 } from "@/types";
 import type { QuestionType } from "@prisma/client";
 import { verifyHostToken } from "@/lib/socket/host-token";
@@ -612,30 +614,12 @@ export function setupSocketHandlers(io: TypedIO) {
       let isCorrect: boolean;
       let score: number;
       try {
-        isCorrect = checkAnswer(question.type, question.options, value);
-
-        // Calculate score: use partial scoring for types that support it
-        const partialTypes = ["MULTIPLE_CHOICE", "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
-        if (partialTypes.includes(question.type)) {
-          const rawPartial = calculatePartialScore(question.type, question.options, value, question.points);
-          const timeLimitMs = question.timeLimit * 1000;
-          const timeRatio = Math.min(responseTimeMs / timeLimitMs, 1);
-          const timeMultiplier = 1.0 - timeRatio * 0.5;
-          score = Math.round(rawPartial * timeMultiplier);
-        } else {
-          score = calculateScore({
-            isCorrect,
-            responseTimeMs,
-            timeLimit: question.timeLimit,
-            maxPoints: question.points,
-          });
-        }
+        // The same scoring the question ranking uses to explain the points
+        ({ isCorrect, points: score } = scoreAnswer(question, value, responseTimeMs));
       } catch {
         return;
       }
       if (!Number.isFinite(score)) return;
-      // Never more than the question is worth
-      score = Math.max(0, Math.min(score, question.points));
 
       // One answer per player per question. The mark is set before any
       // await, so a second message sent together with the first stops here.
@@ -1275,8 +1259,25 @@ async function runShowResults(io: TypedIO, game: GameState) {
   try {
     const dbAnswers = await prisma.answer.findMany({
       where: { sessionId: game.sessionId, questionId: question.id },
-      select: { value: true, isCorrect: true, playerName: true, score: true, responseTimeMs: true },
+      select: { value: true, isCorrect: true, playerName: true, score: true, responseTimeMs: true, confidenceLevel: true },
     });
+
+    // How each answer earned its points: recomputed from what is stored,
+    // with the same function that scored it, so it adds up to the score.
+    // Whatever the score has beyond correctness + speed is the confidence.
+    const breakdownOf = (a: (typeof dbAnswers)[number]): PointsBreakdown | undefined => {
+      try {
+        const scored = scoreAnswer(question, a.value, a.responseTimeMs ?? 0);
+        return {
+          correctness: scored.correctness,
+          speed: scored.speed,
+          confidence: a.confidenceLevel != null ? a.score - scored.points : null,
+          responseTimeMs: a.responseTimeMs ?? 0,
+        };
+      } catch {
+        return undefined;
+      }
+    };
 
     const distribution = buildDistribution(
       question.type,
@@ -1294,12 +1295,23 @@ async function runShowResults(io: TypedIO, game: GameState) {
         playerName: a.playerName,
         points: a.score,
         playerAvatar: game.players.get(a.playerName)?.avatar,
+        breakdown: breakdownOf(a),
       }));
+
+    // Every third question, never in the last three: the overall standings
+    const overall = classificaGeneraleDopo(game.currentQuestionIndex + 1, game.questions.length)
+      ? buildLeaderboard(game).filter((l) => !game.kickedNames.has(l.playerName))
+      : null;
 
     io.to(room(game.sessionId)).emit("questionResult", {
       correctAnswer: question.options,
       distribution,
       questionRanking,
+      ...(overall && {
+        overallRanking: overall
+          .slice(0, 5)
+          .map((l) => ({ playerName: l.playerName, score: l.score, playerAvatar: l.playerAvatar })),
+      }),
     });
 
     const allSessionAnswers = await prisma.answer.findMany({
@@ -1324,6 +1336,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
           totalScore: player.totalScore,
           classCorrectPercent: classPercent,
           confidenceEnabled: false,
+          breakdown: breakdownOf(revealed),
         });
       }
       const playerAnswers = allSessionAnswers.filter((a) => a.playerName === playerName);
@@ -1346,6 +1359,7 @@ async function runShowResults(io: TypedIO, game: GameState) {
           correctCount,
           totalAnswered,
           streak,
+          ...(overall && { overallPosition: 1 + overall.findIndex((l) => l.playerName === playerName) }),
         });
       }
     }

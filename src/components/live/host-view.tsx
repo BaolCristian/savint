@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ANSWER_TILES, CONFETTI_COLORS, GAME, PODIUM_TIMELINE } from "@/lib/game-theme";
 import { useSocket } from "@/lib/socket/client";
 import Link from "next/link";
-import type { QuestionOptions, MultipleChoiceOptions, MatchingOptions, OrderingOptions } from "@/types";
+import type { QuestionOptions, MultipleChoiceOptions, MatchingOptions, OrderingOptions, PointsBreakdown } from "@/types";
 import type { QuestionType } from "@prisma/client";
 import { isCustomAvatar } from "@/lib/emoji-avatars";
 import { withBasePath } from "@/lib/base-path";
@@ -154,8 +154,10 @@ interface QuestionData {
 interface ResultData {
   correctAnswer: QuestionOptions;
   distribution: Record<string, number>;
-  /** Best of this question only; the overall standings wait for the podium */
-  questionRanking: { playerName: string; playerAvatar?: string; points: number }[];
+  /** Best of this question only, with how each earned the points */
+  questionRanking: { playerName: string; playerAvatar?: string; points: number; breakdown?: PointsBreakdown }[];
+  /** Overall standings: only every third question, never in the last three */
+  overallRanking?: { playerName: string; playerAvatar?: string; score: number }[];
 }
 
 interface GameOverData {
@@ -163,6 +165,26 @@ interface GameOverData {
   fullResults: { playerName: string; playerAvatar?: string; score: number }[];
 }
 
+
+/** How a player earned the points of a question: correctness, speed,
+ * confidence (when asked) and the time taken, big enough for the board. */
+function BreakdownLine({ breakdown }: { breakdown: PointsBreakdown }) {
+  const t = useTranslations("live");
+  const segno = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `+${n}`);
+  const voce = "inline-flex items-center gap-1 rounded-md bg-black/20 px-2 py-0.5";
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5 pl-10 lg:pl-11 text-xs lg:text-sm text-slate-300 tabular-nums">
+      <span className={voce}>✓ {t("breakdownCorrectness")} {segno(breakdown.correctness)}</span>
+      <span className={voce}>⚡ {t("breakdownSpeed")} {segno(breakdown.speed)}</span>
+      {breakdown.confidence !== null && (
+        <span className={`${voce} ${breakdown.confidence < 0 ? "text-red-300" : ""}`}>
+          🎯 {t("breakdownConfidence")} {segno(breakdown.confidence)}
+        </span>
+      )}
+      <span className={voce}>⏱ {t("breakdownTime", { seconds: (breakdown.responseTimeMs / 1000).toFixed(1).replace(".", ",") })}</span>
+    </div>
+  );
+}
 
 function CountdownScreen({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations("live");
@@ -211,6 +233,9 @@ export function HostView({ session }: Props) {
   const [answerCount, setAnswerCount] = useState({ count: 0, total: 0 });
   const [confidenceCount, setConfidenceCount] = useState({ count: 0, total: 0 });
   const [resultData, setResultData] = useState<ResultData | null>(null);
+  // The overall standings screen, shown after the results when the server
+  // sends them (every third question, never in the last three)
+  const [showOverall, setShowOverall] = useState(false);
   const [gameOverData, setGameOverData] = useState<GameOverData | null>(null);
   const [resultsRevealed, setResultsRevealed] = useState(false);
   const [muted, setMutedState] = useState(false);
@@ -293,6 +318,7 @@ export function HostView({ session }: Props) {
       setConfidenceCount({ count: 0, total: 0 });
       setResultData(null);
       setResultsRevealed(false);
+      setShowOverall(false);
       setPhase("question");
     };
 
@@ -995,6 +1021,43 @@ export function HostView({ session }: Props) {
     const q = currentQuestion;
     const isLastQuestion = q && q.questionIndex + 1 >= q.totalQuestions;
 
+    if (showOverall && resultData?.overallRanking) {
+      return (
+        <div className="min-h-screen live-stage text-white flex flex-col">
+          <header className="bg-black/25 border-b border-white/10 backdrop-blur-sm px-6 lg:px-10 py-4 flex items-center justify-between">
+            <h2 className="text-xl lg:text-2xl font-bold">🏆 {t("overallStandings")}</h2>
+            <span className="text-sm lg:text-base text-slate-400">
+              {t("overallAfter", { index: q ? q.questionIndex + 1 : "", total: q?.totalQuestions ?? "" })}
+            </span>
+          </header>
+          <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 lg:px-10 py-8">
+            <div className="w-full max-w-3xl space-y-3 lg:space-y-4">
+              {resultData.overallRanking.map((entry, i) => (
+                <div
+                  key={entry.playerName}
+                  className="flex items-center justify-between bg-slate-800/90 border border-slate-600/60 rounded-2xl px-5 lg:px-7 py-4 lg:py-5 animate-slide-up-dramatic"
+                  style={{ animationDelay: `${(resultData.overallRanking!.length - i) * 250}ms` }}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span className="text-2xl lg:text-3xl font-black text-amber-300 w-9 shrink-0 tabular-nums">{i + 1}</span>
+                    <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-10 h-10 lg:w-12 lg:h-12" : "text-3xl lg:text-4xl"} />
+                    <span className="font-bold text-xl lg:text-3xl truncate">{entry.playerName}</span>
+                  </div>
+                  <span className="text-xl lg:text-3xl font-extrabold tabular-nums">{entry.score}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleNextQuestion}
+              className="w-full max-w-3xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg shadow-green-900/30 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {t("nextQuestion")}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen live-stage text-white flex flex-col">
         {/* Top bar */}
@@ -1148,7 +1211,9 @@ export function HostView({ session }: Props) {
                     <span className="text-2xl">⚡</span>
                     <h3 className="text-xl lg:text-2xl font-bold">{t("bestThisQuestion")}</h3>
                   </div>
-                  <p className="text-sm text-slate-400 mb-5">{t("finalStandingsSecret")}</p>
+                  <p className="text-sm text-slate-400 mb-5">
+                    {resultData.overallRanking ? t("overallComing") : t("finalStandingsSecret")}
+                  </p>
                   {resultData.questionRanking.length === 0 ? (
                     <p className="text-slate-400">{t("nobodyScored")}</p>
                   ) : (
@@ -1156,9 +1221,10 @@ export function HostView({ session }: Props) {
                       {resultData.questionRanking.map((entry, i) => (
                         <div
                           key={entry.playerName}
-                          className="flex items-center justify-between bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 animate-slide-up-dramatic"
+                          className="bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 lg:px-5 py-3 lg:py-4 animate-slide-up-dramatic"
                           style={{ animationDelay: `${i * 150 + 500}ms` }}
                         >
+                          <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 lg:gap-4 min-w-0">
                             <span className="text-xl lg:text-2xl font-black text-slate-400 w-7 shrink-0 tabular-nums">{i + 1}</span>
                             <HostAvatar avatar={entry.playerAvatar} className={isCustomAvatar(entry.playerAvatar || "") ? "w-8 h-8 lg:w-10 lg:h-10" : "text-2xl lg:text-3xl"} />
@@ -1167,6 +1233,8 @@ export function HostView({ session }: Props) {
                           <span className="text-green-400 text-lg lg:text-xl font-extrabold bg-green-400/10 px-3 py-1 rounded-lg tabular-nums">
                             +{entry.points}
                           </span>
+                          </div>
+                          {entry.breakdown && <BreakdownLine breakdown={entry.breakdown} />}
                         </div>
                       ))}
                     </div>
@@ -1182,6 +1250,13 @@ export function HostView({ session }: Props) {
                     className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {t("showPodium")}
+                  </button>
+                ) : resultData?.overallRanking ? (
+                  <button
+                    onClick={() => setShowOverall(true)}
+                    className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 font-extrabold px-8 py-5 lg:py-6 rounded-2xl text-xl lg:text-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    🏆 {t("showOverallStandings")}
                   </button>
                 ) : (
                   <button

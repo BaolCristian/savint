@@ -22,6 +22,7 @@ import type {
   NumericEstimationOptions,
   ImageHotspotOptions,
   CodeCompletionOptions,
+  PointsBreakdown,
 } from "@/types";
 import type { QuestionType } from "@prisma/client";
 
@@ -51,6 +52,8 @@ interface FeedbackData {
   score: number;
   totalScore: number;
   classCorrectPercent: number;
+  /** How the points were earned: correctness, speed, confidence */
+  breakdown?: PointsBreakdown;
 }
 
 interface PlayerStatsData {
@@ -60,6 +63,8 @@ interface PlayerStatsData {
   correctCount: number;
   totalAnswered: number;
   streak: number;
+  /** Overall position, only when the board shows the overall standings */
+  overallPosition?: number;
 }
 
 interface PodiumData {
@@ -1102,6 +1107,19 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
             </div>
           </div>
 
+          {/* Where the points came from */}
+          {feedback.breakdown && feedback.score !== 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5 text-xs sm:text-sm text-white/90 tabular-nums animate-slide-up-fade" style={{ animationDelay: "250ms" }}>
+              <span className="rounded-md bg-black/15 px-2 py-0.5">✓ {t("breakdownCorrectness")} +{feedback.breakdown.correctness}</span>
+              <span className="rounded-md bg-black/15 px-2 py-0.5">⚡ {t("breakdownSpeed")} +{feedback.breakdown.speed}</span>
+              {feedback.breakdown.confidence !== null && (
+                <span className="rounded-md bg-black/15 px-2 py-0.5">
+                  🎯 {t("breakdownConfidence")} {feedback.breakdown.confidence < 0 ? "−" : "+"}{Math.abs(feedback.breakdown.confidence)}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Total score */}
           <div className="w-full max-w-sm animate-slide-up-fade" style={{ animationDelay: "300ms" }}>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
@@ -1114,6 +1132,15 @@ export function PlayerView({ testMode, testPin, testPlayerName }: PlayerViewProp
           <p className="text-sm sm:text-base text-white/60 animate-slide-up-fade" style={{ animationDelay: "400ms" }}>
             {t("classCorrect", { percent: feedback.classCorrectPercent })}
           </p>
+
+          {/* Overall position, when the board shows the overall standings */}
+          {playerStats?.overallPosition ? (
+            <div className="w-full max-w-sm bg-amber-300/25 border border-amber-200/40 rounded-xl px-4 py-2 text-center animate-slide-up-fade">
+              <p className="text-sm sm:text-base font-bold text-white">
+                🏆 {t("overallPositionLabel", { position: playerStats.overallPosition, total: playerStats.totalPlayers })}
+              </p>
+            </div>
+          ) : null}
 
           {/* Player stats (shown when host reveals results) */}
           {playerStats && (

@@ -176,3 +176,45 @@ export function applyConfidence(score: number, isCorrect: boolean, confidenceLev
     return score;
   }
 }
+
+/** Question types whose points depend on how close the answer is, not only
+ * on right/wrong (see calculatePartialScore). */
+export const PARTIAL_SCORE_TYPES = ["MULTIPLE_CHOICE", "SPOT_ERROR", "NUMERIC_ESTIMATION", "IMAGE_HOTSPOT"];
+
+/** Points of one live answer, split into what earned them. */
+export interface AnswerScore {
+  isCorrect: boolean;
+  /** Total before confidence: always correctness + speed, 0..points. */
+  points: number;
+  /** Half of what the answer is worth (all of it if right, a share if
+   * partly right): earned however slow the answer was. */
+  correctness: number;
+  /** The other half, shrinking linearly with the time taken: all of it
+   * for an instant answer, nothing at the time limit. */
+  speed: number;
+}
+
+/**
+ * The one place where a live answer is scored: submitAnswer uses it to
+ * store the points, the question ranking to explain them. Same inputs,
+ * same split, so the breakdown always adds up to the stored score.
+ * Throws on a malformed answer (the caller ignores it).
+ */
+export function scoreAnswer(
+  question: { type: string; options: unknown; points: number; timeLimit: number },
+  value: unknown,
+  responseTimeMs: number,
+): AnswerScore {
+  const isCorrect = checkAnswer(question.type, question.options, value);
+  const worth = PARTIAL_SCORE_TYPES.includes(question.type)
+    ? calculatePartialScore(question.type, question.options, value, question.points)
+    : isCorrect
+      ? question.points
+      : 0;
+  const timeRatio = Math.min(responseTimeMs / (question.timeLimit * 1000), 1);
+  // Never more than the question is worth
+  const points = Math.max(0, Math.min(Math.round(worth * (1.0 - timeRatio * 0.5)), question.points));
+  const correctness = Math.min(points, Math.round(worth / 2));
+  return { isCorrect, points, correctness, speed: points - correctness };
+}
+
