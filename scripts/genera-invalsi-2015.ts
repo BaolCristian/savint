@@ -3,6 +3,8 @@
  * secondo grado, fascicolo 1): 31 domande, una per esercizio, nei file
  * `content/esercizi/invalsi-2015-dNN-*.json`.
  *
+ * Le regole comuni a tutte le prove sono in `scripts/invalsi/comune.ts`.
+ *
  * Come per `genera-percentuali.ts`: ogni esercizio è scritto qui come modello
  * dell'editor (`EsercizioEditor`) e convertito con `versoFile`, così l'editor
  * dei docenti sa riaprirlo. I file JSON NON si correggono a mano: si corregge
@@ -29,17 +31,24 @@
  * - le probabilità si scrivono come frazione (parte «espressione», che
  *   accetta qualunque forma equivalente, anche il decimale).
  */
-import { mkdirSync, writeFileSync } from "fs";
-import path from "path";
-import { pathToFileURL } from "url";
-import type { EsercizioEditor, ParteEditor } from "../src/lib/esercizi/editor/modello";
-import { esercizioEditorSchema } from "../src/lib/esercizi/editor/modello";
-import { versoFile } from "../src/lib/esercizi/editor/verso-numbas";
-import type { AmbitoInvalsi } from "../src/lib/esercizi/ambiti-invalsi";
+import {
+  creaPacchetto,
+  espressione,
+  img as immagine,
+  lanciatoDirettamente,
+  numerica,
+  r,
+  scelta,
+  sceltaMultipla,
+  scriviPacchetto,
+  testoFile,
+  veroFalso,
+  type Domanda,
+  type EsercizioPacchetto,
+} from "./invalsi/comune";
 
-const r = String.raw;
-
-type Ambito = AmbitoInvalsi;
+export { testoFile };
+export type { EsercizioPacchetto };
 
 /** Le immagini ritagliate dal fascicolo (in `content/esercizi/immagini/`). */
 const IMMAGINE = {
@@ -51,83 +60,7 @@ const IMMAGINE = {
   d31: "1e96233e-3bf9-4fe1-bfd7-5dd14b1ba091.png",
 } as const;
 
-/** Il nome del file (senza `.json`), la domanda del fascicolo e il modello. */
-export interface EsercizioPacchetto {
-  nome: string;
-  domanda: number;
-  modello: EsercizioEditor;
-}
-
-interface Domanda {
-  numero: number;
-  slug: string;
-  titolo: string;
-  ambito: Ambito;
-  temi: string[];
-  difficolta: 1 | 2 | 3;
-  /** Una nota sulla trascrizione, quando la domanda è stata adattata. */
-  adattamento?: string;
-  testo: string;
-  suggerimento: string;
-  parti: ParteEditor[];
-}
-
-const FONTE = "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado";
-
-function esercizio(d: Domanda): EsercizioPacchetto {
-  const codice = `d${String(d.numero).padStart(2, "0")}`;
-  return {
-    nome: `invalsi-2015-${codice}-${d.slug}`,
-    domanda: d.numero,
-    modello: {
-      meta: {
-        titolo: `INVALSI 2015 · D${d.numero} · ${d.titolo}`,
-        descrizione: `${FONTE}, domanda D${d.numero}.${d.adattamento ? ` ${d.adattamento}` : ""}`,
-        anno: 2,
-        argomento: d.ambito,
-        tag: ["INVALSI", "INVALSI 2015", ...d.temi],
-        difficolta: d.difficolta,
-      },
-      testo: d.testo,
-      suggerimento: d.suggerimento,
-      variabili: [],
-      condizione: "",
-      parti: d.parti,
-    },
-  };
-}
-
-// Costruttori brevi per le parti: ogni domanda del fascicolo vale un punto
-// per item, una tabella Vero/Falso un punto per affermazione.
-const numerica = (consegna: string, valore: string, margine?: string): ParteEditor => ({
-  tipo: "numerica",
-  consegna,
-  punti: 1,
-  valore,
-  tolleranza: margine ? { tipo: "margine", margine } : { tipo: "esatta" },
-});
-const scelta = (consegna: string, risposte: string[], indiceGiusta: number): ParteEditor => ({
-  tipo: "scelta",
-  consegna,
-  punti: 1,
-  risposte,
-  indiceGiusta,
-});
-const veroFalso = (affermazioni: string[], vere: boolean[], consegna = "Indica se ciascuna affermazione è vera o falsa."): ParteEditor => ({
-  tipo: "veroFalso",
-  consegna,
-  punti: affermazioni.length,
-  affermazioni,
-  vere,
-});
-const espressione = (consegna: string, risposta: string): ParteEditor => ({
-  tipo: "espressione",
-  consegna,
-  punti: 1,
-  risposta,
-});
-
-const img = (chiave: keyof typeof IMMAGINE, descrizione: string) => `![${descrizione}](${IMMAGINE[chiave]})`;
+const img = (chiave: keyof typeof IMMAGINE, descrizione: string) => immagine(IMMAGINE[chiave], descrizione);
 
 const DOMANDE: Domanda[] = [
   {
@@ -713,33 +646,17 @@ const DOMANDE: Domanda[] = [
     suggerimento:
       "I lati del quadrato sono tutti uguali ad AB: AD, BC, CD. I lati del triangolo equilatero sono tutti uguali ad AB: AE e BE. DE e CE sono più corti, la diagonale AC è più lunga.",
     parti: [
-      {
-        tipo: "sceltaMultipla",
-        consegna: "Quali segmenti hanno la stessa lunghezza del segmento AB? Spunta tutti quelli giusti.",
-        punti: 1,
-        risposte: ["AD", "BC", "CD", "AE", "BE", "DE", "CE", "AC"],
-        corrette: [true, true, true, true, true, false, false, false],
-      },
+      sceltaMultipla(
+        "Quali segmenti hanno la stessa lunghezza del segmento AB? Spunta tutti quelli giusti.",
+        ["AD", "BC", "CD", "AE", "BE", "DE", "CE", "AC"],
+        [true, true, true, true, true, false, false, false],
+      ),
     ],
   },
 ];
 
-export const PACCHETTO_INVALSI_2015: EsercizioPacchetto[] = DOMANDE.map(esercizio);
+export const PACCHETTO_INVALSI_2015: EsercizioPacchetto[] = creaPacchetto({ anno: 2015, annoScolastico: "2014/15" }, DOMANDE);
 
-/** I byte esatti del file di un esercizio (come `genera-percentuali.ts`). */
-export function testoFile(modello: EsercizioEditor): string {
-  return `${JSON.stringify(versoFile(esercizioEditorSchema.parse(modello)), null, 2)}\n`;
-}
-
-function scrivi(): void {
-  const dir = path.resolve(process.cwd(), "content/esercizi");
-  mkdirSync(dir, { recursive: true });
-  for (const { nome, modello } of PACCHETTO_INVALSI_2015) {
-    writeFileSync(path.join(dir, `${nome}.json`), testoFile(modello));
-    console.log(`scritto content/esercizi/${nome}.json`);
-  }
-}
-
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  scrivi();
+if (lanciatoDirettamente(import.meta.url)) {
+  scriviPacchetto(PACCHETTO_INVALSI_2015);
 }
