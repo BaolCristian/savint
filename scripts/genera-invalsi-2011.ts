@@ -741,7 +741,7 @@ const DOMANDE: Domanda[] = [
     ],
     testo: r`L'espressione \(\frac{\var{c1}}{10} + \frac{\var{c2}}{10^2} + \frac{\var{c3}}{10^4} + \frac{\var{c4}}{10^5}\) si può rappresentare mediante il numero decimale`,
     suggerimento:
-      r`Ogni frazione è una cifra in una posizione: \(\var{c1}\) decimi, \(\var{c2}\) centesimi, 0 millesimi (manca \(\frac{\ldots}{10^3}\)), \(\var{c3}\) decimillesimi, \(\var{c4}\) centomillesimi: ` +
+      r`Ogni frazione è una cifra in una posizione: la cifra dei decimi è \(\var{c1}\), quella dei centesimi \(\var{c2}\), quella dei millesimi 0 (manca \(\frac{\ldots}{10^3}\)), quella dei decimillesimi \(\var{c3}\), quella dei centomillesimi \(\var{c4}\): ` +
       r`\(\var{c1/10} + \var{c2/100} + \var{c3/10000} + \var{c4/100000} = \var{(10000*c1 + 1000*c2 + 10*c3 + c4)/100000}\).`,
     // Gli errori del fascicolo: le cifre senza lo zero con la virgola in mezzo,
     // ogni cifra spostata di un posto a sinistra, lo zero dei millesimi dimenticato.

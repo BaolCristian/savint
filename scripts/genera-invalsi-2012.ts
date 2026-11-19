@@ -671,7 +671,7 @@ const DOMANDE: Domanda[] = [
     ],
     testo: r`In un negozio un abito è messo in vendita con uno sconto del \(\var{primo}\%\) sul prezzo originario. Durante la stagione dei saldi il prezzo già scontato viene ancora abbassato del \(\var{secondo}\%\). Qual è la percentuale complessiva di sconto sul prezzo originario dell'abito?`,
     suggerimento:
-      r`Dopo il primo sconto si paga il \(\var{100-primo}\%\) del prezzo, dopo il secondo il \(\var{100-secondo}\%\) di quello: \(\var{(100-primo)/100} \cdot \var{(100-secondo)/100} = \var{(100-primo)*(100-secondo)/10000}\), cioè il \(\var{(100-primo)*(100-secondo)/100}\%\) del prezzo originario. ` +
+      r`Dopo il primo sconto si paga il \(\var{100-primo}\%\) del prezzo, dopo il secondo resta da pagare una quota pari a \(\var{100-secondo}\%\) di quel prezzo: \(\var{(100-primo)/100} \cdot \var{(100-secondo)/100} = \var{(100-primo)*(100-secondo)/10000}\), cioè il \(\var{(100-primo)*(100-secondo)/100}\%\) del prezzo originario. ` +
       r`Lo sconto complessivo è \(100\% - \var{(100-primo)*(100-secondo)/100}\% = \var{primo+secondo-primo*secondo/100}\%\), non \(\var{primo+secondo}\%\): il \(\var{secondo}\%\) si calcola sul prezzo già scontato.`,
     // Gli errori del fascicolo (20%, 33%, 40%): la differenza degli sconti, il
     // secondo sconto calcolato sul primo (30% + 10% di 30%), la somma.

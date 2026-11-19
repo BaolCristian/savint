@@ -225,7 +225,7 @@ const DOMANDE: Domanda[] = [
     difficolta: 2,
     // Multipli di 10 fino a 50: l'aumento dell'area resta intero e le quattro
     // risposte della parte b non coincidono mai (p, 2p, 2p + p²/100, 100 + p).
-    variabili: [v("perc", "10*random(1..5)", "l'aumento percentuale del lato (fascicolo: 20)")],
+    variabili: [v("perc", "10*random(1, 2, 3, 5)", "l'aumento percentuale del lato (fascicolo: 20)")],
     testo: r`Considera un quadrato di lato \(a\).`,
     suggerimento:
       r`a) Aumentare del \(\var{perc}\%\) vuol dire aggiungere \(\var{dpformat(perc/100, 2)}\,a\): \(b = a + \var{dpformat(perc/100, 2)}\,a = \var{dpformat(1 + perc/100, 2)}\,a\). ` +

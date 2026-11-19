@@ -16,7 +16,7 @@
   "question": {
     "name": "INVALSI 2017 · D24 · Un quadrato di binomio",
     "statement": "<p>L'espressione \\(\\left(a - \\frac{1}{a}\\right)^2\\) si può scrivere come:</p>",
-    "advice": "<p>Quadrato di binomio: \\(\\left(a - \\frac{1}{a}\\right)^2 = a^2 - 2 \\cdot a \\cdot \\frac{1}{a} + \\frac{1}{a^2} = a^2 + \\frac{1}{a^2} - 2\\), perché \\(a \\cdot \\frac{1}{a} = 1\\). La B dimentica il doppio prodotto, la C confonde il quadrato di un binomio con la differenza di due quadrati, la D sbaglia il doppio prodotto.</p>",
+    "advice": "<p>Quadrato di binomio: \\(\\left(a - \\frac{1}{a}\\right)^2 = a^2 - 2 \\cdot a \\cdot \\frac{1}{a} + \\frac{1}{a^2} = a^2 + \\frac{1}{a^2} - 2\\), perché \\(a \\cdot \\frac{1}{a} = 1\\). Chi dimentica il doppio prodotto ottiene \\(\\frac{a^4 + 1}{a^2}\\); chi confonde il quadrato di un binomio con la differenza di due quadrati ottiene \\(a^2 - \\left(\\frac{1}{a}\\right)^2\\); chi sbaglia il doppio prodotto ottiene \\(\\frac{a^2 - 2a + 1}{a^2}\\).</p>",
     "variables": {},
     "variablesTest": {
       "condition": "",

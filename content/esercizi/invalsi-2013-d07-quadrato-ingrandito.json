@@ -21,7 +21,7 @@
     "variables": {
       "perc": {
         "name": "perc",
-        "definition": "10*random(1..5)",
+        "definition": "10*random(1, 2, 3, 5)",
         "description": "l'aumento percentuale del lato (fascicolo: 20)"
       }
     },

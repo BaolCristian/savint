@@ -396,6 +396,9 @@ const DOMANDE: Domanda[] = [
     difficolta: 2,
     // Il 10% resta; il prezzo è un multiplo di 10 (la quota per copia è
     // intera) e il compenso forfettario si costruisce dalle copie di pareggio.
+    // Dai 10 000 in su gli importi si mostrano con la separazione delle migliaia
+    // come nel fascicolo («50 000»): `formatnumber(x, "si-fr")`, solo per x >= 10000
+    // (la condizione `x = max(x, 10000)` evita il `>` dentro il testo).
     variabili: [
       v("fisso", "1000*random(2..8)", "il compenso fisso del contratto a partecipazione, in euro (fascicolo: 5000)"),
       v("prezzo", "10*random(2..5)", "il prezzo di copertina, in euro (fascicolo: 30)"),
@@ -405,14 +408,14 @@ const DOMANDE: Domanda[] = [
     ],
     testo:
       "Una casa editrice propone all'autore di un libro di scegliere uno tra due diversi tipi di contratto relativi al suo compenso. " +
-      r`Contratto forfettario: compenso di \(\var{forfait}\) €, indipendentemente dal numero di copie vendute. ` +
-      r`Contratto a partecipazione: compenso di \(\var{fisso}\) € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. ` +
+      r`Contratto forfettario: compenso di \(\var{if(forfait = max(forfait, 10000), formatnumber(forfait, "si-fr"), forfait)}\) €, indipendentemente dal numero di copie vendute. ` +
+      r`Contratto a partecipazione: compenso di \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)}\) € a cui si aggiunge il 10% del prezzo di copertina per ogni copia venduta. ` +
       r`Il prezzo di copertina del libro è di \(\var{prezzo}\) €.`,
     suggerimento:
-      r`Il 10% di \(\var{prezzo}\) € è \(\var{quota}\) €: con il contratto a partecipazione l'autore prende \(\var{fisso}\) € più \(\var{quota}\) € per copia. ` +
-      r`a) 0 copie: \(\var{fisso}\) €; 1000 copie: \(\var{fisso} + \var{1000*quota} = \var{fisso + 1000*quota}\) €; 2000 copie: \(\var{fisso} + \var{2000*quota} = \var{fisso + 2000*quota}\) €. ` +
-      r`b) \(C = \var{fisso} + \var{quota}n\). ` +
-      r`c) \(\var{fisso} + \var{quota}n = \var{forfait}\), cioè \(\var{quota}n = \var{forfait - fisso}\) e \(n = \var{pareggio}\) copie.`,
+      r`Il 10% di \(\var{prezzo}\) € è \(\var{quota}\) €: con il contratto a partecipazione l'autore prende \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)}\) € più \(\var{quota}\) € per copia. ` +
+      r`a) 0 copie: \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)}\) €; 1000 copie: \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)} + \var{if(1000*quota = max(1000*quota, 10000), formatnumber(1000*quota, "si-fr"), 1000*quota)} = \var{if(fisso + 1000*quota = max(fisso + 1000*quota, 10000), formatnumber(fisso + 1000*quota, "si-fr"), fisso + 1000*quota)}\) €; 2000 copie: \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)} + \var{if(2000*quota = max(2000*quota, 10000), formatnumber(2000*quota, "si-fr"), 2000*quota)} = \var{if(fisso + 2000*quota = max(fisso + 2000*quota, 10000), formatnumber(fisso + 2000*quota, "si-fr"), fisso + 2000*quota)}\) €. ` +
+      r`b) \(C = \var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)} + \var{quota}n\). ` +
+      r`c) \(\var{if(fisso = max(fisso, 10000), formatnumber(fisso, "si-fr"), fisso)} + \var{quota}n = \var{if(forfait = max(forfait, 10000), formatnumber(forfait, "si-fr"), forfait)}\), cioè \(\var{quota}n = \var{if(forfait - fisso = max(forfait - fisso, 10000), formatnumber(forfait - fisso, "si-fr"), forfait - fisso)}\) e \(n = \var{if(pareggio = max(pareggio, 10000), formatnumber(pareggio, "si-fr"), pareggio)}\) copie.`,
     parti: [
       numerica("a) L'autore sceglie il contratto a partecipazione. Completa la tabella. Compenso per l'autore (in euro) con 0 copie vendute:", "fisso"),
       numerica("Con 1000 copie vendute:", "fisso + 1000*quota"),
@@ -596,7 +599,7 @@ const DOMANDE: Domanda[] = [
     ],
     suggerimento:
       r`Con i dati in classi si usa il valore centrale di ogni classe (30, 90, 150, 240 minuti), lo si moltiplica per la frequenza e si divide per il numero totale di alunni (\(\var{f1} + \var{f2} + \var{f3} + \var{f4} = \var{f1+f2+f3+f4}\)): è una media ponderata. ` +
-      "La B usa gli estremi superiori delle classi, la A non tiene conto delle frequenze, la D è la media delle frequenze.",
+      "Sbaglia l'espressione che usa gli estremi superiori delle classi (60, 120, 180, 300) invece dei valori centrali, quella che calcola la media dei soli valori centrali senza le frequenze e quella che divide la somma delle frequenze per 4.",
     parti: [
       scelta(
         "",
@@ -636,7 +639,7 @@ const DOMANDE: Domanda[] = [
     testo: r`L'espressione \(\left(a - \frac{1}{a}\right)^2\) si può scrivere come:`,
     suggerimento:
       r`Quadrato di binomio: \(\left(a - \frac{1}{a}\right)^2 = a^2 - 2 \cdot a \cdot \frac{1}{a} + \frac{1}{a^2} = a^2 + \frac{1}{a^2} - 2\), perché \(a \cdot \frac{1}{a} = 1\). ` +
-      r`La B dimentica il doppio prodotto, la C confonde il quadrato di un binomio con la differenza di due quadrati, la D sbaglia il doppio prodotto.`,
+      r`Chi dimentica il doppio prodotto ottiene \(\frac{a^4 + 1}{a^2}\); chi confonde il quadrato di un binomio con la differenza di due quadrati ottiene \(a^2 - \left(\frac{1}{a}\right)^2\); chi sbaglia il doppio prodotto ottiene \(\frac{a^2 - 2a + 1}{a^2}\).`,
     parti: [
       scelta(
         "",
