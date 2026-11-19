@@ -10,13 +10,24 @@ export async function GET(
 ) {
   const gate = await requireTeacher();
   if (!gate.ok) return gate.response;
+  const session = gate.session;
 
+  // Il quiz esce con le risposte giuste: solo all'autore o a chi lo ha in
+  // condivisione, la stessa regola di /dashboard/quiz e di ./export. Agli
+  // altri (ADMIN compresi, quiz pubblici compresi) 404 come per un id
+  // inesistente; i quiz pubblici si copiano da /api/quiz/duplicate.
   const { id } = await params;
   const quiz = await prisma.quiz.findUnique({
-    where: { id },
+    where: {
+      id,
+      OR: [
+        { authorId: session.user.id },
+        { shares: { some: { sharedWithId: session.user.id } } },
+      ],
+    },
     include: {
       questions: { orderBy: { order: "asc" } },
-      author: { select: { name: true, email: true } },
+      author: { select: { name: true } },
     },
   });
 
