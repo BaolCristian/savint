@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D16 · Due cubi",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D16.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D16. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -15,14 +15,22 @@
   },
   "question": {
     "name": "INVALSI 2015 · D16 · Due cubi",
-    "statement": "<p>Il rapporto tra gli spigoli di due cubi è 5. Qual è il rapporto tra i loro volumi?</p>",
-    "advice": "<p>Il volume di un cubo è lo spigolo al cubo: se uno spigolo è 5 volte l'altro, il volume è \\(5^3 = 125\\) volte l'altro.</p>",
-    "variables": {},
+    "statement": "<p>Il rapporto tra gli spigoli di due cubi è \\(\\var{r}\\). Qual è il rapporto tra i loro volumi?</p>",
+    "advice": "<p>Il volume di un cubo è lo spigolo al cubo: se uno spigolo è \\(\\var{r}\\) volte l'altro, il volume è \\(\\var{r}^3 = \\var{r^3}\\) volte l'altro.</p>",
+    "variables": {
+      "r": {
+        "name": "r",
+        "definition": "random(2, 4, 5, 6, 7, 8, 9)",
+        "description": "il rapporto fra gli spigoli (fascicolo: 5)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "r"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +40,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>5</p>",
-          "<p>15</p>",
-          "<p>25</p>",
-          "<p>125</p>"
+          "<p>\\(\\var{r}\\)</p>",
+          "<p>\\(\\var{3*r}\\)</p>",
+          "<p>\\(\\var{r^2}\\)</p>",
+          "<p>\\(\\var{r^3}\\)</p>"
         ],
         "matrix": [
           "0",

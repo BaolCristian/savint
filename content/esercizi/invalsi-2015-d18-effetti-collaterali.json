@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D18 · Effetti collaterali",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D18.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D18. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -16,14 +16,28 @@
   },
   "question": {
     "name": "INVALSI 2015 · D18 · Effetti collaterali",
-    "statement": "<p>Nel foglietto illustrativo contenuto nella confezione di un farmaco, alla voce «Effetti collaterali» si legge che: il 2% dei pazienti trattati con il farmaco ha accusato vertigini; il 7% dei pazienti trattati con il farmaco ha avuto bruciori di stomaco. I due tipi di effetti collaterali sono indipendenti l'uno dall'altro.</p>",
-    "advice": "<p>a) L'evento contrario di «avere bruciori» ha probabilità \\(100\\% - 7\\% = 93\\%\\). b) Per eventi indipendenti la probabilità che accadano entrambi è il prodotto: \\(0{,}02 \\cdot 0{,}07 = 0{,}0014\\), cioè lo \\(0{,}14\\%\\).</p>",
-    "variables": {},
+    "statement": "<p>Nel foglietto illustrativo contenuto nella confezione di un farmaco, alla voce «Effetti collaterali» si legge che: il \\(\\var{p}\\%\\) dei pazienti trattati con il farmaco ha accusato vertigini; il \\(\\var{q}\\%\\) dei pazienti trattati con il farmaco ha avuto bruciori di stomaco. I due tipi di effetti collaterali sono indipendenti l'uno dall'altro.</p>",
+    "advice": "<p>a) L'evento contrario di «avere bruciori» ha probabilità \\(100\\% - \\var{q}\\% = \\var{100-q}\\%\\). b) Per eventi indipendenti la probabilità che accadano entrambi è il prodotto: \\(\\var{p/100} \\cdot \\var{q/100} = \\var{p*q/10000}\\), cioè lo \\(\\var{p*q/100}\\%\\).</p>",
+    "variables": {
+      "p": {
+        "name": "p",
+        "definition": "random(2..5)",
+        "description": "la percentuale di vertigini (fascicolo: 2)"
+      },
+      "q": {
+        "name": "q",
+        "definition": "random(6, 7, 9)",
+        "description": "la percentuale di bruciori; niente 8, che vorrebbe «l'8%» (fascicolo: 7)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "p",
+      "q"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +46,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) Qual è la probabilità che un paziente che ha assunto il farmaco NON abbia bruciori di stomaco? Esprimi il risultato in forma percentuale (scrivi solo il numero).</p>",
-        "minValue": "93",
-        "maxValue": "93",
+        "minValue": "100 - q",
+        "maxValue": "100 - q",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -51,10 +65,10 @@
         "marks": 0,
         "prompt": "<p>b) Qual è la probabilità che un paziente che ha assunto il farmaco manifesti ENTRAMBI gli effetti collaterali?</p>",
         "choices": [
-          "<p>9%</p>",
-          "<p>0,14%</p>",
-          "<p>14%</p>",
-          "<p>0,9%</p>"
+          "<p>\\(\\var{p+q}\\%\\)</p>",
+          "<p>\\(\\var{p*q/100}\\%\\)</p>",
+          "<p>\\(\\var{p*q}\\%\\)</p>",
+          "<p>\\(\\var{(p+q)/10}\\%\\)</p>"
         ],
         "matrix": [
           "0",

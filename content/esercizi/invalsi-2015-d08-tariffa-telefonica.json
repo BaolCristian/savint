@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D8 · La tariffa del cellulare",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D8.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D8. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Relazioni e funzioni",
     "tags": [
@@ -15,14 +15,58 @@
   },
   "question": {
     "name": "INVALSI 2015 · D8 · La tariffa del cellulare",
-    "statement": "<p>Il piano tariffario di un cellulare prevede un costo di 0,15 euro per lo «scatto alla risposta» più 0,12 euro per minuto o frazione di minuto di conversazione. Per esempio, se parlo 1 minuto e 1 secondo pago (0,15 + 0,24) euro, come se parlassi esattamente 2 minuti.</p>",
-    "advice": "<p>a) 7 minuti e 10 secondi si pagano come 8 minuti: \\(0{,}15 + 8 \\cdot 0{,}12 = 0{,}15 + 0{,}96 = 1{,}11\\) euro. b) Tolto lo scatto restano \\(4 - 0{,}15 = 3{,}85\\) euro, e \\(3{,}85 : 0{,}12 \\approx 32{,}08\\): si possono pagare 32 minuti. Il 33° porterebbe la spesa a \\(0{,}15 + 33 \\cdot 0{,}12 = 4{,}11\\) euro.</p>",
-    "variables": {},
+    "statement": "<p>Il piano tariffario di un cellulare prevede un costo di \\(\\var{dpformat(c/100, 2)}\\) euro per lo «scatto alla risposta» più \\(\\var{dpformat(m/100, 2)}\\) euro per minuto o frazione di minuto di conversazione. Per esempio, se parlo 1 minuto e 1 secondo pago \\((\\var{dpformat(c/100, 2)} + \\var{dpformat(2*m/100, 2)})\\) euro, come se parlassi esattamente 2 minuti.</p>",
+    "advice": "<p>a) \\(\\var{durata}\\) minuti e \\(\\var{secondi}\\) secondi si pagano come \\(\\var{durata+1}\\) minuti: \\(\\var{dpformat(c/100, 2)} + \\var{durata+1} \\cdot \\var{dpformat(m/100, 2)} = \\var{dpformat(c/100, 2)} + \\var{dpformat((durata+1)*m/100, 2)} = \\var{dpformat(costo, 2)}\\) euro. b) Tolto lo scatto restano \\(\\var{E} - \\var{dpformat(c/100, 2)} = \\var{dpformat(E - c/100, 2)}\\) euro, e \\(\\var{dpformat(E - c/100, 2)} : \\var{dpformat(m/100, 2)} \\approx \\var{dpformat((100*E - c)/m, 2)}\\): si possono pagare \\(\\var{minuti}\\) minuti. Il \\(\\var{minuti+1}\\)° porterebbe la spesa a \\(\\var{dpformat(c/100, 2)} + \\var{minuti+1} \\cdot \\var{dpformat(m/100, 2)} = \\var{dpformat((c + (minuti+1)*m)/100, 2)}\\) euro.</p>",
+    "variables": {
+      "c": {
+        "name": "c",
+        "definition": "random(10..20)",
+        "description": "lo scatto alla risposta, in centesimi (fascicolo: 15)"
+      },
+      "m": {
+        "name": "m",
+        "definition": "random(8..15)",
+        "description": "il costo di un minuto, in centesimi (fascicolo: 12)"
+      },
+      "durata": {
+        "name": "durata",
+        "definition": "random(4..12)",
+        "description": "i minuti interi della telefonata (fascicolo: 7)"
+      },
+      "secondi": {
+        "name": "secondi",
+        "definition": "random(5..55)",
+        "description": "i secondi oltre i minuti interi (fascicolo: 10)"
+      },
+      "E": {
+        "name": "E",
+        "definition": "random(3..6)",
+        "description": "il credito in euro (fascicolo: 4)"
+      },
+      "costo": {
+        "name": "costo",
+        "definition": "(c + (durata+1)*m)/100",
+        "description": "il costo della telefonata in euro"
+      },
+      "minuti": {
+        "name": "minuti",
+        "definition": "floor((100*E - c)/m)",
+        "description": "i minuti pagabili con il credito"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "c",
+      "m",
+      "durata",
+      "secondi",
+      "E",
+      "costo",
+      "minuti"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -30,9 +74,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>a) Quanti euro si spendono per una telefonata che dura 7 minuti e 10 secondi?</p>",
-        "minValue": "1.11",
-        "maxValue": "1.11",
+        "prompt": "<p>a) Quanti euro si spendono per una telefonata che dura \\(\\var{durata}\\) minuti e \\(\\var{secondi}\\) secondi?</p>",
+        "minValue": "costo",
+        "maxValue": "costo",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -48,9 +92,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>b) Se nel cellulare mi è rimasto un credito di 4 euro e voglio fare una telefonata, quanti minuti al massimo posso farla durare?</p>",
-        "minValue": "32",
-        "maxValue": "32",
+        "prompt": "<p>b) Se nel cellulare mi è rimasto un credito di \\(\\var{E}\\) euro e voglio fare una telefonata, quanti minuti al massimo posso farla durare?</p>",
+        "minValue": "minuti",
+        "maxValue": "minuti",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

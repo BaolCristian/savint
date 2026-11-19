@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D23 · La media di due gruppi",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D23.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D23. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,14 +15,40 @@
   },
   "question": {
     "name": "INVALSI 2015 · D23 · La media di due gruppi",
-    "statement": "<p>Lo stesso test di matematica è stato proposto a due diversi gruppi di studenti. Il primo gruppo, composto da 20 studenti, ha ottenuto un punteggio medio di 85 e il secondo, composto da 80 studenti, ha ottenuto un punteggio medio di 65.</p>",
-    "advice": "<p>Non è la media fra 85 e 65: i gruppi hanno numeri diversi. Il punteggio totale è \\(20 \\cdot 85 + 80 \\cdot 65 = 1700 + 5200 = 6900\\), e \\(6900 : 100 = 69\\).</p>",
-    "variables": {},
+    "statement": "<p>Lo stesso test di matematica è stato proposto a due diversi gruppi di studenti. Il primo gruppo, composto da \\(\\var{n1}\\) studenti, ha ottenuto un punteggio medio di \\(\\var{m1}\\) e il secondo, composto da \\(\\var{n2}\\) studenti, ha ottenuto un punteggio medio di \\(\\var{m2}\\).</p>",
+    "advice": "<p>Non è la media fra \\(\\var{m1}\\) e \\(\\var{m2}\\): i gruppi hanno numeri diversi. Il punteggio totale è \\(\\var{n1} \\cdot \\var{m1} + \\var{n2} \\cdot \\var{m2} = \\var{n1*m1} + \\var{n2*m2} = \\var{n1*m1 + n2*m2}\\), e \\(\\var{n1*m1 + n2*m2} : 100 = \\var{(n1*m1 + n2*m2)/100}\\).</p>",
+    "variables": {
+      "n1": {
+        "name": "n1",
+        "definition": "10*random(1..4)",
+        "description": "gli studenti del primo gruppo (fascicolo: 20)"
+      },
+      "n2": {
+        "name": "n2",
+        "definition": "100 - n1",
+        "description": "gli studenti del secondo gruppo (fascicolo: 80)"
+      },
+      "m2": {
+        "name": "m2",
+        "definition": "random(50..70)",
+        "description": "la media del secondo gruppo (fascicolo: 65)"
+      },
+      "m1": {
+        "name": "m1",
+        "definition": "m2 + 10*random(1..3)",
+        "description": "la media del primo gruppo, più alta (fascicolo: 85)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "n1",
+      "n2",
+      "m2",
+      "m1"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +57,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Qual è il punteggio medio ottenuto dai 100 studenti dei due gruppi?</p>",
-        "minValue": "69",
-        "maxValue": "69",
+        "minValue": "(n1*m1 + n2*m2)/100",
+        "maxValue": "(n1*m1 + n2*m2)/100",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

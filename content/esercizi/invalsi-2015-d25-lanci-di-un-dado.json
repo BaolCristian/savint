@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D25 · Lanci di un dado",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D25.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D25. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,14 +15,22 @@
   },
   "question": {
     "name": "INVALSI 2015 · D25 · Lanci di un dado",
-    "statement": "<p>Si lancia 300 volte un dado non truccato a 6 facce. Quante volte ci si aspetta di ottenere un numero maggiore di 4?</p>",
-    "advice": "<p>I numeri maggiori di 4 sono 5 e 6: probabilità \\(\\frac{2}{6} = \\frac{1}{3}\\). Su 300 lanci ci si aspetta \\(300 \\cdot \\frac{1}{3} = 100\\) volte circa.</p>",
-    "variables": {},
+    "statement": "<p>Si lancia \\(\\var{lanci}\\) volte un dado non truccato a 6 facce. Quante volte ci si aspetta di ottenere un numero maggiore di 4?</p>",
+    "advice": "<p>I numeri maggiori di 4 sono 5 e 6: probabilità \\(\\frac{2}{6} = \\frac{1}{3}\\). Su \\(\\var{lanci}\\) lanci ci si aspetta \\(\\var{lanci} \\cdot \\frac{1}{3} = \\var{lanci/3}\\) volte circa.</p>",
+    "variables": {
+      "lanci": {
+        "name": "lanci",
+        "definition": "60*random(3..10)",
+        "description": "i lanci, multiplo di 60: tutti i distrattori sono interi (fascicolo: 300)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "lanci"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +40,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>circa 100 volte</p>",
-          "<p>circa 50 volte</p>",
-          "<p>circa 30 volte</p>",
-          "<p>circa 150 volte</p>"
+          "<p>circa \\(\\var{lanci/3}\\) volte</p>",
+          "<p>circa \\(\\var{lanci/6}\\) volte</p>",
+          "<p>circa \\(\\var{lanci/10}\\) volte</p>",
+          "<p>circa \\(\\var{lanci/2}\\) volte</p>"
         ],
         "matrix": [
           "1",

@@ -29,7 +29,13 @@
  *   sono diventate a scelta, perché la piattaforma corregge da sola; la
  *   descrizione lo dice;
  * - le probabilità si scrivono come frazione (parte «espressione», che
- *   accetta qualunque forma equivalente, anche il decimale).
+ *   accetta qualunque forma equivalente, anche il decimale);
+ * - le domande di solo testo e calcolo hanno i NUMERI VARIABILI (regole in
+ *   `scripts/invalsi/comune.ts`): D4, D6 (parte b), D7, D8, D9, D12, D13, D15,
+ *   D16, D17, D18, D21, D22, D23, D25. Le altre restano con i numeri del
+ *   fascicolo: legate a un'immagine o a un grafico (D1, D5, D10, D14, D19,
+ *   D27, D31), concettuali (D2, D3, D11, D20, D26, D29, D30), o con
+ *   distrattori di cui non si ricostruisce l'errore (D24, D28).
  */
 import {
   creaPacchetto,
@@ -42,6 +48,7 @@ import {
   sceltaMultipla,
   scriviPacchetto,
   testoFile,
+  variabile as v,
   veroFalso,
   type Domanda,
   type EsercizioPacchetto,
@@ -131,22 +138,35 @@ const DOMANDE: Domanda[] = [
     ambito: "Relazioni e funzioni",
     temi: ["funzioni lineari", "modellizzazione"],
     difficolta: 2,
+    variabili: [
+      v("d", "random(2..4)", "i m³ che il serbatoio perde ogni settimana (fascicolo: 2)"),
+      v("entra", "d + random(1..3)", "i m³ che entrano ogni settimana, sempre più di d (fascicolo: 5)"),
+      v("esce", "entra + d", "i m³ prelevati ogni settimana (fascicolo: 7)"),
+      v("N", "lcm(entra, d)*random(5..10)", "i m³ di oggi, multiplo di d e di entra: N/d e N/entra interi (fascicolo: 100)"),
+    ],
     testo:
-      r`Una sorgente di montagna alimenta continuativamente un serbatoio con \(5\text{ m}^3\) di acqua ogni settimana. ` +
-      r`Oggi il serbatoio contiene \(100\text{ m}^3\) di acqua e un villaggio inizia a prelevare \(7\text{ m}^3\) di acqua alla settimana. ` +
-      r`Indichiamo con \(n\) i \(\text{m}^3\) di acqua contenuti nel serbatoio e con \(t\) il numero di settimane a partire da oggi: per \(t = 0\) è \(n = 100\).`,
+      r`Una sorgente di montagna alimenta continuativamente un serbatoio con \(\var{entra}\text{ m}^3\) di acqua ogni settimana. ` +
+      r`Oggi il serbatoio contiene \(\var{N}\text{ m}^3\) di acqua e un villaggio inizia a prelevare \(\var{esce}\text{ m}^3\) di acqua alla settimana. ` +
+      r`Indichiamo con \(n\) i \(\text{m}^3\) di acqua contenuti nel serbatoio e con \(t\) il numero di settimane a partire da oggi: per \(t = 0\) è \(n = \var{N}\).`,
     suggerimento:
-      r`Ogni settimana entrano \(5\text{ m}^3\) ed escono \(7\text{ m}^3\): il serbatoio perde \(2\text{ m}^3\) a settimana. ` +
-      r`a) Dopo 1, 2, 3, 4 settimane contiene 98, 96, 94, 92 \(\text{m}^3\). ` +
-      r`b) \(n = 100 - 2t\). ` +
-      r`c) È vuoto quando \(100 - 2t = 0\), cioè dopo \(t = 50\) settimane.`,
+      r`Ogni settimana entrano \(\var{entra}\text{ m}^3\) ed escono \(\var{esce}\text{ m}^3\): il serbatoio perde \(\var{d}\text{ m}^3\) a settimana. ` +
+      r`a) Dopo 1, 2, 3, 4 settimane contiene \(\var{N-d}\), \(\var{N-2*d}\), \(\var{N-3*d}\), \(\var{N-4*d}\) \(\text{m}^3\). ` +
+      r`b) \(n = \var{N} - \var{d}t\). ` +
+      r`c) È vuoto quando \(\var{N} - \var{d}t = 0\), cioè dopo \(t = \var{N} : \var{d} = \var{N/d}\) settimane.`,
     parti: [
-      numerica(r`a) Completa la tabella. Per \(t = 1\): \(n =\)`, "98"),
-      numerica(r`Per \(t = 2\): \(n =\)`, "96"),
-      numerica(r`Per \(t = 3\): \(n =\)`, "94"),
-      numerica(r`Per \(t = 4\): \(n =\)`, "92"),
-      espressione(r`b) Scrivi un'espressione che rappresenti \(n\) in funzione di \(t\). \(n =\)`, "100 - 2*t"),
-      scelta("c) Dopo quante settimane il serbatoio sarà vuoto?", ["20 settimane", "50 settimane", "98 settimane", "102 settimane"], 1),
+      numerica(r`a) Completa la tabella. Per \(t = 1\): \(n =\)`, "N - d"),
+      numerica(r`Per \(t = 2\): \(n =\)`, "N - 2*d"),
+      numerica(r`Per \(t = 3\): \(n =\)`, "N - 3*d"),
+      numerica(r`Per \(t = 4\): \(n =\)`, "N - 4*d"),
+      espressione(r`b) Scrivi un'espressione che rappresenti \(n\) in funzione di \(t\). \(n =\)`, "{N} - {d}*t"),
+      // Gli errori del fascicolo (20, 98, 102 con 100, 5, 2): divide per
+      // l'acqua che entra invece che per quella persa, toglie o aggiunge
+      // una sola settimana di perdita.
+      scelta(
+        "c) Dopo quante settimane il serbatoio sarà vuoto?",
+        [r`\(\var{N/entra}\) settimane`, r`\(\var{N/d}\) settimane`, r`\(\var{N-d}\) settimane`, r`\(\var{N+d}\) settimane`],
+        1,
+      ),
     ],
   },
   {
@@ -177,15 +197,18 @@ const DOMANDE: Domanda[] = [
     difficolta: 3,
     testo:
       "Da un mazzo di 52 carte da gioco (composto da 13 carte per ognuno dei semi: cuori, quadri, fiori, picche) sono stati tolti i 4 assi.",
+    // Variabile solo la parte b: la a dipende dal mazzo, che è sempre quello.
+    variabili: [v("k", "random(2..11)", "le carte di fiori tolte (fascicolo: 7)")],
     suggerimento:
       r`a) Restano 48 carte, di cui 12 di cuori: \(\frac{12}{48} = \frac{1}{4}\). ` +
-      r`b) Se si tolgono \(k\) carte di fiori restano \(52 - k\) carte, di cui \(13 - k\) di fiori: \(\frac{13 - k}{52 - k} = \frac{6}{45}\). ` +
-      r`Moltiplicando in croce \(45(13 - k) = 6(52 - k)\), cioè \(585 - 45k = 312 - 6k\), da cui \(k = 7\). Infatti \(52 - 7 = 45\) e \(13 - 7 = 6\).`,
+      r`b) Se si tolgono \(x\) carte di fiori restano \(52 - x\) carte, di cui \(13 - x\) di fiori: \(\frac{13 - x}{52 - x} = \frac{\var{13-k}}{\var{52-k}}\). ` +
+      r`Moltiplicando in croce \(\var{52-k}(13 - x) = \var{13-k}(52 - x)\), cioè \(\var{13*(52-k)} - \var{52-k}x = \var{52*(13-k)} - \var{13-k}x\), da cui \(39x = \var{39*k}\) e \(x = \var{k}\). ` +
+      r`Infatti \(52 - \var{k} = \var{52-k}\) e \(13 - \var{k} = \var{13-k}\).`,
     parti: [
       espressione("a) Si estrae una carta a caso. Qual è la probabilità che sia di cuori? Scrivi il risultato come frazione (per esempio 3/5).", "1/4"),
       numerica(
-        r`b) Da un altro mazzo di 52 carte, completo, sono state tolte alcune carte di fiori. Dopo questa operazione la probabilità di estrarre, a caso, una carta di fiori è \(\frac{6}{45}\). Quante carte di fiori sono state tolte?`,
-        "7",
+        r`b) Da un altro mazzo di 52 carte, completo, sono state tolte alcune carte di fiori. Dopo questa operazione la probabilità di estrarre, a caso, una carta di fiori è \(\frac{\var{13-k}}{\var{52-k}}\). Quante carte di fiori sono state tolte?`,
+        "k",
       ),
     ],
   },
@@ -196,14 +219,21 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["similitudine", "proporzioni"],
     difficolta: 1,
+    variabili: [
+      v("k", "random(5..12)", "quante volte l'ombra dell'obelisco è più lunga di quella del palo (fascicolo: 8)"),
+      v("s", "random(5..9)/10", "l'ombra del palo in metri, un decimale (fascicolo: 0,8)"),
+      v("p", "random(3..6)/2", "l'altezza del palo in metri, da 1,5 a 3 (fascicolo: 2,5)"),
+      v("ombra", "k*s", "l'ombra dell'obelisco in metri, un decimale (fascicolo: 6,4)"),
+      v("h", "k*p", "l'altezza dell'obelisco, intera o con ,5 (fascicolo: 20)"),
+    ],
     testo:
       "Arturo vuole misurare l'altezza di un obelisco che si trova al centro della piazza principale della sua città. " +
-      "A una certa ora di un giorno di sole, l'obelisco proietta un'ombra di circa 6,4 metri, e un palo alto 2,5 metri, che si trova nella stessa piazza, proietta un'ombra di circa 0,8 metri. " +
+      r`A una certa ora di un giorno di sole, l'obelisco proietta un'ombra di circa \(\var{ombra}\) metri, e un palo alto \(\var{p}\) metri, che si trova nella stessa piazza, proietta un'ombra di circa \(\var{s}\) metri. ` +
       "Supponi che la piazza sia orizzontale e che l'obelisco e il palo siano verticali.",
     suggerimento:
       r`Alla stessa ora i raggi del sole sono paralleli: obelisco e palo formano con le loro ombre due triangoli rettangoli simili. ` +
-      r`Quindi \(\frac{h}{6{,}4} = \frac{2{,}5}{0{,}8}\), da cui \(h = \frac{6{,}4 \cdot 2{,}5}{0{,}8} = 20\) m.`,
-    parti: [numerica("Qual è l'altezza dell'obelisco, in metri?", "20", "0.1")],
+      r`Quindi \(\frac{h}{\var{ombra}} = \frac{\var{p}}{\var{s}}\), da cui \(h = \frac{\var{ombra} \cdot \var{p}}{\var{s}} = \var{h}\) m.`,
+    parti: [numerica("Qual è l'altezza dell'obelisco, in metri?", "h", "0.1")],
   },
   {
     numero: 8,
@@ -212,15 +242,29 @@ const DOMANDE: Domanda[] = [
     ambito: "Relazioni e funzioni",
     temi: ["modellizzazione", "problemi"],
     difficolta: 2,
+    variabili: [
+      v("c", "random(10..20)", "lo scatto alla risposta, in centesimi (fascicolo: 15)"),
+      v("m", "random(8..15)", "il costo di un minuto, in centesimi (fascicolo: 12)"),
+      v("durata", "random(4..12)", "i minuti interi della telefonata (fascicolo: 7)"),
+      v("secondi", "random(5..55)", "i secondi oltre i minuti interi (fascicolo: 10)"),
+      v("E", "random(3..6)", "il credito in euro (fascicolo: 4)"),
+      v("costo", "(c + (durata+1)*m)/100", "il costo della telefonata in euro"),
+      v("minuti", "floor((100*E - c)/m)", "i minuti pagabili con il credito"),
+    ],
     testo:
-      "Il piano tariffario di un cellulare prevede un costo di 0,15 euro per lo «scatto alla risposta» più 0,12 euro per minuto o frazione di minuto di conversazione. " +
-      "Per esempio, se parlo 1 minuto e 1 secondo pago (0,15 + 0,24) euro, come se parlassi esattamente 2 minuti.",
+      r`Il piano tariffario di un cellulare prevede un costo di \(\var{dpformat(c/100, 2)}\) euro per lo «scatto alla risposta» più \(\var{dpformat(m/100, 2)}\) euro per minuto o frazione di minuto di conversazione. ` +
+      r`Per esempio, se parlo 1 minuto e 1 secondo pago \((\var{dpformat(c/100, 2)} + \var{dpformat(2*m/100, 2)})\) euro, come se parlassi esattamente 2 minuti.`,
     suggerimento:
-      r`a) 7 minuti e 10 secondi si pagano come 8 minuti: \(0{,}15 + 8 \cdot 0{,}12 = 0{,}15 + 0{,}96 = 1{,}11\) euro. ` +
-      r`b) Tolto lo scatto restano \(4 - 0{,}15 = 3{,}85\) euro, e \(3{,}85 : 0{,}12 \approx 32{,}08\): si possono pagare 32 minuti. Il 33° porterebbe la spesa a \(0{,}15 + 33 \cdot 0{,}12 = 4{,}11\) euro.`,
+      r`a) \(\var{durata}\) minuti e \(\var{secondi}\) secondi si pagano come \(\var{durata+1}\) minuti: ` +
+      r`\(\var{dpformat(c/100, 2)} + \var{durata+1} \cdot \var{dpformat(m/100, 2)} = \var{dpformat(c/100, 2)} + \var{dpformat((durata+1)*m/100, 2)} = \var{dpformat(costo, 2)}\) euro. ` +
+      r`b) Tolto lo scatto restano \(\var{E} - \var{dpformat(c/100, 2)} = \var{dpformat(E - c/100, 2)}\) euro, e \(\var{dpformat(E - c/100, 2)} : \var{dpformat(m/100, 2)} \approx \var{dpformat((100*E - c)/m, 2)}\): ` +
+      r`si possono pagare \(\var{minuti}\) minuti. Il \(\var{minuti+1}\)° porterebbe la spesa a \(\var{dpformat(c/100, 2)} + \var{minuti+1} \cdot \var{dpformat(m/100, 2)} = \var{dpformat((c + (minuti+1)*m)/100, 2)}\) euro.`,
     parti: [
-      numerica("a) Quanti euro si spendono per una telefonata che dura 7 minuti e 10 secondi?", "1.11"),
-      numerica("b) Se nel cellulare mi è rimasto un credito di 4 euro e voglio fare una telefonata, quanti minuti al massimo posso farla durare?", "32"),
+      numerica(r`a) Quanti euro si spendono per una telefonata che dura \(\var{durata}\) minuti e \(\var{secondi}\) secondi?`, "costo"),
+      numerica(
+        r`b) Se nel cellulare mi è rimasto un credito di \(\var{E}\) euro e voglio fare una telefonata, quanti minuti al massimo posso farla durare?`,
+        "minuti",
+      ),
     ],
   },
   {
@@ -230,16 +274,32 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["tabelle", "percentuali", "frequenze"],
     difficolta: 1,
+    // Gli alunni restano 25 (ogni alunno vale il 4%). Con n1 + n2 fra 6 e 11
+    // e n3 fra 4 e 5 i quattro distrattori non coincidono mai: n3 < n1 + n2
+    // e n1 + n2 + n3 ≠ 4·n3.
+    variabili: [
+      v("n1", "random(1..3)", "alunni fra 100 e 500 m (fascicolo: 2)"),
+      v("n2", "random(5..8)", "alunni fra 500 e 1000 m (fascicolo: 8)"),
+      v("n3", "random(4..5)", "alunni fra 1000 e 1500 m (fascicolo: 5)"),
+      v("n4", "random(4..8)", "alunni fra 1500 e 2000 m (fascicolo: 7)"),
+      v("n5", "25 - n1 - n2 - n3 - n4", "alunni fra 2000 e 2500 m, perché siano 25 in tutto: da 1 a 11 (fascicolo: 3)"),
+    ],
     testo:
       r`Nella seguente tabella, \(d\) rappresenta la distanza in metri fra l'abitazione e la scuola di ciascuno degli alunni di una classe. ` +
-      r`\[\begin{array}{|c|c|} \hline \text{Distanza dalla scuola (m)} & \text{Numero di alunni} \\ \hline 100 \le d < 500 & 2 \\ \hline 500 \le d < 1000 & 8 \\ \hline 1000 \le d < 1500 & 5 \\ \hline 1500 \le d < 2000 & 7 \\ \hline 2000 \le d < 2500 & 3 \\ \hline \end{array}\]`,
+      r`\[\begin{array}{|c|c|} \hline \text{Distanza dalla scuola (m)} & \text{Numero di alunni} \\ \hline 100 \le d < 500 & \var{n1} \\ \hline 500 \le d < 1000 & \var{n2} \\ \hline 1000 \le d < 1500 & \var{n3} \\ \hline 1500 \le d < 2000 & \var{n4} \\ \hline 2000 \le d < 2500 & \var{n5} \\ \hline \end{array}\]`,
     suggerimento:
-      "Gli alunni sono in tutto 2 + 8 + 5 + 7 + 3 = 25. " +
-      "a) Meno di 1 km vuol dire meno di 1000 m: 2 + 8 = 10 alunni. " +
-      r`b) Meno di 1,5 km: 2 + 8 + 5 = 15 alunni, e \(\frac{15}{25} = \frac{60}{100}\), cioè il 60%.`,
+      r`Gli alunni sono in tutto \(\var{n1} + \var{n2} + \var{n3} + \var{n4} + \var{n5} = 25\). ` +
+      r`a) Meno di 1 km vuol dire meno di 1000 m: \(\var{n1} + \var{n2} = \var{n1+n2}\) alunni. ` +
+      r`b) Meno di 1,5 km: \(\var{n1} + \var{n2} + \var{n3} = \var{n1+n2+n3}\) alunni, e \(\frac{\var{n1+n2+n3}}{25} = \frac{\var{4*(n1+n2+n3)}}{100}\), cioè il \(\var{4*(n1+n2+n3)}\%\).`,
     parti: [
-      numerica("a) Quanti sono gli alunni che abitano a meno di 1 km dalla scuola?", "10"),
-      scelta("b) Qual è la percentuale di alunni che abitano a meno di 1,5 km dalla scuola?", ["15%", "20%", "40%", "60%"], 3),
+      numerica("a) Quanti sono gli alunni che abitano a meno di 1 km dalla scuola?", "n1 + n2"),
+      // Gli errori del fascicolo (15%, 20%, 40%): il numero di alunni preso
+      // per percentuale, la sola fascia 1000-1500, la sola distanza < 1 km.
+      scelta(
+        "b) Qual è la percentuale di alunni che abitano a meno di 1,5 km dalla scuola?",
+        [r`\(\var{n1+n2+n3}\%\)`, r`\(\var{4*n3}\%\)`, r`\(\var{4*(n1+n2)}\%\)`, r`\(\var{4*(n1+n2+n3)}\%\)`],
+        3,
+      ),
     ],
   },
   {
@@ -311,15 +371,37 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["media", "numeri relativi", "tabelle"],
     difficolta: 1,
+    // L'andamento del fascicolo (fredda la notte, sopra lo zero verso le 13),
+    // con scarti casuali. L'ultima misura corregge la somma perché sia un
+    // multiplo di 8: la media resta intera. Con tutte le scelte di mezzo si
+    // ritrova il fascicolo (-8, -10, -10, -3, +1, -1, -3, -6).
+    variabili: [
+      v("t1", "random(-9..-6)", "ore 1 (fascicolo: -8)"),
+      v("t2", "t1 - random(1..3)", "ore 4 (fascicolo: -10)"),
+      v("t3", "t2 + random(-1..1)", "ore 7 (fascicolo: -10)"),
+      v("t4", "random(-4..-2)", "ore 10 (fascicolo: -3)"),
+      v("t5", "random(-1..3)", "ore 13 (fascicolo: +1)"),
+      v("t6", "t5 - random(1..3)", "ore 16 (fascicolo: -1)"),
+      v("t7", "t6 - random(1..3)", "ore 19 (fascicolo: -3)"),
+      v("base", "t7 - 3", "ore 22 prima della correzione"),
+      v("resto", "mod(t1 + t2 + t3 + t4 + t5 + t6 + t7 + base, 8)", "quanto la somma supera un multiplo di 8"),
+      v("t8", "if(resto > 4, base - resto + 8, base - resto)", "ore 22, spostata al più di 4 gradi perché la media sia intera (fascicolo: -6)"),
+      v("somma", "t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8", "la somma delle otto misure"),
+      v("tmax", "max([t1, t2, t3, t4, t5, t6, t7, t8])", "la temperatura massima"),
+      v("tmin", "min([t1, t2, t3, t4, t5, t6, t7, t8])", "la temperatura minima"),
+    ],
     testo:
       "Una stazione meteorologica nelle Alpi ha misurato le temperature, in gradi centigradi (°C), durante un giorno di dicembre. I dati raccolti sono riportati nella seguente tabella. " +
-      r`\[\begin{array}{|c|c|} \hline \text{Ora} & \text{Temperatura (°C)} \\ \hline 1 & -8 \\ \hline 4 & -10 \\ \hline 7 & -10 \\ \hline 10 & -3 \\ \hline 13 & +1 \\ \hline 16 & -1 \\ \hline 19 & -3 \\ \hline 22 & -6 \\ \hline \end{array}\]`,
+      r`\[\begin{array}{|c|c|} \hline \text{Ora} & \text{Temperatura (°C)} \\ \hline 1 & \var{t1} \\ \hline 4 & \var{t2} \\ \hline 7 & \var{t3} \\ \hline 10 & \var{t4} \\ \hline 13 & \var{t5} \\ \hline 16 & \var{t6} \\ \hline 19 & \var{t7} \\ \hline 22 & \var{t8} \\ \hline \end{array}\]`,
     suggerimento:
-      r`a) La massima è \(+1\) °C, la minima \(-10\) °C: \(1 - (-10) = 11\) °C. ` +
-      r`b) La somma delle otto misure è \(-8 - 10 - 10 - 3 + 1 - 1 - 3 - 6 = -40\), e \(-40 : 8 = -5\) °C.`,
+      r`a) La massima è \(\var{tmax}\) °C, la minima \(\var{tmin}\) °C: \(\var{tmax} - (\var{tmin}) = \var{tmax - tmin}\) °C. ` +
+      r`b) La somma delle otto misure è \(\var{somma}\), e \(\var{somma} : 8 = \var{somma/8}\) °C.`,
     parti: [
-      numerica("a) Qual è l'escursione termica, cioè la differenza tra la temperatura massima e la temperatura minima, nel giorno considerato, in °C?", "11"),
-      numerica(r`b) Qual è la temperatura media \(T_M\) relativa alle misure riportate in tabella, in °C?`, "-5"),
+      numerica(
+        "a) Qual è l'escursione termica, cioè la differenza tra la temperatura massima e la temperatura minima, nel giorno considerato, in °C?",
+        "tmax - tmin",
+      ),
+      numerica(r`b) Qual è la temperatura media \(T_M\) relativa alle misure riportate in tabella, in °C?`, "somma/8"),
     ],
   },
   {
@@ -329,24 +411,30 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["equazioni", "frazioni", "problemi"],
     difficolta: 2,
+    variabili: [
+      v("a", "random(3..5)", "il palo interrato è 1/a (fascicolo: 5)"),
+      v("b", "a + random(1..2)", "il palo in acqua è 1/b (fascicolo: 6)"),
+      v("L", "random(50..120)/10", "la parte fuori dall'acqua, in metri, un decimale (fascicolo: 8,9)"),
+      v("palo", "L/(1 - 1/a - 1/b)", "la lunghezza del palo"),
+    ],
     testo:
-      "Un palo verticale è piantato in uno stagno. Un quinto del palo è interrato nel fondale, un sesto è immerso in acqua e la parte del palo che esce dall'acqua è lunga 8,9 metri.",
+      r`Un palo verticale è piantato in uno stagno. \(\frac{1}{\var{a}}\) del palo è interrato nel fondale, \(\frac{1}{\var{b}}\) è immerso in acqua e la parte del palo che esce dall'acqua è lunga \(\var{L}\) metri.`,
     suggerimento:
-      r`a) Le tre parti insieme fanno tutto il palo: \(\frac{1}{5}x + \frac{1}{6}x + 8{,}9 = x\). ` +
-      r`b) \(\frac{1}{5} + \frac{1}{6} = \frac{11}{30}\), quindi la parte fuori dall'acqua è \(\frac{19}{30}\) del palo: \(\frac{19}{30}x = 8{,}9\), ` +
-      r`\(x = \frac{8{,}9 \cdot 30}{19} = \frac{267}{19} \approx 14{,}05\) m.`,
+      r`a) Le tre parti insieme fanno tutto il palo: \(\frac{1}{\var{a}}x + \frac{1}{\var{b}}x + \var{L} = x\). ` +
+      r`b) \(\frac{1}{\var{a}} + \frac{1}{\var{b}} = \frac{\var{a+b}}{\var{a*b}}\), quindi la parte fuori dall'acqua è \(\frac{\var{a*b-a-b}}{\var{a*b}}\) del palo: \(\frac{\var{a*b-a-b}}{\var{a*b}}x = \var{L}\), ` +
+      r`\(x = \frac{\var{L} \cdot \var{a*b}}{\var{a*b-a-b}} \approx \var{dpformat(palo, 2)}\) m.`,
     parti: [
       scelta(
         r`a) Quale delle seguenti equazioni consente di determinare la lunghezza totale \(x\) del palo?`,
         [
-          r`\(\frac{1}{5} + \frac{1}{6} + 8{,}9 = x\)`,
-          r`\(\frac{1}{5}x + \frac{1}{6}x = x + 8{,}9\)`,
-          r`\(\frac{1}{5}x + \frac{1}{6}x + x = 8{,}9\)`,
-          r`\(\frac{1}{5}x + \frac{1}{6}x + 8{,}9 = x\)`,
+          r`\(\frac{1}{\var{a}} + \frac{1}{\var{b}} + \var{L} = x\)`,
+          r`\(\frac{1}{\var{a}}x + \frac{1}{\var{b}}x = x + \var{L}\)`,
+          r`\(\frac{1}{\var{a}}x + \frac{1}{\var{b}}x + x = \var{L}\)`,
+          r`\(\frac{1}{\var{a}}x + \frac{1}{\var{b}}x + \var{L} = x\)`,
         ],
         3,
       ),
-      numerica(r`b) Qual è la lunghezza totale \(x\) del palo, in metri? Arrotonda ai centesimi.`, "267/19", "0.01"),
+      numerica(r`b) Qual è la lunghezza totale \(x\) del palo, in metri? Arrotonda ai centesimi.`, "palo", "0.01"),
     ],
   },
   {
@@ -381,10 +469,18 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["retta", "piano cartesiano", "coefficiente angolare"],
     difficolta: 1,
+    variabili: [
+      v("m", "random(2..9)", "il coefficiente angolare della prima retta (fascicolo: 3)"),
+      v("q1", "random(4..9)", "la prima retta è y = mx - q1 (fascicolo: 5)"),
+      v("q2", "random(1..3)", "la seconda retta è y = k/2 x - q2 (fascicolo: 1)"),
+    ],
     testo:
-      r`Nel piano cartesiano \(Oxy\) la retta di equazione \(y = 3x - 5\) e la retta di equazione \(y = \frac{k}{2}x - 1\) sono tra loro parallele; il valore di \(k\) è`,
-    suggerimento: r`Due rette sono parallele quando hanno lo stesso coefficiente angolare: \(\frac{k}{2} = 3\), quindi \(k = 6\).`,
-    parti: [scelta("", [r`\(-3\)`, r`\(-6\)`, r`\(3\)`, r`\(6\)`], 3)],
+      r`Nel piano cartesiano \(Oxy\) la retta di equazione \(y = \var{m}x - \var{q1}\) e la retta di equazione \(y = \frac{k}{2}x - \var{q2}\) sono tra loro parallele; il valore di \(k\) è`,
+    suggerimento: r`Due rette sono parallele quando hanno lo stesso coefficiente angolare: \(\frac{k}{2} = \var{m}\), quindi \(k = \var{2*m}\).`,
+    // Gli errori del fascicolo (-3, -6, 3): il coefficiente opposto (come per
+    // le perpendicolari, senza invertirlo), il suo doppio, il coefficiente
+    // senza moltiplicare per 2.
+    parti: [scelta("", [r`\(\var{-m}\)`, r`\(\var{-2*m}\)`, r`\(\var{m}\)`, r`\(\var{2*m}\)`], 3)],
   },
   {
     numero: 16,
@@ -393,9 +489,13 @@ const DOMANDE: Domanda[] = [
     ambito: "Spazio e figure",
     temi: ["volume", "similitudine"],
     difficolta: 1,
-    testo: "Il rapporto tra gli spigoli di due cubi è 5. Qual è il rapporto tra i loro volumi?",
-    suggerimento: r`Il volume di un cubo è lo spigolo al cubo: se uno spigolo è 5 volte l'altro, il volume è \(5^3 = 125\) volte l'altro.`,
-    parti: [scelta("", ["5", "15", "25", "125"], 3)],
+    // Niente 3: il distrattore 3·r coinciderebbe con r².
+    variabili: [v("r", "random(2, 4, 5, 6, 7, 8, 9)", "il rapporto fra gli spigoli (fascicolo: 5)")],
+    testo: r`Il rapporto tra gli spigoli di due cubi è \(\var{r}\). Qual è il rapporto tra i loro volumi?`,
+    suggerimento: r`Il volume di un cubo è lo spigolo al cubo: se uno spigolo è \(\var{r}\) volte l'altro, il volume è \(\var{r}^3 = \var{r^3}\) volte l'altro.`,
+    // Gli errori del fascicolo (5, 15, 25): il rapporto stesso, il rapporto
+    // per 3, il rapporto al quadrato (come per le aree).
+    parti: [scelta("", [r`\(\var{r}\)`, r`\(\var{3*r}\)`, r`\(\var{r^2}\)`, r`\(\var{r^3}\)`], 3)],
   },
   {
     numero: 17,
@@ -404,11 +504,28 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["problemi", "divisione"],
     difficolta: 1,
+    // Con almeno 8 minuti fra carico e svuotamento e almeno 8 ore di apertura,
+    // chi li dimentica ottiene sempre un numero più grande.
+    variabili: [
+      v("h1", "random(8..9)", "l'ora di apertura (fascicolo: 9)"),
+      v("h2", "random(17..19)", "l'ora di chiusura (fascicolo: 18)"),
+      v("ciclo", "random(25..40)", "i minuti del ciclo di lavaggio (fascicolo: 33)"),
+      v("carico", "random(5..10)", "i minuti del carico (fascicolo: 10)"),
+      v("svuota", "random(3..6)", "i minuti dello svuotamento (fascicolo: 5)"),
+      v("aperto", "60*(h2 - h1)", "i minuti di apertura"),
+      v("lavaggio", "ciclo + carico + svuota", "i minuti di un lavaggio completo"),
+    ],
     testo:
-      "Una lavanderia a gettoni lavora con orario continuato dalle 9 alle 18. Ogni lavatrice effettua cicli di lavaggio della durata di 33 minuti, ai quali si devono aggiungere 10 minuti per l'operazione di carico e 5 per lo svuotamento.",
+      r`Una lavanderia a gettoni lavora con orario continuato dalle \(\var{h1}\) alle \(\var{h2}\). Ogni lavatrice effettua cicli di lavaggio della durata di \(\var{ciclo}\) minuti, ai quali si devono aggiungere \(\var{carico}\) minuti per l'operazione di carico e \(\var{svuota}\) per lo svuotamento.`,
     suggerimento:
-      r`Dalle 9 alle 18 ci sono 9 ore, cioè 540 minuti. Un lavaggio completo dura \(33 + 10 + 5 = 48\) minuti. \(540 : 48 = 11{,}25\): i lavaggi completi sono 11.`,
-    parti: [numerica("Quanti lavaggi completi, comprensivi di carico e svuotamento, può effettuare al massimo una lavatrice nell'arco della giornata?", "11")],
+      r`Dalle \(\var{h1}\) alle \(\var{h2}\) ci sono \(\var{h2-h1}\) ore, cioè \(\var{aperto}\) minuti. Un lavaggio completo dura \(\var{ciclo} + \var{carico} + \var{svuota} = \var{lavaggio}\) minuti. ` +
+      r`\(\var{aperto} : \var{lavaggio}\) fa \(\var{floor(aperto/lavaggio)}\) con resto \(\var{mod(aperto, lavaggio)}\): i lavaggi completi sono \(\var{floor(aperto/lavaggio)}\).`,
+    parti: [
+      numerica(
+        "Quanti lavaggi completi, comprensivi di carico e svuotamento, può effettuare al massimo una lavatrice nell'arco della giornata?",
+        "floor(aperto/lavaggio)",
+      ),
+    ],
   },
   {
     numero: 18,
@@ -417,15 +534,29 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità", "eventi indipendenti", "percentuali"],
     difficolta: 2,
+    variabili: [
+      v("p", "random(2..5)", "la percentuale di vertigini (fascicolo: 2)"),
+      v("q", "random(6, 7, 9)", "la percentuale di bruciori; niente 8, che vorrebbe «l'8%» (fascicolo: 7)"),
+    ],
     testo:
-      "Nel foglietto illustrativo contenuto nella confezione di un farmaco, alla voce «Effetti collaterali» si legge che: il 2% dei pazienti trattati con il farmaco ha accusato vertigini; il 7% dei pazienti trattati con il farmaco ha avuto bruciori di stomaco. " +
+      r`Nel foglietto illustrativo contenuto nella confezione di un farmaco, alla voce «Effetti collaterali» si legge che: il \(\var{p}\%\) dei pazienti trattati con il farmaco ha accusato vertigini; il \(\var{q}\%\) dei pazienti trattati con il farmaco ha avuto bruciori di stomaco. ` +
       "I due tipi di effetti collaterali sono indipendenti l'uno dall'altro.",
     suggerimento:
-      r`a) L'evento contrario di «avere bruciori» ha probabilità \(100\% - 7\% = 93\%\). ` +
-      r`b) Per eventi indipendenti la probabilità che accadano entrambi è il prodotto: \(0{,}02 \cdot 0{,}07 = 0{,}0014\), cioè lo \(0{,}14\%\).`,
+      r`a) L'evento contrario di «avere bruciori» ha probabilità \(100\% - \var{q}\% = \var{100-q}\%\). ` +
+      r`b) Per eventi indipendenti la probabilità che accadano entrambi è il prodotto: \(\var{p/100} \cdot \var{q/100} = \var{p*q/10000}\), cioè lo \(\var{p*q/100}\%\).`,
     parti: [
-      numerica("a) Qual è la probabilità che un paziente che ha assunto il farmaco NON abbia bruciori di stomaco? Esprimi il risultato in forma percentuale (scrivi solo il numero).", "93"),
-      scelta("b) Qual è la probabilità che un paziente che ha assunto il farmaco manifesti ENTRAMBI gli effetti collaterali?", ["9%", "0,14%", "14%", "0,9%"], 1),
+      numerica(
+        "a) Qual è la probabilità che un paziente che ha assunto il farmaco NON abbia bruciori di stomaco? Esprimi il risultato in forma percentuale (scrivi solo il numero).",
+        "100 - q",
+      ),
+      // Gli errori del fascicolo (9%, 14%, 0,9%): la somma delle percentuali,
+      // il prodotto dei due numeri preso per percentuale, la somma dei
+      // decimali (0,02 + 0,07 = 0,09) letta come 0,9%.
+      scelta(
+        "b) Qual è la probabilità che un paziente che ha assunto il farmaco manifesti ENTRAMBI gli effetti collaterali?",
+        [r`\(\var{p+q}\%\)`, r`\(\var{p*q/100}\%\)`, r`\(\var{p*q}\%\)`, r`\(\var{(p+q)/10}\%\)`],
+        1,
+      ),
     ],
   },
   {
@@ -474,9 +605,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Numeri",
     temi: ["potenze", "raccoglimento"],
     difficolta: 2,
-    testo: r`L'espressione \(a^{43} + a^{44}\) è uguale a`,
-    suggerimento: r`Si raccoglie \(a^{43}\): \(a^{43} + a^{44} = a^{43} + a^{43} \cdot a = a^{43}(1 + a)\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.`,
-    parti: [scelta("", [r`\(a^{44 \cdot 43}\)`, r`\(a^{43} \cdot (a + 1)\)`, r`\(a^{87}\)`, r`\(2a^{87}\)`], 1)],
+    variabili: [v("n", "random(20..60)", "l'esponente minore (fascicolo: 43)")],
+    testo: r`L'espressione \(a^{\var{n}} + a^{\var{n+1}}\) è uguale a`,
+    suggerimento:
+      r`Si raccoglie \(a^{\var{n}}\): \(a^{\var{n}} + a^{\var{n+1}} = a^{\var{n}} + a^{\var{n}} \cdot a = a^{\var{n}}(1 + a)\). ` +
+      "La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.",
+    // Gli errori del fascicolo: esponenti moltiplicati, esponenti sommati,
+    // esponenti sommati e coefficienti sommati.
+    parti: [
+      scelta(
+        "",
+        [r`\(a^{\var{n+1} \cdot \var{n}}\)`, r`\(a^{\var{n}} \cdot (a + 1)\)`, r`\(a^{\var{2*n+1}}\)`, r`\(2a^{\var{2*n+1}}\)`],
+        1,
+      ),
+    ],
   },
   {
     numero: 22,
@@ -485,11 +627,15 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità"],
     difficolta: 2,
+    variabili: [
+      v("rosse", "random(18..28)", "le palline rosse (fascicolo: 23)"),
+      v("blu", "random(12..20)", "le palline blu (fascicolo: 17)"),
+    ],
     testo:
-      "Un'urna contiene 40 palline identiche tranne che per il colore: 23 sono rosse e 17 blu. Si estraggono contemporaneamente due palline dall'urna. Entrambe sono blu. " +
+      r`Un'urna contiene \(\var{rosse+blu}\) palline identiche tranne che per il colore: \(\var{rosse}\) sono rosse e \(\var{blu}\) blu. Si estraggono contemporaneamente due palline dall'urna. Entrambe sono blu. ` +
       "Senza reintrodurre le due palline estratte, si estrae dall'urna una terza pallina.",
-    suggerimento: r`Dopo le due estrazioni restano 38 palline, di cui \(17 - 2 = 15\) blu: la probabilità è \(\frac{15}{38}\).`,
-    parti: [espressione("Qual è la probabilità che anche la terza pallina sia blu? Scrivi il risultato come frazione.", "15/38")],
+    suggerimento: r`Dopo le due estrazioni restano \(\var{rosse+blu-2}\) palline, di cui \(\var{blu} - 2 = \var{blu-2}\) blu: la probabilità è \(\frac{\var{blu-2}}{\var{rosse+blu-2}}\).`,
+    parti: [espressione("Qual è la probabilità che anche la terza pallina sia blu? Scrivi il risultato come frazione.", "{blu-2}/{rosse+blu-2}")],
   },
   {
     numero: 23,
@@ -498,11 +644,20 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["media", "media ponderata"],
     difficolta: 2,
+    // Gli studenti restano 100 e i gruppi mai uguali (la media semplice
+    // sarebbe giusta); n1 e lo scarto multipli di 10: la media è intera.
+    variabili: [
+      v("n1", "10*random(1..4)", "gli studenti del primo gruppo (fascicolo: 20)"),
+      v("n2", "100 - n1", "gli studenti del secondo gruppo (fascicolo: 80)"),
+      v("m2", "random(50..70)", "la media del secondo gruppo (fascicolo: 65)"),
+      v("m1", "m2 + 10*random(1..3)", "la media del primo gruppo, più alta (fascicolo: 85)"),
+    ],
     testo:
-      "Lo stesso test di matematica è stato proposto a due diversi gruppi di studenti. Il primo gruppo, composto da 20 studenti, ha ottenuto un punteggio medio di 85 e il secondo, composto da 80 studenti, ha ottenuto un punteggio medio di 65.",
+      r`Lo stesso test di matematica è stato proposto a due diversi gruppi di studenti. Il primo gruppo, composto da \(\var{n1}\) studenti, ha ottenuto un punteggio medio di \(\var{m1}\) e il secondo, composto da \(\var{n2}\) studenti, ha ottenuto un punteggio medio di \(\var{m2}\).`,
     suggerimento:
-      r`Non è la media fra 85 e 65: i gruppi hanno numeri diversi. Il punteggio totale è \(20 \cdot 85 + 80 \cdot 65 = 1700 + 5200 = 6900\), e \(6900 : 100 = 69\).`,
-    parti: [numerica("Qual è il punteggio medio ottenuto dai 100 studenti dei due gruppi?", "69")],
+      r`Non è la media fra \(\var{m1}\) e \(\var{m2}\): i gruppi hanno numeri diversi. ` +
+      r`Il punteggio totale è \(\var{n1} \cdot \var{m1} + \var{n2} \cdot \var{m2} = \var{n1*m1} + \var{n2*m2} = \var{n1*m1 + n2*m2}\), e \(\var{n1*m1 + n2*m2} : 100 = \var{(n1*m1 + n2*m2)/100}\).`,
+    parti: [numerica("Qual è il punteggio medio ottenuto dai 100 studenti dei due gruppi?", "(n1*m1 + n2*m2)/100")],
   },
   {
     numero: 24,
@@ -530,9 +685,18 @@ const DOMANDE: Domanda[] = [
     ambito: "Dati e previsioni",
     temi: ["probabilità", "frequenza attesa"],
     difficolta: 1,
-    testo: "Si lancia 300 volte un dado non truccato a 6 facce. Quante volte ci si aspetta di ottenere un numero maggiore di 4?",
-    suggerimento: r`I numeri maggiori di 4 sono 5 e 6: probabilità \(\frac{2}{6} = \frac{1}{3}\). Su 300 lanci ci si aspetta \(300 \cdot \frac{1}{3} = 100\) volte circa.`,
-    parti: [scelta("", ["circa 100 volte", "circa 50 volte", "circa 30 volte", "circa 150 volte"], 0)],
+    variabili: [v("lanci", "60*random(3..10)", "i lanci, multiplo di 60: tutti i distrattori sono interi (fascicolo: 300)")],
+    testo: r`Si lancia \(\var{lanci}\) volte un dado non truccato a 6 facce. Quante volte ci si aspetta di ottenere un numero maggiore di 4?`,
+    suggerimento: r`I numeri maggiori di 4 sono 5 e 6: probabilità \(\frac{2}{6} = \frac{1}{3}\). Su \(\var{lanci}\) lanci ci si aspetta \(\var{lanci} \cdot \frac{1}{3} = \var{lanci/3}\) volte circa.`,
+    // Gli errori del fascicolo (50, 30, 150 su 300): una faccia sola (1/6),
+    // un decimo, la metà (maggiore o uguale a 4).
+    parti: [
+      scelta(
+        "",
+        [r`circa \(\var{lanci/3}\) volte`, r`circa \(\var{lanci/6}\) volte`, r`circa \(\var{lanci/10}\) volte`, r`circa \(\var{lanci/2}\) volte`],
+        0,
+      ),
+    ],
   },
   {
     numero: 26,

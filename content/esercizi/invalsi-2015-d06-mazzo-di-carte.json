@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D6 · Il mazzo di carte",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D6.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D6. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -15,13 +15,21 @@
   "question": {
     "name": "INVALSI 2015 · D6 · Il mazzo di carte",
     "statement": "<p>Da un mazzo di 52 carte da gioco (composto da 13 carte per ognuno dei semi: cuori, quadri, fiori, picche) sono stati tolti i 4 assi.</p>",
-    "advice": "<p>a) Restano 48 carte, di cui 12 di cuori: \\(\\frac{12}{48} = \\frac{1}{4}\\). b) Se si tolgono \\(k\\) carte di fiori restano \\(52 - k\\) carte, di cui \\(13 - k\\) di fiori: \\(\\frac{13 - k}{52 - k} = \\frac{6}{45}\\). Moltiplicando in croce \\(45(13 - k) = 6(52 - k)\\), cioè \\(585 - 45k = 312 - 6k\\), da cui \\(k = 7\\). Infatti \\(52 - 7 = 45\\) e \\(13 - 7 = 6\\).</p>",
-    "variables": {},
+    "advice": "<p>a) Restano 48 carte, di cui 12 di cuori: \\(\\frac{12}{48} = \\frac{1}{4}\\). b) Se si tolgono \\(x\\) carte di fiori restano \\(52 - x\\) carte, di cui \\(13 - x\\) di fiori: \\(\\frac{13 - x}{52 - x} = \\frac{\\var{13-k}}{\\var{52-k}}\\). Moltiplicando in croce \\(\\var{52-k}(13 - x) = \\var{13-k}(52 - x)\\), cioè \\(\\var{13*(52-k)} - \\var{52-k}x = \\var{52*(13-k)} - \\var{13-k}x\\), da cui \\(39x = \\var{39*k}\\) e \\(x = \\var{k}\\). Infatti \\(52 - \\var{k} = \\var{52-k}\\) e \\(13 - \\var{k} = \\var{13-k}\\).</p>",
+    "variables": {
+      "k": {
+        "name": "k",
+        "definition": "random(2..11)",
+        "description": "le carte di fiori tolte (fascicolo: 7)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "k"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -47,9 +55,9 @@
       {
         "type": "numberentry",
         "marks": 1,
-        "prompt": "<p>b) Da un altro mazzo di 52 carte, completo, sono state tolte alcune carte di fiori. Dopo questa operazione la probabilità di estrarre, a caso, una carta di fiori è \\(\\frac{6}{45}\\). Quante carte di fiori sono state tolte?</p>",
-        "minValue": "7",
-        "maxValue": "7",
+        "prompt": "<p>b) Da un altro mazzo di 52 carte, completo, sono state tolte alcune carte di fiori. Dopo questa operazione la probabilità di estrarre, a caso, una carta di fiori è \\(\\frac{\\var{13-k}}{\\var{52-k}}\\). Quante carte di fiori sono state tolte?</p>",
+        "minValue": "k",
+        "maxValue": "k",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

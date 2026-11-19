@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D13 · Il palo nello stagno",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D13.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D13. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -16,14 +16,40 @@
   },
   "question": {
     "name": "INVALSI 2015 · D13 · Il palo nello stagno",
-    "statement": "<p>Un palo verticale è piantato in uno stagno. Un quinto del palo è interrato nel fondale, un sesto è immerso in acqua e la parte del palo che esce dall'acqua è lunga 8,9 metri.</p>",
-    "advice": "<p>a) Le tre parti insieme fanno tutto il palo: \\(\\frac{1}{5}x + \\frac{1}{6}x + 8{,}9 = x\\). b) \\(\\frac{1}{5} + \\frac{1}{6} = \\frac{11}{30}\\), quindi la parte fuori dall'acqua è \\(\\frac{19}{30}\\) del palo: \\(\\frac{19}{30}x = 8{,}9\\), \\(x = \\frac{8{,}9 \\cdot 30}{19} = \\frac{267}{19} \\approx 14{,}05\\) m.</p>",
-    "variables": {},
+    "statement": "<p>Un palo verticale è piantato in uno stagno. \\(\\frac{1}{\\var{a}}\\) del palo è interrato nel fondale, \\(\\frac{1}{\\var{b}}\\) è immerso in acqua e la parte del palo che esce dall'acqua è lunga \\(\\var{L}\\) metri.</p>",
+    "advice": "<p>a) Le tre parti insieme fanno tutto il palo: \\(\\frac{1}{\\var{a}}x + \\frac{1}{\\var{b}}x + \\var{L} = x\\). b) \\(\\frac{1}{\\var{a}} + \\frac{1}{\\var{b}} = \\frac{\\var{a+b}}{\\var{a*b}}\\), quindi la parte fuori dall'acqua è \\(\\frac{\\var{a*b-a-b}}{\\var{a*b}}\\) del palo: \\(\\frac{\\var{a*b-a-b}}{\\var{a*b}}x = \\var{L}\\), \\(x = \\frac{\\var{L} \\cdot \\var{a*b}}{\\var{a*b-a-b}} \\approx \\var{dpformat(palo, 2)}\\) m.</p>",
+    "variables": {
+      "a": {
+        "name": "a",
+        "definition": "random(3..5)",
+        "description": "il palo interrato è 1/a (fascicolo: 5)"
+      },
+      "b": {
+        "name": "b",
+        "definition": "a + random(1..2)",
+        "description": "il palo in acqua è 1/b (fascicolo: 6)"
+      },
+      "L": {
+        "name": "L",
+        "definition": "random(50..120)/10",
+        "description": "la parte fuori dall'acqua, in metri, un decimale (fascicolo: 8,9)"
+      },
+      "palo": {
+        "name": "palo",
+        "definition": "L/(1 - 1/a - 1/b)",
+        "description": "la lunghezza del palo"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "a",
+      "b",
+      "L",
+      "palo"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -33,10 +59,10 @@
         "marks": 0,
         "prompt": "<p>a) Quale delle seguenti equazioni consente di determinare la lunghezza totale \\(x\\) del palo?</p>",
         "choices": [
-          "<p>\\(\\frac{1}{5} + \\frac{1}{6} + 8{,}9 = x\\)</p>",
-          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x = x + 8{,}9\\)</p>",
-          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x + x = 8{,}9\\)</p>",
-          "<p>\\(\\frac{1}{5}x + \\frac{1}{6}x + 8{,}9 = x\\)</p>"
+          "<p>\\(\\frac{1}{\\var{a}} + \\frac{1}{\\var{b}} + \\var{L} = x\\)</p>",
+          "<p>\\(\\frac{1}{\\var{a}}x + \\frac{1}{\\var{b}}x = x + \\var{L}\\)</p>",
+          "<p>\\(\\frac{1}{\\var{a}}x + \\frac{1}{\\var{b}}x + x = \\var{L}\\)</p>",
+          "<p>\\(\\frac{1}{\\var{a}}x + \\frac{1}{\\var{b}}x + \\var{L} = x\\)</p>"
         ],
         "matrix": [
           "0",
@@ -61,8 +87,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>b) Qual è la lunghezza totale \\(x\\) del palo, in metri? Arrotonda ai centesimi.</p>",
-        "minValue": "(267/19) - (0.01)",
-        "maxValue": "(267/19) + (0.01)",
+        "minValue": "(palo) - (0.01)",
+        "maxValue": "(palo) + (0.01)",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

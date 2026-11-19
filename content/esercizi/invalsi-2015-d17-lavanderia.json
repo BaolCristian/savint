@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D17 · La lavanderia a gettoni",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D17.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D17. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,58 @@
   },
   "question": {
     "name": "INVALSI 2015 · D17 · La lavanderia a gettoni",
-    "statement": "<p>Una lavanderia a gettoni lavora con orario continuato dalle 9 alle 18. Ogni lavatrice effettua cicli di lavaggio della durata di 33 minuti, ai quali si devono aggiungere 10 minuti per l'operazione di carico e 5 per lo svuotamento.</p>",
-    "advice": "<p>Dalle 9 alle 18 ci sono 9 ore, cioè 540 minuti. Un lavaggio completo dura \\(33 + 10 + 5 = 48\\) minuti. \\(540 : 48 = 11{,}25\\): i lavaggi completi sono 11.</p>",
-    "variables": {},
+    "statement": "<p>Una lavanderia a gettoni lavora con orario continuato dalle \\(\\var{h1}\\) alle \\(\\var{h2}\\). Ogni lavatrice effettua cicli di lavaggio della durata di \\(\\var{ciclo}\\) minuti, ai quali si devono aggiungere \\(\\var{carico}\\) minuti per l'operazione di carico e \\(\\var{svuota}\\) per lo svuotamento.</p>",
+    "advice": "<p>Dalle \\(\\var{h1}\\) alle \\(\\var{h2}\\) ci sono \\(\\var{h2-h1}\\) ore, cioè \\(\\var{aperto}\\) minuti. Un lavaggio completo dura \\(\\var{ciclo} + \\var{carico} + \\var{svuota} = \\var{lavaggio}\\) minuti. \\(\\var{aperto} : \\var{lavaggio}\\) fa \\(\\var{floor(aperto/lavaggio)}\\) con resto \\(\\var{mod(aperto, lavaggio)}\\): i lavaggi completi sono \\(\\var{floor(aperto/lavaggio)}\\).</p>",
+    "variables": {
+      "h1": {
+        "name": "h1",
+        "definition": "random(8..9)",
+        "description": "l'ora di apertura (fascicolo: 9)"
+      },
+      "h2": {
+        "name": "h2",
+        "definition": "random(17..19)",
+        "description": "l'ora di chiusura (fascicolo: 18)"
+      },
+      "ciclo": {
+        "name": "ciclo",
+        "definition": "random(25..40)",
+        "description": "i minuti del ciclo di lavaggio (fascicolo: 33)"
+      },
+      "carico": {
+        "name": "carico",
+        "definition": "random(5..10)",
+        "description": "i minuti del carico (fascicolo: 10)"
+      },
+      "svuota": {
+        "name": "svuota",
+        "definition": "random(3..6)",
+        "description": "i minuti dello svuotamento (fascicolo: 5)"
+      },
+      "aperto": {
+        "name": "aperto",
+        "definition": "60*(h2 - h1)",
+        "description": "i minuti di apertura"
+      },
+      "lavaggio": {
+        "name": "lavaggio",
+        "definition": "ciclo + carico + svuota",
+        "description": "i minuti di un lavaggio completo"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "h1",
+      "h2",
+      "ciclo",
+      "carico",
+      "svuota",
+      "aperto",
+      "lavaggio"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -31,8 +75,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>Quanti lavaggi completi, comprensivi di carico e svuotamento, può effettuare al massimo una lavatrice nell'arco della giornata?</p>",
-        "minValue": "11",
-        "maxValue": "11",
+        "minValue": "floor(aperto/lavaggio)",
+        "maxValue": "floor(aperto/lavaggio)",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

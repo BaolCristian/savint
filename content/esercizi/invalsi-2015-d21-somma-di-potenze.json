@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D21 · Somma di potenze",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D21.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D21. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Numeri",
     "tags": [
@@ -15,14 +15,22 @@
   },
   "question": {
     "name": "INVALSI 2015 · D21 · Somma di potenze",
-    "statement": "<p>L'espressione \\(a^{43} + a^{44}\\) è uguale a</p>",
-    "advice": "<p>Si raccoglie \\(a^{43}\\): \\(a^{43} + a^{44} = a^{43} + a^{43} \\cdot a = a^{43}(1 + a)\\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.</p>",
-    "variables": {},
+    "statement": "<p>L'espressione \\(a^{\\var{n}} + a^{\\var{n+1}}\\) è uguale a</p>",
+    "advice": "<p>Si raccoglie \\(a^{\\var{n}}\\): \\(a^{\\var{n}} + a^{\\var{n+1}} = a^{\\var{n}} + a^{\\var{n}} \\cdot a = a^{\\var{n}}(1 + a)\\). La somma di due potenze NON è una potenza con gli esponenti sommati: quello vale per il prodotto.</p>",
+    "variables": {
+      "n": {
+        "name": "n",
+        "definition": "random(20..60)",
+        "description": "l'esponente minore (fascicolo: 43)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "n"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,10 +40,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(a^{44 \\cdot 43}\\)</p>",
-          "<p>\\(a^{43} \\cdot (a + 1)\\)</p>",
-          "<p>\\(a^{87}\\)</p>",
-          "<p>\\(2a^{87}\\)</p>"
+          "<p>\\(a^{\\var{n+1} \\cdot \\var{n}}\\)</p>",
+          "<p>\\(a^{\\var{n}} \\cdot (a + 1)\\)</p>",
+          "<p>\\(a^{\\var{2*n+1}}\\)</p>",
+          "<p>\\(2a^{\\var{2*n+1}}\\)</p>"
         ],
         "matrix": [
           "0",

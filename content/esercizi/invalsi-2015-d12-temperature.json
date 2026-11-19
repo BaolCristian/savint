@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D12 · Le temperature in montagna",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D12.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D12. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Dati e previsioni",
     "tags": [
@@ -16,14 +16,94 @@
   },
   "question": {
     "name": "INVALSI 2015 · D12 · Le temperature in montagna",
-    "statement": "<p>Una stazione meteorologica nelle Alpi ha misurato le temperature, in gradi centigradi (°C), durante un giorno di dicembre. I dati raccolti sono riportati nella seguente tabella. \\[\\begin{array}{|c|c|} \\hline \\text{Ora} &amp; \\text{Temperatura (°C)} \\\\ \\hline 1 &amp; -8 \\\\ \\hline 4 &amp; -10 \\\\ \\hline 7 &amp; -10 \\\\ \\hline 10 &amp; -3 \\\\ \\hline 13 &amp; +1 \\\\ \\hline 16 &amp; -1 \\\\ \\hline 19 &amp; -3 \\\\ \\hline 22 &amp; -6 \\\\ \\hline \\end{array}\\]</p>",
-    "advice": "<p>a) La massima è \\(+1\\) °C, la minima \\(-10\\) °C: \\(1 - (-10) = 11\\) °C. b) La somma delle otto misure è \\(-8 - 10 - 10 - 3 + 1 - 1 - 3 - 6 = -40\\), e \\(-40 : 8 = -5\\) °C.</p>",
-    "variables": {},
+    "statement": "<p>Una stazione meteorologica nelle Alpi ha misurato le temperature, in gradi centigradi (°C), durante un giorno di dicembre. I dati raccolti sono riportati nella seguente tabella. \\[\\begin{array}{|c|c|} \\hline \\text{Ora} &amp; \\text{Temperatura (°C)} \\\\ \\hline 1 &amp; \\var{t1} \\\\ \\hline 4 &amp; \\var{t2} \\\\ \\hline 7 &amp; \\var{t3} \\\\ \\hline 10 &amp; \\var{t4} \\\\ \\hline 13 &amp; \\var{t5} \\\\ \\hline 16 &amp; \\var{t6} \\\\ \\hline 19 &amp; \\var{t7} \\\\ \\hline 22 &amp; \\var{t8} \\\\ \\hline \\end{array}\\]</p>",
+    "advice": "<p>a) La massima è \\(\\var{tmax}\\) °C, la minima \\(\\var{tmin}\\) °C: \\(\\var{tmax} - (\\var{tmin}) = \\var{tmax - tmin}\\) °C. b) La somma delle otto misure è \\(\\var{somma}\\), e \\(\\var{somma} : 8 = \\var{somma/8}\\) °C.</p>",
+    "variables": {
+      "t1": {
+        "name": "t1",
+        "definition": "random(-9..-6)",
+        "description": "ore 1 (fascicolo: -8)"
+      },
+      "t2": {
+        "name": "t2",
+        "definition": "t1 - random(1..3)",
+        "description": "ore 4 (fascicolo: -10)"
+      },
+      "t3": {
+        "name": "t3",
+        "definition": "t2 + random(-1..1)",
+        "description": "ore 7 (fascicolo: -10)"
+      },
+      "t4": {
+        "name": "t4",
+        "definition": "random(-4..-2)",
+        "description": "ore 10 (fascicolo: -3)"
+      },
+      "t5": {
+        "name": "t5",
+        "definition": "random(-1..3)",
+        "description": "ore 13 (fascicolo: +1)"
+      },
+      "t6": {
+        "name": "t6",
+        "definition": "t5 - random(1..3)",
+        "description": "ore 16 (fascicolo: -1)"
+      },
+      "t7": {
+        "name": "t7",
+        "definition": "t6 - random(1..3)",
+        "description": "ore 19 (fascicolo: -3)"
+      },
+      "base": {
+        "name": "base",
+        "definition": "t7 - 3",
+        "description": "ore 22 prima della correzione"
+      },
+      "resto": {
+        "name": "resto",
+        "definition": "mod(t1 + t2 + t3 + t4 + t5 + t6 + t7 + base, 8)",
+        "description": "quanto la somma supera un multiplo di 8"
+      },
+      "t8": {
+        "name": "t8",
+        "definition": "if(resto > 4, base - resto + 8, base - resto)",
+        "description": "ore 22, spostata al più di 4 gradi perché la media sia intera (fascicolo: -6)"
+      },
+      "somma": {
+        "name": "somma",
+        "definition": "t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8",
+        "description": "la somma delle otto misure"
+      },
+      "tmax": {
+        "name": "tmax",
+        "definition": "max([t1, t2, t3, t4, t5, t6, t7, t8])",
+        "description": "la temperatura massima"
+      },
+      "tmin": {
+        "name": "tmin",
+        "definition": "min([t1, t2, t3, t4, t5, t6, t7, t8])",
+        "description": "la temperatura minima"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "t1",
+      "t2",
+      "t3",
+      "t4",
+      "t5",
+      "t6",
+      "t7",
+      "base",
+      "resto",
+      "t8",
+      "somma",
+      "tmax",
+      "tmin"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -32,8 +112,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>a) Qual è l'escursione termica, cioè la differenza tra la temperatura massima e la temperatura minima, nel giorno considerato, in °C?</p>",
-        "minValue": "11",
-        "maxValue": "11",
+        "minValue": "tmax - tmin",
+        "maxValue": "tmax - tmin",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [
@@ -50,8 +130,8 @@
         "type": "numberentry",
         "marks": 1,
         "prompt": "<p>b) Qual è la temperatura media \\(T_M\\) relativa alle misure riportate in tabella, in °C?</p>",
-        "minValue": "-5",
-        "maxValue": "-5",
+        "minValue": "somma/8",
+        "maxValue": "somma/8",
         "correctAnswerFraction": false,
         "allowFractions": false,
         "notationStyles": [

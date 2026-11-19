@@ -2,7 +2,7 @@
   "savint": {
     "version": 1,
     "title": "INVALSI 2015 · D15 · Rette parallele",
-    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D15.",
+    "description": "Prova INVALSI di matematica 2014/15, classe seconda della secondaria di secondo grado, domanda D15. Numeri variabili: ogni studente riceve valori diversi da quelli del fascicolo.",
     "yearLevel": 2,
     "topic": "Spazio e figure",
     "tags": [
@@ -16,14 +16,34 @@
   },
   "question": {
     "name": "INVALSI 2015 · D15 · Rette parallele",
-    "statement": "<p>Nel piano cartesiano \\(Oxy\\) la retta di equazione \\(y = 3x - 5\\) e la retta di equazione \\(y = \\frac{k}{2}x - 1\\) sono tra loro parallele; il valore di \\(k\\) è</p>",
-    "advice": "<p>Due rette sono parallele quando hanno lo stesso coefficiente angolare: \\(\\frac{k}{2} = 3\\), quindi \\(k = 6\\).</p>",
-    "variables": {},
+    "statement": "<p>Nel piano cartesiano \\(Oxy\\) la retta di equazione \\(y = \\var{m}x - \\var{q1}\\) e la retta di equazione \\(y = \\frac{k}{2}x - \\var{q2}\\) sono tra loro parallele; il valore di \\(k\\) è</p>",
+    "advice": "<p>Due rette sono parallele quando hanno lo stesso coefficiente angolare: \\(\\frac{k}{2} = \\var{m}\\), quindi \\(k = \\var{2*m}\\).</p>",
+    "variables": {
+      "m": {
+        "name": "m",
+        "definition": "random(2..9)",
+        "description": "il coefficiente angolare della prima retta (fascicolo: 3)"
+      },
+      "q1": {
+        "name": "q1",
+        "definition": "random(4..9)",
+        "description": "la prima retta è y = mx - q1 (fascicolo: 5)"
+      },
+      "q2": {
+        "name": "q2",
+        "definition": "random(1..3)",
+        "description": "la seconda retta è y = k/2 x - q2 (fascicolo: 1)"
+      }
+    },
     "variablesTest": {
       "condition": "",
       "maxRuns": 10
     },
-    "ungrouped_variables": [],
+    "ungrouped_variables": [
+      "m",
+      "q1",
+      "q2"
+    ],
     "variable_groups": [],
     "functions": {},
     "rulesets": {},
@@ -33,10 +53,10 @@
         "marks": 0,
         "prompt": "<p></p>",
         "choices": [
-          "<p>\\(-3\\)</p>",
-          "<p>\\(-6\\)</p>",
-          "<p>\\(3\\)</p>",
-          "<p>\\(6\\)</p>"
+          "<p>\\(\\var{-m}\\)</p>",
+          "<p>\\(\\var{-2*m}\\)</p>",
+          "<p>\\(\\var{m}\\)</p>",
+          "<p>\\(\\var{2*m}\\)</p>"
         ],
         "matrix": [
           "0",
